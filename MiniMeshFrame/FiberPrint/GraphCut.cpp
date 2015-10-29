@@ -47,6 +47,9 @@ void GraphCut::CreateAandC()
 		C_list.push_back(Triplet<double>(i, i, pow(dual_edge[i]->w(), 2)));
 	}
 	C_.setFromTriplets(C_list.begin(), C_list.end());
+	
+	Statistics s_C("C", C_);
+	s_C.GenerateSpFile();
 
 	H1 = new SpMat(Nd_, Nd_);
 	*H1 = A_.transpose() * C_ * A_;
@@ -269,6 +272,16 @@ void GraphCut::MakeLayers()
 		VX d(Nd_);
 		SpMat W(Nd_, Nd_);
 		SetBoundary(d, W, cut_count);
+
+		Statistics s_H("H1_", *H1);
+		s_H.GenerateSpFile();
+
+		Statistics s_x("x_", x_);
+		s_x.GenerateVectorFile();
+		cout << x_.size() << endl;
+
+		Statistics s_D("D_", D_);
+		s_D.GenerateVectorFile();
 
 		ptr_stiff_->CalculateD(&D_, &x_);
 
