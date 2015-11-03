@@ -624,6 +624,7 @@ void RenderingWidget::DrawHeat(bool bv)
 void RenderingWidget::FiberPrintAnalysis()
 {
 	delete ptr_fiberprint_;
+	
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
 	ptr_fiberprint_->Debug();
 

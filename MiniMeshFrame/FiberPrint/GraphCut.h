@@ -12,10 +12,13 @@
 
 #include "WireFrame\WireFrame.h"
 #include "Stiffness.h"
-#include "Statistics.h"
 
 #include "QPMosek.h"
 #include "QPFactory.h"
+#include "Statistics.h"
+
+#include "LPFactory.h"
+#include "TSPLIB_Loader.h"
 
 using namespace std;
 using namespace Eigen;
@@ -52,6 +55,9 @@ public:
 	void		CalculateX(VX &d, SpMat &W);		// QP optimization for x at every iteration
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
+
+	//Debug
+	void		debug();
 
 	vector<DualVertex*>		*GetDualVertexList();
 	VectorXi				*GetLabel();

@@ -16,6 +16,7 @@ public:
 	void start();
 	void stop();
 	std::string to_string() const;
+	double	to_double() const;
 
 private:
 	TimePoint startTime;

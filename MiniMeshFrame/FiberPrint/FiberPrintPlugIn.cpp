@@ -44,7 +44,25 @@ void FiberPrintPlugIn::Debug()
 	//ptr_stiffness_->CreateM();
 	//ptr_stiffness_->CreateK();
 	
-	ptr_graphcut_->MakeLayers();
+	//ptr_graphcut_->MakeLayers();
+	//ptr_graphcut_->debug();
+	TSPLIB_Loader *loader = new TSPLIB_Loader();
+	int N;
+	Eigen::SparseMatrix<double> Cost;
+	loader->loadFromFile("F:\\bays29.txt", N, &Cost);
+
+
+	Statistics s_cost("cost", Cost);
+	s_cost.GenerateSpFile();
+
+	TSPSolver *ptr_tspsolve = new TSPSolver(&Cost);
+
+	Eigen::VectorXd x;
+
+	ptr_tspsolve->Solve(x, true);
+
+	Statistics s_x("tsp_x", x);
+	s_x.GenerateMatrixFile();
 
 	/*
 	std::vector<int> *e_id = ptr_graphcut_->edge_id();

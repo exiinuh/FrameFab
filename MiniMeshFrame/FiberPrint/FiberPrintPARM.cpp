@@ -4,8 +4,7 @@
 FiberPrintPARM::FiberPrintPARM()
 {
 	radius_ = 0.0015;
-	//density_ = 0.001;
-	density_ = 1;
+	density_ = 0.001;
 	g_ = 9.80;
 	youngs_modulus_ = 1586;
 	shear_modulus_ = 1387;

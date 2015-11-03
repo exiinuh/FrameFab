@@ -6,6 +6,8 @@
 #include "SeqAnalyzer.h"
 #include "Stiffness.h"
 
+#include "TSPSolver.h"
+#include "TSPLIB_Loader.h"
 
 class FiberPrintPlugIn
 {

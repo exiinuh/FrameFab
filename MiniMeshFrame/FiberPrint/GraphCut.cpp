@@ -107,7 +107,7 @@ void GraphCut::SetBoundary(VX &d, SpMat &W, int count)
 			x_[e_id] = 0;
 
 			edge = edge->pnext_;
-		}
+		} 
 	}
 	else
 	{
@@ -213,8 +213,7 @@ bool GraphCut::CheckLabel(int iter_count)
 	cout << "Lower Set edge number : " << l << endl;
 	cout << "Lower Set percentage" << double(l) / double(M_) * 100 << "%" << endl;
 	
-	if (iter_count == 8)
-	//if (l < 20)
+	if (iter_count == 4)
 	{
 		return true;
 	}
@@ -273,6 +272,8 @@ void GraphCut::MakeLayers()
 		SpMat W(Nd_, Nd_);
 		SetBoundary(d, W, cut_count);
 
+		ptr_stiff_->CalculateD(&D_, &x_);
+
 		Statistics s_H("H1_", *H1);
 		s_H.GenerateSpFile();
 
@@ -321,7 +322,6 @@ void GraphCut::MakeLayers()
 			double obj_func = x_.dot((*H1) * x_);
 			record.push_back(obj_func);
 
-			cout << "********" << endl;
 			cout << "new energy func value record: " << obj_func << endl;
 			cout << "dual_residual : " << dual_res.norm() << endl;
 			cout << "primal_residual : " << primal_res.norm() << endl;
@@ -333,6 +333,10 @@ void GraphCut::MakeLayers()
 			putchar('\n');
 			
 			ADMM_count++;
+			if (ADMM_count >= 20)
+			{
+				break;
+			}
 		} while (!TerminationCriteria());
 
 		UpdateX();
@@ -344,6 +348,7 @@ void GraphCut::MakeLayers()
 
 void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 {
+	// Construct Hessian Matrix for D-Qp problem
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 
@@ -433,7 +438,7 @@ void GraphCut::CalculateD()
 	lb = lb * (-MYINF);
 	ub = ub * MYINF;
 
-	qp->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);
+	qp->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
 }
 
 
@@ -449,6 +454,17 @@ void GraphCut::UpdateLambda()
 	lambda_ = lambda_ + penalty_ * (K * D_ - F);
 }
 
+void GraphCut::debug()
+{
+	int N; 
+	SpMat CostMatrix;
+
+	TSPLIB_Loader tsp_loader;
+	tsp_loader.loadFromFile("F:\\bays29.txt", N, &CostMatrix);
+
+	Statistics s_tsp("cost_matrix", CostMatrix);
+	s_tsp.GenerateSpFile();
+}
 
 vector<DualVertex*> *GraphCut::GetDualVertexList()
 {

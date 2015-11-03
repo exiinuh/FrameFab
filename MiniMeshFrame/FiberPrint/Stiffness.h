@@ -12,13 +12,12 @@
 #include <Eigen/Core>
 #include <Eigen/OrderingMethods>
 #include <Eigen/IterativeLinearSolvers>
-#include <Eigen/SparseLU>
 
 #include "WireFrame\WireFrame.h"
 #include "DualGraph.h"
 #include "FiberPrintPARM.h"
-
 #include "Statistics.h"
+
 using namespace std;
 using namespace Eigen;
 

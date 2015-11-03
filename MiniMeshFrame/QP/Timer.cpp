@@ -21,6 +21,12 @@
 		return s;
 	}
 
+	double Timer::to_double() const
+	{
+		Duration d = endTime - startTime;
+		return (double)d.count();
+	}
+
 	std::ostream & operator << (std::ostream& os, const Timer& t)
 	{
 		os << t.to_string();

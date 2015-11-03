@@ -83,6 +83,14 @@ void Stiffness::CreateM()
 					Muv(2, 2) = -material * M_PI * radius * radius / volume * dz * dz
 						+ G * M_PI * radius * radius / len;
 
+					if (Muv(0, 0) == 0 || Muv(1, 1) == 0 || Muv(2, 2) == 0)
+					{
+						cout << "--------------------------" << endl;
+						cout << Muv(0, 0) << ", " << Muv(0, 1) << ", " << Muv(0, 2) << endl;
+						cout << Muv(1, 0) << ", " << Muv(1, 1) << ", " << Muv(1, 2) << endl;
+						cout << Muv(2, 0) << ", " << Muv(2, 1) << ", " << Muv(2, 2) << endl;
+					}
+
 					M_[ptr_dualgraph_->dual_id(edge->ID())] = Muv;
 				}
 				edge = edge->pnext_;
@@ -115,7 +123,6 @@ void Stiffness::CreateK(const VectorXd *x)
 		int e_id = ptr_dualgraph_->dual_id(i); 
 		int u = edges[i]->ppair_->pvert_->ID();
 		int v = edges[i]->pvert_->ID();
-		vector<double> weight_record;
 
 		if (!verts[u]->IsFixed())
 		{
@@ -136,14 +143,11 @@ void Stiffness::CreateK(const VectorXd *x)
 				}
 			}
 		}
-		else
-		{
-			Mn[u](0, 0) = Mn[u](1, 1) = Mn[u](2, 2) = 1;
-		}
 	}
 
 	for (int i = 0; i < N; i++)
 	{
+		bool flag = false;
 		for (int j = 0; j < 3; j++)
 		{
 			for (int k = 0; k < 3; k++)
@@ -151,6 +155,18 @@ void Stiffness::CreateK(const VectorXd *x)
 				if (Mn[i](j, k) != 0)
 				{
 					K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
+					flag = true;
+				}
+			}
+		}
+		if (!flag)
+		{
+			Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
+			for (int j = 0; j < 3; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+						K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
 				}
 			}
 		}
@@ -158,6 +174,9 @@ void Stiffness::CreateK(const VectorXd *x)
 
 	K_.resize(3 * N, 3 * N);
 	K_.setFromTriplets(K_list.begin(), K_list.end());
+
+	Statistics s_K("K", K_);
+	s_K.GenerateSpFile();
 }
 
 
@@ -236,37 +255,30 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 	CreateK(ptr_x);
 	CreateFv(ptr_x);
 
-	Statistics s_K("K", K_);
-	s_K.GenerateSpFile();
-
-	cout << "KD = F solving ..." << endl;
-	SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
+	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
 	//BiCGSTAB<SparseMatrix<double>> solver;
-	//FullPivLU<MatrixXd> solver;
 	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//ConjugateGradient<SparseMatrix<double>> solver;
+	FullPivLU<MatrixXd> solver;
+	int r = K_.cols();
 
 	K_.makeCompressed();
 	solver.compute(K_);
 
-	cout << "K's row : " << K_.rows() << ", K's column : " << K_.cols() << endl;
-	cout << "K's rank" << solver.rank() << endl;
+	cout << "column number of K_ : " << K_.cols() << endl;
+	cout << solver.rank() << endl;
 	
-	//solver.compute(K_);
-	//solver.analyzePattern(K_);
-	//solver.factorize(K_);
-	//cout << solver.determinant() << endl;
+	//vector<double> diag;
+	//for (int i = 0; i < r; i++)
+	//{
+	//	diag.push_back(K_.coeff(i, i));
+	//}
 
-	//solver.preconditioner();
-	//solver.setTolerance(1e-10);
-	
-
+	//Statistics s_diag("diag", diag);
+	//s_diag.GenerateStdVecFile();
 
 	//assert(solver.info() == Success);
 	(*ptr_D) = solver.solve(Fv_);
 	//assert(solver.info() == Success);
-
-	cout << "Matrix solved successfully!" << endl;
 }
 
 
