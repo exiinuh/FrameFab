@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef RENDERINGWIDGET_H
 #define RENDERINGWIDGET_H
 
@@ -21,10 +23,6 @@
 #include "globalFunctions.h"
 #include "FiberPrint\FiberPrintPlugIn.h"
 #include "WireFrame\WireFrame.h"
-
-
-using trimesh::vec;
-using trimesh::point;
 
 
 enum OperationMode
@@ -68,11 +66,13 @@ signals:
 	void	meshInfo(int, int);
 	void	operatorInfo(QString);
 	void	modeInfo(QString); 
-	void	CapturedInfo(int);
+	void	CapturedVert(int);
+	void	CapturedEdge(int, double);
 
 private:
 	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
-	void	CaptureVertex(QPoint mouse);
+	bool	CaptureVertex(QPoint mouse);
+	bool	CaptureEdge(QPoint mouse);
 
 	void	Render();
 	void	SetLight();
@@ -90,9 +90,9 @@ public slots:
 
 private:
 	void	DrawAxes(bool bv);
-	void	DrawPoints(bool);
-	void	DrawEdge(bool);
-	void	DrawHeat(bool);
+	void	DrawPoints(bool bv);
+	void	DrawEdge(bool bv);
+	void	DrawHeat(bool bv);
 
 public slots:
 	void	FiberPrintAnalysis();
@@ -123,11 +123,11 @@ public:
 
 	// Fiber
 	FiberPrintPlugIn	*ptr_fiberprint_;
+	OperationMode		op_mode_;
 	vector<int>			bound_;
+	vector<WF_vert*>	captured_verts_;
+	int					captured_edge_;
 	bool				is_simplified_;
-
-	int					op_mode_;
-	vector<WF_vert*>	captured_;
 
 private:
 	

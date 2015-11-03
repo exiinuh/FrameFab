@@ -5,7 +5,7 @@
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
 has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_axes_(false),
-is_simplified_(false), op_mode_(Normal)
+is_simplified_(false), op_mode_(Normal), captured_edge_(-1)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
@@ -14,8 +14,8 @@ is_simplified_(false), op_mode_(Normal)
 	eye_goal_[0] = eye_goal_[1] = eye_goal_[2] = 0.0;
 	eye_direction_[0] = eye_direction_[1] = 0.0;
 	eye_direction_[2] = 1.0;
+
 	setFocusPolicy(Qt::StrongFocus);
-	//keyPressEvent(NULL);
 }
 
 
@@ -108,15 +108,18 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 	{
 	case Qt::LeftButton:
 		ptr_arcball_->MouseDown(e->pos());
-		CaptureVertex(e->pos());
+		if (!CaptureVertex(e->pos()))
+		{
+			CaptureEdge(e->pos());
+		}
 		break;
 	case Qt::MidButton:
 		current_position_ = e->pos();
 		break;
 	case Qt::RightButton:
-		if (op_mode_ != Normal&& captured_.size() > 0)
+		if (op_mode_ != Normal&& captured_verts_.size() > 0)
 		{
-			captured_.pop_back();
+			captured_verts_.pop_back();
 		}
 		break;
 	default:
@@ -206,12 +209,13 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 		if (op_mode_ == Choosebound)
 		{
 			fill(bound_.begin(), bound_.end(), 0);
-			for (int i = 0; i < captured_.size(); i++)
+			for (int i = 0; i < captured_verts_.size(); i++)
 			{
-				bound_[captured_[i]->ID()] = true;
+				bound_[captured_verts_[i]->ID()] = true;
 			}
 		}
-		captured_.clear();
+		captured_verts_.clear();
+		captured_edge_ = -1;
 		op_mode_ = Normal;
 		break;
 	default:
@@ -261,7 +265,7 @@ void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy,
 }
 
 
-void RenderingWidget::CaptureVertex(QPoint mouse)
+bool RenderingWidget::CaptureVertex(QPoint mouse)
 {
 	double x = 0;
 	double y = 0;
@@ -270,12 +274,14 @@ void RenderingWidget::CaptureVertex(QPoint mouse)
 
 	if (op_mode_ == Normal)
 	{
-		captured_.clear();
+		captured_verts_.clear();
+		captured_edge_ = -1;
 	}
 
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	int N = verts.size();
-	for (size_t i = 0; i < N; i++)
+	int i;
+	for (i = 0; i < N; i++)
 	{
 		double dx = verts[i]->RenderPos().x() - x;
 		double dy = verts[i]->RenderPos().y() - y;
@@ -283,17 +289,23 @@ void RenderingWidget::CaptureVertex(QPoint mouse)
 		double dis = sqrt(dx*dx + dy*dy + dz*dz);
 		if (dis < 0.015)
 		{
-			captured_.push_back(verts[i]);
+			captured_verts_.push_back(verts[i]);
 			break;
 		}
+	}
+
+	if (i >= N)
+	{
+		return false;
 	}
 
 	switch (op_mode_)
 	{
 	case Normal:
-		if (captured_.size() >= 1)
+		if (captured_verts_.size() >= 1)
 		{
-			emit(CapturedInfo(captured_[0]->ID() + 1));
+			emit(CapturedEdge(-1, -1));
+			emit(CapturedVert(captured_verts_[0]->ID() + 1));
 		}
 		break;
 
@@ -301,17 +313,57 @@ void RenderingWidget::CaptureVertex(QPoint mouse)
 		break;
 
 	case Manualedge:
-		if (captured_.size() >= 2)
+		if (captured_verts_.size() >= 2)
 		{
-			ptr_frame_->InsertEdge(captured_[0]->ID(), captured_[1]->ID());
-			captured_.clear();
+			ptr_frame_->InsertEdge(captured_verts_[0]->ID(), captured_verts_[1]->ID());
+			captured_verts_.clear();
 			emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 		}
 		break;
 
 	default:
 		break;
-	} 
+	}
+
+	return true;
+}
+
+
+bool RenderingWidget::CaptureEdge(QPoint mouse)
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	CoordinatesTransform(mouse, &x, &y, &z);
+
+	if (op_mode_ == Normal)
+	{
+		captured_verts_.clear();
+		captured_edge_ = -1;
+	}
+
+	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
+	int M = edges.size();
+	for (size_t i = 0; i < M; i++)
+	{
+		if (edges[i]->ID() < edges[i]->ppair_->ID())
+		{
+			WF_vert	*u = new WF_vert(x, y, z);
+			WF_vert *v1 = edges[i]->pvert_;
+			WF_vert *v2 = edges[i]->ppair_->pvert_;
+
+			double delta = ptr_frame_->ArcHeight(u->RenderPos(), v1->RenderPos(), v2->RenderPos());
+			if (delta < 0.007)
+			{
+				captured_edge_ = i;
+				emit(CapturedVert(-1));
+				emit(CapturedEdge(i + 1, ptr_frame_->Length(v1->Position(), v2->Position())));
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 
@@ -381,7 +433,7 @@ void RenderingWidget::ReadFrame()
 	int N = ptr_frame_->SizeOfVertList();
 	bound_.resize(N);
 	fill(bound_.begin(), bound_.end(), 0);
-	captured_.clear();
+	captured_verts_.clear();
 
 	emit(modeInfo(QString("Insert edge (I)")));
 	//emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
@@ -520,9 +572,9 @@ void RenderingWidget::DrawPoints(bool bv)
 
 		case Choosebound:
 		case Manualedge:
-			for (int j = 0; j < captured_.size(); j++)
+			for (int j = 0; j < captured_verts_.size(); j++)
 			{
-				if (i == captured_[j]->ID())
+				if (i == captured_verts_[j]->ID())
 				{
 					glColor3f(1.0, 0.0, 0.0);
 					break;
@@ -557,6 +609,18 @@ void RenderingWidget::DrawEdge(bool bv)
 		if (e->ID() < e_pair->ID())
 		{
 			glBegin(GL_LINE_LOOP);
+
+			if (captured_edge_ == i)
+			{
+				glColor3f(1.0, 0.0, 0.0);
+
+				/*Draw Collision*/
+
+			}
+			else
+			{
+				glColor3f(1.0, 1.0, 1.0);
+			}
 
 			glVertex3fv(e->pvert_->RenderPos().data());
 			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
@@ -624,7 +688,6 @@ void RenderingWidget::DrawHeat(bool bv)
 void RenderingWidget::FiberPrintAnalysis()
 {
 	delete ptr_fiberprint_;
-	
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
 	ptr_fiberprint_->Debug();
 
@@ -683,7 +746,7 @@ void RenderingWidget::RotateXY()
 								verts[i]->RenderPos().z());
 	}
 
-	ptr_frame_->UpdateFrame();
+	ptr_frame_->Unify();
 	updateGL();
 }
 
@@ -701,7 +764,7 @@ void RenderingWidget::RotateXZ()
 								verts[i]->RenderPos().x());
 	}
 
-	ptr_frame_->UpdateFrame();
+	ptr_frame_->Unify();
 	updateGL();
 }
 
@@ -719,6 +782,6 @@ void RenderingWidget::RotateYZ()
 								verts[i]->RenderPos().y());
 	}
 
-	ptr_frame_->UpdateFrame();
+	ptr_frame_->Unify();
 	updateGL();
 }

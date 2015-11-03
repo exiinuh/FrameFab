@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef FIBERPRINTPLUGIN_H
 #define FIBERPRINTPLUGIN_H
 

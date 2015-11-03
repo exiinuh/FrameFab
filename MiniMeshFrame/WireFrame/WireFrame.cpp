@@ -2,11 +2,10 @@
 
 
 WireFrame::WireFrame()
+		  :delta_tol_(2e-3), unify_size_(2.0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
-
-	delta_tol_ = 2e-3;
 }
 
 
@@ -134,8 +133,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 			}
 		}
 
-		UpdateFrame();
-		Unify(2.f);
+		Unify();
 	}
 	catch (...)
 	{
@@ -227,7 +225,7 @@ void WireFrame::InsertOneWayEdge(WF_vert *u, WF_vert *v)
 }
 
 
-void WireFrame::UpdateFrame()
+void WireFrame::Unify()
 {
 	maxx_ = -1e10;
 	maxy_ = -1e10;
@@ -273,35 +271,33 @@ void WireFrame::UpdateFrame()
 	{
 		(*pedge_list_)[i]->SetID(i);
 	}
-}
 
-
-void WireFrame::Unify(double size)
-{
-	double scaleX = maxx_ - minx_;
-	double scaleY = maxy_ - miny_;
-	double scaleZ = maxz_ - minz_;
-	double scaleMax;
-
-	if (scaleX < scaleY)
+	float scaleX = maxx_ - minx_;
+	float scaleY = maxy_ - miny_;
+	float scaleZ = maxz_ - minz_;
+	float scaleMax = scaleX;
+	if (scaleMax < scaleY)
 	{
 		scaleMax = scaleY;
-	}
-	else
-	{
-		scaleMax = scaleX;
 	}
 	if (scaleMax < scaleZ)
 	{
 		scaleMax = scaleZ;
 	}
-	float scaleV = size / scaleMax;
-	Vec3f center((minx_ + maxx_) / 2.f, (miny_ + maxy_) / 2.f, (minz_ + maxz_) / 2.f);
-	int N = pvert_list_->size();
+
+	scaleV_ = unify_size_ / scaleMax;
+	center_pos_ = point((minx_ + maxx_) / 2.f, (miny_ + maxy_) / 2.f, (minz_ + maxz_) / 2.f);
+
 	for (size_t i = 0; i < N; i++)
 	{
-		(*pvert_list_)[i]->SetRenderPos( ((*pvert_list_)[i]->Position() - center) * scaleV);
+		(*pvert_list_)[i]->SetRenderPos( Unify((*pvert_list_)[i]->Position()) );
 	}
+}
+
+
+point WireFrame::Unify(Vec3f p)
+{
+	return (p - center_pos_) * scaleV_;
 }
 
 
@@ -328,11 +324,7 @@ void WireFrame::SimplifyFrame()
 			WF_vert *v1 = e1->pvert_;
 			WF_vert *v2 = e2->pvert_;
 
-			point alpha = u->Position() - v1->Position();
-			point beta = v2->Position() - v1->Position();
-			double delta = Norm(Cross(alpha, beta)) / Norm(beta);
-
-			if (delta < delta_tol_)
+			if (ArcHeight(u->Position(), v1->Position(), v2->Position()) < delta_tol_)
 			{
 				delete_vert[u->ID()] = true;
 				delete_edge[e1->ID()] = true;
@@ -374,7 +366,7 @@ void WireFrame::SimplifyFrame()
 		}
 	}
 
-	UpdateFrame();
+	Unify();
 }
 
 
@@ -402,7 +394,8 @@ void WireFrame::ProjectBound(vector<int> *bound)
 			*/
 		}
 	}
-	Unify(2.0);
+	
+	Unify();
 	//InsertEdge(N, SizeOfVertList() - 1);
 	//UpdateFrame();
 }

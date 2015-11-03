@@ -62,14 +62,14 @@ void GraphCut::SetStartingPoints()
 	D_.resize(3 * N_);
 	lambda_.resize(3 * N_);
 	a_.resize(Nd_);
-	x_render_.resize(Nd_);
+	layer_label_.resize(Nd_);
 
 	// Set all label x = 1 and calculate KD = F to obtain inital D_0	
 	x_.setOnes();
 	D_.setZero();
 	lambda_.setZero();							
 	a_.setZero();
-	x_render_.setZero();
+	layer_label_.setZero();
 	
 	//ptr_stiff_->Debug();
 
@@ -186,7 +186,7 @@ void GraphCut::UpdateX()
 		{
 			x_[i] = 0;
 		}
-		x_render_[i] += !x_[i];
+		layer_label_[i] += !x_[i];
 	}
 }
 
@@ -284,7 +284,7 @@ void GraphCut::MakeLayers()
 		Statistics s_D("D_", D_);
 		s_D.GenerateVectorFile();
 
-		ptr_stiff_->CalculateD(&D_, &x_);
+		//ptr_stiff_->CalculateD(&D_, &x_);
 
 		double old_energy = x_.dot((*H1)*x_);
 		cout << "Initial energy : " << old_energy << endl;
@@ -448,7 +448,7 @@ void GraphCut::UpdateLambda()
 	ptr_stiff_->CreateK(&x_);
 	SpMat K = *(ptr_stiff_->WeightedK());
 
-	ptr_stiff_->CreateFv(&x_);
+	ptr_stiff_->CreateFv();
 	VX F = *(ptr_stiff_->WeightedF());
 
 	lambda_ = lambda_ + penalty_ * (K * D_ - F);
@@ -474,5 +474,5 @@ vector<DualVertex*> *GraphCut::GetDualVertexList()
 
 VectorXi *GraphCut::GetLabel()
 {
-	return &x_render_;
+	return &layer_label_;
 }

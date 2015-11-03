@@ -1,5 +1,5 @@
+#pragma once
 #include <iostream>
-
 #include "WireFrame\WireFrame.h"
 
 using namespace std;

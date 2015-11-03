@@ -8,8 +8,18 @@ SeqAnalyzer::SeqAnalyzer()
 }
 
 
+SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
+{
+	ptr_graphcut_ = ptr_graphcut;
+}
+
 SeqAnalyzer::~SeqAnalyzer()
 {
+}
+
+void SeqAnalyzer::DetectCollision()
+{
+
 }
 
 void SeqAnalyzer::TSPSolver()

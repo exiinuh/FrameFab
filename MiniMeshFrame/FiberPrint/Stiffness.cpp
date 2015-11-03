@@ -83,14 +83,6 @@ void Stiffness::CreateM()
 					Muv(2, 2) = -material * M_PI * radius * radius / volume * dz * dz
 						+ G * M_PI * radius * radius / len;
 
-					if (Muv(0, 0) == 0 || Muv(1, 1) == 0 || Muv(2, 2) == 0)
-					{
-						cout << "--------------------------" << endl;
-						cout << Muv(0, 0) << ", " << Muv(0, 1) << ", " << Muv(0, 2) << endl;
-						cout << Muv(1, 0) << ", " << Muv(1, 1) << ", " << Muv(1, 2) << endl;
-						cout << Muv(2, 0) << ", " << Muv(2, 1) << ", " << Muv(2, 2) << endl;
-					}
-
 					M_[ptr_dualgraph_->dual_id(edge->ID())] = Muv;
 				}
 				edge = edge->pnext_;
@@ -100,7 +92,7 @@ void Stiffness::CreateM()
 }
 
 
-void Stiffness::CreateK(const VectorXd *x)
+void Stiffness::CreateK(const VectorXd *ptr_x)
 {
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
@@ -124,20 +116,21 @@ void Stiffness::CreateK(const VectorXd *x)
 		int u = edges[i]->ppair_->pvert_->ID();
 		int v = edges[i]->pvert_->ID();
 
-		if (!verts[u]->IsFixed())
+		if ((*ptr_x)[e_id] == 1)
 		{
-			Matrix3d M_tmp = M_[e_id] * (*x)[e_id];
-			Mn[u] -= M_tmp;
-
-			if (!verts[v]->IsFixed())
+			if (!verts[u]->IsFixed())
 			{
-				for (int j = 0; j < 3; j++)
+				Mn[u] -= M_[e_id];
+				if (!verts[v]->IsFixed())
 				{
-					for (int k = 0; k < 3; k++)
+					for (int j = 0; j < 3; j++)
 					{
-						if (M_tmp(j, k) != 0)
+						for (int k = 0; k < 3; k++)
 						{
-							K_list.push_back(Triplet<double>(u * 3 + j, v * 3 + k, M_tmp(j, k)));
+							if (M_[e_id](j, k) != 0)
+							{
+								K_list.push_back(Triplet<double>(u * 3 + j, v * 3 + k, M_[e_id](j, k)));
+							}
 						}
 					}
 				}
@@ -162,25 +155,58 @@ void Stiffness::CreateK(const VectorXd *x)
 		if (!flag)
 		{
 			Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
-			for (int j = 0; j < 3; j++)
-			{
-				for (int k = 0; k < 3; k++)
-				{
-						K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
-				}
-			}
+			K_list.push_back(Triplet<double>(i * 3, i * 3, Mn[i](0, 0)));
+			K_list.push_back(Triplet<double>(i * 3 + 1, i * 3 + 1, Mn[i](1, 1)));
+			K_list.push_back(Triplet<double>(i * 3 + 2, i * 3 + 2, Mn[i](2, 2)));
 		}
 	}
 
 	K_.resize(3 * N, 3 * N);
 	K_.setFromTriplets(K_list.begin(), K_list.end());
 
-	Statistics s_K("K", K_);
-	s_K.GenerateSpFile();
+	/*
+	Nk_ = 0;
+	v_id_.resize(N);
+	fill(v_id_.begin(), v_id_.end(), 0);
+
+	for (int i = 0; i < N; i++)
+	{
+		bool flag = false;
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				if (Mn[i](j, k) != 0)
+				{
+					K_list.push_back(Triplet<double>(Nk_ * 3 + j, Nk_ * 3 + k, Mn[i](j, k)));
+					flag = true;
+				}
+			}
+		}
+		if (!flag)
+		{
+			if (verts[i]->IsFixed())
+			{
+				Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
+				K_list.push_back(Triplet<double>(Nk_ * 3, Nk_ * 3, Mn[i](0, 0)));
+				K_list.push_back(Triplet<double>(Nk_ * 3 + 1, Nk_ * 3 + 1, Mn[i](1, 1)));
+				K_list.push_back(Triplet<double>(Nk_ * 3 + 2, Nk_ * 3 + 2, Mn[i](2, 2)));
+				v_id_[Nk_++] = i;
+			}
+		}
+		else
+		{
+			v_id_[Nk_++] = i;
+		}
+	}
+
+	K_.resize(3 * Nk_, 3 * Nk_);
+	K_.setFromTriplets(K_list.begin(), K_list.end());
+	*/
 }
 
 
-void Stiffness::CreateFv(const VectorXd *x)
+void Stiffness::CreateFv(const VectorXd *ptr_x)
 {
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	int N = ptr_frame_->SizeOfVertList();
@@ -200,10 +226,10 @@ void Stiffness::CreateFv(const VectorXd *x)
 			{
 				int e_id = ptr_dualgraph_->dual_id(edge->ID());
 
-				gravity += (*x)[e_id] * Fe_[3 * e_id + 2];
+				gravity += (*ptr_x)[e_id] * Fe_[3 * e_id + 2];
 
 				edge = edge->pnext_;
-			} 
+			}
 		}
 		else
 		{
@@ -213,6 +239,31 @@ void Stiffness::CreateFv(const VectorXd *x)
 		Fv_[3 * i + 2] = gravity / 2;
 		//printf("Fv_[%i] = %.12lf \n", 3 * u + 2, gravity / 2);
 	}
+}
+
+
+void Stiffness::CreateFv()
+{
+	/*
+	Fv_.resize(3 * Nk_);
+	Fv_.setZero();
+
+	for (int j = 0; j < Nk_; j++)
+	{
+		int i = v_id_[j];
+		double gravity = 0;
+
+		WF_edge *edge = verts[i]->pedge_;
+		while (edge != NULL)
+		{
+			int e_id = ptr_dualgraph_->dual_id(edge->ID());
+			gravity += Fe_[3 * e_id + 2];
+
+			edge = edge->pnext_;
+		}
+		Fv_[3 * j + 2] = gravity / 2;
+	}
+	*/
 }
 
 
@@ -259,26 +310,38 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 	//BiCGSTAB<SparseMatrix<double>> solver;
 	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
 	FullPivLU<MatrixXd> solver;
-	int r = K_.cols();
 
 	K_.makeCompressed();
 	solver.compute(K_);
 
+	/*
+	for (int i = 0; i < 3 * Nk_; i++)
+	{
+		if (K_.coeff(i, i) == 0)
+		{
+			printf("%d\n", i);
+		}
+	}
+	*/
+
 	cout << "column number of K_ : " << K_.cols() << endl;
+	cout << "Nk_; " << Nk_ << endl;
 	cout << solver.rank() << endl;
+	getchar();
 	
-	//vector<double> diag;
-	//for (int i = 0; i < r; i++)
-	//{
-	//	diag.push_back(K_.coeff(i, i));
-	//}
-
-	//Statistics s_diag("diag", diag);
-	//s_diag.GenerateStdVecFile();
-
-	//assert(solver.info() == Success);
 	(*ptr_D) = solver.solve(Fv_);
-	//assert(solver.info() == Success);
+	/*
+	VectorXd D;
+	D.resize(3 * Nk_);
+	D.setZero();
+//	assert(solver.info() == Success);
+	D = solver.solve(Fv_);
+	for (int i = 0; i < Nk_; i++)
+	{
+		(*ptr_D)[3 * v_id_[i] + 2] = D[3 * i + 2];
+	}
+//	assert(solver.info() == Success);
+*/
 }
 
 
@@ -308,26 +371,45 @@ void Stiffness::Debug()
 	int M = ptr_frame_->SizeOfEdgeList();
 	int Nd = M / 2;
 
+	VectorXd x;
+	x.resize(Nd);
+	x.setOnes();
+
 	CreateM();
+	CreateK(&x);
+	CreateFv();
+
+	for (int i = 0; i < N; i++)
+	{
+		if (K_.coeff(i * 3, i * 3) == 0 || K_.coeff(i * 3 + 1, i * 3 + 1) == 0 || K_.coeff(i * 3 + 2, i * 3 + 2) == 0)
+		{
+			for (int p = 0; p < 3; p++)
+			{
+				for (int q = 0; q < 3; q++)
+				{
+					printf("%lf ", K_.coeff(i * 3 + p, i * 3 + q));
+				}
+				printf("\n");
+			}
+		}
+	}
+
 	for (int i = 0; i < Nd; i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
 			for (int k = 0; k < 3; k++)
 			{
-				if (M_[i](j, k) != 0)
+				//if (M_[i](j, k) != 0)
 				{
-					fprintf(fp, "%.8f ", M_[i](j, k));
+					fprintf(fp, "%.8f   ", M_[i](j, k));
 				}
 			}
+			fprintf(fp, "\r\n");
 		}
 		fprintf(fp, "\r\n");
 	}
 
-	VectorXd x;
-	x.resize(Nd);
-	x.setOnes();
-	CreateK(&x);
 
 	for (int i = 0; i < 3 * N; i++)
 	{

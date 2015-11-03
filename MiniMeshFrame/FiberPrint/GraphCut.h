@@ -87,7 +87,7 @@ public:
 	VX				D_;
 	VX				lambda_;
 	VX				a_;				// linear coefficient used in x_Qp
-	VectorXi		x_render_;		// passed to render
+	VectorXi		layer_label_;	// passed to render
 
 	VX				dual_res;		// dual residual for ADMM termination criteria
 	VX				primal_res;		// dual residual for ADMM termination criteria
@@ -96,4 +96,3 @@ public:
 									// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
 	SpMat			*H1;			// Part 1 of hessian matrix for x-Qp problem
 };
-

@@ -38,12 +38,13 @@ public:
 
 public:
 	void		CreateM();
-	void		CreateK(const VectorXd *x);
-	void		CreateFv(const VectorXd *x);
+	void		CreateK(const VectorXd *ptr_x);
+	void		CreateFv();							// excute after CreateFe and CreateK
+	void		CreateFv(const VectorXd *ptr_x);
 	void		CreateFe();
 
 	// Socket to GraphCut
-	void		CalculateD(VectorXd *D, const VectorXd *x);
+	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_);  return &K_;  }
@@ -59,6 +60,9 @@ public:
 	WireFrame				*ptr_frame_;
 	DualGraph				*ptr_dualgraph_;
 	FiberPrintPARM			*ptr_parm_;
+
+	int						Nk_ ;
+	vector<int>				v_id_;
 
 	vector<Matrix3d>		M_;						// indexed by dual id
 	SpMat					K_;						// x-Weighted global stiffness matrix, 
