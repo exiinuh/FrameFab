@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -33,7 +35,8 @@ protected:
 
 public slots:
 	void	ShowMeshInfo(int npoint, int nedge);
-	void	ShowCapturedInfo(int id);
+	void	ShowCapturedVert(int id);
+	void	ShowCapturedEdge(int id, double len);
 	void	OpenFile();
 	void	ShowAbout();
 
@@ -78,6 +81,7 @@ private:
 	QCheckBox			*checkbox_point_;
 	QCheckBox			*checkbox_edge_;
 	QCheckBox			*checkbox_heat_;
+	QCheckBox			*checkbox_bulk_;
 	QCheckBox			*checkbox_light_;
 	QCheckBox			*checkbox_axes_;
 
@@ -87,7 +91,7 @@ private:
 	QLabel				*label_meshinfo_;
 	QLabel				*label_operatorinfo_;
 	QLabel				*label_modeinfo_;
-	QLabel				*label_captured_;
+	QLabel				*label_capture_;
 
 	RenderingWidget		*renderingwidget_;
 };

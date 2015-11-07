@@ -2,6 +2,9 @@
 /*INCLUDE FILE*/
 #include <cmath>
 #include <iostream>
+
+#include "WireFrame\WireFrame.h"
+
 using std::cout;
 /*INCLUDE FILE*/
 

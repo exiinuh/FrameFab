@@ -85,6 +85,7 @@ public slots:
 	void	CheckDrawPoint(bool bv);
 	void	CheckDrawEdge(bool bv);
 	void	CheckDrawHeat(bool bv);
+	void	CheckDrawBulk(bool bv);
 	void	CheckLight(bool bv);
 	void	CheckDrawAxes(bool bv);
 
@@ -93,6 +94,7 @@ private:
 	void	DrawPoints(bool bv);
 	void	DrawEdge(bool bv);
 	void	DrawHeat(bool bv);
+	void	DrawBulk(bool bv);
 
 public slots:
 	void	FiberPrintAnalysis();
@@ -118,19 +120,21 @@ public:
 	bool			is_draw_point_;
 	bool			is_draw_edge_;
 	bool			is_draw_heat_;
+	bool			is_draw_bulk_;
 	bool			has_lighting_;
 	bool			is_draw_axes_;
 
 	// Fiber
 	FiberPrintPlugIn	*ptr_fiberprint_;
 	OperationMode		op_mode_;
-	vector<int>			bound_;
-	vector<WF_vert*>	captured_verts_;
-	int					captured_edge_;
+
 	bool				is_simplified_;
 
-private:
-	
+	vector<WF_vert*>	captured_verts_;
+	int					captured_edge_;
+	vector<int>			bound_;
+
+	Collision			*ptr_collision_;
 };
 
 #endif // RENDERINGWIDGET_H

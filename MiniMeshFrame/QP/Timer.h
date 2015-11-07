@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef FIBER_PRINT_TIMER_H
 #define FIBER_PRINT_TIMER_H
 
@@ -16,7 +18,6 @@ public:
 	void start();
 	void stop();
 	std::string to_string() const;
-	double	to_double() const;
 
 private:
 	TimePoint startTime;

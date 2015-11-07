@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef VEC_H
 #define VEC_H
 /*

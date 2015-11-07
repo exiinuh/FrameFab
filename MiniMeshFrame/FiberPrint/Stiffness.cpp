@@ -32,7 +32,8 @@ void Stiffness::CreateM()
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
-	int Nd = M / 2;
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
 	M_.resize(Nd);
 	for (int i = 0; i < Nd; i++)
@@ -40,59 +41,62 @@ void Stiffness::CreateM()
 		M_[i].setZero();
 	}
 
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < Fd; i++)
 	{
-		//if (!verts[i]->IsFixed())
-		//{
-			WF_edge *edge = verts[i]->pedge_;
-			while (edge != NULL)
+		int u = ptr_dualgraph_->v_orig_id(i);
+		WF_edge *edge = verts[u]->pedge_;
+		while (edge != NULL)
+		{
+			int e_id = ptr_dualgraph_->e_dual_id(edge->ID());
+			if (edge->ID() < edge->ppair_->ID() && e_id != -1)
 			{
-				if (edge->ID() < edge->ppair_->ID())
-				{
-					WF_vert *neighbor = edge->pvert_;
+				WF_vert *neighbor = edge->pvert_;
 
-					double dx = verts[i]->Position().x() - neighbor->Position().x();
-					double dy = verts[i]->Position().y() - neighbor->Position().y();
-					double dz = verts[i]->Position().z() - neighbor->Position().z();
-					double len = sqrt(dx*dx + dy*dy + dz*dz);
-					double volume = pow(len, 3);
+				double dx = verts[u]->Position().x() - neighbor->Position().x();
+				double dy = verts[u]->Position().y() - neighbor->Position().y();
+				double dz = verts[u]->Position().z() - neighbor->Position().z();
+				double len = sqrt(dx*dx + dy*dy + dz*dz);
+				double volume = pow(len, 3);
 
-					double G = ptr_parm_->ShearModulus();
-					double E = ptr_parm_->YoungsModulus();
-					double material = G - E;
-					double radius = ptr_parm_->Radius();
+				double G = ptr_parm_->ShearModulus();
+				double E = ptr_parm_->YoungsModulus();
+				double material = G - E;
+				double radius = ptr_parm_->Radius();
 
-					Matrix3d Muv;
-					Muv.setZero();
+				Matrix3d Muv;
+				Muv.setZero();
 
-					/*x axis*/
-					Muv(0, 0) = -material * M_PI * radius * radius / volume * dx * dx
-						+ G * M_PI * radius * radius / len;
-					Muv(0, 1) = -material * M_PI * radius * radius / volume * dx * dy;
-					Muv(0, 2) = -material * M_PI * radius * radius / volume * dx * dz;
+				/*x axis*/
+				Muv(0, 0) = -material * M_PI * radius * radius / volume * dx * dx
+					+ G * M_PI * radius * radius / len;
+				Muv(0, 1) = -material * M_PI * radius * radius / volume * dx * dy;
+				Muv(0, 2) = -material * M_PI * radius * radius / volume * dx * dz;
 
-					/*y axis*/
-					Muv(1, 0) = -material * M_PI * radius * radius / volume * dx * dy;
-					Muv(1, 1) = -material * M_PI * radius * radius / volume * dy * dy
-						+ G * M_PI * radius * radius / len;
-					Muv(1, 2) = -material * M_PI * radius * radius / volume * dz * dy;
+				/*y axis*/
+				Muv(1, 0) = -material * M_PI * radius * radius / volume * dx * dy;
+				Muv(1, 1) = -material * M_PI * radius * radius / volume * dy * dy
+					+ G * M_PI * radius * radius / len;
+				Muv(1, 2) = -material * M_PI * radius * radius / volume * dz * dy;
 
-					/*z axis*/
-					Muv(2, 0) = -material * M_PI * radius * radius / volume * dx * dz;
-					Muv(2, 1) = -material * M_PI * radius * radius / volume * dy * dz;
-					Muv(2, 2) = -material * M_PI * radius * radius / volume * dz * dz
-						+ G * M_PI * radius * radius / len;
+				/*z axis*/
+				Muv(2, 0) = -material * M_PI * radius * radius / volume * dx * dz;
+				Muv(2, 1) = -material * M_PI * radius * radius / volume * dy * dz;
+				Muv(2, 2) = -material * M_PI * radius * radius / volume * dz * dz
+					+ G * M_PI * radius * radius / len;
 
-					M_[ptr_dualgraph_->dual_id(edge->ID())] = Muv;
-				}
-				edge = edge->pnext_;
+				M_[e_id] = Muv;
+				
+				//MatrixXd M_tmp = Muv;
+				//Statistics s_M("LocalStiffMatrix_CreateM", M_tmp);
+				//s_M.GenerateMatrixFile();
 			}
-		//}
+			edge = edge->pnext_;
+		}
 	}
 }
 
-
-void Stiffness::CreateK(const VectorXd *ptr_x)
+/*
+void Stiffness::CreateInitK()
 {
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
@@ -103,70 +107,14 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 
 	vector<Matrix3d> Mn;
 	Mn.resize(N);
-	//for (int i = 0; i < N; i++)
-	//{
-	//	Mn[i].setZero();
-	//}
-	//
-	//vector<Triplet<double>> K_list;
-	//for (int i = 0; i < M; i++)
-	////for (int i = 0; i < Nd; i++)
-	//{
-	//	int e_id = ptr_dualgraph_->dual_id(i); 
-	//	int u = edges[i]->ppair_->pvert_->ID();
-	//	int v = edges[i]->pvert_->ID();
-
-	//	if ((*ptr_x)[e_id] == 1)
-	//	{
-	//		if (!verts[u]->IsFixed())
-	//		{
-	//			Mn[u] -= M_[e_id];
-	//			if (!verts[v]->IsFixed())
-	//			{
-	//				for (int j = 0; j < 3; j++)
-	//				{
-	//					for (int k = 0; k < 3; k++)
-	//					{
-	//						if (M_[e_id](j, k) != 0)
-	//						{
-	//							K_list.push_back(Triplet<double>(u * 3 + j, v * 3 + k, M_[e_id](j, k)));
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-	//for (int i = 0; i < N; i++)
-	//{
-	//	bool flag = false;
-	//	for (int j = 0; j < 3; j++)
-	//	{
-	//		for (int k = 0; k < 3; k++)
-	//		{
-	//			if (Mn[i](j, k) != 0)
-	//			{
-	//				K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
-	//				flag = true;
-	//			}
-	//		}
-	//	}
-	//	if (!flag)
-	//	{
-	//		Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
-	//		K_list.push_back(Triplet<double>(i * 3, i * 3, Mn[i](0, 0)));
-	//		K_list.push_back(Triplet<double>(i * 3 + 1, i * 3 + 1, Mn[i](1, 1)));
-	//		K_list.push_back(Triplet<double>(i * 3 + 2, i * 3 + 2, Mn[i](2, 2)));
-	//	}
-	//}
-
-	//K_.resize(3 * N, 3 * N);
-	//K_.setFromTriplets(K_list.begin(), K_list.end());
+	for (int i = 0; i < N; i++)
+	{
+		Mn[i].setZero();
+	}
 
 	vector<Triplet<double>> K_list;
-	
-	Nk_ = 0;			// index tracking for undeleted nodes, i.e. nodes still with edge weight not zero
+
+	Nk_ = 0;
 	v_id_.resize(N);
 	fill(v_id_.begin(), v_id_.end(), 0);
 
@@ -177,7 +125,6 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 		{
 			for (int k = 0; k < 3; k++)
 			{
-				// Local Stiffness Matrix not zero, keep this node
 				if (Mn[i](j, k) != 0)
 				{
 					K_list.push_back(Triplet<double>(Nk_ * 3 + j, Nk_ * 3 + k, Mn[i](j, k)));
@@ -185,16 +132,8 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 				}
 			}
 		}
-		
-		cout << "--------------------------" << endl;
-		cout << "Local matrix with NK_ : " << Nk_ << ", N index : " << i << ", matrix content : " << endl;
-		cout << Mn[i](0, 0) << ", " << Mn[i](0, 1) << ",  " << Mn[i](0, 2) << endl;
-		cout << Mn[i](1, 0) << ", " << Mn[i](1, 1) << ",  " << Mn[i](1, 2) << endl;
-		cout << Mn[i](2, 0) << ", " << Mn[i](2, 1) << ",  " << Mn[i](2, 2) << endl;
-
 		if (!flag)
 		{
-			// Delete nodes whose all incident edge weight all zero, keep fixed nodes.
 			if (verts[i]->IsFixed())
 			{
 				Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
@@ -212,31 +151,128 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 
 	K_.resize(3 * Nk_, 3 * Nk_);
 	K_.setFromTriplets(K_list.begin(), K_list.end());
+}
+*/
+
+void Stiffness::CreateK(const VectorXd *ptr_x)
+{
+	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
+	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
+	int N = ptr_frame_->SizeOfVertList();
+	int M = ptr_frame_->SizeOfEdgeList();
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Fd = ptr_dualgraph_->SizeOfFaceList();			// Fd = Number of nodes in Current orig graph
+
+	Statistics s_x("x_CreateK", *ptr_x);
+	s_x.GenerateVectorFile();
+
+	vector<Matrix3d> Mn;
+	Mn.resize(Fd);
+	for (int i = 0; i < Fd; i++)
+	{
+		Mn[i].setZero();
+	}
 	
+	vector<Triplet<double>> K_list;
+	for (int e_id = 0; e_id < Nd; e_id++)
+	{
+		int i = ptr_dualgraph_->e_orig_id(e_id);
+		int u = edges[i]->ppair_->pvert_->ID();			// node id at orig graph
+		int v = edges[i]->pvert_->ID();
+		int dual_u = ptr_dualgraph_->v_dual_id(u);		// DualFace Id (orig graph node's renumbering id after previous cut)
+		int dual_v = ptr_dualgraph_->v_dual_id(v);
+
+		if (!verts[u]->IsFixed())
+		{
+			Mn[dual_u] -= (*ptr_x)[e_id] * M_[e_id];
+
+			if (!verts[v]->IsFixed())
+			{
+				for (int j = 0; j < 3; j++)
+				{
+					for (int k = 0; k < 3; k++)
+					{
+						if (M_[e_id](j, k) != 0)
+						{
+							K_list.push_back(Triplet<double>(dual_u * 3 + j, dual_v * 3 + k, M_[e_id](j, k)));
+						}
+					}
+				}
+			}
+		}
+
+		if (!verts[v]->IsFixed())
+		{
+			Mn[dual_v] -= (*ptr_x)[e_id] * M_[e_id];
+			if (!verts[u]->IsFixed())
+			{
+				for (int j = 0; j < 3; j++)
+				{
+					for (int k = 0; k < 3; k++)
+					{
+						if (M_[e_id](j, k) != 0)
+						{
+							K_list.push_back(Triplet<double>(dual_v * 3 + j, dual_u * 3 + k, M_[e_id](j, k)));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < Fd; i++)
+	{
+		bool flag = false;
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				if (Mn[i](j, k) != 0)
+				{
+					K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
+					flag = true;
+				}
+			}
+		}
+		if (!flag)
+		{
+			Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
+			K_list.push_back(Triplet<double>(i * 3, i * 3, Mn[i](0, 0)));
+			K_list.push_back(Triplet<double>(i * 3 + 1, i * 3 + 1, Mn[i](1, 1)));
+			K_list.push_back(Triplet<double>(i * 3 + 2, i * 3 + 2, Mn[i](2, 2)));
+		}
+	}
+
+	K_.resize(3 * Fd, 3 * Fd);
+	K_.setFromTriplets(K_list.begin(), K_list.end());
 }
 
 
 void Stiffness::CreateFv(const VectorXd *ptr_x)
 {
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
-	int N = ptr_frame_->SizeOfVertList();
+	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	Fv_.resize(3 * N);
+	Fv_.resize(3 * Fd);
 	Fv_.setZero();
 
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < Fd; i++)
 	{
 		double gravity = 0;
+		int u = ptr_dualgraph_->v_orig_id(i);
 
 		// if not boundary
-		if (!verts[i]->IsFixed())
+		if (!verts[u]->IsFixed())
 		{
-			WF_edge *edge = verts[i]->pedge_;
+			WF_edge *edge = verts[u]->pedge_;
 			while (edge != NULL)
 			{
-				int e_id = ptr_dualgraph_->dual_id(edge->ID());
+				int e_id = ptr_dualgraph_->e_dual_id(edge->ID());
 
-				gravity += (*ptr_x)[e_id] * Fe_[3 * e_id + 2];
+				if (e_id != -1)
+				{
+					gravity += (*ptr_x)[e_id] * Fe_[edge->ID()];
+				}
 
 				edge = edge->pnext_;
 			}
@@ -252,31 +288,6 @@ void Stiffness::CreateFv(const VectorXd *ptr_x)
 }
 
 
-void Stiffness::CreateFv()
-{
-	/*
-	Fv_.resize(3 * Nk_);
-	Fv_.setZero();
-
-	for (int j = 0; j < Nk_; j++)
-	{
-		int i = v_id_[j];
-		double gravity = 0;
-
-		WF_edge *edge = verts[i]->pedge_;
-		while (edge != NULL)
-		{
-			int e_id = ptr_dualgraph_->dual_id(edge->ID());
-			gravity += Fe_[3 * e_id + 2];
-
-			edge = edge->pnext_;
-		}
-		Fv_[3 * j + 2] = gravity / 2;
-	}
-	*/
-}
-
-
 void Stiffness::CreateFe()
 {
 	double r = ptr_parm_->Radius();
@@ -285,16 +296,15 @@ void Stiffness::CreateFe()
 
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
-	int Nd = M / 2;
 
-	Fe_.resize(Nd * 3);
+	Fe_.resize(M);
 	Fe_.setZero();
 
 	for (int i = 0; i < M; i++)
 	{
-		if (edges[i]->ID() < edges[i]->ppair_->ID())
+		int j = edges[i]->ppair_->ID();
+		if (i < j)
 		{
-			int e_id = ptr_dualgraph_->dual_id(i);
 			WF_vert *u = edges[i]->ppair_->pvert_;
 			WF_vert *v = edges[i]->pvert_;
 
@@ -304,7 +314,7 @@ void Stiffness::CreateFe()
 			double len = sqrt(dx*dx + dy*dy + dz*dz);
 			double gravity = M_PI * r * r * len * density * g;
 
-			Fe_[3 * e_id + 2] = gravity;
+			Fe_[i] = Fe_[j] = gravity;
 		}
 	}
 }
@@ -335,9 +345,8 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 	*/
 
 	cout << "column number of K_ : " << K_.cols() << endl;
-	cout << "Nk_; " << Nk_ << endl;
-	cout << solver.rank() << endl;
-	getchar();
+	cout << "rank of K_ : "			 << solver.rank() << endl;
+	//getchar();
 	
 	(*ptr_D) = solver.solve(Fv_);
 	/*
@@ -357,18 +366,17 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 
 Matrix3d Stiffness::Me(int ei)
 {
-	int e_id = ptr_dualgraph_->dual_id(ei);
+	int e_id = ptr_dualgraph_->e_dual_id(ei);
 	return M_[e_id];
 }
 
 
 Vector3d Stiffness::Fe(int ei)
 {
-	int e_id = ptr_dualgraph_->dual_id(ei);
 	Vector3d Fei;
-	Fei[0] = Fe_[3 * e_id];
-	Fei[1] = Fe_[3 * e_id + 1];
-	Fei[2] = Fe_[3 * e_id + 2];
+	Fei[0] = 0;
+	Fei[1] = 0;
+	Fei[2] = Fe_[ei];
 	return Fei;
 }
 
@@ -387,7 +395,7 @@ void Stiffness::Debug()
 
 	CreateM();
 	CreateK(&x);
-	CreateFv();
+	CreateFv(&x);
 
 	for (int i = 0; i < N; i++)
 	{

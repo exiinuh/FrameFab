@@ -239,30 +239,33 @@ void WireFrame::Unify()
 	{
 		(*pvert_list_)[i]->SetID(i);
 
-		point p = (*pvert_list_)[i]->Position();
-		if (p.x() > maxx_)
+		if (!(*pvert_list_)[i]->IsFixed())
 		{
-			maxx_ = p.x();
-		}
-		if (p.y() > maxy_)
-		{
-			maxy_ = p.y();
-		}
-		if (p.z() > maxz_)
-		{
-			maxz_ = p.z();
-		}
-		if (p.x() < minx_)
-		{
-			minx_ = p.x();
-		}
-		if (p.y() < miny_)
-		{
-			miny_ = p.y();
-		}
-		if (p.z() < minz_)
-		{
-			minz_ = p.z();
+			point p = (*pvert_list_)[i]->Position();
+			if (p.x() > maxx_)
+			{
+				maxx_ = p.x();
+			}
+			if (p.y() > maxy_)
+			{
+				maxy_ = p.y();
+			}
+			if (p.z() > maxz_)
+			{
+				maxz_ = p.z();
+			}
+			if (p.x() < minx_)
+			{
+				minx_ = p.x();
+			}
+			if (p.y() < miny_)
+			{
+				miny_ = p.y();
+			}
+			if (p.z() < minz_)
+			{
+				minz_ = p.z();
+			}
 		}
 	}
 

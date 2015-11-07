@@ -13,14 +13,19 @@ public:
 	~ExtruderCone();
 
 public:
-	void	Default();
+	double	Height();
+	double	Angle();
+	double	WaveAngle();
+	point	BasePoint();
+	Vec3f	Normal();
+
 	void	Test();
 
-public:
+private:
 	double	height_;
-	point	base_point_;
-	Vec3f	normal_;
-	double	angle_;  
+	double	angle_;
 	double	wave_angle_;
 
+	point	base_point_;
+	Vec3f	normal_;
 };

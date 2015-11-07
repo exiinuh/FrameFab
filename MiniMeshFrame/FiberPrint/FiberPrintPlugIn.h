@@ -8,8 +8,6 @@
 #include "SeqAnalyzer.h"
 #include "Stiffness.h"
 
-#include "TSPSolver.h"
-#include "TSPLIB_Loader.h"
 
 class FiberPrintPlugIn
 {
@@ -20,7 +18,7 @@ public:
 
 public:
 	void				Print();
-	vector<DualVertex*>	*GetDualVertexList();
+	vector<DualVertex*>	*GetDualVertList();
 	VectorXi			*GetLabel();
 	void				Debug();		// return value: edge index in mesh, for cut rendering
 
@@ -28,7 +26,6 @@ private:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
-	Stiffness		*ptr_stiffness_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef QPFACTORY_H
 #define QPFACTORY_H
 

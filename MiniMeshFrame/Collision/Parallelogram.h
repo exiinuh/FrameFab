@@ -1,48 +1,66 @@
 #pragma once
-#include"WireFrame\WireFrame.h"
-#include"Triangle.h"
 
-typedef Geometry::Vector3d GeoV3;
+#include "Polyface.h"
 
 
-class Parallelogram
+class Parallelogram : public Polyface
 {
 public:
 	Parallelogram()
-		: v0_(point{ 0, 0, 0 }), v1_(point{ 1, 0, 0 }), v2_(point{ 1, 1, 0 }), v3_(point{ 0, 1, 0 }),
-		t0_(Triangle(v2_, v0_, v1_)), t1_(Triangle(v3_, v0_, v2_)) {}
-	Parallelogram(point v0, point v1, point v2, point v3)
-		: v0_(v0), v1_(v1), v2_(v2), v3_(v3), t0_(Triangle(v2, v0, v1)), t1_(Triangle(v3, v0, v2)) {}
-	Parallelogram(GeoV3 v0, GeoV3 v1, GeoV3 v2, GeoV3 v3)
-		: v0_(Trans(v0)), v1_(Trans(v1)), v2_(Trans(v2)), v3_(Trans(v3)), 
-		t0_(Triangle(v2, v0, v1)), t1_(Triangle(v3, v0, v2)) {}
-	~Parallelogram(){}
-
-public:
-	point Trans(GeoV3 V)
 	{
-		point v;
-		v.x() = V.getX();
-		v.y() = V.getY();
-		v.z() = V.getZ();
-		return v;
+		vert_list_.push_back(point(0, 0, 0));
+		vert_list_.push_back(point(1, 0, 0));
+		vert_list_.push_back(point(1, 1, 0));
+		vert_list_.push_back(point(0, 1, 0));
+		Normal_();
 	}
 
+	Parallelogram(point v0, point v1, point v2, point v3)
+	{
+		vert_list_.push_back(v0);
+		vert_list_.push_back(v1);
+		vert_list_.push_back(v2);
+		vert_list_.push_back(v3);
+		Normal_();
+	}
+
+	Parallelogram(GeoV3 v0, GeoV3 v1, GeoV3 v2, GeoV3 v3)
+	{
+		vert_list_.push_back(Trans(v0));
+		vert_list_.push_back(Trans(v1));
+		vert_list_.push_back(Trans(v2));
+		vert_list_.push_back(Trans(v3));
+		Normal_();
+	}
+
+	~Parallelogram() {}
+
+public:
 	void Print()
 	{
-		std::cout << v0_.x() << " ," << v0_.y() << ", " << v0_.z() << std::endl;
-		std::cout << v1_.x() << " ," << v1_.y() << ", " << v1_.z() << std::endl;
-		std::cout << v2_.x() << ", " << v2_.y() << " ," << v2_.z() << std::endl;
-		std::cout << v3_.x() << ", " << v3_.y() << ", " << v3_.z() << std::endl;
+		point _v0 = v0();
+		point _v1 = v1();
+		point _v2 = v2();
+		point _v3 = v3();
+
+		std::cout << _v0.x() << ", " << _v0.y() << ", " << _v0.z() << std::endl;
+		std::cout << _v1.x() << ", " << _v1.y() << ", " << _v1.z() << std::endl;
+		std::cout << _v2.x() << ", " << _v2.y() << ", " << _v2.z() << std::endl;
+		std::cout << _v3.x() << ", " << _v3.y() << ", " << _v3.z() << std::endl;
+	}
+
+	void Render(WireFrame* ptr_frame, double alpha)
+	{
+		glBegin(GL_QUADS);
+		glColor4f(1.0, 1.0, 0, alpha);
+		glNormal3fv(normal_);
+		glVertex3fv(ptr_frame->Unify(v0()));
+		glVertex3fv(ptr_frame->Unify(v1()));
+		glVertex3fv(ptr_frame->Unify(v2()));
+		glVertex3fv(ptr_frame->Unify(v3()));
+		glEnd();
 	}
 
 public:
-	point		v0_;
-	point		v1_;
-	point		v2_;
-	point		v3_;
-
-	Triangle	t1_;
-	Triangle	t0_;
 };
 

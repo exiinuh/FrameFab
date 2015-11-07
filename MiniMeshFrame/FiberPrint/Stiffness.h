@@ -16,8 +16,8 @@
 #include "WireFrame\WireFrame.h"
 #include "DualGraph.h"
 #include "FiberPrintPARM.h"
-#include "Statistics.h"
 
+#include "Statistics.h"
 using namespace std;
 using namespace Eigen;
 
@@ -39,7 +39,6 @@ public:
 public:
 	void		CreateM();
 	void		CreateK(const VectorXd *ptr_x);
-	void		CreateFv();							// excute after CreateFe and CreateK
 	void		CreateFv(const VectorXd *ptr_x);
 	void		CreateFe();
 
@@ -50,8 +49,8 @@ public:
 	SpMat		*WeightedK(){ assert(&K_);  return &K_;  }
 	VectorXd	*WeightedF(){ assert(&Fv_); return &Fv_; }
 
-	M3			Me(int ei);
-	V3			Fe(int ei);
+	Matrix3d	Me(int ei);							// ei: original edge id
+	Vector3d	Fe(int ei);
 
 	void		Debug();
 
@@ -60,9 +59,6 @@ public:
 	WireFrame				*ptr_frame_;
 	DualGraph				*ptr_dualgraph_;
 	FiberPrintPARM			*ptr_parm_;
-
-	int						Nk_ ;
-	vector<int>				v_id_;					// tracking nodes to be deleted from stiffness matrix
 
 	vector<Matrix3d>		M_;						// indexed by dual id
 	SpMat					K_;						// x-Weighted global stiffness matrix, 

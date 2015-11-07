@@ -1,15 +1,16 @@
-#include "renderingwidget.h"
+ï»¿#include "renderingwidget.h"
 
 
 
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
-has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_axes_(false),
-is_simplified_(false), op_mode_(Normal), captured_edge_(-1)
+has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_bulk_(false),
+is_draw_axes_(false), is_simplified_(false), op_mode_(Normal), captured_edge_(-1)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
 	ptr_fiberprint_ = NULL;
+	ptr_collision_ = NULL;
 
 	eye_goal_[0] = eye_goal_[1] = eye_goal_[2] = 0.0;
 	eye_direction_[0] = eye_direction_[1] = 0.0;
@@ -23,7 +24,7 @@ RenderingWidget::~RenderingWidget()
 {
 	SafeDelete(ptr_arcball_);
 	SafeDelete(ptr_frame_);
-//	SafeDelete(ptr_layermaker);
+	//	SafeDelete(ptr_layermaker);
 }
 
 
@@ -70,6 +71,11 @@ void RenderingWidget::paintGL()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//add guoxian
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//
+
 	if (has_lighting_)
 	{
 		SetLight();
@@ -93,8 +99,8 @@ void RenderingWidget::paintGL()
 
 	Render();
 	glPopMatrix();
-}
 
+}
 
 void RenderingWidget::timerEvent(QTimerEvent * e)
 {
@@ -272,12 +278,6 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 	double z = 0;
 	CoordinatesTransform(mouse, &x, &y, &z);
 
-	if (op_mode_ == Normal)
-	{
-		captured_verts_.clear();
-		captured_edge_ = -1;
-	}
-
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	int N = verts.size();
 	int i;
@@ -289,6 +289,12 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 		double dis = sqrt(dx*dx + dy*dy + dz*dz);
 		if (dis < 0.015)
 		{
+			if (op_mode_ == Normal)
+			{
+				captured_verts_.clear();
+				captured_edge_ = -1;
+			}
+
 			captured_verts_.push_back(verts[i]);
 			break;
 		}
@@ -336,12 +342,6 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 	double z = 0;
 	CoordinatesTransform(mouse, &x, &y, &z);
 
-	if (op_mode_ == Normal)
-	{
-		captured_verts_.clear();
-		captured_edge_ = -1;
-	}
-
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	int M = edges.size();
 	for (size_t i = 0; i < M; i++)
@@ -355,6 +355,12 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 			double delta = ptr_frame_->ArcHeight(u->RenderPos(), v1->RenderPos(), v2->RenderPos());
 			if (delta < 0.007)
 			{
+				if (op_mode_ == Normal)
+				{
+					captured_verts_.clear();
+					captured_edge_ = -1;
+				}
+
 				captured_edge_ = i;
 				emit(CapturedVert(-1));
 				emit(CapturedEdge(i + 1, ptr_frame_->Length(v1->Position(), v2->Position())));
@@ -372,7 +378,10 @@ void RenderingWidget::Render()
 	DrawAxes(is_draw_axes_);
 
 	DrawPoints(is_draw_point_);
+
+
 	DrawEdge(is_draw_edge_);
+
 	DrawHeat(is_draw_heat_);
 }
 
@@ -420,12 +429,12 @@ void RenderingWidget::ReadFrame()
 		emit(operatorInfo(QString("Read Mesh Failed!")));
 		return;
 	}
-	//ÖÐÎÄÂ·¾¶Ö§³Ö
+	//Ã–ÃÃŽÃ„Ã‚Â·Â¾Â¶Ã–Â§Â³Ã–
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
 	QTextCodec::setCodecForLocale(code);
 
 	QByteArray byfilename = filename.toLocal8Bit();
-	delete ptr_frame_; 
+	delete ptr_frame_;
 	ptr_frame_ = new WireFrame();
 	ptr_frame_->LoadFromOBJ(byfilename.data());
 	is_simplified_ = false;
@@ -438,6 +447,17 @@ void RenderingWidget::ReadFrame()
 	emit(modeInfo(QString("Insert edge (I)")));
 	//emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+
+
+	/*
+	//Run detection
+	cout << "graphcut begin" << endl;
+	DualGraph  *ptr_dualgraph_ = new DualGraph(ptr_frame_);
+    ptr_dualgraph_->Dualization();
+	cout << "graphcut end" << endl;
+
+	ptr_collision_ = new Collision(ptr_frame_, ptr_dualgraph_);
+	*/
 
 	updateGL();
 }
@@ -480,6 +500,13 @@ void RenderingWidget::CheckDrawEdge(bool bv)
 void RenderingWidget::CheckDrawHeat(bool bv)
 {
 	is_draw_heat_ = bv;
+	updateGL();
+}
+
+
+void RenderingWidget::CheckDrawBulk(bool bv)
+{
+	is_draw_bulk_ = bv;
 	updateGL();
 }
 
@@ -541,7 +568,6 @@ void RenderingWidget::DrawAxes(bool bV)
 	glColor3f(1.0, 1.0, 1.0);
 }
 
-
 void RenderingWidget::DrawPoints(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
@@ -592,7 +618,6 @@ void RenderingWidget::DrawPoints(bool bv)
 	glEnd();
 }
 
-
 void RenderingWidget::DrawEdge(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
@@ -602,10 +627,12 @@ void RenderingWidget::DrawEdge(bool bv)
 
 	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
+
 	for (size_t i = 0; i < M; i++)
 	{
 		WF_edge *e = edges[i];
 		WF_edge *e_pair = edges[i]->ppair_;
+
 		if (e->ID() < e_pair->ID())
 		{
 			glBegin(GL_LINE_LOOP);
@@ -613,9 +640,6 @@ void RenderingWidget::DrawEdge(bool bv)
 			if (captured_edge_ == i)
 			{
 				glColor3f(1.0, 0.0, 0.0);
-
-				/*Draw Collision*/
-
 			}
 			else
 			{
@@ -628,68 +652,154 @@ void RenderingWidget::DrawEdge(bool bv)
 			glEnd();
 		}
 	}
-}
 
+}
 
 void RenderingWidget::DrawHeat(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == 0)
 	{
 		return;
 	}
 
-	const vector<DualVertex*>& dual_verts = *(ptr_fiberprint_->GetDualVertexList());
 	const VectorXi Label = *(ptr_fiberprint_->GetLabel());
 	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
-	int Nd = ptr_frame_->SizeOfEdgeList() / 2;
+	int M = ptr_frame_->SizeOfEdgeList();
 
-	for (size_t e_id = 0; e_id < Nd; e_id++)
+	for (int i = 0; i < M; i++)
 	{
-		int i = dual_verts[e_id]->original_id();
+		int j = edges[i]->ppair_->ID();
+		if (i < j)
+		{
+			WF_edge *e = edges[i];
+			WF_edge *e_pair = edges[i]->ppair_;
+
+			glBegin(GL_LINE_LOOP);
+
+			int tag = (Label[i] % 6);
+			switch (tag)
+			{
+			case 0:
+				glColor3f(1.0, 0.0, 0.0);
+				break;
+			case 1:
+				glColor3f(0.0, 1.0, 0.0);
+				break;
+			case 2:
+				glColor3f(0.0, 0.0, 1.0);
+				break;
+			case 3:
+				glColor3f(1.0, 1.0, 0.0);
+				break;
+			case 4:
+				glColor3f(1.0, 0.0, 1.0);
+				break;
+			case 5:
+				glColor3f(1.0, 1.0, 1.0);
+				break;
+
+			default:
+				break;
+			}
+
+			glVertex3fv(e->pvert_->RenderPos().data());
+			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+
+			glEnd();
+		}
+	}
+}
+
+void RenderingWidget::DrawBulk(bool bv)
+{
+	if (!bv || ptr_frame_ == NULL || ptr_collision_ == NULL)
+	{
+		return;
+	}
+
+	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
+	int M = ptr_frame_->SizeOfEdgeList();
+
+	/*Draw Collision*/
+	for (size_t i = 0; i < M; i++)
+	{
 		WF_edge *e = edges[i];
 		WF_edge *e_pair = edges[i]->ppair_;
 
-		glBegin(GL_LINE_LOOP);
-
-		int tag = (Label[e_id] % 6);
-		switch (tag)
+		if (e->ID() < e_pair->ID())
 		{
-		case 0:
-			glColor3f(1.0, 0.0, 0.0);
-			break;
-		case 1:
-			glColor3f(0.0, 1.0, 0.0);
-			break;
-		case 2:
-			glColor3f(0.0, 0.0, 1.0);
-			break;
-		case 3:
-			glColor3f(1.0, 1.0, 0.0);
-			break;
-		case 4:
-			glColor3f(1.0, 0.0, 1.0);
-			break;
-		case 5:
-			glColor3f(1.0, 1.0, 1.0);
-			break;
+			glBegin(GL_LINE_LOOP);
 
-		default:
-			break;
+			//decide line color
+			if (captured_edge_ != -1)
+			{
+				int e_id = ptr_collision_->ptr_dualgraph_->e_dual_id(i);
+				int cap_id = ptr_collision_->ptr_dualgraph_->e_dual_id(captured_edge_);
+				if (captured_edge_ == i)
+				{
+					glColor4f(0.0, 0.0, 1.0, 1);
+
+					// draw bulk
+					if (!has_lighting_)
+					{
+						glDepthMask(GL_FALSE);
+					}
+
+					Bulk *bulk = ptr_collision_->bulk_list_[cap_id];
+					bulk->Face(0)->Render(ptr_frame_, 0.1);
+					bulk->Face(1)->Render(ptr_frame_, 0.6);
+					bulk->Face(2)->Render(ptr_frame_, 0.45);
+					bulk->Face(3)->Render(ptr_frame_, 0.45);
+					bulk->Face(4)->Render(ptr_frame_, 0.2);
+					bulk->Face(5)->Render(ptr_frame_, 0.2);
+					bulk->Face(6)->Render(ptr_frame_, 0.3);
+					bulk->Face(7)->Render(ptr_frame_, 0.25);
+					bulk->Face(8)->Render(ptr_frame_, 0.3);
+					bulk->Face(9)->Render(ptr_frame_, 0.25);
+					bulk->Face(10)->Render(ptr_frame_, 0.4);
+					bulk->Face(11)->Render(ptr_frame_, 0.4);
+					bulk->Face(12)->Render(ptr_frame_, 0.3);
+
+					if (!has_lighting_)
+					{
+						glDepthMask(GL_TRUE);
+					}
+				}
+				else
+				if (ptr_collision_->range_state_[cap_id][e_id] == 1)
+				{
+					glColor4f(0.80, 0.0, 0.30, 0.4);
+				}
+				else
+				if (ptr_collision_->range_state_[cap_id][e_id] == 2)
+				{
+					glColor4f(1.0, 0.0, 0.0, 1);
+				}
+				else
+				{
+					glColor4f(1.0, 1.0, 1.0, 1);
+				}
+			}
+			else
+			{
+				glColor4f(1.0, 1.0, 1.0, 1);
+			}
+
+			glVertex3fv(e->pvert_->RenderPos().data());
+			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+
+			glEnd();
 		}
-
-		glVertex3fv(e->pvert_->RenderPos().data());
-		glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-
-		glEnd();
 	}
 }
+
 
 
 void RenderingWidget::FiberPrintAnalysis()
 {
 	delete ptr_fiberprint_;
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	ptr_fiberprint_->Debug();
+	ptr_fiberprint_->Print();
 
 	/*
 	delete ptr_layermaker;
@@ -737,13 +847,13 @@ void RenderingWidget::RotateXY()
 {
 	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
 	int N = ptr_frame_->SizeOfVertList();
-	
+
 	for (int i = 0; i < N; i++)
 	{
-		verts[i]->SetPosition(verts[i]->Position().y(), verts[i]->Position().x(), 
-								verts[i]->Position().z());
+		verts[i]->SetPosition(verts[i]->Position().y(), verts[i]->Position().x(),
+			verts[i]->Position().z());
 		verts[i]->SetRenderPos(verts[i]->RenderPos().y(), verts[i]->RenderPos().x(),
-								verts[i]->RenderPos().z());
+			verts[i]->RenderPos().z());
 	}
 
 	ptr_frame_->Unify();
@@ -759,9 +869,9 @@ void RenderingWidget::RotateXZ()
 	for (int i = 0; i < N; i++)
 	{
 		verts[i]->SetPosition(verts[i]->Position().z(), verts[i]->Position().y(),
-								verts[i]->Position().x());
+			verts[i]->Position().x());
 		verts[i]->SetRenderPos(verts[i]->RenderPos().z(), verts[i]->RenderPos().y(),
-								verts[i]->RenderPos().x());
+			verts[i]->RenderPos().x());
 	}
 
 	ptr_frame_->Unify();
@@ -777,11 +887,12 @@ void RenderingWidget::RotateYZ()
 	for (int i = 0; i < N; i++)
 	{
 		verts[i]->SetPosition(verts[i]->Position().x(), verts[i]->Position().z(),
-								verts[i]->Position().y());
+			verts[i]->Position().y());
 		verts[i]->SetRenderPos(verts[i]->RenderPos().x(), verts[i]->RenderPos().z(),
-								verts[i]->RenderPos().y());
+			verts[i]->RenderPos().y());
 	}
 
 	ptr_frame_->Unify();
 	updateGL();
 }
+

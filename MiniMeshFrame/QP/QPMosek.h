@@ -1,8 +1,12 @@
+#pragma once
+
 #ifndef QPMOSEK_H
 #define QPMOSEK_H
 
+
 #include "QP.h"
 #include "Timer.h"
+
 
 class QPMosek : public QP
 {

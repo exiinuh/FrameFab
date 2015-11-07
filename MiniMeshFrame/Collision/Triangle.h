@@ -1,40 +1,58 @@
 #pragma once
-#include"WireFrame\WireFrame.h"
 
-typedef Geometry::Vector3d GeoV3;
+#include "Polyface.h"
 
 
-class Triangle
+class Triangle : public Polyface
 {
 public:
-	Triangle() 
-		: v0_(point{ 1, 0, 0 }), v1_(point{ 0, 1, 0 }), v2_(point{ 0, 0, 1 }) {}
-	Triangle(point v0, point v1, point v2)
-		: v0_(v0), v1_(v1), v2_(v2) {}
-	Triangle(GeoV3 v0, GeoV3 v1, GeoV3 v2)
-		: v0_(Trans(v0)), v1_(Trans(v1)), v2_(Trans(v2)) {}
-	~Triangle(){};
-
-public:
-	point Trans(GeoV3 V)
+	Triangle()
 	{
-		point v; 
-		v.x() = V.getX(); 
-		v.y() = V.getY(); 
-		v.z() = V.getZ(); 
-		return v;
+		vert_list_.push_back(point(1, 0, 0));
+		vert_list_.push_back(point(0, 1, 0));
+		vert_list_.push_back(point(0, 0, 1));
+		Normal_();
 	}
 
+	Triangle(point v0, point v1, point v2)
+	{
+		vert_list_.push_back(v0);
+		vert_list_.push_back(v1);
+		vert_list_.push_back(v2);
+		Normal_();
+	}
+
+	Triangle(GeoV3 v0, GeoV3 v1, GeoV3 v2)
+	{
+		vert_list_.push_back(Trans(v0));
+		vert_list_.push_back(Trans(v1));
+		vert_list_.push_back(Trans(v2));
+		Normal_();
+	}
+
+	~Triangle() {}
+
+public:
 	void Print()
 	{
-		std::cout << v0_.x() << ", " << v0_.y() << ", " << v0_.z() << std::endl;
-		std::cout << v1_.x() << ", " << v1_.y() << ", " << v1_.z() << std::endl;
-		std::cout << v2_.x() << ", " << v2_.y() << ", " << v2_.z() << std::endl;
+		point _v0 = v0();
+		point _v1 = v1();
+		point _v2 = v2();
+
+		std::cout << _v0.x() << ", " << _v0.y() << ", " << _v0.z() << std::endl;
+		std::cout << _v1.x() << ", " << _v1.y() << ", " << _v1.z() << std::endl;
+		std::cout << _v2.x() << ", " << _v2.y() << ", " << _v2.z() << std::endl;
 	}
 
-public:
-	point	v0_;
-	point	v1_;
-	point	v2_;
+	void Render(WireFrame* ptr_frame, double alpha)
+	{
+		glBegin(GL_TRIANGLES);
+		glColor4f(1.0, 1.0, 0, alpha);
+		glNormal3fv(normal_);
+		glVertex3fv(ptr_frame->Unify(v0()));
+		glVertex3fv(ptr_frame->Unify(v1()));
+		glVertex3fv(ptr_frame->Unify(v2()));
+		glEnd();
+	}
 };
 

@@ -137,7 +137,7 @@ void MainWindow::CreateStatusBar()
 	
 	label_modeinfo_ = new QLabel();
 
-	label_captured_ = new QLabel();
+	label_capture_ = new QLabel();
 
 	statusBar()->addWidget(label_meshinfo_);
 	connect(renderingwidget_, SIGNAL(meshInfo(int, int)), this, SLOT(ShowMeshInfo(int, int)));
@@ -148,8 +148,9 @@ void MainWindow::CreateStatusBar()
 	statusBar()->addWidget(label_modeinfo_);
 	connect(renderingwidget_, SIGNAL(modeInfo(QString)), label_modeinfo_, SLOT(setText(QString)));
 
-	statusBar()->addWidget(label_captured_);
-	connect(renderingwidget_, SIGNAL(CapturedInfo(int)), this, SLOT(ShowCapturedInfo(int)));
+	statusBar()->addWidget(label_capture_);
+	connect(renderingwidget_, SIGNAL(CapturedVert(int)), this, SLOT(ShowCapturedVert(int)));
+	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
 }
 
 
@@ -166,6 +167,9 @@ void MainWindow::CreateRenderGroup()
 	connect(checkbox_heat_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawHeat(bool)));
 	connect(checkbox_heat_, SIGNAL(clicked(bool)), this, SLOT(CheckFace(bool)));
 
+	checkbox_bulk_ = new QCheckBox(tr("Bulk"), this);
+	connect(checkbox_bulk_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawBulk(bool)));
+
 	checkbox_light_ = new QCheckBox(tr("Light"), this);
 	connect(checkbox_light_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckLight(bool)));
 
@@ -178,6 +182,7 @@ void MainWindow::CreateRenderGroup()
 	render_layout->addWidget(checkbox_point_);
 	render_layout->addWidget(checkbox_edge_);
 	render_layout->addWidget(checkbox_heat_);
+	render_layout->addWidget(checkbox_bulk_);
 	render_layout->addWidget(checkbox_light_);
 	render_layout->addWidget(checkbox_axes_);
 }
@@ -212,9 +217,29 @@ void MainWindow::ShowMeshInfo(int npoint, int nedge)
 }
 
 
-void MainWindow::ShowCapturedInfo(int id)
+void MainWindow::ShowCapturedVert(int id)
 {
-	label_captured_->setText(QString("Captured: %1").arg(id));
+	if (id != -1)
+	{
+		label_capture_->setText(QString("Captured vertex: %1").arg(id));
+	}
+	else
+	{
+		label_capture_->setText(QString(""));
+	}
+}
+
+
+void MainWindow::ShowCapturedEdge(int id, double len)
+{
+	if (id != -1)
+	{
+		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id).arg(len));
+	}
+	else
+	{
+		label_capture_->setText(QString(""));
+	}
 }
 
 

@@ -1,26 +1,29 @@
 #pragma once
 #include <iostream>
+#include <Eigen/Core>
+
 #include "WireFrame\WireFrame.h"
 
 using namespace std;
+using namespace Eigen;
 
 
 class DualVertex
 {
 public:
-	DualVertex(){ org_id_ = -1; dual_id_ = -1; }
+	DualVertex(){ orig_id_ = -1; dual_id_ = -1; }
 	~DualVertex(){}
 
 public:
-	void		SetOrgId(int org_id)	{ org_id_ = org_id; }
+	void		SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
 	void		SetDualId(int dual_id)	{ dual_id_ = dual_id; }
 
-	inline int	original_id()			const { return org_id_; }
+	inline int	orig_id()				const { return orig_id_; }
 	inline int	dual_id()				const { return dual_id_; }
 
 private:
-	int		org_id_;										// indexed by dual graph id
-	int		dual_id_;										// indexed by original graph id
+	int		orig_id_;										// indexed by dual edge id
+	int		dual_id_;										// indexed by original edge id
 };
 
 
@@ -48,6 +51,25 @@ private:
 };
 
 
+class DualFace
+{
+public:
+	DualFace(){ orig_id_ = -1; dual_id_ = -1; }
+	~DualFace(){}
+
+public:
+	void		SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
+	void		SetDualId(int dual_id)	{ dual_id_ = dual_id; }
+
+	inline int	orig_id()				const { return orig_id_; }
+	inline int	dual_id()				const { return dual_id_; }
+
+private:
+	int		orig_id_;										// indexed by dual vertex id
+	int		dual_id_;										// indexed by original vertex id
+};
+
+
 class DualGraph
 {
 public:
@@ -57,19 +79,36 @@ public:
 
 public:
 	void					Dualization();
+	void					Dualization(VectorXd *ptr_x);
+	void					Establish();
 
-	int						num_of_edge_list()	{ return edge_list_->size(); }
-	vector<DualEdge*>		*get_edge_list()	{ return edge_list_; }
-	vector<DualVertex*>		*get_vert_list()	{ return vert_list_; }
+	int						SizeOfVertList()	{ return Nd_; }
+	int						SizeOfEdgeList()	{ return Md_; }
+	int						SizeOfFaceList()	{ return Fd_; }
+
+	vector<DualVertex*>		*GetVertList()		{ return vert_list_; }
+	vector<DualEdge*>		*GetEdgeList()		{ return edge_list_; }
+	vector<DualFace*>		*GetFaceList()		{ return face_list_; }
+
 	int						u(int ei)			{ return (*edge_list_)[ei]->u(); }
 	int						v(int ei)			{ return (*edge_list_)[ei]->v(); }
-	int						org_id(int ei)		{ return (*vert_list_)[ei]->original_id(); }
-	int						dual_id(int ei)		{ return (*vert_list_)[ei]->dual_id(); }
+	int						e_orig_id(int ei)	{ return (*vert_list_)[ei]->orig_id(); }
+	int						e_dual_id(int ei)	{ return (*vert_list_)[ei]->dual_id(); }
+	int						v_orig_id(int i)	{ return (*face_list_)[i]->orig_id(); }
+	int						v_dual_id(int i)	{ return (*face_list_)[i]->dual_id(); }
 
 	void					Debug();
 
 private:
-	vector<DualEdge*>		*edge_list_;
-	vector<DualVertex*>		*vert_list_;
+	int						Nd_;
+	int						Md_;
+	int						Fd_;
+
+	vector<DualEdge*>		*edge_list_;				// dual edge: original edge -> original edge
+	vector<DualVertex*>		*vert_list_;				// dual vert: original edge
+	vector<DualFace*>		*face_list_;				// dual face: original vert
 	WireFrame				*ptr_frame_;
+
+	vector<bool>			exist_vert_;
+	vector<bool>			exist_edge_;
 };

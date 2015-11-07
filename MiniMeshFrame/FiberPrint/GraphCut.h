@@ -17,33 +17,29 @@
 #include "QPFactory.h"
 #include "Statistics.h"
 
-#include "LPFactory.h"
-#include "TSPLIB_Loader.h"
-
 using namespace std;
 using namespace Eigen;
 
 
 class GraphCut
 {
-
-public:
 	typedef Eigen::SparseMatrix<double> SpMat;
 	typedef Eigen::MatrixXd MX;
 	typedef Eigen::Matrix3d M3;
 	typedef Eigen::VectorXd VX;
 	typedef Eigen::Vector3d V3;
 
+public:
 	GraphCut();
 	GraphCut(WireFrame *ptr_frame);
 	~GraphCut();
 
 public:
 	//Initialization
+	void		InitState();
+	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		CreateAandC();						// Construct edge-incidence matrix A and weight diagonal matrix C
-	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary(VX &d, SpMat &W, int count);
-	void		UpdateX();
 
 	//Termination
 	bool		CheckLabel(int iter_count);			// Stopping Criterion for iteratively apply ADMM to find several cuts
@@ -51,15 +47,16 @@ public:
 
 	//ADMM
 	void		MakeLayers();						// Main loop of ADMM
-	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateX(VX &d, SpMat &W);		// QP optimization for x at every iteration
+	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
+	void		UpdateX();
 
-	//Debug
-	void		debug();
+	vector<DualVertex*>		*GetDualVertList();
+	vector<DualEdge*>		*GetDualEdgeList();
+	vector<DualFace*>		*GetDualFaceList();
 
-	vector<DualVertex*>		*GetDualVertexList();
 	VectorXi				*GetLabel();
 
 public:
@@ -72,6 +69,7 @@ public:
 	int				M_;				// M : Number of edges in orig graph 
 	int				Nd_;			// Nd : Number of node in dual graph
 	int				Md_;			// Md : number of edges in dual graph
+	int				Fd_;			// Fd : number of faces in dual graph
 
 	double			penalty_;		// penalty  : penalty factor used in ADMM  
 	double			D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
@@ -89,10 +87,11 @@ public:
 	VX				a_;				// linear coefficient used in x_Qp
 	VectorXi		layer_label_;	// passed to render
 
-	VX				dual_res;		// dual residual for ADMM termination criteria
-	VX				primal_res;		// dual residual for ADMM termination criteria
+	VX				dual_res_;		// dual residual for ADMM termination criteria
+	VX				primal_res_;		// dual residual for ADMM termination criteria
 
-	QP				*qp;			// Solves the quadratic programming problem:
+	QP				*qp_;			// Solves the quadratic programming problem:
 									// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
-	SpMat			*H1;			// Part 1 of hessian matrix for x-Qp problem
+	SpMat			*H1_;			// Part 1 of hessian matrix for x-Qp problem
 };
+
