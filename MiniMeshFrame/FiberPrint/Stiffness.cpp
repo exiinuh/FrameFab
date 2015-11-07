@@ -103,69 +103,70 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 
 	vector<Matrix3d> Mn;
 	Mn.resize(N);
-	for (int i = 0; i < N; i++)
-	{
-		Mn[i].setZero();
-	}
-	
+	//for (int i = 0; i < N; i++)
+	//{
+	//	Mn[i].setZero();
+	//}
+	//
+	//vector<Triplet<double>> K_list;
+	//for (int i = 0; i < M; i++)
+	////for (int i = 0; i < Nd; i++)
+	//{
+	//	int e_id = ptr_dualgraph_->dual_id(i); 
+	//	int u = edges[i]->ppair_->pvert_->ID();
+	//	int v = edges[i]->pvert_->ID();
+
+	//	if ((*ptr_x)[e_id] == 1)
+	//	{
+	//		if (!verts[u]->IsFixed())
+	//		{
+	//			Mn[u] -= M_[e_id];
+	//			if (!verts[v]->IsFixed())
+	//			{
+	//				for (int j = 0; j < 3; j++)
+	//				{
+	//					for (int k = 0; k < 3; k++)
+	//					{
+	//						if (M_[e_id](j, k) != 0)
+	//						{
+	//							K_list.push_back(Triplet<double>(u * 3 + j, v * 3 + k, M_[e_id](j, k)));
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	//for (int i = 0; i < N; i++)
+	//{
+	//	bool flag = false;
+	//	for (int j = 0; j < 3; j++)
+	//	{
+	//		for (int k = 0; k < 3; k++)
+	//		{
+	//			if (Mn[i](j, k) != 0)
+	//			{
+	//				K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
+	//				flag = true;
+	//			}
+	//		}
+	//	}
+	//	if (!flag)
+	//	{
+	//		Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
+	//		K_list.push_back(Triplet<double>(i * 3, i * 3, Mn[i](0, 0)));
+	//		K_list.push_back(Triplet<double>(i * 3 + 1, i * 3 + 1, Mn[i](1, 1)));
+	//		K_list.push_back(Triplet<double>(i * 3 + 2, i * 3 + 2, Mn[i](2, 2)));
+	//	}
+	//}
+
+	//K_.resize(3 * N, 3 * N);
+	//K_.setFromTriplets(K_list.begin(), K_list.end());
+
 	vector<Triplet<double>> K_list;
-	for (int i = 0; i < M; i++)
-	//for (int i = 0; i < Nd; i++)
-	{
-		int e_id = ptr_dualgraph_->dual_id(i); 
-		int u = edges[i]->ppair_->pvert_->ID();
-		int v = edges[i]->pvert_->ID();
-
-		if ((*ptr_x)[e_id] == 1)
-		{
-			if (!verts[u]->IsFixed())
-			{
-				Mn[u] -= M_[e_id];
-				if (!verts[v]->IsFixed())
-				{
-					for (int j = 0; j < 3; j++)
-					{
-						for (int k = 0; k < 3; k++)
-						{
-							if (M_[e_id](j, k) != 0)
-							{
-								K_list.push_back(Triplet<double>(u * 3 + j, v * 3 + k, M_[e_id](j, k)));
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	for (int i = 0; i < N; i++)
-	{
-		bool flag = false;
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				if (Mn[i](j, k) != 0)
-				{
-					K_list.push_back(Triplet<double>(i * 3 + j, i * 3 + k, Mn[i](j, k)));
-					flag = true;
-				}
-			}
-		}
-		if (!flag)
-		{
-			Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
-			K_list.push_back(Triplet<double>(i * 3, i * 3, Mn[i](0, 0)));
-			K_list.push_back(Triplet<double>(i * 3 + 1, i * 3 + 1, Mn[i](1, 1)));
-			K_list.push_back(Triplet<double>(i * 3 + 2, i * 3 + 2, Mn[i](2, 2)));
-		}
-	}
-
-	K_.resize(3 * N, 3 * N);
-	K_.setFromTriplets(K_list.begin(), K_list.end());
-
-	/*
-	Nk_ = 0;
+	
+	Nk_ = 0;			// index tracking for undeleted nodes, i.e. nodes still with edge weight not zero
 	v_id_.resize(N);
 	fill(v_id_.begin(), v_id_.end(), 0);
 
@@ -176,6 +177,7 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 		{
 			for (int k = 0; k < 3; k++)
 			{
+				// Local Stiffness Matrix not zero, keep this node
 				if (Mn[i](j, k) != 0)
 				{
 					K_list.push_back(Triplet<double>(Nk_ * 3 + j, Nk_ * 3 + k, Mn[i](j, k)));
@@ -183,8 +185,16 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 				}
 			}
 		}
+		
+		cout << "--------------------------" << endl;
+		cout << "Local matrix with NK_ : " << Nk_ << ", N index : " << i << ", matrix content : " << endl;
+		cout << Mn[i](0, 0) << ", " << Mn[i](0, 1) << ",  " << Mn[i](0, 2) << endl;
+		cout << Mn[i](1, 0) << ", " << Mn[i](1, 1) << ",  " << Mn[i](1, 2) << endl;
+		cout << Mn[i](2, 0) << ", " << Mn[i](2, 1) << ",  " << Mn[i](2, 2) << endl;
+
 		if (!flag)
 		{
+			// Delete nodes whose all incident edge weight all zero, keep fixed nodes.
 			if (verts[i]->IsFixed())
 			{
 				Mn[i](0, 0) = Mn[i](1, 1) = Mn[i](2, 2) = 1;
@@ -202,7 +212,7 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 
 	K_.resize(3 * Nk_, 3 * Nk_);
 	K_.setFromTriplets(K_list.begin(), K_list.end());
-	*/
+	
 }
 
 

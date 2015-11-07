@@ -28,6 +28,7 @@ private:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
+	Stiffness		*ptr_stiffness_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

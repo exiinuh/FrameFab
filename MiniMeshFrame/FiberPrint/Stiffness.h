@@ -50,8 +50,8 @@ public:
 	SpMat		*WeightedK(){ assert(&K_);  return &K_;  }
 	VectorXd	*WeightedF(){ assert(&Fv_); return &Fv_; }
 
-	Matrix3d	Me(int ei);
-	Vector3d	Fe(int ei);
+	M3			Me(int ei);
+	V3			Fe(int ei);
 
 	void		Debug();
 
@@ -62,7 +62,7 @@ public:
 	FiberPrintPARM			*ptr_parm_;
 
 	int						Nk_ ;
-	vector<int>				v_id_;
+	vector<int>				v_id_;					// tracking nodes to be deleted from stiffness matrix
 
 	vector<Matrix3d>		M_;						// indexed by dual id
 	SpMat					K_;						// x-Weighted global stiffness matrix, 
