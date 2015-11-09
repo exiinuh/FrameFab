@@ -96,3 +96,35 @@ void SeqAnalyzer::LayerPrint()
 	TSPSolver *TSP_solver = new TSPSolver(&cost);
 	TSP_solver->Solve(x, 0);
 }
+
+void SeqAnalyzer::Debug()
+{
+	TSPLIB_Loader loader;
+	Eigen::SparseMatrix<double> Cost;
+	int N;
+	loader.loadFromFile("F:\\bays29.txt", N, &Cost);
+
+	VectorXd x;
+	TSPSolver solver(&Cost);
+	solver.Solve(x, true);
+
+	Statistics s_x("TSP_Result_x", x);
+	s_x.GenerateVectorFile();
+
+	int n = sqrt(x.size());
+	MatrixXd TSP_M(n, n);
+	TSP_M.setZero();
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			TSP_M(i, j) = x(i*n + j);
+		}
+	}
+
+	Statistics s_M("TSP_Matrix", TSP_M);
+	s_M.GenerateMatrixFile();
+
+	getchar();
+}

@@ -1,10 +1,8 @@
 #include "GraphCut.h"
 
-#define DUAL_RES 10e-7
-#define PRIM_RES 10e-5
 
 GraphCut::GraphCut()
-		:debug_(false), penalty_(10e2), pri_tol_(PRIM_RES), dual_tol_(DUAL_RES), D_tol_(0.1)
+		:debug_(false), penalty_(10e2), pri_tol_(10e-3), dual_tol_(10e-3), D_tol_(0.1)
 {
 	// This default construction function should never be run
 	// We need a mesh to begin with
@@ -12,7 +10,7 @@ GraphCut::GraphCut()
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame)
-		:debug_(false), penalty_(10e2), pri_tol_(PRIM_RES), dual_tol_(DUAL_RES), D_tol_(0.001)
+		:debug_(false), penalty_(10e2), pri_tol_(10e-3), dual_tol_(10e-3), D_tol_(0.001)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
@@ -37,11 +35,32 @@ void GraphCut::InitState()
 	qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
 
 	layer_label_.resize(M_);
-	layer_label_.setZero();
+	fill(layer_label_.begin(), layer_label_.end(), 0);
+
+	// Find nodes with max height
+	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
+	int max_id = 0;
+	for (int i = 1; i < N_; i++)
+	{
+		if (verts[i]->Position().z() > verts[max_id]->Position().z())
+		{
+			max_id = i;
+		}
+	}
+
+	WF_edge *edge = verts[max_id]->pedge_;								// Upper dual id
+	while (edge != NULL)
+	{
+		cutting_edge_.push_back(edge->ID()); 
+		edge = edge->pnext_;
+	}
+
 
 	cout << "penalty : " << penalty_ << endl;
 	cout << "primal tolerance : " << pri_tol_ << endl;
 	cout << "dual tolerance : " << dual_tol_ << endl;
+	cout << "GraphCut Start" << endl;
+	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 }
 
 
@@ -50,6 +69,8 @@ void GraphCut::SetStartingPoints(int count)
 	if (count == 0)
 	{
 		ptr_dualgraph_->Dualization();
+		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
+		
 	}
 	else
 	{
@@ -81,7 +102,6 @@ void GraphCut::CreateAandC()
 
 	A_.resize(Md_, Nd_); 
 	vector<Triplet<double>> A_list;
-
 	for (int i = 0; i < Md_; i++)
 	{
 		A_list.push_back(Triplet<double>(i, dual_edge[i]->u(), 1));
@@ -97,84 +117,34 @@ void GraphCut::CreateAandC()
 	}
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 	
-	Statistics s_C("C_inCreateAandC", C_);
+	Statistics s_C("C", C_);
 	s_C.GenerateSpFile();
 
 	H1_ = new SpMat(Nd_, Nd_);
-	*H1_ = A_.transpose() * C_ * A_;		// Objective function (For Cut Problem)
+	*H1_ = A_.transpose() * C_ * A_;
 }
 
 
-void GraphCut::SetBoundary(VX &d, SpMat &W, int count)
+void GraphCut::SetBoundary(VX &d, SpMat &W)
 {
 	// Set lower boundary and upper boundary
-	// Equality constraints W*x = d
+	// equality constraints W*x = d
 	// Identify Base nodes(1) and Upper Nodes(2)
-	// here we just take the edge with biggest height
+	// Here we just take the edge with biggest height
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	VectorXi bound(Nd_);
 	bound.setZero();
 
-	if (count == 0)
+	// upper dual
+	int cuts = cutting_edge_.size();
+	for (int i = 0; i < cuts; i++)
 	{
-		// Find nodes with max height
-		int max_id = ptr_dualgraph_->v_orig_id(0);
-		for (int i = 1; i < Fd_; i++)
-		{
-			int u = ptr_dualgraph_->v_orig_id(i);
-			if (verts[u]->Position().z() > verts[max_id]->Position().z())
-			{
-				max_id = u;
-			}
-		}
-
-		WF_edge *edge = verts[max_id]->pedge_;								// Upper dual id
-		while (edge != NULL)
-		{
-			int e_id = ptr_dualgraph_->e_dual_id(edge->ID());
-			if (e_id != -1)
-			{
-				bound[e_id] = 2;
-				x_[e_id] = 0;
-			}
-			edge = edge->pnext_;
-		} 
-	}
-	else
-	{
-		// later iteration of ADMM
-		VectorXd J(Md_);
-		J = A_ * x_;
-
-		Statistics s_A("A_inSetBoundart", A_);
-		s_A.GenerateSpFile();
-
-		Statistics s_J("Ax_inSetBoundary", J);
-		s_J.GenerateVectorFile();
-
-		for (int i = 0; i < Md_; i++)
-		{
-			if (J[i] == 1 || J[i] == -1)
-			{
-				int u = ptr_dualgraph_->u(i);
-				int v = ptr_dualgraph_->v(i);
-				if (x_[u] == 1)
-				{
-					// u is the lower dual vertex of cutting-edge 
-					bound[u] = 2;
-					x_[u] = 0;
-				}
-				else
-				{
-					// v is the lower dual vertex of cutting-edge 
-					bound[v] = 2;
-					x_[v] = 0;
-				}
-			}
-		}
+		int e_id = ptr_dualgraph_->e_dual_id(cutting_edge_[i]);
+		bound[e_id] = 2;
+		x_[e_id] = 0;
 	}
 
-	// Base dual 
+	// base dual 
 	// find boundary nodes, in current stage boundary edge = base edge (for cat_head)
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	for (int i = 0; i < M_; i++)
@@ -228,11 +198,13 @@ bool GraphCut::CheckLabel(int iter_count)
 	}
 
 	cout << "--------------------------------------------" << endl;
-	cout << "iteration: " << iter_count << endl;
-	cout << "Lower Set edge number : " << l << endl;
-	cout << "Lower Set percentage  : " << double(l) / double(Nd_) * 100 << "%" << endl;
-	
-	if (iter_count == 4)
+	cout << "GRAPHCUT REPORT" << endl;
+	cout << "GraphCut Round : " << iter_count << endl;
+	cout << "Lower Set edge number : " << l << "\\ " << Nd_w_ << " (Whole dual graph Nd)" << endl;
+	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
+	cout << "--------------------------------------------" << endl;
+
+	if (iter_count == 8)
 	{
 		return true;
 	}
@@ -247,7 +219,6 @@ bool GraphCut::TerminationCriteria()
 {
 	if (primal_res_.norm() <= pri_tol_ && dual_res_.norm() <= dual_tol_)
 	{
-		cout << "ADMM terminate!" << endl;
 		return true;
 	}
 	else
@@ -265,7 +236,6 @@ bool GraphCut::TerminationCriteria()
 			penalty_ /= 2;
 		}
 
-		cout << "ADMM continue." << endl;
 		return false;
 	}
 }
@@ -283,28 +253,26 @@ void GraphCut::MakeLayers()
 
 		VX d(Nd_);
 		SpMat W(Nd_, Nd_);
-		SetBoundary(d, W, cut_count);
+		SetBoundary(d, W);
 
 		//ptr_stiff_->Debug();
 		ptr_stiff_->CalculateD(&D_, &x_);
 
-		Statistics s_H("ObjectiveHessian_MakeLayer_", *H1_);
+		Statistics s_H("H1_", *H1_);
 		s_H.GenerateSpFile();
 
-		Statistics s_x("x_beforeEnterADMM", x_);
+		Statistics s_x("x_", x_);
 		s_x.GenerateVectorFile();
-		cout << x_.size() << endl;
 
-		Statistics s_D("D_beforeEnterADMM", D_);
+		Statistics s_D("D_", D_);
 		s_D.GenerateVectorFile();
 
 		//ptr_stiff_->CalculateD(&D_, &x_);
 
-		cout << "********************************" << endl;
-		cout << "GraphCut round " << cut_count << "." << endl;
-
 		double old_energy = x_.dot((*H1_)*x_);
-		cout << "Initial energy before entering ADMM process: " << old_energy << endl;
+		cout << "****************************************" << endl;
+		cout << "GraphCut Round : " << cut_count << endl;
+		cout << "Initial energy before entering ADMM: " << old_energy << endl;
 
 		int ADMM_count = 0;
 		record.clear();
@@ -312,14 +280,14 @@ void GraphCut::MakeLayers()
 		cout << "---------------------------------" << endl;
 		do
 		{
-			cout << "GraphCut round: " << cut_count << ", ADMM " << ADMM_count << " iteration " << endl;
+			cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
 			
-			VX x_prev = x_;
-			CalculateX(d, W);
-
-			string str = "cut_" + to_string(cut_count) + "_ADMMIter_" + to_string(ADMM_count) + "_x_afterCalX";
+			string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
 			Statistics s_x(str, x_);
 			s_x.GenerateVectorFile();
+
+			VX x_prev = x_;
+			CalculateX(d, W);
 
 			VX D_prev = D_;
 			CalculateD();
@@ -331,15 +299,16 @@ void GraphCut::MakeLayers()
 			SpMat Q_new;
 			CalculateQ(D_prev, Q_prev);
 			CalculateQ(D_, Q_new);
-			dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev 
+			dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
 				+ lambda_.transpose() * (Q_prev - Q_new);
+			//dual_res_ = penalty_ * (D_)
 			primal_res_ = Q_new * x_;
 
 
 			double obj_func = x_.dot((*H1_) * x_);
 			record.push_back(obj_func);
 
-			cout << "energy func value after one iteration in ADMM: " << obj_func << endl;
+			cout << "new energy func value record: " << obj_func << endl;
 			cout << "dual_residual : " << dual_res_.norm() << endl;
 			cout << "primal_residual : " << primal_res_.norm() << endl;
 
@@ -356,11 +325,13 @@ void GraphCut::MakeLayers()
 			}
 		} while (!TerminationCriteria());
 
-		UpdateX();
+		UpdateCut();	// Update New Cut information to Rendering (layer_label_)
 		
-		printf("One GraphCut done!\n");
+		printf("One iteration done!\n");
 		cut_count++;
 	} while (!CheckLabel(cut_count));
+
+	printf("All done!\n");
 }
 
 
@@ -376,12 +347,10 @@ void GraphCut::CalculateX(VX &d, SpMat &W)
 	// Construct Linear coefficient for x-Qp problem
 	a_ = Q.transpose() * lambda_;
 	
-	// Inequality constraints A*x <= b, no constraints here
-	//SpMat A(3 * Fd_, 3 * Fd_);
-	SpMat A(Nd_, Nd_);
+	// Inequality constraints A*x <= b
+	SpMat A(3 * Fd_, 3 * Fd_);
 	A.setZero();
-	//VX b(3 * Fd_);
-	VX b(Nd_);
+	VX b(3 * Fd_);
 	b.setZero();
 
 	// Variable constraints x >= lb, x <= ub
@@ -435,9 +404,6 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 void GraphCut::CalculateD()
 {
 	// Construct Hessian Matrix for D-Qp problem
-	Statistics sta_x("x_inCalD", x_);
-	sta_x.GenerateVectorFile();
-
 	ptr_stiff_->CreateK(&x_);
 	SpMat K = *(ptr_stiff_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
@@ -485,22 +451,53 @@ void GraphCut::UpdateLambda()
 }
 
 
-void GraphCut::UpdateX()
+void GraphCut::UpdateCut()
 {
 	// Convert previous continuous computed result to discrete 1-0 label
-	for (int i = 0; i < Nd_; i++)
+	for (int i = 0; i < M_; i++)
 	{
-		if (x_[i] >= 0.5)
+		int e_id = ptr_dualgraph_->e_dual_id(i);
+		if (e_id == -1)
 		{
-			x_[i] = 1;
+			layer_label_[i] ++;
 		}
 		else
 		{
-			x_[i] = 0;
+			if (x_[e_id] >= 0.5)
+			{
+				x_[e_id] = 1;
+			}
+			else
+			{
+				x_[e_id] = 0;
+				layer_label_[i] ++;
+			}
 		}
+	}
 
-		int u = ptr_dualgraph_->e_orig_id(i);
-		layer_label_[u] += !x_[i];
+	// Update cut
+	cutting_edge_.clear();
+	VectorXd J(Md_);
+	J = A_ * x_;
+	for (int i = 0; i < Md_; i++)
+	{
+		if (J[i] == 1 || J[i] == -1)
+		{
+			int dual_u = ptr_dualgraph_->u(i);
+			int dual_v = ptr_dualgraph_->v(i);
+			int u = ptr_dualgraph_->e_orig_id(dual_u);
+			int v = ptr_dualgraph_->e_orig_id(dual_v);
+			if (x_[dual_u] == 1)
+			{
+				// u is the lower dual vertex of cutting-edge 
+				cutting_edge_.push_back(u);
+			}
+			else
+			{
+				// v is the lower dual vertex of cutting-edge 
+				cutting_edge_.push_back(v);
+			}
+		}
 	}
 }
 
@@ -523,7 +520,13 @@ vector<DualFace*> *GraphCut::GetDualFaceList()
 }
 
 
-VectorXi *GraphCut::GetLabel()
+vector<int> *GraphCut::GetLabel()
 {
 	return &layer_label_;
+}
+
+
+vector<int> *GraphCut::GetCut()
+{
+	return &cutting_edge_;
 }

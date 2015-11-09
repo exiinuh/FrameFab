@@ -4,8 +4,8 @@
 
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
-has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_bulk_(false),
-is_draw_axes_(false), is_simplified_(false), op_mode_(Normal), captured_edge_(-1)
+has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_cut_(false), 
+is_draw_bulk_(false), is_draw_axes_(false), is_simplified_(false), op_mode_(NORMAL), captured_edge_(-1)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
@@ -123,7 +123,7 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 		current_position_ = e->pos();
 		break;
 	case Qt::RightButton:
-		if (op_mode_ != Normal&& captured_verts_.size() > 0)
+		if (op_mode_ != NORMAL&& captured_verts_.size() > 0)
 		{
 			captured_verts_.pop_back();
 		}
@@ -203,16 +203,16 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 		if (is_simplified_)
 		{
 			emit(modeInfo(QString("Choosing boundary...Press ESC to exit.")));
-			op_mode_ = Choosebound;
+			op_mode_ = CHOOSEBOUND;
 		}
 		break;
 	case Qt::Key_I:
 		emit(modeInfo(QString("Inserting edge...Press ESC to exit.")));
-		op_mode_ = Manualedge;
+		op_mode_ = ADDEDGE;
 		break;
 	case Qt::Key_Escape:
 		emit(modeInfo(QString("Insert edge (I) | Choose boundary (C)")));
-		if (op_mode_ == Choosebound)
+		if (op_mode_ == CHOOSEBOUND)
 		{
 			fill(bound_.begin(), bound_.end(), 0);
 			for (int i = 0; i < captured_verts_.size(); i++)
@@ -222,7 +222,7 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 		}
 		captured_verts_.clear();
 		captured_edge_ = -1;
-		op_mode_ = Normal;
+		op_mode_ = NORMAL;
 		break;
 	default:
 		break;
@@ -289,7 +289,7 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 		double dis = sqrt(dx*dx + dy*dy + dz*dz);
 		if (dis < 0.015)
 		{
-			if (op_mode_ == Normal)
+			if (op_mode_ == NORMAL)
 			{
 				captured_verts_.clear();
 				captured_edge_ = -1;
@@ -307,7 +307,7 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 
 	switch (op_mode_)
 	{
-	case Normal:
+	case NORMAL:
 		if (captured_verts_.size() >= 1)
 		{
 			emit(CapturedEdge(-1, -1));
@@ -315,10 +315,10 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 		}
 		break;
 
-	case Choosebound:
+	case CHOOSEBOUND:
 		break;
 
-	case Manualedge:
+	case ADDEDGE:
 		if (captured_verts_.size() >= 2)
 		{
 			ptr_frame_->InsertEdge(captured_verts_[0]->ID(), captured_verts_[1]->ID());
@@ -355,7 +355,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 			double delta = ptr_frame_->ArcHeight(u->RenderPos(), v1->RenderPos(), v2->RenderPos());
 			if (delta < 0.007)
 			{
-				if (op_mode_ == Normal)
+				if (op_mode_ == NORMAL)
 				{
 					captured_verts_.clear();
 					captured_edge_ = -1;
@@ -376,13 +376,11 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 void RenderingWidget::Render()
 {
 	DrawAxes(is_draw_axes_);
-
 	DrawPoints(is_draw_point_);
-
-
 	DrawEdge(is_draw_edge_);
-
 	DrawHeat(is_draw_heat_);
+	DrawCut(is_draw_cut_);
+	DrawBulk(is_draw_bulk_);
 }
 
 
@@ -490,23 +488,48 @@ void RenderingWidget::CheckDrawPoint(bool bv)
 }
 
 
-void RenderingWidget::CheckDrawEdge(bool bv)
+void RenderingWidget::CheckEdgeMode(int type)
 {
-	is_draw_edge_ = bv;
-	updateGL();
-}
+	switch (type)
+	{
+	case NONE:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_cut_ = false;
+		is_draw_bulk_ = false;
+		break;
 
+	case EDGE:
+		is_draw_edge_ = true;
+		is_draw_heat_ = false;
+		is_draw_cut_ = false;
+		is_draw_bulk_ = false;
+		break;
 
-void RenderingWidget::CheckDrawHeat(bool bv)
-{
-	is_draw_heat_ = bv;
-	updateGL();
-}
+	case HEAT:
+		is_draw_edge_ = false;
+		is_draw_heat_ = true;
+		is_draw_cut_ = false;
+		is_draw_bulk_ = false;
+		break;
 
+	case CUT:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_cut_ = true;
+		is_draw_bulk_ = false;
+		break;
 
-void RenderingWidget::CheckDrawBulk(bool bv)
-{
-	is_draw_bulk_ = bv;
+	case BULK:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_cut_ = false;
+		is_draw_bulk_ = true;
+		break;
+
+	default:
+		break;
+	}
 	updateGL();
 }
 
@@ -568,6 +591,7 @@ void RenderingWidget::DrawAxes(bool bV)
 	glColor3f(1.0, 1.0, 1.0);
 }
 
+
 void RenderingWidget::DrawPoints(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
@@ -586,7 +610,7 @@ void RenderingWidget::DrawPoints(bool bv)
 		glColor3f(1.0, 1.0, 1.0);
 		switch (op_mode_)
 		{
-		case Normal:
+		case NORMAL:
 			if (verts[i]->IsFixed())
 			{
 				glColor3f(0.0, 1.0, 1.0);
@@ -596,8 +620,8 @@ void RenderingWidget::DrawPoints(bool bv)
 				glColor3f(0.0, 0.0, 1.0);
 			}
 
-		case Choosebound:
-		case Manualedge:
+		case CHOOSEBOUND:
+		case ADDEDGE:
 			for (int j = 0; j < captured_verts_.size(); j++)
 			{
 				if (i == captured_verts_[j]->ID())
@@ -617,6 +641,7 @@ void RenderingWidget::DrawPoints(bool bv)
 	glColor3f(1.0, 1.0, 1.0);
 	glEnd();
 }
+
 
 void RenderingWidget::DrawEdge(bool bv)
 {
@@ -655,6 +680,7 @@ void RenderingWidget::DrawEdge(bool bv)
 
 }
 
+
 void RenderingWidget::DrawHeat(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == 0)
@@ -662,7 +688,7 @@ void RenderingWidget::DrawHeat(bool bv)
 		return;
 	}
 
-	const VectorXi Label = *(ptr_fiberprint_->GetLabel());
+	const vector<int> Label = *(ptr_fiberprint_->GetLabel());
 	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -709,6 +735,80 @@ void RenderingWidget::DrawHeat(bool bv)
 		}
 	}
 }
+
+
+void RenderingWidget::DrawCut(bool bv)
+{
+	/*
+	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == 0)
+	{
+		return;
+	}
+
+	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
+	int M = ptr_frame_->SizeOfEdgeList();
+
+	const vector<int> cut = *(ptr_fiberprint_->GetCut());
+	vector<bool> is_cut(M);
+	fill(is_cut.begin(), is_cut.end(), false);
+	for (int i = 0; i < cut.size(); i++)
+	{
+		is_cut[cut[i]] = true;
+	}
+
+
+	for (int i = 0; i < M; i++)
+	{
+		int j = edges[i]->ppair_->ID();
+		if (i < j)
+		{
+			WF_edge *e = edges[i];
+			WF_edge *e_pair = edges[i]->ppair_;
+
+			if (is_cut[i])
+			{
+				glColor3f(1.0, 0.0, 0.0);
+			}
+			else
+			{
+			}
+			glBegin(GL_LINE_LOOP);
+
+			int tag = (Label[i] % 6);
+			switch (tag)
+			{
+			case 0:
+				glColor3f(1.0, 0.0, 0.0);
+				break;
+			case 1:
+				glColor3f(0.0, 1.0, 0.0);
+				break;
+			case 2:
+				glColor3f(0.0, 0.0, 1.0);
+				break;
+			case 3:
+				glColor3f(1.0, 1.0, 0.0);
+				break;
+			case 4:
+				glColor3f(1.0, 0.0, 1.0);
+				break;
+			case 5:
+				glColor3f(1.0, 1.0, 1.0);
+				break;
+
+			default:
+				break;
+			}
+
+			glVertex3fv(e->pvert_->RenderPos().data());
+			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+
+			glEnd();
+		}
+	}
+	*/
+}
+
 
 void RenderingWidget::DrawBulk(bool bv)
 {
@@ -810,6 +910,12 @@ void RenderingWidget::FiberPrintAnalysis()
 }
 
 
+void RenderingWidget::PrintLayer(int layer)
+{
+	print_layer_ = layer;
+}
+
+
 void RenderingWidget::SimplifyFrame()
 {
 	if (ptr_frame_ == NULL)
@@ -834,7 +940,7 @@ void RenderingWidget::ProjectBound()
 		return;
 	}
 	ptr_frame_->ProjectBound(&bound_);
-	op_mode_ = Normal;
+	op_mode_ = NORMAL;
 	emit(modeInfo(QString("Insert edge (I) | Choose boundary (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));

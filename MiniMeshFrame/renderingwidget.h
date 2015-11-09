@@ -27,9 +27,9 @@
 
 enum OperationMode
 {
-	Normal,
-	Choosebound,
-	Manualedge,
+	NORMAL,
+	CHOOSEBOUND,
+	ADDEDGE,
 };
 
 
@@ -83,9 +83,7 @@ public slots:
 	void	WriteFrame();
 
 	void	CheckDrawPoint(bool bv);
-	void	CheckDrawEdge(bool bv);
-	void	CheckDrawHeat(bool bv);
-	void	CheckDrawBulk(bool bv);
+	void	CheckEdgeMode(int type);
 	void	CheckLight(bool bv);
 	void	CheckDrawAxes(bool bv);
 
@@ -94,13 +92,15 @@ private:
 	void	DrawPoints(bool bv);
 	void	DrawEdge(bool bv);
 	void	DrawHeat(bool bv);
+	void	DrawCut(bool bv);
 	void	DrawBulk(bool bv);
 
 public slots:
 	void	FiberPrintAnalysis();
+	void	PrintLayer(int layer);
 	void	SimplifyFrame();
 	void	ProjectBound();
-	
+
 	void	RotateXY();
 	void	RotateXZ();
 	void	RotateYZ();
@@ -120,6 +120,7 @@ public:
 	bool			is_draw_point_;
 	bool			is_draw_edge_;
 	bool			is_draw_heat_;
+	bool			is_draw_cut_;
 	bool			is_draw_bulk_;
 	bool			has_lighting_;
 	bool			is_draw_axes_;
@@ -127,6 +128,8 @@ public:
 	// Fiber
 	FiberPrintPlugIn	*ptr_fiberprint_;
 	OperationMode		op_mode_;
+
+	int					print_layer_;
 
 	bool				is_simplified_;
 

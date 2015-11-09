@@ -25,13 +25,13 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateMenus();
 	CreateToolBars();
 	CreateStatusBar();
-	CreateRenderGroup();
 	CreateSliders();
+	CreateRenderGroup();
+
 
 	QVBoxLayout *layout_left = new QVBoxLayout;
 	layout_left->addWidget(groupbox_render_);
 	layout_left->addStretch(1);
-	layout_left->addWidget(slider_layer_);
 
 	QHBoxLayout *layout_main = new QHBoxLayout;
 	layout_main->addLayout(layout_left);
@@ -50,7 +50,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::CreateActions()
 {
-	action_new_ = new QAction(QIcon(":/MainWindow/Resources/images/new.png"), tr("&New"), this);
+	action_new_ = new QAction(QIcon(":/Resources/images/new.png"), tr("&New"), this);
 	action_new_->setShortcut(QKeySequence::New);
 	action_new_->setStatusTip(tr("Create a new file"));
 
@@ -154,21 +154,41 @@ void MainWindow::CreateStatusBar()
 }
 
 
+void MainWindow::CreateSliders()
+{
+	slider_layer_ = new QSlider(Qt::Horizontal);
+	slider_layer_->setMinimum(0);
+	slider_layer_->setMaximum(10);
+
+	connect(slider_layer_, SIGNAL(valueChanged(int)),
+		renderingwidget_, SLOT(PrintLayer(int)));
+}
+
+
 void MainWindow::CreateRenderGroup()
 {
 	checkbox_point_ = new QCheckBox(tr("Point"), this);
 	connect(checkbox_point_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawPoint(bool)));
 	checkbox_point_->setChecked(true);
+	
+	radiobutton_edge_ = new QRadioButton(tr("Edge"), this);
+	connect(radiobutton_edge_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
-	checkbox_edge_ = new QCheckBox(tr("Edge"), this);
-	connect(checkbox_edge_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawEdge(bool)));
+	radiobutton_heat_ = new QRadioButton(tr("Heat"), this);
+	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
-	checkbox_heat_ = new QCheckBox(tr("Heat"), this);
-	connect(checkbox_heat_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawHeat(bool)));
-	connect(checkbox_heat_, SIGNAL(clicked(bool)), this, SLOT(CheckFace(bool)));
+	radiobutton_cut_ = new QRadioButton(tr("Cut"), this);
+	connect(radiobutton_cut_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
-	checkbox_bulk_ = new QCheckBox(tr("Bulk"), this);
-	connect(checkbox_bulk_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawBulk(bool)));
+	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
+	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+
+	radiobutton_none_ = new QRadioButton(tr("None"), this);
+	radiobutton_none_->setVisible(false);
+	radiobutton_none_->setChecked(true);
+	edge_render_ = NONE;
+
+	connect(this, SIGNAL(EdgeMode(int)), renderingwidget_, SLOT(CheckEdgeMode(int)));
 
 	checkbox_light_ = new QCheckBox(tr("Light"), this);
 	connect(checkbox_light_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckLight(bool)));
@@ -180,22 +200,14 @@ void MainWindow::CreateRenderGroup()
 
 	QVBoxLayout* render_layout = new QVBoxLayout(groupbox_render_);
 	render_layout->addWidget(checkbox_point_);
-	render_layout->addWidget(checkbox_edge_);
-	render_layout->addWidget(checkbox_heat_);
-	render_layout->addWidget(checkbox_bulk_);
+	render_layout->addWidget(radiobutton_edge_);
+	render_layout->addWidget(radiobutton_heat_);
+	render_layout->addWidget(radiobutton_cut_);
+	render_layout->addWidget(slider_layer_);
+	render_layout->addWidget(radiobutton_bulk_);
+	render_layout->addWidget(radiobutton_none_);
 	render_layout->addWidget(checkbox_light_);
 	render_layout->addWidget(checkbox_axes_);
-}
-
-
-void MainWindow::CreateSliders()
-{
-	slider_layer_ = new QSlider(Qt::Horizontal);
-	slider_layer_->setMinimum(0);
-	slider_layer_->setMaximum(10);
-
-	connect( slider_layer_, SIGNAL(valueChanged(int)), 
-				renderingwidget_, SLOT(PrintLayer(int)) );
 }
 
 
@@ -206,6 +218,12 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
 
 void MainWindow::keyReleaseEvent(QKeyEvent *e)
+{
+
+}
+
+
+void MainWindow::OpenFile()
 {
 
 }
@@ -243,9 +261,55 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 }
 
 
-void MainWindow::OpenFile()
+void MainWindow::EdgeModeChange()
 {
+	if (sender() == radiobutton_edge_)
+	{
+		if (edge_render_ != EDGE)
+		{
+			radiobutton_edge_->setChecked(true);
+			edge_render_ = EDGE;
+			emit(EdgeMode(EDGE));
+			return;
+		}
+	}
+	else
+	if (sender() == radiobutton_heat_)
+	{
+		if (edge_render_ != HEAT)
+		{
+			radiobutton_heat_->setChecked(true);
+			edge_render_ = HEAT;
+			emit(EdgeMode(HEAT));
+			return;
+		}
+	}
+	else
+	if (sender() == radiobutton_cut_)
+	{
+		if (edge_render_ != CUT)
+		{
+			radiobutton_cut_->setChecked(true);
+			edge_render_ = CUT;
+			emit(EdgeMode(CUT));
+			return;
+		}
+	}
+	else
+	if (sender() == radiobutton_bulk_)
+	{
+		if (edge_render_ != BULK)
+		{
+			radiobutton_bulk_->setChecked(true);
+			edge_render_ = BULK;
+			emit(EdgeMode(BULK));
+			return;
+		}
+	}
 
+	radiobutton_none_->setChecked(true);
+	edge_render_ = NONE;
+	emit(EdgeMode(NONE));
 }
 
 

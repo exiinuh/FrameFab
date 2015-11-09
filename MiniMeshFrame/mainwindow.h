@@ -7,9 +7,20 @@
 #include "ui_mainwindow.h"
 #include "qinputdialog.h"
 
+
+enum EdgeRenderMode
+{
+	NONE, 
+	EDGE,
+	HEAT,
+	CUT,
+	BULK,
+};
+
 class QLabel;
 class QPushButton;
 class QCheckBox;
+class QRadioButton;
 class QGroupBox;
 class RenderingWidget;
 
@@ -26,18 +37,22 @@ private:
 	void	CreateMenus();
 	void	CreateToolBars();
 	void	CreateStatusBar();
-	void	CreateRenderGroup();
 	void	CreateSliders();
+	void	CreateRenderGroup();
 
 protected:
 	void	keyPressEvent(QKeyEvent *e);
 	void	keyReleaseEvent(QKeyEvent *e);
 
+signals:
+	void	EdgeMode(int);
+
 public slots:
+	void	OpenFile();
 	void	ShowMeshInfo(int npoint, int nedge);
 	void	ShowCapturedVert(int id);
 	void	ShowCapturedEdge(int id, double len);
-	void	OpenFile();
+	void	EdgeModeChange();
 	void	ShowAbout();
 
 	void	SetSlider();
@@ -79,13 +94,16 @@ private:
 
 	// Render RadioButtons
 	QCheckBox			*checkbox_point_;
-	QCheckBox			*checkbox_edge_;
-	QCheckBox			*checkbox_heat_;
-	QCheckBox			*checkbox_bulk_;
+	QRadioButton		*radiobutton_edge_;
+	QRadioButton		*radiobutton_heat_;
+	QRadioButton		*radiobutton_cut_;
+	QRadioButton		*radiobutton_bulk_;
+	QRadioButton		*radiobutton_none_;
 	QCheckBox			*checkbox_light_;
 	QCheckBox			*checkbox_axes_;
 
 	QGroupBox			*groupbox_render_;
+	EdgeRenderMode		edge_render_;
 
 	// Information
 	QLabel				*label_meshinfo_;

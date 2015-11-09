@@ -39,7 +39,7 @@ public:
 	void		InitState();
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		CreateAandC();						// Construct edge-incidence matrix A and weight diagonal matrix C
-	void		SetBoundary(VX &d, SpMat &W, int count);
+	void		SetBoundary(VX &d, SpMat &W);
 
 	//Termination
 	bool		CheckLabel(int iter_count);			// Stopping Criterion for iteratively apply ADMM to find several cuts
@@ -51,13 +51,14 @@ public:
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
-	void		UpdateX();
+	void		UpdateCut();
 
 	vector<DualVertex*>		*GetDualVertList();
 	vector<DualEdge*>		*GetDualEdgeList();
 	vector<DualFace*>		*GetDualFaceList();
 
-	VectorXi				*GetLabel();
+	vector<int>				*GetLabel();
+	vector<int>				*GetCut();
 
 public:
 //private:
@@ -65,11 +66,12 @@ public:
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
 
-	int				N_;				// N : Number of nodes in orig graph
-	int				M_;				// M : Number of edges in orig graph 
-	int				Nd_;			// Nd : Number of node in dual graph
-	int				Md_;			// Md : number of edges in dual graph
-	int				Fd_;			// Fd : number of faces in dual graph
+	int				N_;				// N :    Number of nodes in orig graph
+	int				M_;				// M :    Number of edges in orig graph 
+	int				Nd_;			// Nd :   Number of node in dual graph
+	int				Md_;			// Md :   Number of edges in dual graph
+	int				Fd_;			// Fd :   Number of faces in dual graph
+	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
 	double			penalty_;		// penalty  : penalty factor used in ADMM  
 	double			D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
@@ -85,10 +87,11 @@ public:
 	VX				D_;
 	VX				lambda_;
 	VX				a_;				// linear coefficient used in x_Qp
-	VectorXi		layer_label_;	// passed to render
+	vector<int>		layer_label_;	// passed to render
+	vector<int>		cutting_edge_;
 
 	VX				dual_res_;		// dual residual for ADMM termination criteria
-	VX				primal_res_;		// dual residual for ADMM termination criteria
+	VX				primal_res_;	// dual residual for ADMM termination criteria
 
 	QP				*qp_;			// Solves the quadratic programming problem:
 									// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub

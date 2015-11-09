@@ -25,6 +25,7 @@ void FiberPrintPlugIn::Print()
 {
 	ptr_graphcut_->MakeLayers();
 	//ptr_seqanalyzer_->LayerPrint();
+	//ptr_seqanalyzer_->Debug();
 }
 
 
@@ -34,11 +35,16 @@ vector<DualVertex*> *FiberPrintPlugIn::GetDualVertList()
 }
 
 
-VectorXi *FiberPrintPlugIn::GetLabel()
+vector<int> *FiberPrintPlugIn::GetLabel()
 {
 	return ptr_graphcut_->GetLabel();
 }
 
+
+vector<int> *FiberPrintPlugIn::GetCut()
+{
+	return ptr_graphcut_->GetCut();
+}
 
 void FiberPrintPlugIn::Debug()
 {

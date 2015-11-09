@@ -18,8 +18,11 @@ public:
 
 public:
 	void				Print();
+
 	vector<DualVertex*>	*GetDualVertList();
-	VectorXi			*GetLabel();
+	vector<int>			*GetLabel();
+	vector<int>			*GetCut();
+
 	void				Debug();		// return value: edge index in mesh, for cut rendering
 
 private:

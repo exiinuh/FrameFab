@@ -45,7 +45,6 @@ void DualGraph::Dualization()
 
 	edge_list_ = new vector<DualEdge*>;
 
-	// In dualization, each vert in original graph turns into dual face
 	face_list_ = new vector<DualFace*>;
 	(*face_list_).resize(N);
 	for (int i = 0; i < N; i++)
@@ -121,7 +120,7 @@ void DualGraph::Establish()
 		}
 	}
 
-	int Fd = 0;			// New id for each DualFace (node in orig graph)
+	int Fd = 0;
 	double maxz = ptr_frame_->maxZ();
 	double minz = ptr_frame_->minZ();
 	for (int i = 0; i < N; i++)
@@ -132,13 +131,11 @@ void DualGraph::Establish()
 		}
 
 		// face_list_
-		// representing renumbering of nodes in original graph after each cut
 		(*face_list_)[i]->SetDualId(Fd);
 		(*face_list_)[Fd]->SetOrigId(i);
 		Fd++;
 
 		// edge_list_
-		// each dual id corresponding to shared orig nodes of two orig edge
 		if (verts[i]->Degree() > 1)
 		{
 			double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);

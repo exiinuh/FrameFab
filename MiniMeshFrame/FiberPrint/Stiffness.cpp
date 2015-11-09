@@ -85,10 +85,6 @@ void Stiffness::CreateM()
 					+ G * M_PI * radius * radius / len;
 
 				M_[e_id] = Muv;
-				
-				//MatrixXd M_tmp = Muv;
-				//Statistics s_M("LocalStiffMatrix_CreateM", M_tmp);
-				//s_M.GenerateMatrixFile();
 			}
 			edge = edge->pnext_;
 		}
@@ -161,10 +157,7 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
 	int Nd = ptr_dualgraph_->SizeOfVertList();
-	int Fd = ptr_dualgraph_->SizeOfFaceList();			// Fd = Number of nodes in Current orig graph
-
-	Statistics s_x("x_CreateK", *ptr_x);
-	s_x.GenerateVectorFile();
+	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
 	vector<Matrix3d> Mn;
 	Mn.resize(Fd);
@@ -177,15 +170,14 @@ void Stiffness::CreateK(const VectorXd *ptr_x)
 	for (int e_id = 0; e_id < Nd; e_id++)
 	{
 		int i = ptr_dualgraph_->e_orig_id(e_id);
-		int u = edges[i]->ppair_->pvert_->ID();			// node id at orig graph
+		int u = edges[i]->ppair_->pvert_->ID();
 		int v = edges[i]->pvert_->ID();
-		int dual_u = ptr_dualgraph_->v_dual_id(u);		// DualFace Id (orig graph node's renumbering id after previous cut)
+		int dual_u = ptr_dualgraph_->v_dual_id(u);
 		int dual_v = ptr_dualgraph_->v_dual_id(v);
 
 		if (!verts[u]->IsFixed())
 		{
 			Mn[dual_u] -= (*ptr_x)[e_id] * M_[e_id];
-
 			if (!verts[v]->IsFixed())
 			{
 				for (int j = 0; j < 3; j++)
@@ -327,28 +319,22 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 	CreateFv(ptr_x);
 
 	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//BiCGSTAB<SparseMatrix<double>> solver;
+	BiCGSTAB<SparseMatrix<double>> solver;
 	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	FullPivLU<MatrixXd> solver;
+	//FullPivLU<MatrixXd> solver;
 
-	K_.makeCompressed();
+	//K_.makeCompressed();
 	solver.compute(K_);
-
-	/*
-	for (int i = 0; i < 3 * Nk_; i++)
-	{
-		if (K_.coeff(i, i) == 0)
-		{
-			printf("%d\n", i);
-		}
-	}
-	*/
-
-	cout << "column number of K_ : " << K_.cols() << endl;
-	cout << "rank of K_ : "			 << solver.rank() << endl;
+	assert(solver.info() == Success);
+	
+	cout << "Initial D calculating. (Initial Value for GraphCut Process)" << endl;
+	//cout << "column number of K_ : " << K_.cols()     << endl;
+	//cout << "rank of K_ : "			 << solver.rank() << endl;
 	//getchar();
 	
 	(*ptr_D) = solver.solve(Fv_);
+	assert(solver.info() == Success);
+
 	/*
 	VectorXd D;
 	D.resize(3 * Nk_);
