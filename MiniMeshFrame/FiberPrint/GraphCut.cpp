@@ -20,6 +20,14 @@ GraphCut::GraphCut(WireFrame *ptr_frame)
 
 GraphCut::~GraphCut()
 {
+	delete ptr_dualgraph_;
+	ptr_dualgraph_ = NULL;
+
+	delete ptr_stiff_;
+	ptr_stiff_ = NULL;
+
+	delete qp_;
+	qp_ = NULL;
 }
 
 
@@ -120,8 +128,8 @@ void GraphCut::CreateAandC()
 	Statistics s_C("C", C_);
 	s_C.GenerateSpFile();
 
-	H1_ = new SpMat(Nd_, Nd_);
-	*H1_ = A_.transpose() * C_ * A_;
+	H1_ = SpMat(Nd_, Nd_);
+	H1_ = A_.transpose() * C_ * A_;
 }
 
 
@@ -204,7 +212,7 @@ bool GraphCut::CheckLabel(int iter_count)
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
-	if (iter_count == 8)
+	if (l < 30)
 	{
 		return true;
 	}
@@ -258,7 +266,7 @@ void GraphCut::MakeLayers()
 		//ptr_stiff_->Debug();
 		ptr_stiff_->CalculateD(&D_, &x_);
 
-		Statistics s_H("H1_", *H1_);
+		Statistics s_H("H1_", H1_);
 		s_H.GenerateSpFile();
 
 		Statistics s_x("x_", x_);
@@ -269,7 +277,7 @@ void GraphCut::MakeLayers()
 
 		//ptr_stiff_->CalculateD(&D_, &x_);
 
-		double old_energy = x_.dot((*H1_)*x_);
+		double old_energy = x_.dot((H1_)*x_);
 		cout << "****************************************" << endl;
 		cout << "GraphCut Round : " << cut_count << endl;
 		cout << "Initial energy before entering ADMM: " << old_energy << endl;
@@ -299,13 +307,18 @@ void GraphCut::MakeLayers()
 			SpMat Q_new;
 			CalculateQ(D_prev, Q_prev);
 			CalculateQ(D_, Q_new);
-			dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
+
+			ptr_stiff_->CreateK(&x_);
+			SpMat K_new = *(ptr_stiff_->WeightedK());
+
+			/*dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
+				+ lambda_.transpose() * (Q_prev - Q_new);*/
+			dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
 				+ lambda_.transpose() * (Q_prev - Q_new);
-			//dual_res_ = penalty_ * (D_)
 			primal_res_ = Q_new * x_;
 
 
-			double obj_func = x_.dot((*H1_) * x_);
+			double obj_func = x_.dot(H1_ * x_);
 			record.push_back(obj_func);
 
 			cout << "new energy func value record: " << obj_func << endl;
@@ -342,7 +355,7 @@ void GraphCut::CalculateX(VX &d, SpMat &W)
 	CalculateQ(D_, Q);
 
 	SpMat H2 = Q.transpose() * Q;
-	SpMat H = 2 * (*H1_) + penalty_ * H2;
+	SpMat H = 2 * H1_ + penalty_ * H2;
 
 	// Construct Linear coefficient for x-Qp problem
 	a_ = Q.transpose() * lambda_;
@@ -499,34 +512,4 @@ void GraphCut::UpdateCut()
 			}
 		}
 	}
-}
-
-
-vector<DualVertex*> *GraphCut::GetDualVertList()
-{
-	return ptr_dualgraph_->GetVertList();
-}
-
-
-vector<DualEdge*> *GraphCut::GetDualEdgeList()
-{
-	return ptr_dualgraph_->GetEdgeList();
-}
-
-
-vector<DualFace*> *GraphCut::GetDualFaceList()
-{
-	return ptr_dualgraph_->GetFaceList();
-}
-
-
-vector<int> *GraphCut::GetLabel()
-{
-	return &layer_label_;
-}
-
-
-vector<int> *GraphCut::GetCut()
-{
-	return &cutting_edge_;
 }

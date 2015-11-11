@@ -10,17 +10,58 @@ DualGraph::DualGraph(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
 
-	vert_list_ = NULL;
-	edge_list_ = NULL;
-	face_list_ = NULL;
+	int N = ptr_frame_->SizeOfVertList();
+	int M = ptr_frame_->SizeOfEdgeList();
 
-	exist_vert_.resize(ptr_frame_->SizeOfVertList());
-	exist_edge_.resize(ptr_frame_->SizeOfEdgeList());
+	vert_list_ = new vector<DualVertex*>;
+	vert_list_->resize(M);
+	for (int i = 0; i < M; i++)
+	{
+		(*vert_list_)[i] = new DualVertex();
+	}
+
+	edge_list_ = new vector<DualEdge*>;
+
+	face_list_ = new vector<DualFace*>;
+	face_list_->resize(N);
+	for (int i = 0; i < N; i++)
+	{
+		(*face_list_)[i] = new DualFace();
+	}
+
+	exist_vert_.resize(N);
+	exist_edge_.resize(M);
 }
 
 
 DualGraph::~DualGraph()
 {
+	int N = vert_list_->size();
+	for (int i = 0; i < N; i++)
+	{
+		delete (*vert_list_)[i];
+		(*vert_list_)[i] = NULL;
+	}
+	delete vert_list_;
+	vert_list_ = NULL;
+
+	int M = edge_list_->size();
+	for (int i = 0; i < M; i++)
+	{
+		delete (*edge_list_)[i];
+		(*edge_list_)[i] = NULL;
+	}
+	delete edge_list_;
+	edge_list_ = NULL;
+
+	int F = face_list_->size();
+	for (int i = 0; i < F; i++)
+	{
+		delete (*face_list_)[i];
+		(*face_list_)[i] = NULL;
+	}
+	delete face_list_;
+	face_list_ = NULL;
 }
 
 
@@ -34,23 +75,6 @@ void DualGraph::Dualization()
 	// first time & all exsits
 	fill(exist_vert_.begin(), exist_vert_.end(), true);
 	fill(exist_edge_.begin(), exist_edge_.end(), true);
-
-	// Initialize vert_list_ & edge_list_ & face_list_
-	vert_list_ = new vector<DualVertex*>;
-	(*vert_list_).resize(M);
-	for (int i = 0; i < M; i++)
-	{
-		(*vert_list_)[i] = new DualVertex();
-	}
-
-	edge_list_ = new vector<DualEdge*>;
-
-	face_list_ = new vector<DualFace*>;
-	(*face_list_).resize(N);
-	for (int i = 0; i < N; i++)
-	{
-		(*face_list_)[i] = new DualFace();
-	}
 
 	Establish();
 }

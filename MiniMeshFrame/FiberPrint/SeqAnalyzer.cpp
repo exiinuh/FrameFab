@@ -2,7 +2,9 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
+			:alpha_(1.0), beta_(10000), gamma_(100)
 {
+	queue_ = new vector<int>;
 }
 
 
@@ -10,11 +12,17 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 			:alpha_(1.0), beta_(10000), gamma_(100)
 {
 	ptr_graphcut_ = ptr_graphcut;
+	queue_ = new vector<int>;
 }
 
 
 SeqAnalyzer::~SeqAnalyzer()
 {
+	delete ptr_collision_;
+	ptr_collision_ = NULL;
+
+	delete queue_;
+	queue_ = NULL;
 }
 
 
@@ -30,7 +38,7 @@ void SeqAnalyzer::LayerPrint()
 	vector<WF_edge*> edges = *(ptr_frame->GetEdgeList());
 	int N = ptr_frame->SizeOfVertList();
 	int M = ptr_frame->SizeOfEdgeList();
-	int Nd = M / 2;
+	int Nd = ptr_dualgraph->SizeOfVertList();
 	MX L(Nd, Nd);
 	MX D(Nd, Nd);
 	VX x(Nd*Nd);
@@ -38,8 +46,8 @@ void SeqAnalyzer::LayerPrint()
 	D.setConstant(gamma_);
 	x.setZero();
 
-	vector<vector<Range*>> range_list = ptr_collision_->GetRangeList(); //           
-	vector<vector<int>>	range_state = ptr_collision_->GetRangeState();         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
+	vector<vector<Range*>> *range_list = ptr_collision_->GetRangeList(); //           
+	vector<vector<int>>	*range_state = ptr_collision_->GetRangeState();         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
 	for (int i = 0; i < Nd; i++)
 	{
 		int u1 = ptr_dualgraph->u(i);
@@ -55,8 +63,8 @@ void SeqAnalyzer::LayerPrint()
 			}
 
 			double angle = 0;
-			Range *range = range_list[i][j];
-			switch (range_state[i][j])
+			Range *range = (*range_list)[i][j];
+			switch ((*range_state)[i][j])
 			{
 			case 0:
 				L(i, j) = alpha_;
@@ -71,7 +79,11 @@ void SeqAnalyzer::LayerPrint()
 				{
 					angle += range->left_end - range->left_begin;
 				}
-				L(i, j) = beta_ * angle / 20 + alpha_;
+				
+				cout << range->right_begin << " " << range->right_end << " " << range->left_begin << " " << range->left_end << endl;
+				getchar();
+				
+				L(i, j) = beta_ * angle / 20.0 + alpha_;
 				break;
 
 			case 2:
@@ -84,6 +96,16 @@ void SeqAnalyzer::LayerPrint()
 		}
 	}
 
+	for (int i = 0; i < Nd; i++)
+	{
+		for (int j = 0; j < Nd; j++)
+		{
+			cout << L(i, j) << " ";
+		}
+		puts("");
+		getchar();
+	}
+
 	MX cost(Nd, Nd);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -93,38 +115,40 @@ void SeqAnalyzer::LayerPrint()
 		}
 	}
 
+	
+	for (int i = 0; i < Nd; i++)
+	{
+		for (int j = 0; j < Nd; j++)
+		{
+			cout << cost(i, j) << " ";
+		}
+		puts("");
+		getchar();
+	}
+	
+
+
 	TSPSolver *TSP_solver = new TSPSolver(&cost);
 	TSP_solver->Solve(x, 0);
-}
 
-void SeqAnalyzer::Debug()
-{
-	TSPLIB_Loader loader;
-	Eigen::SparseMatrix<double> Cost;
-	int N;
-	loader.loadFromFile("F:\\bays29.txt", N, &Cost);
 
-	VectorXd x;
-	TSPSolver solver(&Cost);
-	solver.Solve(x, true);
-
-	Statistics s_x("TSP_Result_x", x);
-	s_x.GenerateVectorFile();
-
-	int n = sqrt(x.size());
-	MatrixXd TSP_M(n, n);
-	TSP_M.setZero();
-
-	for (int i = 0; i < n; i++)
+	int h = 0;
+	queue_->clear();
+	queue_->push_back(0);
+	while (queue_->size() < Nd)
 	{
-		for (int j = 0; j < n; j++)
+		int i = (*queue_)[h];
+		for (int j = 0; j < Nd; j++)
 		{
-			TSP_M(i, j) = x(i*n + j);
+			if (x(i*Nd+j))
+			{
+				queue_->push_back(j);
+				break;
+			}
 		}
+		h++;
 	}
-
-	Statistics s_M("TSP_Matrix", TSP_M);
-	s_M.GenerateMatrixFile();
-
-	getchar();
+	
+	Statistics s_x("TSP_Res", x);
+	s_x.GenerateVectorFile();
 }

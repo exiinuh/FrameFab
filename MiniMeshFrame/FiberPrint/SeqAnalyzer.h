@@ -3,9 +3,8 @@
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
 #include "Collision\Collision.h"
-
 #include "TSPSolver.h"
-#include "TSPLIB_Loader.h"
+
 
 class SeqAnalyzer
 {
@@ -18,8 +17,11 @@ public:
 	~SeqAnalyzer();
 
 public:
-	void		LayerPrint();
-	void		Debug();
+	void				LayerPrint();
+
+	vector<int>			*GetQueue()			{ return queue_; }
+	vector<vector<int>>	*GetRangeState()	{ return ptr_collision_->GetRangeState(); }
+	vector<Bulk*>		*GetBulk()			{ return ptr_collision_->GetBulk(); }
 
 private:
 	GraphCut		*ptr_graphcut_;
@@ -28,5 +30,7 @@ private:
 	double			alpha_;					
 	double			beta_;
 	double			gamma_;
+
+	vector<int>		*queue_;
 };
 

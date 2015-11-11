@@ -15,6 +15,7 @@ enum EdgeRenderMode
 	HEAT,
 	CUT,
 	BULK,
+	ORDER,
 };
 
 class QLabel;
@@ -37,8 +38,9 @@ private:
 	void	CreateMenus();
 	void	CreateToolBars();
 	void	CreateStatusBar();
-	void	CreateSliders();
-	void	CreateRenderGroup();
+	void	CreateRenderGroup();	
+	void	CreateEditGroup();
+	void	CreateScaleGroup();
 
 protected:
 	void	keyPressEvent(QKeyEvent *e);
@@ -81,29 +83,36 @@ private:
 	// Basic Operator Tool
 	QAction				*action_loadmesh_;
 	QAction				*action_background_;
-	QAction				*action_rotatexy_;
-	QAction				*action_rotatexz_;
-	QAction				*action_rotateyz_;
 
 	// Fiber
 	QAction				*action_fiberprint_;
 	QAction				*action_simplify_;
 	QAction				*action_project_;
-	QAction				*action_setslider_;
-	QSlider				*slider_layer_;
 
-	// Render RadioButtons
+	// Render group
 	QCheckBox			*checkbox_point_;
 	QRadioButton		*radiobutton_edge_;
 	QRadioButton		*radiobutton_heat_;
 	QRadioButton		*radiobutton_cut_;
+	QSlider				*slider_layer_;
 	QRadioButton		*radiobutton_bulk_;
+	QRadioButton		*radiobutton_order_;
+	QSlider				*slider_order_;
 	QRadioButton		*radiobutton_none_;
 	QCheckBox			*checkbox_light_;
 	QCheckBox			*checkbox_axes_;
-
 	QGroupBox			*groupbox_render_;
 	EdgeRenderMode		edge_render_;
+
+	// Edit group
+	QPushButton			*pushbutton_rotatexy_;
+	QPushButton			*pushbutton_rotatexz_;
+	QPushButton			*pushbutton_rotateyz_;
+	QGroupBox			*groupbox_edit_;
+
+	// Scale group
+	QSlider				*slider_scale_;
+	QGroupBox			*groupbox_scale_;
 
 	// Information
 	QLabel				*label_meshinfo_;

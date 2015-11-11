@@ -10,7 +10,6 @@ is_draw_bulk_(false), is_draw_axes_(false), is_simplified_(false), op_mode_(NORM
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
 	ptr_fiberprint_ = NULL;
-	ptr_collision_ = NULL;
 
 	eye_goal_[0] = eye_goal_[1] = eye_goal_[2] = 0.0;
 	eye_direction_[0] = eye_direction_[1] = 0.0;
@@ -24,7 +23,7 @@ RenderingWidget::~RenderingWidget()
 {
 	SafeDelete(ptr_arcball_);
 	SafeDelete(ptr_frame_);
-	//	SafeDelete(ptr_layermaker);
+	SafeDelete(ptr_fiberprint_);
 }
 
 
@@ -273,12 +272,17 @@ void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy,
 
 bool RenderingWidget::CaptureVertex(QPoint mouse)
 {
+	if (ptr_frame_ == NULL)
+	{
+		return 0;
+	}
+
 	double x = 0;
 	double y = 0;
 	double z = 0;
 	CoordinatesTransform(mouse, &x, &y, &z);
 
-	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
+	vector<WF_vert*> verts = *(ptr_frame_->GetVertList()); 
 	int N = verts.size();
 	int i;
 	for (i = 0; i < N; i++)
@@ -337,6 +341,11 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 
 bool RenderingWidget::CaptureEdge(QPoint mouse)
 {
+	if (ptr_frame_ == NULL)
+	{
+		return 0;
+	}
+
 	double x = 0;
 	double y = 0;
 	double z = 0;
@@ -348,11 +357,11 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 	{
 		if (edges[i]->ID() < edges[i]->ppair_->ID())
 		{
-			WF_vert	*u = new WF_vert(x, y, z);
+			WF_vert	u = WF_vert(x, y, z);
 			WF_vert *v1 = edges[i]->pvert_;
 			WF_vert *v2 = edges[i]->ppair_->pvert_;
 
-			double delta = ptr_frame_->ArcHeight(u->RenderPos(), v1->RenderPos(), v2->RenderPos());
+			double delta = ptr_frame_->ArcHeight(u.RenderPos(), v1->RenderPos(), v2->RenderPos());
 			if (delta < 0.007)
 			{
 				if (op_mode_ == NORMAL)
@@ -381,6 +390,7 @@ void RenderingWidget::Render()
 	DrawHeat(is_draw_heat_);
 	DrawCut(is_draw_cut_);
 	DrawBulk(is_draw_bulk_);
+	DrawOrder(is_draw_order_);
 }
 
 
@@ -427,12 +437,13 @@ void RenderingWidget::ReadFrame()
 		emit(operatorInfo(QString("Read Mesh Failed!")));
 		return;
 	}
-	//ÖÐÎÄÂ·¾¶Ö§³Ö
+
+	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
 	QTextCodec::setCodecForLocale(code);
 
 	QByteArray byfilename = filename.toLocal8Bit();
-	delete ptr_frame_;
+	delete ptr_frame_; 
 	ptr_frame_ = new WireFrame();
 	ptr_frame_->LoadFromOBJ(byfilename.data());
 	is_simplified_ = false;
@@ -441,14 +452,15 @@ void RenderingWidget::ReadFrame()
 	bound_.resize(N);
 	fill(bound_.begin(), bound_.end(), 0);
 	captured_verts_.clear();
+	captured_edge_ = -1;
 
 	emit(modeInfo(QString("Insert edge (I)")));
-	//emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
+	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
 
 	/*
-	//Run detection
+	// Run detection
 	cout << "graphcut begin" << endl;
 	DualGraph  *ptr_dualgraph_ = new DualGraph(ptr_frame_);
     ptr_dualgraph_->Dualization();
@@ -497,6 +509,7 @@ void RenderingWidget::CheckEdgeMode(int type)
 		is_draw_heat_ = false;
 		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
+		is_draw_order_ = false;
 		break;
 
 	case EDGE:
@@ -504,6 +517,7 @@ void RenderingWidget::CheckEdgeMode(int type)
 		is_draw_heat_ = false;
 		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
+		is_draw_order_ = false;
 		break;
 
 	case HEAT:
@@ -511,6 +525,7 @@ void RenderingWidget::CheckEdgeMode(int type)
 		is_draw_heat_ = true;
 		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
+		is_draw_order_ = false;
 		break;
 
 	case CUT:
@@ -518,6 +533,7 @@ void RenderingWidget::CheckEdgeMode(int type)
 		is_draw_heat_ = false;
 		is_draw_cut_ = true;
 		is_draw_bulk_ = false;
+		is_draw_order_ = false;
 		break;
 
 	case BULK:
@@ -525,6 +541,15 @@ void RenderingWidget::CheckEdgeMode(int type)
 		is_draw_heat_ = false;
 		is_draw_cut_ = false;
 		is_draw_bulk_ = true;
+		is_draw_order_ = false;
+		break;
+
+	case ORDER:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_cut_ = false;
+		is_draw_bulk_ = false;
+		is_draw_order_ = true;
 		break;
 
 	default:
@@ -812,11 +837,14 @@ void RenderingWidget::DrawCut(bool bv)
 
 void RenderingWidget::DrawBulk(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_collision_ == NULL)
+	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
 	{
 		return;
 	}
 
+	const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
+	const vector<Bulk*> bulk_list = *(ptr_fiberprint_->GetBulk());
+	vector<vector<int>> range_state = *(ptr_fiberprint_->GetRangeState());
 	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -833,8 +861,8 @@ void RenderingWidget::DrawBulk(bool bv)
 			//decide line color
 			if (captured_edge_ != -1)
 			{
-				int e_id = ptr_collision_->ptr_dualgraph_->e_dual_id(i);
-				int cap_id = ptr_collision_->ptr_dualgraph_->e_dual_id(captured_edge_);
+				int e_id = dual_vert[i]->dual_id();
+				int cap_id = dual_vert[captured_edge_]->dual_id();
 				if (captured_edge_ == i)
 				{
 					glColor4f(0.0, 0.0, 1.0, 1);
@@ -845,7 +873,7 @@ void RenderingWidget::DrawBulk(bool bv)
 						glDepthMask(GL_FALSE);
 					}
 
-					Bulk *bulk = ptr_collision_->bulk_list_[cap_id];
+					Bulk *bulk = bulk_list[cap_id];
 					bulk->Face(0)->Render(ptr_frame_, 0.1);
 					bulk->Face(1)->Render(ptr_frame_, 0.6);
 					bulk->Face(2)->Render(ptr_frame_, 0.45);
@@ -866,12 +894,12 @@ void RenderingWidget::DrawBulk(bool bv)
 					}
 				}
 				else
-				if (ptr_collision_->range_state_[cap_id][e_id] == 1)
+				if (range_state[cap_id][e_id] == 1)
 				{
 					glColor4f(0.80, 0.0, 0.30, 0.4);
 				}
 				else
-				if (ptr_collision_->range_state_[cap_id][e_id] == 2)
+				if (range_state[cap_id][e_id] == 2)
 				{
 					glColor4f(1.0, 0.0, 0.0, 1);
 				}
@@ -894,13 +922,41 @@ void RenderingWidget::DrawBulk(bool bv)
 }
 
 
+void RenderingWidget::DrawOrder(bool bv)
+{
+	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
+	{
+		return;
+	}
+
+	const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
+	const std::vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
+	const std::vector<int> print_queue = *(ptr_fiberprint_->GetQueue());
+	for (int i = 0; i < print_order_; i++)
+	{
+		int ei = dual_vert[print_queue[i]]->orig_id();
+		WF_edge *e = edges[ei];
+		glBegin(GL_LINE_LOOP);
+		glColor3f(1.0, 1.0, 1.0);
+		glVertex3fv(e->pvert_->RenderPos().data());
+		glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+		glEnd();
+	}
+	//updateGL();
+}
+
 
 void RenderingWidget::FiberPrintAnalysis()
 {
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->Dualization();
+	ptr_fiberprint_->ptr_seqanalyzer_->LayerPrint();
+	
+	/*
 	delete ptr_fiberprint_;
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
 	ptr_fiberprint_->Print();
-
+	*/
 	/*
 	delete ptr_layermaker;
 	ptr_layermaker = new LayerMaker(ptr_mesh_);
@@ -913,6 +969,14 @@ void RenderingWidget::FiberPrintAnalysis()
 void RenderingWidget::PrintLayer(int layer)
 {
 	print_layer_ = layer;
+	updateGL();
+}
+
+
+void RenderingWidget::PrintOrder(int order)
+{
+	print_order_ = order;
+	updateGL();
 }
 
 

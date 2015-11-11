@@ -337,9 +337,6 @@ bool LPMosek::solve(const VX& c,
 
 	tSolve.stop();
 	
-	setup_time_ = tSetup.to_double();
-	solve_time_ = tSolve.to_double();
-
 	return success;
 
 #else

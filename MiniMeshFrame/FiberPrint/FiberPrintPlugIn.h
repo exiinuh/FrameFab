@@ -19,13 +19,17 @@ public:
 public:
 	void				Print();
 
-	vector<DualVertex*>	*GetDualVertList();
-	vector<int>			*GetLabel();
-	vector<int>			*GetCut();
+	vector<DualVertex*>	*GetDualVertList()	{ return 	ptr_graphcut_->GetDualVertList(); }
+	vector<int>			*GetLabel()			{ return ptr_graphcut_->GetLabel(); }
+	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
+
+	vector<int>			*GetQueue()			{ return ptr_seqanalyzer_->GetQueue(); }
+	vector<vector<int>>	*GetRangeState()	{ return ptr_seqanalyzer_->GetRangeState(); }
+	vector<Bulk*>		*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
 	void				Debug();		// return value: edge index in mesh, for cut rendering
 
-private:
+public:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;

@@ -9,8 +9,11 @@ Collision::Collision(WireFrame  *ptr_frame, DualGraph *ptr_dualgraph)
 {
 	extruder_ = new ExtruderCone();
 	ptr_frame_ = ptr_frame;
-	ptr_dualgraph_ = ptr_dualgraph;
-	DetectFrame();
+	ptr_dualgraph_ = ptr_dualgraph; 
+
+	range_list_ = new vector<vector<Range*>>;
+	range_state_ = new vector<vector<int>>;
+	bulk_list_ = new vector<Bulk*>;
 }
 
 /*
@@ -36,14 +39,16 @@ void Collision::DetectFrame()
 	double generatrix = height / angle;
 	double radii = height*tan(angle);
 
-	range_list_.clear();
-	range_state_.clear();
-	bulk_list_.clear();
+	range_list_->clear();
+	range_state_->clear();
+	bulk_list_->clear();
 
+	// Store the relative collision influence (valid angle)
+	// between two dual vertex
 	vector<Range*> temp_range_, org_temp_range_;
-	vector<int> temp_state_, org_temp_state_;
+	vector<int>	   temp_state_, org_temp_state_;
 
-	int M = ptr_frame_->SizeOfEdgeList();
+	int M  = ptr_frame_->SizeOfEdgeList();
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 
 	temp_range_.resize(Nd);
@@ -51,66 +56,71 @@ void Collision::DetectFrame()
 	org_temp_range_.resize(2 * Nd);
 	org_temp_state_.resize(2 * Nd);
 
-	//set size
 	for (int i = 0; i < Nd; i++)
 	{
-		range_list_.push_back(temp_range_);
-		range_state_.push_back(temp_state_);
+		range_list_->push_back(temp_range_);
+		range_state_->push_back(temp_state_);
 	}
 
 	for (int i = 0; i < Nd; i++)
 	{
+
 		if (i%int(Nd / 10) == 0)
-			cout << " " << int(100 * i / Nd) << " %";
-		
+			cout << double(i) / double(Nd) * 100 << "%" << endl;
+
 		//Fix Polyhedron
 		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
 		point start = e->pvert_->Position();
 		point end = e->ppair_->pvert_->Position();
-		Bulk *bulk = new Bulk(extruder_, start, end);
-		bulk_list_.push_back(bulk);
+		Bulk *bulk;
 
-		//Exception
-		if (Geometry::angle((start - end), GeoV3(0, 0, 1)) == 0)
+		//Exception, vertical edge
+		if (Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), 0.0) || Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), pi))
 		{
+			bulk = NULL;
+			bulk_list_->push_back(bulk);
 			//for dual_list
 			for (int j = 0; j < Nd; j++)
 			{
-				(range_state_)[i][j] = -1;
-				Range temp_range;
-				temp_range = { pi / 2, pi / 2, pi / 2, pi / 2 };
-				(range_list_)[i][j] = &temp_range;
+				(*range_state_)[i][j] = -1;
+				Range *temp_range;
+				temp_range = new Range{ pi / 2, pi / 2, pi / 2, pi / 2 };
+				(*range_list_)[i][j] = temp_range;
 			}
 			continue;
 		}
 
+		bulk = new Bulk(extruder_, start, end);
+		bulk_list_->push_back(bulk);
+
 		for (int j = 0; j< Nd; j++)
 		{
-			
+
 			//For Specific Edge
-			Range temp_range;
+			Range *temp_range = new Range();
 			WF_edge *e_ij = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(j));
 			point target_start = e_ij->pvert_->Position();
-			point target_end = e_ij->ppair_->pvert_->Position();
-		
+			point target_end   = e_ij->ppair_->pvert_->Position();
+
 			switch (DetectCollision(bulk, target_start, target_end))
 			{
 				//for dual_list
 			case 0:
-				(range_state_)[i][j] = 0;
-				temp_range = { pi - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
-				(range_list_)[i][j] = &temp_range;
+				(*range_state_)[i][j] = 0;
+				temp_range = new Range{ pi/2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
+				(*range_list_)[i][j] = temp_range;
 				break;
 
 			case 1:
-				(range_state_)[i][j] = 1;
-				temp_range = allowed_angle_;
-				(range_list_)[i][j] = &temp_range;
+				(*range_state_)[i][j] = 1;
+				*temp_range = allowed_angle_;
+				(*range_list_)[i][j] = temp_range;
 				break;
 
 			case 2:
-				(range_state_)[i][j] = 2;
-				temp_range = { -1, -1, -1, -1 };
+				(*range_state_)[i][j] = 2;
+				temp_range = new Range{ -1, -1, -1, -1 };
+				(*range_list_)[i][j] = temp_range;
 				break;
 
 			default:
@@ -126,20 +136,21 @@ void Collision::DetectFrame()
 			}
 		}
 	}
+
 	cout << endl;
 	cout << " Detect Collision done." << endl;
 }
 
 
-
 int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 {
 	point start = bulk->StartPoint();
-	point end = bulk->EndPoint();
+	point end   = bulk->EndPoint();
 
 	collision_point_.clear();
 	collision_state_.clear();
 
+	// Check triangle face collision
 	for (int i = 0; i < 10; i++)
 	{
 		if (bulk->IfTriIntersect(i, target_start, target_end))
@@ -153,6 +164,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		}
 	}
 
+	// Check parallelogram face collision
 	for (int i = 10; i < 13; i++)
 	{
 		if (bulk->IfParaIntersect(i, target_start, target_end))
@@ -327,6 +339,7 @@ bool Collision::Inside(Bulk *bulk, point p)
 
 bool Collision::JointAngle(double angle_1, double angle_2)
 {
+	// Combining left valid angle and right valid angle together
 	double height = extruder_->Height();
 	double angle = extruder_->Angle();
 	double wave_angle = extruder_->WaveAngle();
@@ -335,7 +348,7 @@ bool Collision::JointAngle(double angle_1, double angle_2)
 
 	double min_ = min(angle_1, angle_2);
 	double max_ = max(angle_1, angle_2);
-	allowed_angle_.right_end = min_ - angle;
+	allowed_angle_.right_end   = min_   - angle;
 	allowed_angle_.right_begin = pi / 2 - wave_angle;
 
 	allowed_angle_.left_begin = max_ + angle;
@@ -343,22 +356,21 @@ bool Collision::JointAngle(double angle_1, double angle_2)
 
 	if (allowed_angle_.right_begin >= allowed_angle_.right_end && 
 			allowed_angle_.left_begin >= allowed_angle_.left_end)
-		return false;
+		return false;	// edge occupy whole bulk 
 
 	if (allowed_angle_.right_begin >= allowed_angle_.right_end)
 	{
 		allowed_angle_.right_begin = -1.0;
-		allowed_angle_.right_end = -1.0;
+		allowed_angle_.right_end   = -1.0;
 	}
 
 	if (allowed_angle_.left_begin >= allowed_angle_.left_end)
 	{
 		allowed_angle_.left_begin = -1.0;
-		allowed_angle_.left_end = -1.0;
+		allowed_angle_.left_end   = -1.0;
 	}
 
 	return true;
-
 }
 
 /*
@@ -445,13 +457,10 @@ void Collision::SegementTriangleTest()
 }
 
 
-
-
-
 void Collision::Test()
 {
-	range_list_.clear();
-	range_state_.clear();
+	range_list_->clear();
+	range_state_->clear();
 	//extruder_.Default();
 	//DetectFrame();
 

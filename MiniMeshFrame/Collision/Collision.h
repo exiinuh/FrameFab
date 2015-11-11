@@ -77,8 +77,9 @@ public:
 	inline bool		Equal(point x, point y){ return((x - y).length() < eps) ? true : false; }
 	inline bool		Equal(double x, double y){ return(abs(x - y) < eps) ? true : false; }
 
-	vector<vector<Range*>>	GetRangeList(){ return range_list_; }
-	vector<vector<int>>		GetRangeState(){ return range_state_; }
+	vector<vector<Range*>>	*GetRangeList(){ return range_list_; }
+	vector<vector<int>>		*GetRangeState(){ return range_state_; }
+	vector<Bulk*>			*GetBulk(){ return bulk_list_; }
 
 private:
 	ExtruderCone	*extruder_;
@@ -86,14 +87,13 @@ private:
 	vector<point>	collision_point_;
 	vector<int>		collision_state_;
 	Range			allowed_angle_;
-	
-public:
+
 	//input
 	WireFrame		*ptr_frame_;
 	DualGraph		*ptr_dualgraph_;
 
 	//output  by Test()
-	vector<vector<Range*>>      range_list_; //           
-	vector<vector<int>>			range_state_;         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
-	vector<Bulk*>				bulk_list_;
+	vector<vector<Range*>>      *range_list_; //           
+	vector<vector<int>>			*range_state_;         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
+	vector<Bulk*>				*bulk_list_;
 };

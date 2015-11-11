@@ -53,12 +53,12 @@ public:
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
 
-	vector<DualVertex*>		*GetDualVertList();
-	vector<DualEdge*>		*GetDualEdgeList();
-	vector<DualFace*>		*GetDualFaceList();
+	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
+	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
+	vector<DualFace*>		*GetDualFaceList()		{ return ptr_dualgraph_->GetFaceList(); }
 
-	vector<int>				*GetLabel();
-	vector<int>				*GetCut();
+	vector<int>				*GetLabel()				{ return &layer_label_; }
+	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
 public:
 //private:
@@ -95,6 +95,6 @@ public:
 
 	QP				*qp_;			// Solves the quadratic programming problem:
 									// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
-	SpMat			*H1_;			// Part 1 of hessian matrix for x-Qp problem
+	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
 };
 

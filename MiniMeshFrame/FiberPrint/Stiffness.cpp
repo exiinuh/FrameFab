@@ -24,6 +24,8 @@ Stiffness::Stiffness(WireFrame *ptr_frame, DualGraph *ptr_dualgraph, FiberPrintP
 
 Stiffness::~Stiffness()
 {
+	delete ptr_parm_;
+	ptr_parm_ = NULL;
 }
 
 
@@ -319,34 +321,25 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 	CreateFv(ptr_x);
 
 	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	BiCGSTAB<SparseMatrix<double>> solver;
+	//BiCGSTAB<SparseMatrix<double>> solver;
 	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//FullPivLU<MatrixXd> solver;
+	FullPivLU<MatrixXd> solver;
 
-	//K_.makeCompressed();
-	solver.compute(K_);
-	assert(solver.info() == Success);
+	cout << "Stiffness: Calculating Initial D." << endl;
 	
-	cout << "Initial D calculating. (Initial Value for GraphCut Process)" << endl;
-	//cout << "column number of K_ : " << K_.cols()     << endl;
-	//cout << "rank of K_ : "			 << solver.rank() << endl;
+	//K_.makeCompressed();
+	
+	solver.compute(K_);
+	//assert(solver.info() == Success);
+
+	//cout << "column number of K_ : " << K_.cols() << endl;
+	//cout << solver.rank() << endl;
 	//getchar();
 	
 	(*ptr_D) = solver.solve(Fv_);
-	assert(solver.info() == Success);
+	//assert(solver.info() == Success);
 
-	/*
-	VectorXd D;
-	D.resize(3 * Nk_);
-	D.setZero();
-//	assert(solver.info() == Success);
-	D = solver.solve(Fv_);
-	for (int i = 0; i < Nk_; i++)
-	{
-		(*ptr_D)[3 * v_id_[i] + 2] = D[3 * i + 2];
-	}
-//	assert(solver.info() == Success);
-*/
+	cout << "Stiffness: Initial D Calculation Completed." << endl;
 }
 
 

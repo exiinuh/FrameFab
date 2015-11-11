@@ -94,10 +94,12 @@ private:
 	void	DrawHeat(bool bv);
 	void	DrawCut(bool bv);
 	void	DrawBulk(bool bv);
+	void	DrawOrder(bool bv);
 
 public slots:
 	void	FiberPrintAnalysis();
 	void	PrintLayer(int layer);
+	void	PrintOrder(int order);
 	void	SimplifyFrame();
 	void	ProjectBound();
 
@@ -117,19 +119,21 @@ public:
 	QPoint			current_position_;
 
 	// Render information
+	OperationMode	op_mode_;
 	bool			is_draw_point_;
 	bool			is_draw_edge_;
 	bool			is_draw_heat_;
 	bool			is_draw_cut_;
 	bool			is_draw_bulk_;
+	bool			is_draw_order_;
 	bool			has_lighting_;
 	bool			is_draw_axes_;
 
 	// Fiber
 	FiberPrintPlugIn	*ptr_fiberprint_;
-	OperationMode		op_mode_;
 
 	int					print_layer_;
+	int					print_order_;
 
 	bool				is_simplified_;
 
@@ -137,7 +141,6 @@ public:
 	int					captured_edge_;
 	vector<int>			bound_;
 
-	Collision			*ptr_collision_;
 };
 
 #endif // RENDERINGWIDGET_H

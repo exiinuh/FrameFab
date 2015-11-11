@@ -25,12 +25,14 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateMenus();
 	CreateToolBars();
 	CreateStatusBar();
-	CreateSliders();
 	CreateRenderGroup();
-
+	CreateEditGroup();
+	CreateScaleGroup();
 
 	QVBoxLayout *layout_left = new QVBoxLayout;
 	layout_left->addWidget(groupbox_render_);
+	layout_left->addWidget(groupbox_edit_);
+	layout_left->addWidget(groupbox_scale_);
 	layout_left->addStretch(1);
 
 	QHBoxLayout *layout_main = new QHBoxLayout;
@@ -50,46 +52,38 @@ MainWindow::~MainWindow()
 
 void MainWindow::CreateActions()
 {
-	action_new_ = new QAction(QIcon(":/Resources/images/new.png"), tr("&New"), this);
+	action_new_ = new QAction(QIcon(":/Resources/images/new.png"), tr("New"), this);
 	action_new_->setShortcut(QKeySequence::New);
 	action_new_->setStatusTip(tr("Create a new file"));
 
-	action_open_ = new QAction(QIcon(":/MainWindow/Resources/images/open.png"), tr("&Open..."), this);
+	action_open_ = new QAction(QIcon(":/MainWindow/Resources/images/open.png"), tr("Open..."), this);
 	action_open_->setShortcuts(QKeySequence::Open);
 	action_open_->setStatusTip(tr("Open an existing file"));
 	connect(action_open_, SIGNAL(triggered()), renderingwidget_, SLOT(ReadFrame()));
 
-	action_save_ = new QAction(QIcon(":/MainWindow/Resources/images/save.png"), tr("&Save"), this);
+	action_save_ = new QAction(QIcon(":/MainWindow/Resources/images/save.png"), tr("Save"), this);
 	action_save_->setShortcuts(QKeySequence::Save);
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteFrame()));
-
-	action_saveas_ = new QAction(tr("Save &As..."), this);
+	
+	action_saveas_ = new QAction(tr("Save As..."), this);
 	action_saveas_->setShortcuts(QKeySequence::SaveAs);
 	action_saveas_->setStatusTip(tr("Save the document under a new name"));
 //	connect(action_saveas_, SIGNAL(triggered()), imagewidget_, SLOT(SaveAs()));
 
 	action_loadmesh_ = new QAction(tr("readOBJ"), this);
 	action_background_ = new QAction(tr("ChangeBackground"), this);
-	action_rotatexy_ = new QAction(tr("RotateXY"), this);
-	action_rotatexz_ = new QAction(tr("RotateXZ"), this);
-	action_rotateyz_ = new QAction(tr("RotateYZ"), this);
 
 	action_fiberprint_ = new QAction(tr("FiberPrint"), this);
 	action_simplify_ = new QAction(tr("Simplify"), this);
 	action_project_ = new QAction(tr("Project"), this);
-	action_setslider_ = new QAction(tr("SetSlider"), this);
 
 	connect(action_loadmesh_, SIGNAL(triggered()), renderingwidget_, SLOT(ReadFrame()));
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
-	connect(action_rotatexy_, SIGNAL(triggered()), renderingwidget_, SLOT(RotateXY()));
-	connect(action_rotatexz_, SIGNAL(triggered()), renderingwidget_, SLOT(RotateXZ()));
-	connect(action_rotateyz_, SIGNAL(triggered()), renderingwidget_, SLOT(RotateYZ()));
 
 	connect(action_fiberprint_, SIGNAL(triggered()), renderingwidget_, SLOT(FiberPrintAnalysis()));
 	connect(action_simplify_, SIGNAL(triggered()), renderingwidget_, SLOT(SimplifyFrame()));
 	connect(action_project_, SIGNAL(triggered()), renderingwidget_, SLOT(ProjectBound()));
-	connect(action_setslider_, SIGNAL(triggered()), this, SLOT(SetSlider()));
 }
 
 
@@ -114,15 +108,11 @@ void MainWindow::CreateToolBars()
 	toolbar_basic_ = addToolBar(tr("Basic"));
 	toolbar_basic_->addAction(action_loadmesh_);
 	toolbar_basic_->addAction(action_background_);
-	toolbar_basic_->addAction(action_rotatexy_);
-	toolbar_basic_->addAction(action_rotatexz_);
-	toolbar_basic_->addAction(action_rotateyz_);
 
 	toolbar_fiber_ = addToolBar(tr("Fiber"));
 	toolbar_fiber_->addAction(action_fiberprint_);
 	toolbar_fiber_->addAction(action_simplify_);
 	toolbar_fiber_->addAction(action_project_);
-	toolbar_fiber_->addAction(action_setslider_);
 }
 
 
@@ -154,17 +144,6 @@ void MainWindow::CreateStatusBar()
 }
 
 
-void MainWindow::CreateSliders()
-{
-	slider_layer_ = new QSlider(Qt::Horizontal);
-	slider_layer_->setMinimum(0);
-	slider_layer_->setMaximum(10);
-
-	connect(slider_layer_, SIGNAL(valueChanged(int)),
-		renderingwidget_, SLOT(PrintLayer(int)));
-}
-
-
 void MainWindow::CreateRenderGroup()
 {
 	checkbox_point_ = new QCheckBox(tr("Point"), this);
@@ -180,8 +159,21 @@ void MainWindow::CreateRenderGroup()
 	radiobutton_cut_ = new QRadioButton(tr("Cut"), this);
 	connect(radiobutton_cut_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
+	slider_layer_ = new QSlider(Qt::Horizontal);
+	slider_layer_->setMinimum(0);
+	slider_layer_->setMaximum(10);
+	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
+
 	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
 	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+
+	radiobutton_order_ = new QRadioButton(tr("Order"), this);
+	connect(radiobutton_order_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+
+	slider_order_ = new QSlider(Qt::Horizontal);
+	slider_order_->setMinimum(0);
+	slider_order_->setMaximum(10);
+	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
 
 	radiobutton_none_ = new QRadioButton(tr("None"), this);
 	radiobutton_none_->setVisible(false);
@@ -205,9 +197,40 @@ void MainWindow::CreateRenderGroup()
 	render_layout->addWidget(radiobutton_cut_);
 	render_layout->addWidget(slider_layer_);
 	render_layout->addWidget(radiobutton_bulk_);
+	render_layout->addWidget(radiobutton_order_);
+	render_layout->addWidget(slider_order_);
 	render_layout->addWidget(radiobutton_none_);
 	render_layout->addWidget(checkbox_light_);
 	render_layout->addWidget(checkbox_axes_);
+}
+
+
+void MainWindow::CreateEditGroup()
+{
+	pushbutton_rotatexy_ = new QPushButton(tr("RotateXY"), this);
+	pushbutton_rotatexz_ = new QPushButton(tr("RotateXZ"), this);
+	pushbutton_rotateyz_ = new QPushButton(tr("RotateYZ"), this);
+	connect(pushbutton_rotatexy_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXY()));
+	connect(pushbutton_rotatexz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXZ()));
+	connect(pushbutton_rotateyz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateYZ()));
+
+	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
+
+	QVBoxLayout* edit_layout = new QVBoxLayout(groupbox_edit_);
+	edit_layout->addWidget(pushbutton_rotatexy_);
+	edit_layout->addWidget(pushbutton_rotatexz_);
+	edit_layout->addWidget(pushbutton_rotateyz_);
+}
+
+
+void MainWindow::CreateScaleGroup()
+{
+	slider_scale_ = new QSlider(Qt::Horizontal);
+
+	groupbox_scale_ = new QGroupBox(tr("Scale"), this);
+
+	QVBoxLayout* scale_layout = new QVBoxLayout(groupbox_scale_);
+	scale_layout->addWidget(slider_scale_);
 }
 
 
@@ -303,6 +326,17 @@ void MainWindow::EdgeModeChange()
 			radiobutton_bulk_->setChecked(true);
 			edge_render_ = BULK;
 			emit(EdgeMode(BULK));
+			return;
+		}
+	}
+	else
+	if (sender() == radiobutton_order_)
+	{
+		if (edge_render_ != ORDER)
+		{
+			radiobutton_order_->setChecked(true);
+			edge_render_ = ORDER;
+			emit(EdgeMode(ORDER));
 			return;
 		}
 	}

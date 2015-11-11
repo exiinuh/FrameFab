@@ -11,6 +11,23 @@ WireFrame::WireFrame()
 
 WireFrame::~WireFrame()
 {
+	int N = pvert_list_->size();
+	for (int i = 0; i < N; i++)
+	{
+		delete (*pvert_list_)[i];
+		(*pvert_list_)[i] = NULL;
+	}
+	delete pvert_list_;
+	pvert_list_ = NULL;
+
+	int M = pedge_list_->size();
+	for (int i = 0; i < M; i++)
+	{
+		delete (*pedge_list_)[i];
+		(*pedge_list_)[i] = NULL;
+	}
+	delete pedge_list_;
+	pedge_list_ = NULL;
 }
 
 

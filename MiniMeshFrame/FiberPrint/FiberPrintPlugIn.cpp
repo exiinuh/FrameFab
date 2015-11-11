@@ -18,6 +18,9 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 {
 	delete ptr_graphcut_;
 	ptr_graphcut_ = NULL;
+
+	delete ptr_seqanalyzer_;
+	ptr_seqanalyzer_ = NULL;
 }
 
 
@@ -25,26 +28,8 @@ void FiberPrintPlugIn::Print()
 {
 	ptr_graphcut_->MakeLayers();
 	//ptr_seqanalyzer_->LayerPrint();
-	//ptr_seqanalyzer_->Debug();
 }
 
-
-vector<DualVertex*> *FiberPrintPlugIn::GetDualVertList()
-{
-	return 	ptr_graphcut_->GetDualVertList();
-}
-
-
-vector<int> *FiberPrintPlugIn::GetLabel()
-{
-	return ptr_graphcut_->GetLabel();
-}
-
-
-vector<int> *FiberPrintPlugIn::GetCut()
-{
-	return ptr_graphcut_->GetCut();
-}
 
 void FiberPrintPlugIn::Debug()
 {

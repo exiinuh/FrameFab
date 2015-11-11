@@ -10,40 +10,43 @@ Bulk::Bulk()
 Bulk::Bulk(ExtruderCone *extruder, point start, point end)
 {
 	extruder_ = extruder;
-	start_ = start;
-	end_ = end;
+	start_    = start;
+	end_	  = end;
 
+	// Currently, we only print upwards
 	if (end.z() < start.z())
 	{
 		swap(start, end);
 	}
 
-	double height = extruder_->Height();
-	double angle = extruder_->Angle();
+	double height	  =	extruder_->Height();
+	double angle	  =	extruder_->Angle();
 	double wave_angle = extruder_->WaveAngle();
-	double generatrix = height / angle;
-	double radii = height*tan(angle);
+	double generatrix = height / cos(angle);
+	double radii      =	height * tan(angle);
 
-	vector_t_ = end - start;
+	// Printing edge direction
+	vector_t_   = end - start;
 	vector_t_.normalize();
-	vector_z_ = point{ 0.0, 0.0, 1.0 };
-	vector_tz_ = cross(vector_t_, vector_z_);
+	vector_z_   = point{ 0.0, 0.0, 1.0 };
+	vector_tz_  = cross(vector_t_,  vector_z_);
 	vector_tzz_ = cross(vector_tz_, vector_z_);
 
-	GeoV3 _start = Geometry::Vector3d(start);
-	GeoV3 _end = GeoV3(end);
+	GeoV3 _start = GeoV3(start);
+	GeoV3 _end   = GeoV3(end);
 
-	//triangle front; 
+	// Using pyramid to approximate cone
+	// Triangle front;
 	GeoV3 front_face_right = _start + vector_tzz_*(radii) + vector_z_*(height*cos(wave_angle))
 								+ vector_tz_*(height*sin(wave_angle));
 	GeoV3 front_face_left = _start + vector_tzz_*(radii)+vector_z_*(height*cos(wave_angle))
 								+ vector_tz_*(-height*sin(wave_angle));
 	face_list_.push_back(new Triangle(_start, front_face_right, front_face_left));
 
-	//triangle back;
-	GeoV3 back_face_right = _end + vector_tzz_*(-radii) + vector_z_*(height*cos(wave_angle))
+	// Triangle back;
+	GeoV3 back_face_right = _end +    vector_tzz_*(-radii) + vector_z_*(height*cos(wave_angle))
 								+ vector_tz_*(height*sin(wave_angle));
-	GeoV3 back_face_left = _end + vector_tzz_*(-radii) + vector_z_*(height*cos(wave_angle))
+	GeoV3 back_face_left  = _end  +   vector_tzz_*(-radii) + vector_z_*(height*cos(wave_angle))
 								+ vector_tz_*(-height*sin(wave_angle));
 	face_list_.push_back(new Triangle(_end, back_face_left, back_face_right));
 
@@ -54,7 +57,7 @@ Bulk::Bulk(ExtruderCone *extruder, point start, point end)
 		+ vector_tz_*(generatrix*sin(angle + wave_angle));
 	GeoV3 start_left = _start + vector_z_*(generatrix*cos(angle + wave_angle))
 		+ vector_tz_*(-generatrix*sin(angle + wave_angle));
-	GeoV3 end_left = _end + vector_z_*(generatrix*cos(angle + wave_angle))
+	GeoV3 end_left   = _end   + vector_z_*(generatrix*cos(angle + wave_angle))
 		+ vector_tz_*(-generatrix*sin(angle + wave_angle));
 
 	// triangle corner_start_right 
@@ -69,11 +72,12 @@ Bulk::Bulk(ExtruderCone *extruder, point start, point end)
 	// triangle corner_end_left;
 	face_list_.push_back(new Triangle(_end, end_left, back_face_left));
 
-	// parallelogram top_right
+	// Overtop Seal plane
+	// parallelogram top_left
 	face_list_.push_back(new Triangle(back_face_left, end_left, front_face_left));
 	face_list_.push_back(new Triangle(front_face_left, end_left, start_left));
 
-	// parallelogram top_left
+	// parallelogram top_right
 	face_list_.push_back(new Triangle(back_face_right, front_face_right, end_right));
 	face_list_.push_back(new Triangle(end_right, front_face_right, start_right));
 
