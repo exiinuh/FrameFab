@@ -29,6 +29,45 @@ Collision::~Collision()
 }
 
 
+int   Collision::AboveCollisionAnalysis(Bulk *bulk, point target_start, point target_end)
+{
+	collision_point_.clear();
+
+	if (UpCollisionBulk(bulk, target_end))
+		collision_point_.push_back(UpIntersectBulk(bulk, target_end));
+	if (UpCollisionBulk(bulk, target_start))
+		collision_point_.push_back(UpIntersectBulk(bulk, target_start));
+
+	if (collision_point_.size() == 1)
+	{
+		//add point 
+		if (UpCollisionBulk(bulk, target_end))
+		{
+			collision_point_.push_back(point(target_start.x(), target_start.y(), collision_point_[0].z()));
+		}
+		else
+		{
+			collision_point_.push_back(point(target_end.x(), target_end.y(), collision_point_[0].z()));
+        }
+	}
+
+		double angle_1, angle_2;
+     	angle_1 = bulk->Angle(collision_point_[0]);
+	    angle_2 = bulk->Angle(collision_point_[1]);
+			if (JointAngle(angle_1, angle_2))
+				return 1;
+			else
+				return 2;
+		}
+
+int Collision::AboveDetection(Bulk *bulk, point target_start, point target_end)
+{
+	if (!UpCollisionBulk(bulk, target_end) && !UpCollisionBulk(bulk, target_start))
+		return 0;
+
+
+}
+
 void Collision::DetectFrame()
 {
 	cout << " Detect Collision begins..." << endl;
@@ -43,12 +82,10 @@ void Collision::DetectFrame()
 	range_state_->clear();
 	bulk_list_->clear();
 
-	// Store the relative collision influence (valid angle)
-	// between two dual vertex
 	vector<Range*> temp_range_, org_temp_range_;
-	vector<int>	   temp_state_, org_temp_state_;
+	vector<int> temp_state_, org_temp_state_;
 
-	int M  = ptr_frame_->SizeOfEdgeList();
+	int M = ptr_frame_->SizeOfEdgeList();
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 
 	temp_range_.resize(Nd);
@@ -65,8 +102,8 @@ void Collision::DetectFrame()
 	for (int i = 0; i < Nd; i++)
 	{
 
-		if (i%int(Nd / 10) == 0)
-			cout << double(i) / double(Nd) * 100 << "%" << endl;
+		//if (i%int(Nd / 10) == 0)
+		//	cout << double(i) / double(Nd) * 100 << "%" << endl;
 
 		//Fix Polyhedron
 		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
@@ -74,7 +111,8 @@ void Collision::DetectFrame()
 		point end = e->ppair_->pvert_->Position();
 		Bulk *bulk;
 
-		//Exception, vertical edge
+		//Exception
+
 		if (Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), 0.0) || Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), pi))
 		{
 			bulk = NULL;
@@ -100,13 +138,33 @@ void Collision::DetectFrame()
 			Range *temp_range = new Range();
 			WF_edge *e_ij = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(j));
 			point target_start = e_ij->pvert_->Position();
-			point target_end   = e_ij->ppair_->pvert_->Position();
+			point target_end = e_ij->ppair_->pvert_->Position();
 
 			switch (DetectCollision(bulk, target_start, target_end))
 			{
 				//for dual_list
 			case 0:
-				(*range_state_)[i][j] = 0;
+				if ((!AboveCollisionBulk(bulk, target_end) && !AboveCollisionBulk(bulk, target_start))&&(UpCollisionBulk(bulk, target_end) || UpCollisionBulk(bulk, target_start))  )
+				{
+					if (AboveCollisionAnalysis(bulk,target_start, target_end) == 2)
+					{ 
+						(*range_state_)[i][j] = 2;
+						temp_range = new Range{ -1, -1, -1, -1 };
+						(*range_list_)[i][j] = temp_range;
+					}
+					else
+                    {
+						(*range_state_)[i][j] = 1;
+						*temp_range = allowed_angle_;
+						(*range_list_)[i][j] = temp_range;
+					}	
+					break;
+				}
+				else
+				{
+					(*range_state_)[i][j] = 0;
+				}
+				   
 				temp_range = new Range{ pi/2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
 				(*range_list_)[i][j] = temp_range;
 				break;
@@ -137,20 +195,104 @@ void Collision::DetectFrame()
 		}
 	}
 
+
+	Range temp = Range{ pi/2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
+	Range temp_ = Range{ -1, -1, -1, -1 };
+	/*for (int i = 0; i < (*bulk_list_)[33]->face_list_.size(); i++)
+	{
+		(*bulk_list_)[33]->face_list_[i]->Print();
+	}
+
+	DetectCollision((*bulk_list_)[33], ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(80))->pvert_->Position(), ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(80))->ppair_->pvert_->Position());
+
+*/
+	for (int i = 0; i < Nd; i++)
+	{
+		cout << i << endl;
+		cout << "--------------------------" << endl;
+		for (int j = 0; j < Nd; j++)
+		{
+			if (!Equal(*(*range_list_)[i][j], temp) && !Equal(*(*range_list_)[i][j], temp_))
+			Print(*(*range_list_)[i][j]);
+		}
+
+	}
+
+
 	cout << endl;
 	cout << " Detect Collision done." << endl;
 }
 
+bool Collision::AboveCollisionBulk(Bulk *bulk, point p)
+{
+	point p_end(p.x(), p.y(), MAX);
 
+	for (int i = 6; i<9; i++)
+	{
+		if (bulk->IfTriIntersect(i, p, p_end))
+		{
+			return true;
+		}
+	}
+		if (bulk->IfParaIntersect(12, p, p_end))
+		{
+			return true;
+		}
+		return false;
+}
+
+point Collision::UpIntersectBulk(Bulk *bulk, point p)
+{
+	point p_end(p.x(), p.y(), -MAX);
+
+	for (int i = 6; i<9; i++)
+	{
+		if (bulk->IfTriIntersect(i, p, p_end))
+		{
+			point temp = bulk->TriIntersect(i, p, p_end);
+			return temp;
+		}
+	}
+
+	if (bulk->IfParaIntersect(12, p, p_end))
+	{
+		point temp = bulk->TriIntersect(12, p, p_end);
+		return temp;
+	}
+}
+
+bool  Collision::UpCollisionBulk(Bulk *bulk, point p)
+{
+	point p_end(p.x(), p.y(), -MAX);
+
+	for (int i = 6; i<9; i++)
+	{
+		if (bulk->IfTriIntersect(i, p, p_end))
+		{
+			
+			return true;
+		}
+	}
+
+	if (bulk->IfParaIntersect(12, p, p_end))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+
+//for bulk
 int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 {
+
 	point start = bulk->StartPoint();
-	point end   = bulk->EndPoint();
+	point end = bulk->EndPoint();
 
 	collision_point_.clear();
 	collision_state_.clear();
 
-	// Check triangle face collision
 	for (int i = 0; i < 10; i++)
 	{
 		if (bulk->IfTriIntersect(i, target_start, target_end))
@@ -164,7 +306,6 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		}
 	}
 
-	// Check parallelogram face collision
 	for (int i = 10; i < 13; i++)
 	{
 		if (bulk->IfParaIntersect(i, target_start, target_end))
@@ -197,6 +338,9 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		temp_.push_back(max);
 		collision_point_ = temp_;
 	}
+
+
+
 
 	//Exception Situation  
 	if ((target_end == start&&target_start == end) || (target_end ==end&&target_start == start))
@@ -290,9 +434,6 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 				return 2;
 		}
 	}
-
-
-
 	return -1;
 }
 
@@ -339,16 +480,15 @@ bool Collision::Inside(Bulk *bulk, point p)
 
 bool Collision::JointAngle(double angle_1, double angle_2)
 {
-	// Combining left valid angle and right valid angle together
 	double height = extruder_->Height();
 	double angle = extruder_->Angle();
 	double wave_angle = extruder_->WaveAngle();
-	double generatrix = height / angle;
+	double generatrix = height / cos(angle);
 	double radii = height*tan(angle);
 
 	double min_ = min(angle_1, angle_2);
 	double max_ = max(angle_1, angle_2);
-	allowed_angle_.right_end   = min_   - angle;
+	allowed_angle_.right_end = min_ - angle;
 	allowed_angle_.right_begin = pi / 2 - wave_angle;
 
 	allowed_angle_.left_begin = max_ + angle;
@@ -356,21 +496,22 @@ bool Collision::JointAngle(double angle_1, double angle_2)
 
 	if (allowed_angle_.right_begin >= allowed_angle_.right_end && 
 			allowed_angle_.left_begin >= allowed_angle_.left_end)
-		return false;	// edge occupy whole bulk 
+		return false;
 
 	if (allowed_angle_.right_begin >= allowed_angle_.right_end)
 	{
 		allowed_angle_.right_begin = -1.0;
-		allowed_angle_.right_end   = -1.0;
+		allowed_angle_.right_end = -1.0;
 	}
 
 	if (allowed_angle_.left_begin >= allowed_angle_.left_end)
 	{
 		allowed_angle_.left_begin = -1.0;
-		allowed_angle_.left_end   = -1.0;
+		allowed_angle_.left_end = -1.0;
 	}
 
 	return true;
+
 }
 
 /*

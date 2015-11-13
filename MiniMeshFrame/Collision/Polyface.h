@@ -59,7 +59,7 @@ public:
 	virtual void Print() {}
 	virtual void Render(WireFrame* ptr_frame, double alpha) {}
 
-protected:
+public:
 	vector<point>	vert_list_;
 	point			normal_;
 };

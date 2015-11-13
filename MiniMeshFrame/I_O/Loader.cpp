@@ -13,9 +13,17 @@
 		std::string &uniqueFullFileName)
 	{
 		int filen = 0;
+		std::string file_name = uniqueFullFileName;
 		bool fexists = true;
 		do{ //skip existing sequence files
-			uniqueFullFileName = filePathName + std::to_string(filen) + fileExtension;
+			if (filen == 0)
+			{
+				uniqueFullFileName = filePathName + file_name + fileExtension;
+			}
+			else
+			{
+				uniqueFullFileName = filePathName + std::to_string(filen) + file_name + fileExtension;
+			}
 			std::ifstream iff(uniqueFullFileName);
 			if (!iff.good()){
 				fexists = false;

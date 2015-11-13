@@ -13,8 +13,8 @@
 #include "WireFrame\WireFrame.h"
 #include "Stiffness.h"
 
-#include "QPMosek.h"
-#include "QPFactory.h"
+#include "QP/QPMosek.h"
+#include "QP/QPFactory.h"
 #include "Statistics.h"
 
 using namespace std;

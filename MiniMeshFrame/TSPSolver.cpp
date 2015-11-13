@@ -10,20 +10,20 @@ TSPSolver::TSPSolver() :maxrounds_(MAXCUTROUNDS), maxcuts_(MAXADDPERROUNDS)
 {
 }
 
-TSPSolver::TSPSolver(MX *_cost) : maxrounds_(MAXCUTROUNDS), maxcuts_(MAXADDPERROUNDS)
+TSPSolver::TSPSolver(const MX &_cost) : maxrounds_(MAXCUTROUNDS), maxcuts_(MAXADDPERROUNDS)
 {
-	SetCostMatrix(*_cost);
+	SetCostMatrix(_cost);
 }
 
-TSPSolver::TSPSolver(SpMat *_cost) : maxrounds_(MAXCUTROUNDS), maxcuts_(MAXADDPERROUNDS)
+TSPSolver::TSPSolver(const SpMat &_cost) : maxrounds_(MAXCUTROUNDS), maxcuts_(MAXADDPERROUNDS)
 {
-	SetCostMatrix(*_cost);
+	SetCostMatrix(_cost);
 }
 
 TSPSolver::~TSPSolver()
 {
-	MSK_deletetask(&task_);
-	MSK_deleteenv(&env_);
+	//MSK_deletetask(&task_);
+	//MSK_deleteenv(&env_);
 }
 
 #ifdef MOSEK_EXISTS
@@ -36,7 +36,7 @@ void MSKAPI TSP_printstr(void *handle,
 } /* printstr */
 #endif
 
-void TSPSolver::SetCostMatrix(SpMat &_costM)
+void TSPSolver::SetCostMatrix(const SpMat &_costM)
 {
 	N_ = _costM.rows();
 	cost_.resize(N_*N_);
@@ -50,7 +50,7 @@ void TSPSolver::SetCostMatrix(SpMat &_costM)
 	}
 }
 
-void TSPSolver::SetCostMatrix(MX  &_costM)
+void TSPSolver::SetCostMatrix(const MX  &_costM)
 {
 	N_ = _costM.rows();
 	cost_.resize(N_*N_);
@@ -92,7 +92,7 @@ void TSPSolver::AddVars()
 void TSPSolver::AddObjFunctions()
 {
 	int ij;
-	int n2 = N_ ^ 2;
+	int n2 = N_ * N_;
 	r_ = MSK_putcfix(task_, 0.0);
 	assert(r_ == MSK_RES_OK);
 
@@ -106,8 +106,8 @@ void TSPSolver::AddObjFunctions()
 void TSPSolver::AddAssignCons()
 {
 	int i, j;
-	double *aval;	    // Number of non-zeros in row i of A.
-	int	   *asub;		// Row indexes of non - zero values in row i of A.
+	double	   *aval;	    // Number of non-zeros in row i of A.
+	int 	   *asub;		// Column indexes of non - zero values in row i of A.
 
 	aval = (double*)malloc(N_*sizeof(double)); 
 	assert(aval);
@@ -120,7 +120,7 @@ void TSPSolver::AddAssignCons()
 		aval[i] = 1;
 	}
 
-	// Apeend 'n*2' empty constraints. The constraints will initially have no bounds
+	// Append 'n*2' empty constraints. The constraints will initially have no bounds
 	r_ = MSK_appendcons(task_, N_ * 2);
 	assert(r_ == MSK_RES_OK);
 
@@ -202,7 +202,7 @@ void TSPSolver::AddMTZCons()
 			r_ = MSK_putbound(task_, MSK_ACC_CON, conidx, MSK_BK_UP, -MSK_INFINITY, N_ - 2);
 			assert(r_ == MSK_RES_OK);
 
-			r_ = MSK_putacol(task_, conidx, 3, asub, aval);
+			r_ = MSK_putarow(task_, conidx, 3, asub, aval);
 			assert(r_ == MSK_RES_OK);
 			
 			conidx++;
@@ -403,9 +403,23 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 
 	MSK_linkfunctotaskstream(task_, MSK_STREAM_LOG, NULL, TSP_printstr);
 
+	double *tmp_x = (double*)calloc(N_ * N_, sizeof(double));
+
 	AddVars();
 	AddObjFunctions();
 	AddAssignCons();
+
+	if (_debug)
+	{
+		MSK_analyzeproblem(task_, MSK_STREAM_MSG);
+		std::string fileName = "taskdump";
+		if (!Loader::uniqueFilename("F:\\FiberPrintProject\\ResultData\\MosekTaskDump\\", ".opf", fileName)){
+			std::cerr << __FUNCTION__ << ": No unique filename for QpMosek dump found. Not storing." << std::endl;
+		}
+		else{
+			MSK_writedata(task_, fileName.c_str());
+		}
+	}
 
 	double cut_time = 0;
 	nsubtours_ = 2;
@@ -463,21 +477,18 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 
 		switch (solsta)
 		{
-		case MSK_SOL_STA_OPTIMAL:
-		case MSK_SOL_STA_NEAR_OPTIMAL:
-			_x.resize(N_ * N_);
+		case MSK_SOL_STA_NEAR_INTEGER_OPTIMAL:
+		case MSK_SOL_STA_INTEGER_OPTIMAL:
 			MSK_getxx(task_,
-				MSK_SOL_BAS,    // Request the basic solution.
-				_x.data());
+				MSK_SOL_ITG,    // Request the integer solution.
+				tmp_x);
 
-			MSK_getprimalobj(task_, MSK_SOL_ITR, &ObjVal_);
+			MSK_getprimalobj(task_, MSK_SOL_ITG, &ObjVal_);
 			assert(std::isfinite(ObjVal_));
 
-			printf("Mosek Lp Optimal primal solution\n");
-			/*for (int j = 0; j < N_ * N_; ++j)
-			{
-				printf("x[%d]: %e\n", j, _x[j]);
-			}*/
+			printf("Mosek Lp Optimal integer solution\n");
+			/*for (j = 0; j < numvar; ++j)
+			printf("x[%d]: %e\n", j, _x[j]);*/
 
 			break;
 		case MSK_SOL_STA_DUAL_INFEAS_CER:
@@ -492,22 +503,6 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 			printf("The status of the solution could not be determined.\n");
 			break;
 		}
-
-		case MSK_SOL_STA_NEAR_INTEGER_OPTIMAL:
-		case MSK_SOL_STA_INTEGER_OPTIMAL:
-			_x.resize(N_ * N_);
-			MSK_getxx(task_,
-				MSK_SOL_ITG,    // Request the basic solution.
-				_x.data());
-			
-			MSK_getprimalobj(task_, MSK_SOL_ITG, &ObjVal_);
-			assert(std::isfinite(ObjVal_));
-
-			printf("Mosek Lp Optimal integer solution\n");
-			/*for (j = 0; j < numvar; ++j)
-			printf("x[%d]: %e\n", j, _x[j]);*/
-
-			break;
 		default:
 			printf("Other solution status.");
 			break;
@@ -523,6 +518,12 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 		"Time spent cutting: %.2f\n"
 		"Total time spent: %.2f\n"
 		"ObjValue: %e\n", cut_time, cut_time + t, ObjVal_);
+
+	_x.resize(N_*N_);
+	for (int i = 0; i < N_*N_; i++)
+	{
+		_x[i] = tmp_x[i];
+	}
 
 	return true;
 }

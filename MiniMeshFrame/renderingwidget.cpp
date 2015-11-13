@@ -459,15 +459,15 @@ void RenderingWidget::ReadFrame()
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
 
-	/*
-	// Run detection
-	cout << "graphcut begin" << endl;
-	DualGraph  *ptr_dualgraph_ = new DualGraph(ptr_frame_);
-    ptr_dualgraph_->Dualization();
-	cout << "graphcut end" << endl;
+	
+	//// Run detection
+	//cout << "graphcut begin" << endl;
+	//DualGraph  *ptr_dualgraph_ = new DualGraph(ptr_frame_);
+ //   ptr_dualgraph_->Dualization();
+	//cout << "graphcut end" << endl;
 
-	ptr_collision_ = new Collision(ptr_frame_, ptr_dualgraph_);
-	*/
+	//ptr_collision_ = new Collision(ptr_frame_, ptr_dualgraph_);
+	//ptr_collision_->DetectFrame();
 
 	updateGL();
 }
@@ -837,10 +837,15 @@ void RenderingWidget::DrawCut(bool bv)
 
 void RenderingWidget::DrawBulk(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
+	//if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
+	//{
+	//	return;
+	//}
+	if (!bv || ptr_frame_ == NULL)
 	{
 		return;
 	}
+
 
 	const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
 	const vector<Bulk*> bulk_list = *(ptr_fiberprint_->GetBulk());
@@ -896,12 +901,17 @@ void RenderingWidget::DrawBulk(bool bv)
 				else
 				if (range_state[cap_id][e_id] == 1)
 				{
-					glColor4f(0.80, 0.0, 0.30, 0.4);
+					glColor4f(0.0, 1, 0.0, 0.4);
 				}
 				else
 				if (range_state[cap_id][e_id] == 2)
 				{
 					glColor4f(1.0, 0.0, 0.0, 1);
+				}
+				else 
+				if (range_state[cap_id][e_id] == 3)
+				{
+					glColor4f(0.0, 0.0, 0.0, 1);
 				}
 				else
 				{
@@ -948,21 +958,13 @@ void RenderingWidget::DrawOrder(bool bv)
 
 void RenderingWidget::FiberPrintAnalysis()
 {
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->Dualization();
-	ptr_fiberprint_->ptr_seqanalyzer_->LayerPrint();
+	//ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	//ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->Dualization();
+	//ptr_fiberprint_->ptr_seqanalyzer_->LayerPrint();
 	
-	/*
-	delete ptr_fiberprint_;
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	ptr_fiberprint_->Print();
-	*/
-	/*
-	delete ptr_layermaker;
-	ptr_layermaker = new LayerMaker(ptr_mesh_);
-	ptr_layermaker->MakeLayers();
-	//PrintLayer();
-	*/
+	IllCondDetector detect;
+	detect.debug();
+
 }
 
 

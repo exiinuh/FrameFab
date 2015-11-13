@@ -24,6 +24,8 @@
 #include "FiberPrint\FiberPrintPlugIn.h"
 #include "WireFrame\WireFrame.h"
 
+#include "IllCondDetector.h"
+
 
 enum OperationMode
 {
@@ -140,6 +142,7 @@ public:
 	vector<WF_vert*>	captured_verts_;
 	int					captured_edge_;
 	vector<int>			bound_;
+
 
 };
 

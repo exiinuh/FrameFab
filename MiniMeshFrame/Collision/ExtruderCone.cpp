@@ -4,7 +4,7 @@
 ExtruderCone::ExtruderCone()
 {
 	normal_ = Vec3f(0, 0, 1);
-	angle_ = pi / 3;						//60 degree for extruder
+	angle_ = pi / 6;						//60 degree for extruder
 	height_ = 10;						// 1 means 10mm
 	wave_angle_ = pi / 18;				// 10 degree for wave 
 }

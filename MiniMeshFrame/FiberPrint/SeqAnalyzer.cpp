@@ -18,11 +18,11 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 
 SeqAnalyzer::~SeqAnalyzer()
 {
-	delete ptr_collision_;
-	ptr_collision_ = NULL;
+	//delete ptr_collision_;
+	//ptr_collision_ = NULL;
 
-	delete queue_;
-	queue_ = NULL;
+	//delete queue_;
+	//queue_ = NULL;
 }
 
 
@@ -41,21 +41,27 @@ void SeqAnalyzer::LayerPrint()
 	int Nd = ptr_dualgraph->SizeOfVertList();
 	MX L(Nd, Nd);
 	MX D(Nd, Nd);
-	VX x(Nd*Nd);
+	VX x(Nd * Nd);
 	L.setZero();
 	D.setConstant(gamma_);
 	x.setZero();
 
-	vector<vector<Range*>> *range_list = ptr_collision_->GetRangeList(); //           
-	vector<vector<int>>	*range_state = ptr_collision_->GetRangeState();         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
+	vector<vector<Range*>> *range_list = ptr_collision_->GetRangeList();
+	vector<vector<int>>	   *range_state = ptr_collision_->GetRangeState();         
+	// -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
+	
 	for (int i = 0; i < Nd; i++)
 	{
-		int u1 = ptr_dualgraph->u(i);
-		int v1 = ptr_dualgraph->v(i);
+		int orig_i = ptr_dualgraph->e_orig_id(i);
+		int u1 = edges[orig_i]->ppair_->pvert_->ID();
+		int v1 = edges[orig_i]->pvert_->ID();
+
 		for (int j = 0; j < Nd; j++)
 		{
-			int u2 = ptr_dualgraph->u(j);
-			int v2 = ptr_dualgraph->v(j);
+			int orig_j = ptr_dualgraph->e_orig_id(j);
+			int u2 = edges[orig_j]->ppair_->pvert_->ID();
+			int v2 = edges[orig_j]->pvert_->ID();
+
 			if (u1 == u2 || u1 == v2 || v1 == u2 || v1 == v2)
 			{
 				D(i, j) = alpha_;
@@ -80,9 +86,6 @@ void SeqAnalyzer::LayerPrint()
 					angle += range->left_end - range->left_begin;
 				}
 				
-				cout << range->right_begin << " " << range->right_end << " " << range->left_begin << " " << range->left_end << endl;
-				getchar();
-				
 				L(i, j) = beta_ * angle / 20.0 + alpha_;
 				break;
 
@@ -96,41 +99,23 @@ void SeqAnalyzer::LayerPrint()
 		}
 	}
 
-	for (int i = 0; i < Nd; i++)
-	{
-		for (int j = 0; j < Nd; j++)
-		{
-			cout << L(i, j) << " ";
-		}
-		puts("");
-		getchar();
-	}
-
 	MX cost(Nd, Nd);
 	for (int i = 0; i < Nd; i++)
 	{
 		for (int j = 0; j < Nd; j++)
 		{
-			cost(i, j) = L(i, j)*D(i, j);
+			cost(i, j) = L(i, j) * D(i, j);
 		}
 	}
 
-	
-	for (int i = 0; i < Nd; i++)
-	{
-		for (int j = 0; j < Nd; j++)
-		{
-			cout << cost(i, j) << " ";
-		}
-		puts("");
-		getchar();
-	}
-	
+	//Statistics s_cost("TSP_Cost", cost);
+	//s_cost.GenerateMatrixFile();
 
+	TSPSolver TSP_solver = TSPSolver(cost);
+	TSP_solver.Solve(x, 1);
 
-	TSPSolver *TSP_solver = new TSPSolver(&cost);
-	TSP_solver->Solve(x, 0);
-
+	//Statistics s_x("TSP_Res", x);
+	//s_x.GenerateVectorFile();
 
 	int h = 0;
 	queue_->clear();
@@ -148,7 +133,4 @@ void SeqAnalyzer::LayerPrint()
 		}
 		h++;
 	}
-	
-	Statistics s_x("TSP_Res", x);
-	s_x.GenerateVectorFile();
 }

@@ -24,13 +24,13 @@ public:
 	typedef Eigen::VectorXd				VX;
 public:
 	TSPSolver();
-	TSPSolver(SpMat  *_cost);
-	TSPSolver(MX	 *_cost);
+	TSPSolver(const SpMat  &_cost);
+	TSPSolver(const MX	   &_cost);
 	~TSPSolver();
 
 	// I/O
-	void SetCostMatrix(MX &_costM);
-	void SetCostMatrix(SpMat &_costM);
+	void SetCostMatrix(const MX &_costM);
+	void SetCostMatrix(const SpMat &_costM);
 
 	bool Solve(VX &_x, bool _debug);
 
@@ -46,7 +46,7 @@ public:
 															// sum_{i,j \in S} x_{ij} <= |S|-1 
 	void AddCuts();											// Identifies subtours and adds a number of violated cuts
 private:
-	VX		cost_;
+	VX		    cost_;
 	int			N_;
 	double		ObjVal_;
 	VX			lb_, ub_;			// Lower variable bound and Upper variable bound
@@ -59,6 +59,6 @@ private:
 
 	MSKrescodee		r_;				// Mosek return code
 	MSKenv_t		env_;			// Mosek enviroment
-	MSKtask_t      task_;			// Mosek task
+	MSKtask_t       task_;			// Mosek task
 };
 #endif

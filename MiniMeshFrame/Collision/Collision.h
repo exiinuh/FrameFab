@@ -50,14 +50,24 @@ public:
 	//double	Distance(Triangle face, point start, point end);
 	//double	Distance(Parallelogram face, point start, point end);
 
+	point UpIntersectBulk(Bulk *bulk, point p);
+	bool  UpCollisionBulk(Bulk *bulk, point p);
+    bool AboveCollisionBulk(Bulk *bulk, point p);
+	
+	int    AboveCollisionAnalysis(Bulk *bulk, point target_start, point target_end); //for machine Arm Collision
+
+
 	bool	CheckPoint(point temp, vector<point>collision_point);		//check is there the same point in the list
 
 	void	ConeSegementTest();
 	void	SegementTriangleTest();
 
+	int AboveDetection(Bulk *bulk, point target_start, point target_end);
+
 	void	Test();
 	void	Print();
 	void	Print(point i){ cout << i.x() << " " << i.y() << " " << i.z() << " " << endl; }
+
 	void	Print(Range a){ cout << a.right_begin / pi * 180 << " " << a.right_end / pi * 180 << " " <<
 									a.left_begin / pi * 180 << " " << a.left_end / pi * 180 << endl; }
 
@@ -76,6 +86,8 @@ public:
 	inline double	Max(double x, double y){ return (x > y) ? x : y; }
 	inline bool		Equal(point x, point y){ return((x - y).length() < eps) ? true : false; }
 	inline bool		Equal(double x, double y){ return(abs(x - y) < eps) ? true : false; }
+
+	inline bool      Equal(Range a, Range b){ if (a.left_begin == b.left_begin&&a.left_end == b.left_end&&a.right_begin == b.right_begin&&a.right_end == b.right_end)return true; return false; }
 
 	vector<vector<Range*>>	*GetRangeList(){ return range_list_; }
 	vector<vector<int>>		*GetRangeState(){ return range_state_; }
