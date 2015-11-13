@@ -22,8 +22,8 @@ TSPSolver::TSPSolver(const SpMat &_cost) : maxrounds_(MAXCUTROUNDS), maxcuts_(MA
 
 TSPSolver::~TSPSolver()
 {
-	//MSK_deletetask(&task_);
-	//MSK_deleteenv(&env_);
+	MSK_deletetask(&task_);
+	MSK_deleteenv(&env_);
 }
 
 #ifdef MOSEK_EXISTS
@@ -409,6 +409,7 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 	AddObjFunctions();
 	AddAssignCons();
 
+	/*
 	if (_debug)
 	{
 		MSK_analyzeproblem(task_, MSK_STREAM_MSG);
@@ -420,6 +421,7 @@ bool TSPSolver::Solve(VX &_x, bool _debug)
 			MSK_writedata(task_, fileName.c_str());
 		}
 	}
+	*/
 
 	double cut_time = 0;
 	nsubtours_ = 2;

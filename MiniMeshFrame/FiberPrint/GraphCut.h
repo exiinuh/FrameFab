@@ -12,9 +12,10 @@
 
 #include "WireFrame\WireFrame.h"
 #include "Stiffness.h"
+#include "FiberPrintPARM.h"
 
-#include "QP/QPMosek.h"
-#include "QP/QPFactory.h"
+#include "QPMosek.h"
+#include "QPFactory.h"
 #include "Statistics.h"
 
 using namespace std;
@@ -32,6 +33,7 @@ class GraphCut
 public:
 	GraphCut();
 	GraphCut(WireFrame *ptr_frame);
+	GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
 	~GraphCut();
 
 public:
@@ -66,21 +68,6 @@ public:
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
 
-	int				N_;				// N :    Number of nodes in orig graph
-	int				M_;				// M :    Number of edges in orig graph 
-	int				Nd_;			// Nd :   Number of node in dual graph
-	int				Md_;			// Md :   Number of edges in dual graph
-	int				Fd_;			// Fd :   Number of faces in dual graph
-	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
-
-	double			penalty_;		// penalty  : penalty factor used in ADMM  
-	double			D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
-	int				stop_n_;		// stop_n   : termination criteria for GraphCut process, number of dual nodes in LowerSet
-	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
-	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
-
-	bool			debug_;
-
 	SpMat			A_;
 	SpMat			C_;
 	VX				x_;
@@ -96,5 +83,20 @@ public:
 	QP				*qp_;			// Solves the quadratic programming problem:
 									// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
 	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
+
+	int				N_;				// N :    Number of nodes in orig graph
+	int				M_;				// M :    Number of edges in orig graph 
+	int				Nd_;			// Nd :   Number of node in dual graph
+	int				Md_;			// Md :   Number of edges in dual graph
+	int				Fd_;			// Fd :   Number of faces in dual graph
+	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
+
+	int				stop_n_;		// stop_n   : termination criteria for GraphCut process, number of dual nodes in LowerSet
+	double			penalty_;		// penalty  : penalty factor used in ADMM  
+	double			D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
+	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
+	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
+
+	bool			debug_;
 };
 

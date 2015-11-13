@@ -23,7 +23,7 @@ extern "C" void dgels_(const char *trans, const int *M, const int *N, const int 
 
 extern "C" void dpotrf_(const char* UPLO, const int *N, double* A, const int *lda, int *info);
 
-extern "C" void dppcon(const char *UPLO, const int *N, double* AP, ANORM, RCOND, WORK, IWORK, INFO)
+//extern "C" void dppcon(const char *UPLO, const int *N, double* AP, ANORM, RCOND, WORK, IWORK, INFO);
 class IllCondDetector{
 public:
 	typedef Eigen::SparseMatrix<double> EigenSp;

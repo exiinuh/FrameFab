@@ -24,14 +24,13 @@
 #include "FiberPrint\FiberPrintPlugIn.h"
 #include "WireFrame\WireFrame.h"
 
-#include "IllCondDetector.h"
-
 
 enum OperationMode
 {
 	NORMAL,
 	CHOOSEBOUND,
 	ADDEDGE,
+	SETSTART,
 };
 
 
@@ -65,11 +64,17 @@ public:
 	void	keyReleaseEvent(QKeyEvent *e);
 
 signals:
+	void	AddEdgePressed(bool);
+	void	ChooseBoundPressed(bool);
+	void	SetStartPressed(bool);
+
 	void	meshInfo(int, int);
 	void	operatorInfo(QString);
-	void	modeInfo(QString); 
+	void	modeInfo(QString);
 	void	CapturedVert(int);
 	void	CapturedEdge(int, double);
+
+	void	Reset();
 
 private:
 	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
@@ -83,11 +88,19 @@ public slots:
 	void	SetBackground();
 	void	ReadFrame();
 	void	WriteFrame();
+	void	ScaleFrame(int size);
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
 	void	CheckLight(bool bv);
 	void	CheckDrawAxes(bool bv);
+
+	void	SwitchToNormal();
+	void	SwitchToAddEdge();
+	void	SwitchToChooseBound();
+	void	SwitchToSetStart();
+
+	void	ChangeOrientation();
 
 private:
 	void	DrawAxes(bool bv);
@@ -99,7 +112,9 @@ private:
 	void	DrawOrder(bool bv);
 
 public slots:
-	void	FiberPrintAnalysis();
+	void	FiberPrintAnalysis(double radius, double density, double g, double youngs_modulus, 
+								double shear_modulus, double penalty, double D_tol, double pri_tol, 
+								double dual_tol, double alpha, double beta, double gamma);
 	void	PrintLayer(int layer);
 	void	PrintOrder(int order);
 	void	SimplifyFrame();
@@ -143,7 +158,7 @@ public:
 	int					captured_edge_;
 	vector<int>			bound_;
 
-
+	float				scale_;
 };
 
 #endif // RENDERINGWIDGET_H

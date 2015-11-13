@@ -14,6 +14,14 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
 }
 
 
+FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
+{
+	ptr_frame_ = ptr_frame;
+	ptr_graphcut_ = new GraphCut(ptr_frame, ptr_parm);
+	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
+}
+
+
 FiberPrintPlugIn::~FiberPrintPlugIn()
 {
 	delete ptr_graphcut_;
@@ -28,6 +36,18 @@ void FiberPrintPlugIn::Print()
 {
 	ptr_graphcut_->MakeLayers();
 	//ptr_seqanalyzer_->LayerPrint();
+}
+
+
+void FiberPrintPlugIn::SetStartEdge(int id)
+{
+	ptr_seqanalyzer_->SetStartEdge(id);
+}
+
+
+void FiberPrintPlugIn::ChangeOrientation()
+{
+	ptr_seqanalyzer_->ChangeOrientation();
 }
 
 

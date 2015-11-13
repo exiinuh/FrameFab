@@ -57,11 +57,17 @@ public:
 	//private:
 	WireFrame				*ptr_frame_;
 	DualGraph				*ptr_dualgraph_;
-	FiberPrintPARM			*ptr_parm_;
 
 	vector<Matrix3d>		M_;						// indexed by dual id
 	SpMat					K_;						// x-Weighted global stiffness matrix, 
 													// 3n*3n, n is the node number of orig graph
 	VectorXd				Fv_;
 	VectorXd				Fe_;
+
+	double					radius_;
+	double					density_;
+	double					g_;
+	double					G_;						// shear modulus
+	double					E_;						// young's modulus;
+	double					material_;
 };

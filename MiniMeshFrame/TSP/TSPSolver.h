@@ -10,8 +10,6 @@
 #include <mosek.h>
 #endif
 
-#include <TSPLIB_Loader.h>
-
 // solves min c^t * x subject to lc < A * x < uc, x >= lb, x <= ub
 // Formulate TSP using "Integer Programming Formulation of Traveling Salesman Problems" http://dl.acm.org/citation.cfm?id=321046
 // i,e, using MTZ constraints to keep subtour clear.

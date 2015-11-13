@@ -2,17 +2,17 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-			:alpha_(1.0), beta_(10000), gamma_(100)
+			:alpha_(1.0), beta_(10000), gamma_(100), start_edge_(0), orientation_(SEQUENCE)
 {
 	queue_ = new vector<int>;
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
-			:alpha_(1.0), beta_(10000), gamma_(100)
+			:alpha_(1.0), beta_(10000), gamma_(100), start_edge_(0), orientation_(SEQUENCE)
 {
 	ptr_graphcut_ = ptr_graphcut;
-	queue_ = new vector<int>;
+	queue_ = NULL;
 }
 
 
@@ -39,12 +39,14 @@ void SeqAnalyzer::LayerPrint()
 	int N = ptr_frame->SizeOfVertList();
 	int M = ptr_frame->SizeOfEdgeList();
 	int Nd = ptr_dualgraph->SizeOfVertList();
+
+	tsp_x_.resize(Nd * Nd);
+	tsp_x_.setZero();
+
 	MX L(Nd, Nd);
 	MX D(Nd, Nd);
-	VX x(Nd * Nd);
 	L.setZero();
 	D.setConstant(gamma_);
-	x.setZero();
 
 	vector<vector<Range*>> *range_list = ptr_collision_->GetRangeList();
 	vector<vector<int>>	   *range_state = ptr_collision_->GetRangeState();         
@@ -65,7 +67,7 @@ void SeqAnalyzer::LayerPrint()
 			if (u1 == u2 || u1 == v2 || v1 == u2 || v1 == v2)
 			{
 				D(i, j) = alpha_;
-				x(i*Nd + j) = 1;
+				tsp_x_(i*Nd + j) = 1;
 			}
 
 			double angle = 0;
@@ -112,20 +114,37 @@ void SeqAnalyzer::LayerPrint()
 	//s_cost.GenerateMatrixFile();
 
 	TSPSolver TSP_solver = TSPSolver(cost);
-	TSP_solver.Solve(x, 1);
+	TSP_solver.Solve(tsp_x_, 1);
 
 	//Statistics s_x("TSP_Res", x);
 	//s_x.GenerateVectorFile();
+	
+	//queue_->clear();
+	GenerateQueue();
+}
 
+
+void SeqAnalyzer::SetStartEdge(int id)
+{
+	start_edge_ = id;
+	GenerateQueue();
+}
+
+
+void SeqAnalyzer::GenerateQueue()
+{
+	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
+	int Nd = ptr_dualgraph->SizeOfVertList();
 	int h = 0;
-	queue_->clear();
-	queue_->push_back(0);
-	while (queue_->size() < Nd)
+	delete queue_;
+	queue_ = new vector<int>;
+	queue_->push_back(ptr_dualgraph->e_dual_id(start_edge_));
+	while (h < Nd)
 	{
 		int i = (*queue_)[h];
 		for (int j = 0; j < Nd; j++)
 		{
-			if (x(i*Nd+j))
+			if (tsp_x_(i*Nd + j))
 			{
 				queue_->push_back(j);
 				break;
@@ -133,4 +152,23 @@ void SeqAnalyzer::LayerPrint()
 		}
 		h++;
 	}
+}
+
+
+void SeqAnalyzer::ChangeOrientation()
+{
+	if (orientation_ == SEQUENCE)
+	{
+		orientation_ = REVERSE;
+	}
+	else
+	{
+		orientation_ = SEQUENCE;
+	}
+}
+
+
+Orientation SeqAnalyzer::GetOrientation()
+{
+	return orientation_;
 }

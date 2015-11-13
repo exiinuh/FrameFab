@@ -2,7 +2,7 @@
 
 
 GraphCut::GraphCut()
-		:debug_(false), penalty_(10e2), pri_tol_(10e-3), dual_tol_(10e-3), D_tol_(0.1)
+		 :debug_(false), penalty_(0), D_tol_(0), pri_tol_(0), dual_tol_(0)
 {
 	// This default construction function should never be run
 	// We need a mesh to begin with
@@ -10,11 +10,25 @@ GraphCut::GraphCut()
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame)
-		:debug_(false), penalty_(10e2), pri_tol_(10e-3), dual_tol_(10e-3), D_tol_(0.001)
+		 :debug_(false), penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_);
+}
+
+
+GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
+		 :debug_(false)
+{
+	ptr_frame_ = ptr_frame;
+	ptr_dualgraph_ = new DualGraph(ptr_frame_);
+	ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_, ptr_parm);
+
+	penalty_ = ptr_parm->penalty_;
+	D_tol_ = ptr_parm->D_tol_;
+	pri_tol_ = ptr_parm->pri_tol_;
+	dual_tol_ = ptr_parm->dual_tol_;
 }
 
 

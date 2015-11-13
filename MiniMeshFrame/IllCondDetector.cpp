@@ -46,8 +46,8 @@ void IllCondDetector::ComputeCondNum()
 	char  *uplo = "U";
 	int   n = N_;
 	int	  lda = N_;
-	int	  *info;
-	dpotrf_(uplo, &n, L, &lda, info);
+	int	  info;
+	dpotrf_(uplo, &n, L, &lda, &info);
 	
 	delete L;
 }
@@ -62,7 +62,7 @@ bool IllCondDetector::StabAnalysis()
 
 	// With the smallest eigenpairs: determine if a gap exists, i.e., if there is a k < ns_,
 	// s.t. lambda_{k-1}/lambda_{k} > gap_ * lambda_k/lambda_{k+1}
-	
+	return true;
 }
 
 void IllCondDetector::Debug()

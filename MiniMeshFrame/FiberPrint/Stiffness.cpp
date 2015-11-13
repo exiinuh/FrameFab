@@ -7,10 +7,10 @@ Stiffness::Stiffness()
 
 
 Stiffness::Stiffness(WireFrame *ptr_frame, DualGraph *ptr_dualgraph)
+		  :radius_(0.0015), density_(0.001), g_(9.80), G_(1586), E_(1387), material_(199)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = ptr_dualgraph;
-	ptr_parm_ = new FiberPrintPARM();		// default parameter set
 }
 
 
@@ -18,14 +18,18 @@ Stiffness::Stiffness(WireFrame *ptr_frame, DualGraph *ptr_dualgraph, FiberPrintP
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = ptr_dualgraph;
-	ptr_parm_ = ptr_parm;
+
+	radius_ = ptr_parm->radius_;
+	density_ = ptr_parm->density_;
+	g_ = ptr_parm->g_;
+	G_ = ptr_parm->shear_modulus_;
+	E_ = ptr_parm->youngs_modulus_;
+	material_ = G_ - E_;
 }
 
 
 Stiffness::~Stiffness()
 {
-	delete ptr_parm_;
-	ptr_parm_ = NULL;
 }
 
 
@@ -60,31 +64,26 @@ void Stiffness::CreateM()
 				double len = sqrt(dx*dx + dy*dy + dz*dz);
 				double volume = pow(len, 3);
 
-				double G = ptr_parm_->ShearModulus();
-				double E = ptr_parm_->YoungsModulus();
-				double material = G - E;
-				double radius = ptr_parm_->Radius();
-
 				Matrix3d Muv;
 				Muv.setZero();
 
 				/*x axis*/
-				Muv(0, 0) = -material * M_PI * radius * radius / volume * dx * dx
-					+ G * M_PI * radius * radius / len;
-				Muv(0, 1) = -material * M_PI * radius * radius / volume * dx * dy;
-				Muv(0, 2) = -material * M_PI * radius * radius / volume * dx * dz;
+				Muv(0, 0) = -material_ * M_PI * radius_ * radius_ / volume * dx * dx
+					+ G_ * M_PI * radius_ * radius_ / len;
+				Muv(0, 1) = -material_ * M_PI * radius_ * radius_ / volume * dx * dy;
+				Muv(0, 2) = -material_ * M_PI * radius_ * radius_ / volume * dx * dz;
 
 				/*y axis*/
-				Muv(1, 0) = -material * M_PI * radius * radius / volume * dx * dy;
-				Muv(1, 1) = -material * M_PI * radius * radius / volume * dy * dy
-					+ G * M_PI * radius * radius / len;
-				Muv(1, 2) = -material * M_PI * radius * radius / volume * dz * dy;
+				Muv(1, 0) = -material_ * M_PI * radius_ * radius_ / volume * dx * dy;
+				Muv(1, 1) = -material_ * M_PI * radius_ * radius_ / volume * dy * dy
+					+ G_ * M_PI * radius_ * radius_ / len;
+				Muv(1, 2) = -material_ * M_PI * radius_ * radius_ / volume * dz * dy;
 
 				/*z axis*/
-				Muv(2, 0) = -material * M_PI * radius * radius / volume * dx * dz;
-				Muv(2, 1) = -material * M_PI * radius * radius / volume * dy * dz;
-				Muv(2, 2) = -material * M_PI * radius * radius / volume * dz * dz
-					+ G * M_PI * radius * radius / len;
+				Muv(2, 0) = -material_ * M_PI * radius_ * radius_ / volume * dx * dz;
+				Muv(2, 1) = -material_ * M_PI * radius_ * radius_ / volume * dy * dz;
+				Muv(2, 2) = -material_ * M_PI * radius_ * radius_ / volume * dz * dz
+					+ G_ * M_PI * radius_ * radius_ / len;
 
 				M_[e_id] = Muv;
 			}
@@ -284,10 +283,6 @@ void Stiffness::CreateFv(const VectorXd *ptr_x)
 
 void Stiffness::CreateFe()
 {
-	double r = ptr_parm_->Radius();
-	double density = ptr_parm_->Density();
-	double g = ptr_parm_->G();
-
 	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -306,7 +301,7 @@ void Stiffness::CreateFe()
 			double dy = u->Position().y() - v->Position().y();
 			double dz = u->Position().z() - v->Position().z();
 			double len = sqrt(dx*dx + dy*dy + dz*dz);
-			double gravity = M_PI * r * r * len * density * g;
+			double gravity = M_PI * radius_ * radius_ * len * density_ * g_;
 
 			Fe_[i] = Fe_[j] = gravity;
 		}

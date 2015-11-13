@@ -19,29 +19,47 @@ MainWindow::MainWindow(QWidget *parent)
 	renderingwidget_ = new RenderingWidget(this);
 //	setCentralWidget(renderingwidget_);
 
-	setGeometry(300, 150, 800, 600);
+	setGeometry(200, 150, 1000, 700);
 
 	CreateActions();
 	CreateMenus();
 	CreateToolBars();
-	CreateStatusBar();
-	CreateRenderGroup();
-	CreateEditGroup();
-	CreateScaleGroup();
+	CreateLabels();
+	CreateLineEdits();
+	CreateCheckBoxes();
+	CreateRadioButtons();
+	CreatePushButtons();
+	CreateToolButtons();
+	CreateSliders();
+	CreateGroups();
 
-	QVBoxLayout *layout_left = new QVBoxLayout;
+	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
+
+	QVBoxLayout *layout_left = new QVBoxLayout; 
 	layout_left->addWidget(groupbox_render_);
+	layout_left->addWidget(groupbox_edge_);
+	layout_left->addWidget(groupbox_orderdisplay_);
+	layout_left->addWidget(groupbox_ordersettings_);
 	layout_left->addWidget(groupbox_edit_);
 	layout_left->addWidget(groupbox_scale_);
+	layout_left->addWidget(groupbox_separator_);
 	layout_left->addStretch(1);
+
+	QVBoxLayout *layout_right = new QVBoxLayout;
+	layout_right->addWidget(groupbox_fiber_);
+	layout_right->addWidget(groupbox_para_);
+	layout_right->addStretch(1);
 
 	QHBoxLayout *layout_main = new QHBoxLayout;
 	layout_main->addLayout(layout_left);
 	layout_main->addWidget(renderingwidget_);
 	layout_main->setStretch(1, 1);
+	layout_main->addLayout(layout_right);
 	this->centralWidget()->setLayout(layout_main);
 
 	toolbar_file_->setVisible(false);
+
+	Reset();
 }
 
 
@@ -74,16 +92,8 @@ void MainWindow::CreateActions()
 	action_loadmesh_ = new QAction(tr("readOBJ"), this);
 	action_background_ = new QAction(tr("ChangeBackground"), this);
 
-	action_fiberprint_ = new QAction(tr("FiberPrint"), this);
-	action_simplify_ = new QAction(tr("Simplify"), this);
-	action_project_ = new QAction(tr("Project"), this);
-
 	connect(action_loadmesh_, SIGNAL(triggered()), renderingwidget_, SLOT(ReadFrame()));
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
-
-	connect(action_fiberprint_, SIGNAL(triggered()), renderingwidget_, SLOT(FiberPrintAnalysis()));
-	connect(action_simplify_, SIGNAL(triggered()), renderingwidget_, SLOT(SimplifyFrame()));
-	connect(action_project_, SIGNAL(triggered()), renderingwidget_, SLOT(ProjectBound()));
 }
 
 
@@ -108,21 +118,16 @@ void MainWindow::CreateToolBars()
 	toolbar_basic_ = addToolBar(tr("Basic"));
 	toolbar_basic_->addAction(action_loadmesh_);
 	toolbar_basic_->addAction(action_background_);
-
-	toolbar_fiber_ = addToolBar(tr("Fiber"));
-	toolbar_fiber_->addAction(action_fiberprint_);
-	toolbar_fiber_->addAction(action_simplify_);
-	toolbar_fiber_->addAction(action_project_);
 }
 
 
-void MainWindow::CreateStatusBar()
+void MainWindow::CreateLabels()
 {
 	label_meshinfo_ = new QLabel(QString("MeshInfo: p: %1 e: %2").arg(0).arg(0));
 	label_meshinfo_->setAlignment(Qt::AlignCenter);
 	label_meshinfo_->setMinimumSize(label_meshinfo_->sizeHint());
 
-	label_operatorinfo_ = new QLabel();
+	label_operatorinfo_ = new QLabel(QString("Scale: 1.0"));
 	label_operatorinfo_->setAlignment(Qt::AlignVCenter);
 	
 	label_modeinfo_ = new QLabel();
@@ -141,28 +146,64 @@ void MainWindow::CreateStatusBar()
 	statusBar()->addWidget(label_capture_);
 	connect(renderingwidget_, SIGNAL(CapturedVert(int)), this, SLOT(ShowCapturedVert(int)));
 	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
+
+
+	label_radius_		= new QLabel(QString("Radius(cm): "));
+	label_density_		= new QLabel(QString("Density(g/cm^3): "));
+	label_g_			= new QLabel(QString("Gravity(m/s^2): "));
+	label_youngsmodulus_= new QLabel(QString("Young's modulus(Pa): "));
+	label_shearmodulus_ = new QLabel(QString("Shear modulus(N/m^2): "));
+
+	label_penalty_	= new QLabel(QString("ADMM penalty: "));
+	label_Dtol_		= new QLabel(QString("ADMM D tolerance: "));
+	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "));
+	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "));
+	label_alpha_	= new QLabel(QString("TSP alpha: "));
+	label_beta_		= new QLabel(QString("TSP beta: "));
+	label_gamma_	= new QLabel(QString("TSP gamma: "));
 }
 
 
-void MainWindow::CreateRenderGroup()
+void MainWindow::CreateLineEdits()
+{
+	line_radius_		= new QLineEdit(tr("0.0015"), this);
+	line_density_		= new QLineEdit(tr("0.001"), this);
+	line_g_				= new QLineEdit(tr("9.80"), this);
+	line_youngsmodulus_	= new QLineEdit(tr("1586"), this);
+	line_shearmodulus_	= new QLineEdit(tr("1387"), this);
+
+	line_penalty_	= new QLineEdit(tr("100"), this);
+	line_Dtol_		= new QLineEdit(tr("0.1"), this);
+	line_pritol_	= new QLineEdit(tr("0.001"), this);
+	line_dualtol_	= new QLineEdit(tr("0.001"), this);
+
+	line_alpha_		= new QLineEdit(tr("1.0"), this);
+	line_beta_		= new QLineEdit(tr("10000.0"), this);
+	line_gamma_		= new QLineEdit(tr("100.0"), this);
+}
+
+
+void MainWindow::CreateCheckBoxes()
 {
 	checkbox_point_ = new QCheckBox(tr("Point"), this);
 	connect(checkbox_point_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawPoint(bool)));
 	checkbox_point_->setChecked(true);
-	
-	radiobutton_edge_ = new QRadioButton(tr("Edge"), this);
-	connect(radiobutton_edge_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
+	checkbox_light_ = new QCheckBox(tr("Light"), this);
+	connect(checkbox_light_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckLight(bool)));
+
+	checkbox_axes_ = new QCheckBox(tr("Axes"), this);
+	connect(checkbox_axes_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawAxes(bool)));
+}
+
+
+void MainWindow::CreateRadioButtons()
+{
 	radiobutton_heat_ = new QRadioButton(tr("Heat"), this);
 	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
 	radiobutton_cut_ = new QRadioButton(tr("Cut"), this);
 	connect(radiobutton_cut_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
-
-	slider_layer_ = new QSlider(Qt::Horizontal);
-	slider_layer_->setMinimum(0);
-	slider_layer_->setMaximum(10);
-	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
 
 	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
 	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
@@ -170,42 +211,14 @@ void MainWindow::CreateRenderGroup()
 	radiobutton_order_ = new QRadioButton(tr("Order"), this);
 	connect(radiobutton_order_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
-	slider_order_ = new QSlider(Qt::Horizontal);
-	slider_order_->setMinimum(0);
-	slider_order_->setMaximum(10);
-	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
-
 	radiobutton_none_ = new QRadioButton(tr("None"), this);
 	radiobutton_none_->setVisible(false);
 	radiobutton_none_->setChecked(true);
 	edge_render_ = NONE;
-
-	connect(this, SIGNAL(EdgeMode(int)), renderingwidget_, SLOT(CheckEdgeMode(int)));
-
-	checkbox_light_ = new QCheckBox(tr("Light"), this);
-	connect(checkbox_light_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckLight(bool)));
-
-	checkbox_axes_ = new QCheckBox(tr("Axes"), this);
-	connect(checkbox_axes_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawAxes(bool)));
-
-	groupbox_render_ = new QGroupBox(tr("Render"), this);
-
-	QVBoxLayout* render_layout = new QVBoxLayout(groupbox_render_);
-	render_layout->addWidget(checkbox_point_);
-	render_layout->addWidget(radiobutton_edge_);
-	render_layout->addWidget(radiobutton_heat_);
-	render_layout->addWidget(radiobutton_cut_);
-	render_layout->addWidget(slider_layer_);
-	render_layout->addWidget(radiobutton_bulk_);
-	render_layout->addWidget(radiobutton_order_);
-	render_layout->addWidget(slider_order_);
-	render_layout->addWidget(radiobutton_none_);
-	render_layout->addWidget(checkbox_light_);
-	render_layout->addWidget(checkbox_axes_);
 }
 
 
-void MainWindow::CreateEditGroup()
+void MainWindow::CreatePushButtons()
 {
 	pushbutton_rotatexy_ = new QPushButton(tr("RotateXY"), this);
 	pushbutton_rotatexz_ = new QPushButton(tr("RotateXZ"), this);
@@ -214,23 +227,168 @@ void MainWindow::CreateEditGroup()
 	connect(pushbutton_rotatexz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXZ()));
 	connect(pushbutton_rotateyz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateYZ()));
 
+	pushbutton_orientation_ = new QPushButton(tr("Change\norientation"), this);
+	connect(pushbutton_orientation_, SIGNAL(clicked()), renderingwidget_, SLOT(ChangeOrientation()));
+
+	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
+	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
+
+	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
+	pushbutton_project_ = new QPushButton(tr("Project"), this);
+	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetParameters())); 
+	connect(this, SIGNAL(SendParameters(double, double, double, double, double, double, double, 
+		double, double, double, double, double)), renderingwidget_, SLOT(FiberPrintAnalysis(double, 
+		double, double, double, double, double, double, double, double, double, double, double)));
+	connect(pushbutton_project_, SIGNAL(clicked()), renderingwidget_, SLOT(ProjectBound()));
+}
+
+
+void MainWindow::CreateToolButtons()
+{
+	toolbutton_addedge_ = new QToolButton();
+	toolbutton_addedge_->setText(tr("Insert\nedge"));
+	toolbutton_addedge_->setMaximumSize(100, 50);
+	connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
+
+	toolbutton_choosebound_ = new QToolButton();
+	toolbutton_choosebound_->setText(tr("Choose frame\nboundary"));
+	toolbutton_choosebound_->setMaximumSize(200, 150);
+	connect(toolbutton_choosebound_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBound()));
+
+	toolbutton_setstart_ = new QToolButton();
+	toolbutton_setstart_->setText(tr("Set as\nstart edge"));
+	toolbutton_setstart_->setMaximumSize(84, 50);
+	connect(toolbutton_setstart_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToSetStart()));
+
+	connect(renderingwidget_, SIGNAL(AddEdgePressed(bool)), this, SLOT(AddEdgeClicked(bool)));
+	connect(renderingwidget_, SIGNAL(ChooseBoundPressed(bool)), this, SLOT(ChooseBoundClicked(bool)));
+	connect(renderingwidget_, SIGNAL(SetStartPressed(bool)), this, SLOT(SetStartClicked(bool)));
+}
+
+
+void MainWindow::CreateSliders()
+{
+	slider_layer_ = new QSlider(Qt::Horizontal);
+	slider_layer_->setMinimum(0);
+	slider_layer_->setMaximum(10);
+	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
+
+	slider_order_ = new QSlider(Qt::Horizontal);
+	slider_order_->setMinimum(0);
+	slider_order_->setMaximum(20);
+	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
+
+	slider_scale_ = new QSlider(Qt::Horizontal);
+	slider_scale_->setMinimum(1);
+	slider_scale_->setMaximum(20);
+	slider_scale_->setValue(10);
+	connect(slider_scale_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(ScaleFrame(int)));
+	connect(slider_scale_, SIGNAL(valueChanged(int)), this, SLOT(ShowScale(int)));
+}
+
+
+void MainWindow::CreateGroups()
+{
+	// render group
+	connect(this, SIGNAL(EdgeMode(int)), renderingwidget_, SLOT(CheckEdgeMode(int)));
+
+	groupbox_render_ = new QGroupBox(tr("Render"), this);
+	groupbox_render_->setFlat(true);
+
+	QVBoxLayout* render_layout = new QVBoxLayout(groupbox_render_);
+	render_layout->addWidget(checkbox_point_);
+	render_layout->addWidget(checkbox_light_);
+	render_layout->addWidget(checkbox_axes_);
+
+	// edge group
+	groupbox_edge_ = new QGroupBox(tr("Edge"), this);
+	groupbox_edge_->setCheckable(true);
+	connect(groupbox_edge_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+
+	QVBoxLayout* edge_layout = new QVBoxLayout(groupbox_edge_);
+	edge_layout->addWidget(radiobutton_heat_);
+	edge_layout->addWidget(radiobutton_cut_);
+	//edge_layout->addWidget(slider_layer_);
+	edge_layout->addWidget(radiobutton_bulk_);
+	edge_layout->addWidget(radiobutton_order_);
+
+	edge_layout->addWidget(radiobutton_none_);
+
+	// order display group
+	groupbox_orderdisplay_ = new QGroupBox(tr("Display"), this);
+	groupbox_orderdisplay_->setFlat(true);
+
+	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
+	orderdisplay_layout->addWidget(slider_order_);
+	
+	// order settings group
+	groupbox_ordersettings_ = new QGroupBox(tr("Settings"), this);
+	groupbox_ordersettings_->setFlat(true);
+
+	QVBoxLayout* ordersettings_layout = new QVBoxLayout(groupbox_ordersettings_);
+	ordersettings_layout->addWidget(pushbutton_orientation_);
+	ordersettings_layout->addWidget(toolbutton_setstart_);
+
+	// edit group
 	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
+	groupbox_edit_->setFlat(true);
 
 	QVBoxLayout* edit_layout = new QVBoxLayout(groupbox_edit_);
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
-}
+	edit_layout->addWidget(toolbutton_addedge_);
+	edit_layout->addWidget(pushbutton_simplify_);
 
-
-void MainWindow::CreateScaleGroup()
-{
-	slider_scale_ = new QSlider(Qt::Horizontal);
-
+	// scale group
 	groupbox_scale_ = new QGroupBox(tr("Scale"), this);
+	groupbox_scale_->setFlat(true);
 
 	QVBoxLayout* scale_layout = new QVBoxLayout(groupbox_scale_);
 	scale_layout->addWidget(slider_scale_);
+
+	// separator group
+	groupbox_separator_ = new QGroupBox(this);
+	groupbox_separator_->setFlat(true);
+
+	// fiber group
+	groupbox_fiber_ = new QGroupBox(tr("Fiber"), this);
+
+	QVBoxLayout* fiber_layout = new QVBoxLayout(groupbox_fiber_);
+	fiber_layout->addWidget(pushbutton_fiberprint_);
+	fiber_layout->addWidget(toolbutton_choosebound_);
+	fiber_layout->addWidget(pushbutton_project_);
+
+	// parameter group
+	groupbox_para_ = new QGroupBox(tr("Parameter"), this);
+
+	QVBoxLayout* para_layout = new QVBoxLayout(groupbox_para_);
+	para_layout->addWidget(label_radius_);
+	para_layout->addWidget(line_radius_);
+	para_layout->addWidget(label_density_);
+	para_layout->addWidget(line_density_);
+	para_layout->addWidget(label_g_);
+	para_layout->addWidget(line_g_);
+	para_layout->addWidget(label_youngsmodulus_);
+	para_layout->addWidget(line_youngsmodulus_);
+	para_layout->addWidget(label_shearmodulus_);
+	para_layout->addWidget(line_shearmodulus_);
+
+	para_layout->addWidget(label_penalty_);
+	para_layout->addWidget(line_penalty_);
+	para_layout->addWidget(label_Dtol_);
+	para_layout->addWidget(line_Dtol_);
+	para_layout->addWidget(label_pritol_);
+	para_layout->addWidget(line_pritol_);
+	para_layout->addWidget(label_dualtol_);
+	para_layout->addWidget(line_dualtol_);
+
+	para_layout->addWidget(label_alpha_);
+	para_layout->addWidget(line_alpha_);
+	para_layout->addWidget(label_beta_);
+	para_layout->addWidget(line_beta_);
+	para_layout->addWidget(label_gamma_);
+	para_layout->addWidget(line_gamma_);
 }
 
 
@@ -249,6 +407,44 @@ void MainWindow::keyReleaseEvent(QKeyEvent *e)
 void MainWindow::OpenFile()
 {
 
+}
+
+
+void MainWindow::AddEdgeClicked(bool down)
+{
+	toolbutton_addedge_->setDown(down);
+}
+
+
+void MainWindow::ChooseBoundClicked(bool down)
+{
+	toolbutton_choosebound_->setDown(down);
+}
+
+
+void MainWindow::SetStartClicked(bool down)
+{
+	toolbutton_setstart_->setDown(down);
+}
+
+
+void MainWindow::GetParameters()
+{
+	emit(SendParameters(
+		line_radius_->text().toDouble(),
+		line_density_->text().toDouble(),
+		line_g_->text().toDouble(),
+		line_youngsmodulus_->text().toDouble(),
+		line_shearmodulus_->text().toDouble(),
+		line_penalty_->text().toDouble(),
+		line_Dtol_->text().toDouble(),
+		line_pritol_->text().toDouble(),
+		line_dualtol_->text().toDouble(),
+		line_alpha_->text().toDouble(),
+		line_beta_->text().toDouble(),
+		line_gamma_->text().toDouble()
+		)
+	);
 }
 
 
@@ -284,66 +480,105 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 }
 
 
+void MainWindow::ShowScale(int size)
+{
+	double scale = size*1.0 / 10;
+	label_operatorinfo_->setText(QString("Scale: %1").arg(scale*scale));
+}
+
+
 void MainWindow::EdgeModeChange()
 {
-	if (sender() == radiobutton_edge_)
+	if (groupbox_edge_->isChecked())
 	{
-		if (edge_render_ != EDGE)
+		if (sender() == radiobutton_heat_)
 		{
-			radiobutton_edge_->setChecked(true);
-			edge_render_ = EDGE;
-			emit(EdgeMode(EDGE));
-			return;
-		}
-	}
-	else
-	if (sender() == radiobutton_heat_)
-	{
-		if (edge_render_ != HEAT)
-		{
-			radiobutton_heat_->setChecked(true);
-			edge_render_ = HEAT;
-			emit(EdgeMode(HEAT));
-			return;
-		}
-	}
-	else
-	if (sender() == radiobutton_cut_)
-	{
-		if (edge_render_ != CUT)
-		{
-			radiobutton_cut_->setChecked(true);
-			edge_render_ = CUT;
-			emit(EdgeMode(CUT));
-			return;
-		}
-	}
-	else
-	if (sender() == radiobutton_bulk_)
-	{
-		if (edge_render_ != BULK)
-		{
-			radiobutton_bulk_->setChecked(true);
-			edge_render_ = BULK;
-			emit(EdgeMode(BULK));
-			return;
-		}
-	}
-	else
-	if (sender() == radiobutton_order_)
-	{
-		if (edge_render_ != ORDER)
-		{
-			radiobutton_order_->setChecked(true);
-			edge_render_ = ORDER;
-			emit(EdgeMode(ORDER));
-			return;
-		}
-	}
+			if (edge_render_ != HEAT)
+			{
+				radiobutton_heat_->setChecked(true);
+				edge_render_ = HEAT;
+				emit(EdgeMode(HEAT));
 
-	radiobutton_none_->setChecked(true);
-	edge_render_ = NONE;
-	emit(EdgeMode(NONE));
+				groupbox_orderdisplay_->setVisible(false);
+				groupbox_ordersettings_->setVisible(false);
+				groupbox_edit_->setVisible(true);
+				groupbox_scale_->setVisible(true);
+
+				return;
+			}
+		}
+		else
+		if (sender() == radiobutton_cut_)
+		{
+			if (edge_render_ != CUT)
+			{
+				radiobutton_cut_->setChecked(true);
+				edge_render_ = CUT;
+				emit(EdgeMode(CUT));
+
+				groupbox_orderdisplay_->setVisible(false);
+				groupbox_ordersettings_->setVisible(false);
+				groupbox_edit_->setVisible(true);
+				groupbox_scale_->setVisible(true);
+
+				return;
+			}
+		}
+		else
+		if (sender() == radiobutton_bulk_)
+		{
+			if (edge_render_ != BULK)
+			{
+				radiobutton_bulk_->setChecked(true);
+				edge_render_ = BULK;
+				emit(EdgeMode(BULK));
+
+				groupbox_orderdisplay_->setVisible(false);
+				groupbox_ordersettings_->setVisible(false);
+				groupbox_edit_->setVisible(true);
+				groupbox_scale_->setVisible(true);
+
+				return;
+			}
+		}
+		else
+		if (sender() == radiobutton_order_)
+		{
+			if (edge_render_ != ORDER)
+			{
+				radiobutton_order_->setChecked(true);
+				edge_render_ = ORDER;
+				emit(EdgeMode(ORDER));
+
+				groupbox_edit_->setVisible(false);
+				groupbox_scale_->setVisible(false);
+				groupbox_orderdisplay_->setVisible(true);
+				groupbox_ordersettings_->setVisible(true);
+
+				return;
+			}
+		}
+
+		radiobutton_none_->setChecked(true);
+		edge_render_ = EDGE;
+		emit(EdgeMode(EDGE));
+
+		groupbox_orderdisplay_->setVisible(false);
+		groupbox_ordersettings_->setVisible(false);
+		groupbox_edit_->setVisible(true);
+		groupbox_scale_->setVisible(true);
+	}
+	else
+	{
+		radiobutton_none_->setChecked(true);
+		edge_render_ = NONE;
+		emit(EdgeMode(NONE));
+
+		groupbox_orderdisplay_->setVisible(false);
+		groupbox_ordersettings_->setVisible(false);
+		groupbox_edit_->setVisible(true);
+		groupbox_scale_->setVisible(true);
+	}
 }
 
 
@@ -361,6 +596,23 @@ void MainWindow::ShowAbout()
 }
 
 
+void MainWindow::Reset()
+{
+	slider_layer_->setValue(0);
+	slider_order_->setValue(0);
+	slider_scale_->setValue(10);
+	label_operatorinfo_->setText(QString("Scale: 1.0"));
+
+	groupbox_edge_->setChecked(false);
+	radiobutton_none_->setChecked(true);
+	edge_render_ = NONE;
+
+	groupbox_orderdisplay_->setVisible(false);
+	groupbox_ordersettings_->setVisible(false);
+	groupbox_edit_->setVisible(true);
+	groupbox_scale_->setVisible(true);
+}
+/*
 void MainWindow::SetSlider()
 {
 	bool ok;
@@ -375,3 +627,4 @@ void MainWindow::SetSlider()
 
 	}
 }
+*/

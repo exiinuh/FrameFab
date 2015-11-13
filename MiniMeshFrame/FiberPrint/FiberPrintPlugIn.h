@@ -14,12 +14,16 @@ class FiberPrintPlugIn
 public:
 	FiberPrintPlugIn();
 	FiberPrintPlugIn(WireFrame *ptr_frame);
+	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
 	~FiberPrintPlugIn();
 
 public:
-	void				Print();
+	void			Print();
 
-	vector<DualVertex*>	*GetDualVertList()	{ return 	ptr_graphcut_->GetDualVertList(); }
+	void			SetStartEdge(int id);
+	void			ChangeOrientation();
+
+	vector<DualVertex*>	*GetDualVertList()	{ return ptr_graphcut_->GetDualVertList(); }
 	vector<int>			*GetLabel()			{ return ptr_graphcut_->GetLabel(); }
 	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
 
