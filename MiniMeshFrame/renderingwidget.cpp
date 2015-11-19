@@ -1194,22 +1194,11 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	
 	delete ptr_fiberprint_;
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm);
-	ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->Dualization();
-	ptr_fiberprint_->ptr_seqanalyzer_->LayerPrint();
+	ptr_fiberprint_->ptr_graphcut_->MakeLayers();
+	//ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->Dualization();
+	//ptr_fiberprint_->ptr_seqanalyzer_->LayerPrint();
 
-	delete ptr_parm;
-	
-	/*
-	delete ptr_fiberprint_;
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	ptr_fiberprint_->Print();
-	*/
-	/*
-	delete ptr_layermaker;
-	ptr_layermaker = new LayerMaker(ptr_mesh_);
-	ptr_layermaker->MakeLayers();
-	//PrintLayer();
-	*/
+	//delete ptr_parm;
 }
 
 

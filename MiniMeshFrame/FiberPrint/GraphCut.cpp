@@ -139,9 +139,6 @@ void GraphCut::CreateAandC()
 	}
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 	
-	Statistics s_C("C", C_);
-	s_C.GenerateSpFile();
-
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
 }
@@ -280,17 +277,6 @@ void GraphCut::MakeLayers()
 		//ptr_stiff_->Debug();
 		ptr_stiff_->CalculateD(&D_, &x_);
 
-		Statistics s_H("H1_", H1_);
-		s_H.GenerateSpFile();
-
-		Statistics s_x("x_", x_);
-		s_x.GenerateVectorFile();
-
-		Statistics s_D("D_", D_);
-		s_D.GenerateVectorFile();
-
-		//ptr_stiff_->CalculateD(&D_, &x_);
-
 		double old_energy = x_.dot((H1_)*x_);
 		cout << "****************************************" << endl;
 		cout << "GraphCut Round : " << cut_count << endl;
@@ -305,9 +291,7 @@ void GraphCut::MakeLayers()
 			cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
 			
 			string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
-			Statistics s_x(str, x_);
-			s_x.GenerateVectorFile();
-
+			
 			VX x_prev = x_;
 			CalculateX(d, W);
 
@@ -324,7 +308,7 @@ void GraphCut::MakeLayers()
 
 			ptr_stiff_->CreateK(&x_);
 			SpMat K_new = *(ptr_stiff_->WeightedK());
-
+			
 			/*dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
 				+ lambda_.transpose() * (Q_prev - Q_new);*/
 			dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev

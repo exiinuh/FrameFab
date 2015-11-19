@@ -62,6 +62,8 @@ public:
 	vector<int>				*GetLabel()				{ return &layer_label_; }
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
+	void Debug();
+
 public:
 //private:
 	WireFrame		*ptr_frame_;
