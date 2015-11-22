@@ -12,8 +12,8 @@
 #define VERSION "20151119+"
 #endif
 
-#ifndef PI
-#define PI 3.14159265358979323846264338327950288419716939937510
+#ifndef F_PI
+#define F_PI 3.14159265358979323846264338327950288419716939937510
 #endif
 
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis

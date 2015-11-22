@@ -17,8 +17,12 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
 {
 	ptr_frame_ = ptr_frame;
-	ptr_graphcut_ = new GraphCut(ptr_frame, ptr_parm);
-	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
+
+	StiffnessIO s_io;
+	s_io.Debug(1);
+
+	//ptr_graphcut_ = new GraphCut(ptr_frame, ptr_parm);
+	//ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
 }
 
 

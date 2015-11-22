@@ -4,10 +4,11 @@
 #define FIBERPRINTPLUGIN_H
 
 #include <vector>
-#include "GraphCut.h"
 #include "SeqAnalyzer.h"
-#include "Stiffness.h"
+//#include "Stiffness.h"
 
+#include "StiffnessIO.h"
+#include "GraphCut.h"
 
 class FiberPrintPlugIn
 {

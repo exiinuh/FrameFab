@@ -13,7 +13,10 @@
 */
 #pragma once
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include <vector>
+#include <string>
 #include <Eigen/dense>
 
 #include "CoordTrans.h"
@@ -22,6 +25,10 @@
 #include "GCommon.h"
 #include "GUtil.h"
 
+/* maximum number of load cases */
+#define _NL_ 32
+#define MYOUT std::cout
+#define MYEND std::endl
 class StiffnessIO
 {
 public:
@@ -38,10 +45,30 @@ public:
 	~StiffnessIO(){};
 
 public:
+
 	int			StiffnessGetline(FILE *fp, char *s, int lim);
 	void		GetlineNoComment(FILE *fp, char *s, int lim);
 	void		ParseInput(FILE *fp, const char *tpath);
-	void		OutPath(const char *fname, char fullpath[], const char *default_outdir);
+	void		OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir);
+
+	void ParseOptions(
+		char IN_file[], char OUT_file[],
+		int *shear_flag,
+		int *geom_flag,
+		int *anlyz_flag,
+		double *exagg_flag,
+		int *D3_flag,	/**< Force 3D plotting in Gnuplot */
+		int *lump_flag,
+		int *modal_flag,
+		double *tol_flag,
+		double *shift_flag,
+		float *pan_flag,
+		int *write_matrix,
+		int *axial_sign,
+		int *condense_flag,
+		int *verbose,
+		int *debug
+		);
 
 	// Stiffness Matrix Data Input
 	void ReadNodeData(
@@ -55,7 +82,7 @@ public:
 		FILE *fp,					/**< input data file pointer					*/
 		int &nN,					/**< number of nodes							*/
 		int &nE,					/**< number of frame elements					*/
-		std::vector<VX> xyz,		/**< XYZ coordinates of each node				*/
+		std::vector<V3> xyz,		/**< XYZ coordinates of each node				*/
 		VX &rj,						/**< rigid radius of each node					*/
 		VX &L, VX &Le,				/**< length of each frame element, effective	*/
 		VXi &N1, VXi &N2, 			/**< node connectivity							*/
@@ -63,7 +90,8 @@ public:
 		VX &Jx, VX &Iy, VX &Iz,		/**< section inertias							*/
 		VX &E, VX &G,				/**< elastic moduli and shear moduli			*/
 		VX &p,						/**< roll angle of each frame element (radians)	*/
-		VX &d						/**< mass density of each frame element			*/
+		VX &d,						/**< mass density of each frame element			*/
+		int verbose
 		);
 
 	void ReadRunData(
@@ -124,12 +152,12 @@ public:
 	void ReadReactionData(
 		FILE *fp,	/**< input data file pointer			*/
 		int DoF,	/**< number of degrees of freedom		*/
-		int nN,		/**< number of nodes				*/
-		int *nR,	/**< number of nodes with reactions		*/
-		int *q,		/**< q[i]=0: DoF i is fixed, q[i]=1: DoF i is free */
-		int *r,		/**< r[i]=1: DoF i is fixed, r[i]=0: DoF i is free */
-		int *sumR,	/**< sum of vector R				*/
-		int verbose	/**< 1: copious screen output; 0: none		*/
+		int nN,		/**< number of nodes					*/
+		int	&nR,	/**< number of nodes with reactions		*/
+		VXi &q,		/**< q[i]=0: DoF i is fixed, q[i]=1: DoF i is free */
+		VXi &r,		/**< r[i]=1: DoF i is fixed, r[i]=0: DoF i is free */
+		int &sumR,	/**< sum of vector R					*/
+		int verbose	/**< 1: copious screen output; 0: none	*/
 		);
 
 	void ReadMassData(
@@ -182,6 +210,8 @@ public:
 		double exagg	/**< mesh exaggeration factor		*/
 		);
 
+	void Debug(int verbose);		// 1 : copious screenpaly, 0 : none 
+
 private:
 	void	dots(FILE *fp, int n)
 	{
@@ -205,6 +235,7 @@ private:
 		if (!strcmp(ext, ".fmm")) return (2);
 		return(0);
 	}
+
 private:
 	CoordTrans		trsf_;
 };

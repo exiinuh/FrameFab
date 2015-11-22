@@ -104,17 +104,6 @@ public:
 	WireFrame				*ptr_frame_;
 	DualGraph				*ptr_dualgraph_;
 
-	vector<Matrix3d>		M_;						// indexed by dual id
-	VectorXd				Fv_;
-	VectorXd				Fe_;
-
-	double					radius_;
-	double					density_;
-	double					g_;
-	double					G_;						// shear modulus
-	double					E_;						// young's modulus;
-	double					material_;
-
 	// Stiffness Assembly
 	MXi						ind_;					// ind_:		Member-structure DoF index table, dimension: 12 * nE_ 	
 	VXi						N1_,N2_;				// N1_[i]:		store the index of endnode		

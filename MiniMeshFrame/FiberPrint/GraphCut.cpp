@@ -14,7 +14,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_);
+	//ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_);
 }
 
 
@@ -23,7 +23,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_, ptr_parm);
+	//ptr_stiff_ = new Stiffness(ptr_frame_, ptr_dualgraph_, ptr_parm);
 
 	penalty_ = ptr_parm->penalty_;
 	D_tol_ = ptr_parm->D_tol_;
@@ -37,8 +37,8 @@ GraphCut::~GraphCut()
 	delete ptr_dualgraph_;
 	ptr_dualgraph_ = NULL;
 
-	delete ptr_stiff_;
-	ptr_stiff_ = NULL;
+	//delete ptr_stiff_;
+	//ptr_stiff_ = NULL;
 
 	delete qp_;
 	qp_ = NULL;
@@ -50,7 +50,7 @@ void GraphCut::InitState()
 	N_ = ptr_frame_->SizeOfVertList();
 	M_ = ptr_frame_->SizeOfEdgeList();
 
-	ptr_stiff_->CreateFe();
+	//ptr_stiff_->CreateFe();
 
 	stop_n_ = floor(N_ / 5);						// set termination tolerance
 
@@ -275,7 +275,7 @@ void GraphCut::MakeLayers()
 		SetBoundary(d, W);
 
 		//ptr_stiff_->Debug();
-		ptr_stiff_->CalculateD(&D_, &x_);
+		//ptr_stiff_->CalculateD(&D_, &x_);
 
 		double old_energy = x_.dot((H1_)*x_);
 		cout << "****************************************" << endl;
@@ -306,13 +306,13 @@ void GraphCut::MakeLayers()
 			CalculateQ(D_prev, Q_prev);
 			CalculateQ(D_, Q_new);
 
-			ptr_stiff_->CreateK(&x_);
-			SpMat K_new = *(ptr_stiff_->WeightedK());
+			//ptr_stiff_->CreateK(&x_);
+			//SpMat K_new = *(ptr_stiff_->WeightedK());
 			
 			/*dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
 				+ lambda_.transpose() * (Q_prev - Q_new);*/
-			dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-				+ lambda_.transpose() * (Q_prev - Q_new);
+			//dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
+			//	+ lambda_.transpose() * (Q_prev - Q_new);
 			primal_res_ = Q_new * x_;
 
 
@@ -393,15 +393,15 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 				int v = edge->pvert_->ID();
 				int j = ptr_dualgraph_->v_dual_id(v);
 
-				Matrix3d M = ptr_stiff_->Me(edge->ID());
-				Vector3d Fe = ptr_stiff_->Fe(edge->ID());
+				//Matrix3d M = ptr_stiff_->Me(edge->ID());
+				//Vector3d Fe = ptr_stiff_->Fe(edge->ID());
 				Vector3d Di(_D[3 * i], _D[3 * i + 1], _D[3 * i + 2]);
 				Vector3d Dj(_D[3 * j], _D[3 * j + 1], _D[3 * j + 2]);
-				Vector3d Gamma = M * (Dj - Di) - 0.5 * Fe;
+				//Vector3d Gamma = M * (Dj - Di) - 0.5 * Fe;
 
-				Q_list.push_back(Triplet<double>(3 * i, e_id, Gamma[0]));
-				Q_list.push_back(Triplet<double>(3 * i + 1, e_id, Gamma[1]));
-				Q_list.push_back(Triplet<double>(3 * i + 2, e_id, Gamma[2]));
+				//Q_list.push_back(Triplet<double>(3 * i, e_id, Gamma[0]));
+				//Q_list.push_back(Triplet<double>(3 * i + 1, e_id, Gamma[1]));
+				//Q_list.push_back(Triplet<double>(3 * i + 2, e_id, Gamma[2]));
 			}
 
 			edge = edge->pnext_;
@@ -415,15 +415,15 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 void GraphCut::CalculateD()
 {
 	// Construct Hessian Matrix for D-Qp problem
-	ptr_stiff_->CreateK(&x_);
-	SpMat K = *(ptr_stiff_->WeightedK());
-	SpMat Q = penalty_ * K.transpose() * K;
+	//ptr_stiff_->CreateK(&x_);
+	//SpMat K = *(ptr_stiff_->WeightedK());
+	//SpMat Q = penalty_ * K.transpose() * K;
 
 	// Construct Linear coefficient for D-Qp problem
-	ptr_stiff_->CreateFv(&x_);
-	VX F = *(ptr_stiff_->WeightedF());
+	//ptr_stiff_->CreateFv(&x_);
+	//VX F = *(ptr_stiff_->WeightedF());
 
-	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
+	//VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 	
 	// Inequality constraints A*D <= b
 	SpMat A(3 * Fd_, 3 * Fd_);
@@ -445,20 +445,20 @@ void GraphCut::CalculateD()
 	lb = lb * (-MYINF);
 	ub = ub * MYINF;
 
-	qp_->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
+	//qp_->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
 }
 
 
 void GraphCut::UpdateLambda()
 {
 	// Recompute K(x_{k+1}) and F(x_{k+1})
-	ptr_stiff_->CreateK(&x_);
-	SpMat K = *(ptr_stiff_->WeightedK());
+	//ptr_stiff_->CreateK(&x_);
+	//SpMat K = *(ptr_stiff_->WeightedK());
 
-	ptr_stiff_->CreateFv(&x_);
-	VX F = *(ptr_stiff_->WeightedF());
+	//ptr_stiff_->CreateFv(&x_);
+	//VX F = *(ptr_stiff_->WeightedF());
 
-	lambda_ = lambda_ + penalty_ * (K * D_ - F);
+	//lambda_ = lambda_ + penalty_ * (K * D_ - F);
 }
 
 

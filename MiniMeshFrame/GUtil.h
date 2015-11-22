@@ -1,4 +1,5 @@
 /*   hpgUtils.h  ---  library of general-purpose utility functions       */
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,15 +8,12 @@
 #include <string.h>
 #include <time.h>
 
-#define DEBUG 1
 
-#define FIBERPRINT_EXIST_
-#ifdef FIBERPRINT_EXIST_
+#define DEBUG 1
 
 #define MAXL 512
 #define ANSI_SYS	1	/*  compile for ANSI_SYS driver; 0: don't */
 // ... requires ANSI.SYS and the line   DEVICE = C:\ANSI.SYS  in  C:\CONFIG.SYS
-
 
 /* ---------------------------------------------------------------------------
 COLOR - change color on the screen ...
@@ -23,7 +21,7 @@ Screen   Color  Scheme  : 0 = white on black, 1 = bright
 first digit= 3  for text color          first digit= 4  for  background color
 second digit codes:     1=red, 2=green, 3=gold, 4=blue, 5=purple, 6=lght blue
 ---------------------------------------------------------------------------- */
-void color(const int colorCode)
+static void color(const int colorCode)
 {
 /*  change the screen color      */
 #if ANSI_SYS
@@ -41,7 +39,7 @@ nbf    : 'n' = normal, 'b' = bright/bold, 'f' = faint
 uline  : 'u' = underline
 http://en.wikipedia.org/wiki/ANSI_escape_code
 --------------------------------------------------------------------------- */
-void textColor(const char tColor, const char bColor, const char nbf, const char uline)
+static void textColor(const char tColor, const char bColor, const char nbf, const char uline)
 {
 #if ANSI_SYS
 	fprintf(stderr, "\033[%02d", 0);// Control Sequence Introducer & reset		
@@ -81,7 +79,7 @@ void textColor(const char tColor, const char bColor, const char nbf, const char 
 /* ---------------------------------------------------------------------------
 ERRORMSG -  write a diagnostic error message in color
 ---------------------------------------------------------------------------- */
-void errorMsg(const char *errString)
+static void errorMsg(const char *errString)
 {
 	fprintf(stderr, "\n\n");
 	fflush(stderr);
@@ -101,7 +99,7 @@ void errorMsg(const char *errString)
 /*  -------------------------------------------------------------------------
 OPENFILE  -  open a file or print a diagnostic error message
 ---------------------------------------------------------------------------- */
-FILE *openFile(const char *path, const char *fileName, const char *mode, char *usage)
+static FILE *openFile(const char *path, const char *fileName, const char *mode, char *usage)
 {
 	FILE	*fp;
 	char	pathToFile[MAXL], errMsg[MAXL];
@@ -113,7 +111,8 @@ FILE *openFile(const char *path, const char *fileName, const char *mode, char *u
 	printf(" openFile ... file name = %s\n", pathToFile);
 #endif
 	if ((fp = fopen(pathToFile, mode)) == NULL) { // open file 
-		switch (*mode) {
+		switch (*mode) 
+		{
 			sprintf(errMsg, " openFile: ");
 		case 'w':
 			sprintf(errMsg, "%s%s\n  usage: %s", "cannot write to file: ", pathToFile, usage);
@@ -143,7 +142,7 @@ FILE *openFile(const char *path, const char *fileName, const char *mode, char *u
 /* ---------------------------------------------------------------------------
 SCANLINE -  scan through a line until a 'a' is reached, like getline() 3feb94
 ---------------------------------------------------------------------------- */
-int scanLine(FILE *fp, int lim, char *s, const char a)
+static int scanLine(FILE *fp, int lim, char *s, const char a)
 {
 	int     c = 0, i = -1;
 
@@ -156,7 +155,7 @@ int scanLine(FILE *fp, int lim, char *s, const char a)
 /* ---------------------------------------------------------------------------
 SCANLABEL -  scan through a line until a '"' is reached, like getline()
 ---------------------------------------------------------------------------- */
-int scanLabel(FILE *fp, int lim, char *s, const char a)
+static int scanLabel(FILE *fp, int lim, char *s, const char a)
 {
 	int     c = 0, i = -1;
 
@@ -168,7 +167,7 @@ int scanLabel(FILE *fp, int lim, char *s, const char a)
 	return i;
 }
 
-int scanFile(FILE *fp, int head_lines, int start_chnl, int stop_chnl)
+static int scanFile(FILE *fp, int head_lines, int start_chnl, int stop_chnl)
 {
 	int	points = 0,
 		i, chn, ok = 1;
@@ -201,7 +200,7 @@ int scanFile(FILE *fp, int head_lines, int start_chnl, int stop_chnl)
 * from K&R               3feb94
 * ---------------------------------------------------------------------------
 */
-int getLine(FILE *fp, int lim, char *s)
+static int getLine(FILE *fp, int lim, char *s)
 {
 	int     c = 0, i = 0;
 
@@ -222,7 +221,7 @@ int getLine(FILE *fp, int lim, char *s)
 * The corresponding time is returned in "time_t" format.
 * ---------------------------------------------------------------------------
 */
-time_t getTime(char s[], int y, int m, int d, int hr, int mn, int sc, int os)
+static time_t getTime(char s[], int y, int m, int d, int hr, int mn, int sc, int os)
 {
 	char   temp[16];
 
@@ -251,7 +250,7 @@ time_t getTime(char s[], int y, int m, int d, int hr, int mn, int sc, int os)
 /*  ---------------------------------------------------------------------------
 SHOW_PROGRESS  -   show the progress of long computations
 --------------------------------------------------------------------------- */
-void showProgress(int i, int n, int count)
+static void showProgress(int i, int n, int count)
 {
 	int	k, j, line_length = 55;
 	float	percent_done;
@@ -274,7 +273,7 @@ void showProgress(int i, int n, int count)
 /*  ---------------------------------------------------------------------------
 * SFERR  -  Display error message upon an erronous *scanf operation
 * ------------------------------------------------------------------------- */
-void sferr(char s[])
+static void sferr(char s[])
 {
 	char    errMsg[MAXL];
 
@@ -284,4 +283,3 @@ void sferr(char s[])
 }
 
 #undef DEBUG
-#endif

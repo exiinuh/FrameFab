@@ -50,7 +50,7 @@ void StiffnessIO::GetlineNoComment(
 	}
 	
 	if (c == EOF) s[0] = EOF;
-
+	
 	return;
 }
 
@@ -62,13 +62,25 @@ void StiffnessIO::ParseInput(FILE *fp, const char *tpath)
 {
 	FILE	*fpc;		/* stripped input file pointer	*/
 	char	line[256];
+	char	errMsg[MAXL];
 
-	if ((fpc = fopen(tpath, "w")) == NULL) {
-		printf("\n  error: cannot open parsed input data file: '%s' \n", tpath);
+	fpc = fopen(tpath, "w");
+
+	if (fpc == NULL) 
+	{
+		sprintf(errMsg, "\n  error: cannot open parsed input data file: '%s' \n", tpath);
+		errorMsg(errMsg);
 		exit(12);
 	}
 
-	do {
+	//fprintf(fpc, "%d", 111);
+	//int ff;
+	//rewind(fpc);
+	//fscanf(fpc, "%d", &ff);
+	//MYOUT << ff << MYEND;
+
+	do 
+	{
 		GetlineNoComment(fp, line, 256);
 		fprintf(fpc, "%s \n", line);
 	} while (line[0] != '_' && line[0] != EOF);
@@ -77,19 +89,73 @@ void StiffnessIO::ParseInput(FILE *fp, const char *tpath)
 }
 
 /*
-* OUTPUT_PATH
-* return path for output files using current directory.
+* PARSE_OPTIONS -  parse command line options
+* command line options over-ride values in the input data file
+* 04 Mar 2009, 22 Sep 2009
 */
-void StiffnessIO::OutPath(const char *fname, char fullpath[], const char *default_outdir) {
-	int res;
-	assert(fname != NULL);
+void StiffnessIO::ParseOptions(
+	char IN_file[], char OUT_file[],
+	int *shear_flag,
+	int *geom_flag,
+	int *anlyz_flag,
+	double *exagg_flag,
+	int *D3_flag,
+	int *lump_flag,
+	int *modal_flag,
+	double *tol_flag,
+	double *shift_flag,
+	float *pan_flag,
+	int *write_matrix,
+	int *axial_sign,
+	int *condense_flag,
+	int *verbose,
+	int *debug
+	)
+{
+	char	option;
+	char	errMsg[MAXL];
+	int		sfrv = 0;		/* *scanf return value	*/
 
-	const char *outdir;
-	outdir = default_outdir;
-	
-	res = sprintf(fullpath, "%s%c%s", outdir, '\\', fname);
+	/* default values */
 
-	//	printf("Output file path generated: %s\n",fullpath); /* debug */
+	*shear_flag = *geom_flag = *anlyz_flag = *lump_flag = *modal_flag = -1;
+	*exagg_flag = *tol_flag = *shift_flag = -1.0;
+	*D3_flag = 0;
+	*pan_flag = -1.0;
+	*condense_flag = -1;
+	*write_matrix = 0;
+	*axial_sign = 1;
+	*debug = 0; *verbose = 1;
+
+	strcpy(IN_file, "\0");
+	strcpy(OUT_file, "\0");
+
+	/* set up file names for the the input data and the output data */
+
+	printf(" Please enter the  input data file name: ");
+	//sfrv = scanf("%s", IN_file);
+	sprintf(IN_file, "exE.3dd");
+	//if (sfrv != 1) sferr("IN_file");
+
+	printf(" Please enter the output data file name: ");
+	//sfrv = scanf("%s", OUT_file);
+	sprintf(IN_file, "exE.out");
+
+	//if (sfrv != 1) sferr("OUT_file");
+
+	if (strcmp(IN_file, "\0") == 0) {
+		fprintf(stderr, " Please enter the  input data file name: ");
+		sfrv = scanf("%s", IN_file);
+		if (sfrv != 1) sferr("IN_file");
+		fprintf(stderr, " Please enter the output data file name: ");
+		sfrv = scanf("%s", OUT_file);
+		if (sfrv != 1) sferr("OUT_file");
+	}
+	if (strcmp(IN_file, "\0") != 0 && strcmp(OUT_file, "\0") == 0) {
+		strcpy(OUT_file, IN_file);
+		strcat(OUT_file, ".out");
+	}
+	return;
 }
 
 /*
@@ -113,326 +179,480 @@ void StiffnessIO::ReadNodeData(FILE *fp, int nN, vec3 &xyz, VX &r)
 			errorMsg(errMsg);
 			exit(41);
 		}
-		sfrv = fscanf(fp, "%lf %lf %lf %f", &xyz[j][0], &xyz[j][1], &xyz[j][2], &r[j]);
+		float r_tmp;
+		sfrv = fscanf(fp, "%lf %lf %lf %f", &xyz[j-1][0], &xyz[j-1][1], &xyz[j-1][2], &r_tmp);
+		r[j - 1] = r_tmp;
+
 		if (sfrv != 4) sferr("node coordinates in node data");
 
-		fprintf(stderr,"\nj = %d, pos = (%lf, %lf, %lf), r = %f", j, xyz[j].x, xyz[j].y, xyz[j].z, r[j]);
+		fprintf(stderr,"\nj = %d, pos = (%lf, %lf, %lf), r = %f", j-1, xyz[j-1][0], xyz[j-1][1], xyz[j-1][2], r[j-1]);
 
-		r[j] = fabs(r[j]);
+		r[j-1] = fabs(r[j-1]);
 	}
 	return;
 }
 
-///*
-//* READ_FRAME_ELEMENT_DATA  -  read frame element property data
-//* 04 Jan 2009
-//*/
-//void StiffnessIO::ReadFrameElementData(
-//	FILE *fp,
-//	int nN, int nE, vec3 *xyz, float *r,
-//	double *L, double *Le,
-//	int *N1, int *N2,
-//	float *Ax, float *Asy, float *Asz,
-//	float *Jx, float *Iy, float *Iz, float *E, float *G, float *p, float *d
-//	)
-//{
-//	int	n1, n2, i, n, b;
-//	int	*epn, epn0 = 0;	/* vector of elements per node */
-//	int	sfrv = 0;		/* *scanf return value */
-//	char	errMsg[MAXL];
-//
-//	epn = ivector(1, nN);
-//
-//	for (n = 1; n <= nN; n++)	epn[n] = 0;
-//
-//	for (i = 1; i <= nE; i++) {		/* read frame element properties */
-//		sfrv = fscanf(fp, "%d", &b);
-//		if (sfrv != 1) sferr("frame element number in element data");
-//		if (b <= 0 || b > nE) {
-//			sprintf(errMsg, "\n  error in frame element property data: Element number out of range  \n Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(51);
-//		}
-//		sfrv = fscanf(fp, "%d %d", &N1[b], &N2[b]);
-//
-//		epn[N1[b]] += 1;        epn[N2[b]] += 1;
-//
-//		if (sfrv != 2) sferr("node numbers in frame element data");
-//		if (N1[b] <= 0 || N1[b] > nN || N2[b] <= 0 || N2[b] > nN) {
-//			sprintf(errMsg, "\n  error in frame element property data: node number out of range  \n Frame element number: %d \n", b);
-//			errorMsg(errMsg);
-//			exit(52);
-//		}
-//		sfrv = fscanf(fp, "%f %f %f", &Ax[b], &Asy[b], &Asz[b]);
-//		if (sfrv != 3) sferr("section areas in frame element data");
-//		sfrv = fscanf(fp, "%f %f %f", &Jx[b], &Iy[b], &Iz[b]);
-//		if (sfrv != 3) sferr("section inertias in frame element data");
-//		sfrv = fscanf(fp, "%f %f", &E[b], &G[b]);
-//		if (sfrv != 2) sferr("material moduli in frame element data");
-//		sfrv = fscanf(fp, "%f", &p[b]);
-//		if (sfrv != 1) sferr("roll angle in frame element data");
-//
-//		p[b] = p[b] * PI / 180.0;	/* convert from degrees to radians */
-//
-//		sfrv = fscanf(fp, "%f", &d[b]);
-//		if (sfrv != 1) sferr("mass density in frame element data");
-//
-//		if (Ax[b] < 0 || Asy[b] < 0 || Asz[b] < 0 ||
-//			Jx[b] < 0 || Iy[b] < 0 || Iz[b] < 0) {
-//			sprintf(errMsg, "\n  error in frame element property data: section property < 0 \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(53);
-//		}
-//		if (Ax[b] == 0) {
-//			sprintf(errMsg, "\n  error in frame element property data: cross section area is zero   \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(54);
-//		}
-//		if ((Asy[b] == 0 || Asz[b] == 0) && G[b] == 0) {
-//			sprintf(errMsg, "\n  error in frame element property data: a shear area and shear modulus are zero   \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(55);
-//		}
-//		if (Jx[b] == 0) {
-//			sprintf(errMsg, "\n  error in frame element property data: torsional moment of inertia is zero   \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(56);
-//		}
-//		if (Iy[b] == 0 || Iz[b] == 0) {
-//			sprintf(errMsg, "\n  error: cross section bending moment of inertia is zero   \n  Frame element number : %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(57);
-//		}
-//		if (E[b] <= 0 || G[b] <= 0) {
-//			sprintf(errMsg, "\n  error : material elastic modulus E or G is not positive   \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(58);
-//		}
-//		if (d[b] <= 0) {
-//			sprintf(errMsg, "\n  error : mass density d is not positive   \n  Frame element number: %d  \n", b);
-//			errorMsg(errMsg);
-//			exit(59);
-//		}
-//	}
-//
-//	for (b = 1; b <= nE; b++) {		/* calculate frame element lengths */
-//		n1 = N1[b];
-//		n2 = N2[b];
-//
-//#define SQ(X) ((X)*(X))
-//		L[b] = SQ(xyz[n2].x - xyz[n1].x) +
-//			SQ(xyz[n2].y - xyz[n1].y) +
-//			SQ(xyz[n2].z - xyz[n1].z);
-//#undef SQ
-//
-//		L[b] = sqrt(L[b]);
-//		Le[b] = L[b] - r[n1] - r[n2];
-//		if (n1 == n2 || L[b] == 0.0) {
-//			sprintf(errMsg,
-//				" Frame elements must start and stop at different nodes\n  frame element %d  N1= %d N2= %d L= %e\n   Perhaps frame element number %d has not been specified.\n  or perhaps the Input Data file is missing expected data.\n",
-//				b, n1, n2, L[b], i);
-//			errorMsg(errMsg);
-//			exit(60);
-//		}
-//		if (Le[b] <= 0.0) {
-//			sprintf(errMsg, " Node  radii are too large.\n  frame element %d  N1= %d N2= %d L= %e \n  r1= %e r2= %e Le= %e \n",
-//				b, n1, n2, L[b], r[n1], r[n2], Le[b]);
-//			errorMsg(errMsg);
-//			exit(61);
-//		}
-//	}
-//
-//	for (n = 1; n <= nN; n++) {
-//		if (epn[n] == 0) {
-//			sprintf(errMsg, "node or frame element property data:\n     node number %3d is unconnected. \n", n);
-//			sferr(errMsg);
-//			epn0 += 1;
-//		}
-//	}
-//
-//	free_ivector(epn, 1, nN);
-//
-//	if (epn0 > 0) exit(42);
-//
-//	return;
-//}
-//
-///*
-//* READ_RUN_DATA  -  read information for analysis
-//* 29 Dec 2008
-//*/
-//void StiffnessIO::ReadRunData(
-//	FILE	*fp,
-//	char	*OUT_file,	/* output data file name */
-//	int	*shear,
-//	int	shear_flag,
-//	int	*geom,
-//	int	geom_flag,
-//	char	*meshpath,
-//	char	*plotpath,
-//	char	*infcpath,
-//	double	*exagg_static,
-//	double	exagg_flag,
-//	float   *scale,
-//	float	*dx,
-//	int	*anlyz,
-//	int	anlyz_flag,
-//	int	debug
-//	)
-//{
-//	int	full_len = 0, len = 0, i;
-//	char	base_file[96] = "EMPTY_BASE";
-//	char	mesh_file[96] = "EMPTY_MESH";
-//	int	sfrv = 0;		/* *scanf return value */
-//
-//	strcpy(base_file, OUT_file);
-//	while (base_file[len++] != '\0')
-//		/* the length of the base_file */;
-//	full_len = len;
-//	while (base_file[len--] != '.' && len > 0)
-//		/* find the last '.' in base_file */;
-//	if (len == 0)	len = full_len;
-//	base_file[++len] = '\0';	/* end base_file at the last '.' */
-//
-//	strcpy(plotpath, base_file);
-//	strcat(plotpath, ".plt");
-//
-//	strcpy(infcpath, base_file);
-//	strcat(infcpath, ".if");
-//
-//	while (base_file[len] != '/' && base_file[len] != '\\' && len > 0)
-//		len--;	/* find the last '/' or '\' in base_file */
-//	i = 0;
-//	while (base_file[len] != '\0')
-//		mesh_file[i++] = base_file[len++];
-//	mesh_file[i] = '\0';
-//	strcat(mesh_file, "-msh");
-//	output_path(mesh_file, meshpath, FRAME3DD_PATHMAX, NULL);
-//
-//	if (debug) {
-//		fprintf(stderr, "OUT_FILE  = %s \n", OUT_file);
-//		fprintf(stderr, "BASE_FILE = %s \n", base_file);
-//		fprintf(stderr, "PLOTPATH  = %s \n", plotpath);
-//		fprintf(stderr, "MESH_FILE = %s \n", mesh_file);
-//		fprintf(stderr, "MESHPATH  = %s \n", meshpath);
-//	}
-//
-//	sfrv = fscanf(fp, "%d %d %lf %f %f", shear, geom, exagg_static, scale, dx);
-//	if (sfrv != 5) sferr("shear, geom, exagg_static, scale, or dx variables");
-//
-//	if (*shear != 0 && *shear != 1) {
-//		errorMsg(" Rember to specify shear deformations with a 0 or a 1 \n after the frame element property info.\n");
-//		exit(71);
-//	}
-//
-//	if (*geom != 0 && *geom != 1) {
-//		errorMsg(" Rember to specify geometric stiffness with a 0 or a 1 \n after the frame element property info.\n");
-//		exit(72);
-//	}
-//
-//	if (*exagg_static < 0.0) {
-//		errorMsg(" Remember to specify an exageration factor greater than zero.\n");
-//		exit(73);
-//	}
-//
-//	if (*dx <= 0.0 && *dx != -1) {
-//		errorMsg(" Remember to specify a frame element increment greater than zero.\n");
-//		exit(74);
-//	}
-//
-//
-//	/* over-ride values from input data file with command-line options */
-//	if (shear_flag != -1)	*shear = shear_flag;
-//	if (geom_flag != -1)	*geom = geom_flag;
-//	if (exagg_flag != -1.0)	*exagg_static = exagg_flag;
-//	if (anlyz_flag != -1.0)	*anlyz = anlyz_flag;
-//
-//
-//	return;
-//}
-//
-///*
-//* READ_REACTION_DATA - Read fixed node displacement boundary conditions
-//* 29 Dec 2009
-//*/
-//void StiffnessIO::ReadReactionData(
-//	FILE *fp, int DoF, int nN, int *nR, int *q, int *r, int *sumR, int verbose
-//	){
-//	int		i, j, l;
-//	int		sfrv = 0;		/* *scanf return value */
-//	char	errMsg[MAXL];
-//
-//	for (i = 1; i <= DoF; i++)	r[i] = 0;
-//
-//	sfrv = fscanf(fp, "%d", nR);	/* read restrained degrees of freedom */
-//	if (sfrv != 1) sferr("number of reactions in reaction data");
-//
-//	if (verbose) {
-//		fprintf(stdout, " number of nodes with reactions ");
-//		dots(stdout, 21);
-//		fprintf(stdout, " nR =%4d ", *nR);
-//	}
-//
-//	if (*nR < 0 || *nR > DoF / 6) {
-//		fprintf(stderr, " number of nodes with reactions ");
-//		dots(stderr, 21);
-//		fprintf(stderr, " nR = %3d ", *nR);
-//		sprintf(errMsg, "\n  error: valid ranges for nR is 0 ... %d \n", DoF / 6);
-//		errorMsg(errMsg);
-//		exit(80);
-//	}
-//
-//	for (i = 1; i <= *nR; i++)
-//	{
-//		sfrv = fscanf(fp, "%d", &j);
-//		if (sfrv != 1) sferr("node number in reaction data");
-//
-//		for (l = 5; l >= 0; l--)
-//		{
-//
-//			sfrv = fscanf(fp, "%d", &r[6 * j - l]);
-//			if (sfrv != 1) sferr("reaction value in reaction data");
-//
-//			if (j > nN)
-//			{
-//				sprintf(errMsg, "\n  error in reaction data: node number %d is greater than the number of nodes, %d \n", j, nN);
-//				errorMsg(errMsg);
-//				exit(81);
-//			}
-//
-//			if (r[6 * j - l] != 0 && r[6 * j - l] != 1)
-//			{
-//				sprintf(errMsg, "\n  error in reaction data: Reaction data must be 0 or 1\n   Data for node %d, DoF %d is %d\n", j, 6 - l, r[6 * j - l]);
-//				errorMsg(errMsg);
-//				exit(82);
-//			}
-//		}
-//		*sumR = 0;
-//		for (l = 5; l >= 0; l--) 	*sumR += r[6 * j - l];
-//		if (*sumR == 0) {
-//			sprintf(errMsg, "\n  error: node %3d has no reactions\n   Remove node %3d from the list of reactions\n   and set nR to %3d \n",
-//				j, j, *nR - 1);
-//			errorMsg(errMsg);
-//			exit(83);
-//		}
-//	}
-//	*sumR = 0;	for (i = 1; i <= DoF; i++)	*sumR += r[i];
-//	if (*sumR < 4) {
-//		sprintf(errMsg, "\n  Warning:  un-restrained structure   %d imposed reactions.\n  At least 4 reactions are required to support static loads.\n", *sumR);
-//		errorMsg(errMsg);
-//		/*	exit(84); */
-//	}
-//	if (*sumR >= DoF) {
-//		sprintf(errMsg, "\n  error in reaction data:  Fully restrained structure\n   %d imposed reactions >= %d degrees of freedom\n", *sumR, DoF);
-//		errorMsg(errMsg);
-//		exit(85);
-//	}
-//
-//	for (i = 1; i <= DoF; i++)	if (r[i]) q[i] = 0;	else q[i] = 1;
-//
-//	return;
-//}
-//
+/*
+* OUTPUT_PATH
+* return path for output files using either current directory, or FRAME3DD_OUTDIR
+* if specified. --
+*/
+void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir) {
+	int res;
+	assert(fname != NULL);
+
+	/*			deprecated code, January 15 2010 ...
+	if ( fname[0]==sep ) {	in Win32 absolute path starts with C:\ not \ ??
+	// absolute output path specified
+	//		res = snprintf(fullpath,len,"%s",fname);
+	res = sprintf(fullpath,"%s",fname);
+	} else {
+	*/
+
+	//		fprintf(stderr,"Generating output path for file '%s'\n",fname);
+	//		res = snprintf(fullpath,len,"%s%c%s",outdir,sep,fname);
+	res = sprintf(fullpath, "%s%s", "F:\\FiberPrintProject\\ResultData\\Frame3dd_data\\", fname);
+
+	/*			closing bracket for deprecated code "if"
+	}
+	*/
+
+	if (res > len) 
+	{
+		errorMsg("ERROR: unable to construct output filename: overflow.\n");
+		exit(16);
+	}
+	//	printf("Output file path generated: %s\n",fullpath); /* debug */
+}
+
+/*
+* READ_FRAME_ELEMENT_DATA  -  read frame element property data
+* 04 Jan 2009
+*/
+void StiffnessIO::ReadFrameElementData(
+	FILE *fp,					/**< input data file pointer					*/
+	int &nN,					/**< number of nodes							*/
+	int &nE,					/**< number of frame elements					*/
+	std::vector<V3> xyz,		/**< XYZ coordinates of each node				*/
+	VX &r,						/**< rigid radius of each node					*/
+	VX &L, VX &Le,				/**< length of each frame element, effective	*/
+	VXi &N1, VXi &N2, 			/**< node connectivity							*/
+	VX &Ax, VX &Asy, VX &Asz,	/**< section areas								*/
+	VX &Jx, VX &Iy, VX &Iz,		/**< section inertias							*/
+	VX &E, VX &G,				/**< elastic moduli and shear moduli			*/
+	VX &p,						/**< roll angle of each frame element (radians)	*/
+	VX &d,						/**< mass density of each frame element			*/
+	int verbose
+	)
+{
+	int	n1, n2, i, n, b;
+	VXi	epn;
+	int epn0 = 0;		/* vector of elements per node */
+	int	sfrv = 0;		/* *scanf return value */
+	char	errMsg[MAXL];
+
+	epn.resize(nN);
+
+	for (n = 0; n < nN; n++)	epn[n] = 0;
+
+	for (i = 0; i < nE; i++) 
+	{		
+		/* read frame element properties */
+		sfrv = fscanf(fp, "%d", &b);
+		MYOUT << b << MYEND;
+
+		if (sfrv != 1) sferr("frame element number in element data");
+		
+		if (b <= 0 || b > nE)
+		{
+			sprintf(errMsg, "\n  error in frame element property data: Element number out of range  \n Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(51);
+		}
+
+		int n1_tmp, n2_tmp;
+		sfrv = fscanf(fp, "%d %d", &n1_tmp, &n2_tmp);
+		N1[b - 1] = n1_tmp;
+		N2[b - 1] = n2_tmp;
+
+		epn[N1[b-1]-1] += 1;        epn[N2[b-1]-1] += 1;
+
+		if (sfrv != 2) sferr("node numbers in frame element data");
+		
+		if (N1[b-1] <= 0 || N1[b-1] > nN || N2[b-1] <= 0 || N2[b-1] > nN) 
+		{
+			sprintf(errMsg, "\n  error in frame element property data: node number out of range  \n Frame element number: %d \n", b);
+			errorMsg(errMsg);
+			exit(52);
+		}
+
+		float ax_t = 0, asy_t = 0, asz_t = 0;
+		sfrv = fscanf(fp, "%f %f %f", &ax_t, &asy_t, &asz_t);
+		Ax[b - 1]  = ax_t;
+		Asy[b - 1] = asy_t;
+		Asz[b - 1] = asz_t;
+
+		if (sfrv != 3) sferr("section areas in frame element data");
+		
+		float jx_t, iy_t, iz_t;
+		sfrv = fscanf(fp, "%f %f %f", &jx_t, &iy_t, &iz_t);
+		Jx[b - 1] = jx_t;
+		Iy[b - 1] = iy_t;
+		Iz[b - 1] = iz_t;
+
+		if (sfrv != 3) sferr("section inertias in frame element data");
+
+		float e_t, g_t;
+		sfrv = fscanf(fp, "%f %f", &e_t, &g_t);
+		E[b - 1] = e_t;
+		G[b - 1] = g_t;
+
+		if (sfrv != 2) sferr("material moduli in frame element data");
+		
+		float p_t;
+		sfrv = fscanf(fp, "%f", &p_t);
+		p[b - 1] = p_t;
+
+		if (sfrv != 1) sferr("roll angle in frame element data");
+
+		p[b-1] = p[b-1] * F_PI / 180.0;	/* convert from degrees to radians */
+
+		float d_t;
+		sfrv = fscanf(fp, "%f", &d_t);
+		d[b - 1] = d_t;
+
+		if (sfrv != 1) sferr("mass density in frame element data");
+
+		if (Ax[b-1] < 0 || Asy[b-1] < 0 || Asz[b-1] < 0 ||
+			Jx[b-1] < 0 || Iy[b-1] < 0 || Iz[b-1] < 0) 
+		{
+			sprintf(errMsg, "\n  error in frame element property data: section property < 0 \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(53);
+		}
+
+		if (Ax[b-1] == 0) 
+		{
+			sprintf(errMsg, "\n  error in frame element property data: cross section area is zero   \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(54);
+		}
+
+		if ((Asy[b-1] == 0 || Asz[b-1] == 0) && G[b-1] == 0) 
+		{
+			sprintf(errMsg, "\n  error in frame element property data: a shear area and shear modulus are zero   \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(55);
+		}
+
+		if (Jx[b-1] == 0) 
+		{
+			sprintf(errMsg, "\n  error in frame element property data: torsional moment of inertia is zero   \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(56);
+		}
+
+		if (Iy[b-1] == 0 || Iz[b-1] == 0) 
+		{
+			sprintf(errMsg, "\n  error: cross section bending moment of inertia is zero   \n  Frame element number : %d  \n", b);
+			errorMsg(errMsg);
+			exit(57);
+		}
+
+		if (E[b-1] <= 0 || G[b-1] <= 0) 
+		{
+			sprintf(errMsg, "\n  error : material elastic modulus E or G is not positive   \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(58);
+		}
+
+		if (d[b-1] <= 0) 
+		{
+			sprintf(errMsg, "\n  error : mass density d is not positive   \n  Frame element number: %d  \n", b);
+			errorMsg(errMsg);
+			exit(59);
+		}
+
+		if (verbose)
+		{
+			printf("b = %d, ( Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, roll, Density) = ( %f, %f, %f, %f, %f, %f, %f, %f, %f, %f)\n",
+				b, Ax[b - 1], Asy[b - 1], Asz[b - 1], Jx[b - 1], Iy[b - 1], Iz[b - 1], E[b - 1], G[b - 1], 
+				p[b - 1], d[b - 1]);
+		}
+	}
+
+	for (b = 1; b <= nE; b++) 
+	{		/* calculate frame element lengths */
+		n1 = N1[b-1];
+		n2 = N2[b-1];
+
+#define SQ(X) ((X)*(X))
+		L[b-1] = SQ(xyz[n2-1][0] - xyz[n1-1][0]) +
+			SQ(xyz[n2-1][1] - xyz[n1-1][1]) +
+			SQ(xyz[n2-1][2] - xyz[n1-1][2]);
+#undef SQ
+
+		L[b-1] = sqrt(L[b-1]);
+		Le[b-1] = L[b-1] - r[n1-1] - r[n2-1];
+
+		if (n1 == n2 || L[b-1] == 0.0) 
+		{
+			sprintf(errMsg,
+				" Frame elements must start and stop at different nodes\n  frame element %d  N1= %d N2= %d L= %e\n   Perhaps frame element number %d has not been specified.\n  or perhaps the Input Data file is missing expected data.\n",
+				b, n1, n2, L[b-1], i);
+			errorMsg(errMsg);
+			exit(60);
+		}
+
+		if (Le[b-1] <= 0.0) {
+			sprintf(errMsg, " Node  radii are too large.\n  frame element %d  N1= %d N2= %d L= %e \n  r1= %e r2= %e Le= %e \n",
+				b, n1, n2, L[b-1], r[n1-1], r[n2-1], Le[b-1]);
+			errorMsg(errMsg);
+			exit(61);
+		}
+
+		if (verbose)
+		{
+			printf("b = %d, ( L, Le) = ( %f, %f), ( n1, n2) = ( %d, %d)\n", b, L[b - 1], Le[b - 1], n1, n2);
+		}
+
+	}
+
+	for (n = 1; n <= nN; n++) 
+	{
+		if (epn[n-1] == 0) 
+		{
+			sprintf(errMsg, "node or frame element property data:\n     node number %3d is unconnected. \n", n);
+			sferr(errMsg);
+			epn0 += 1;
+		}
+	}
+
+	if (epn0 > 0) exit(42);
+
+	return;
+}
+
+/*
+* READ_RUN_DATA  -  read information for analysis
+* 29 Dec 2008
+*/
+void StiffnessIO::ReadRunData(
+	FILE *fp,			 /**< input data file pointer						*/
+	char OUT_file[],	 /**< output data file name							*/
+	int &shear,			 /**< 1: include shear deformations, 0: don't		*/
+	int &geom,		   	 /**< 1: include geometric stiffness, 0: don't		*/
+	char meshpath[],	 /**< file name for mesh data output				*/
+	char plotpath[],	 /**< file name for Gnuplot script					*/
+	char infcpath[],	 /**< file name for internal force data				*/
+	double &exagg_static,/**< factor for static displ. exaggeration			*/
+	double &exagg_flag,	 /**< static exagg. command-line over-ride			*/
+	float &scale,		 /**< zoom scale for 3D plotting in gnuplot			*/
+	float &dx,			 /**< frame element increment for internal forces	*/
+	int &anlyz,			 /**< 1: perform elastic analysis, 0: don't			*/
+	int debug			 /**< print debugging information					*/
+	)
+{
+	int	full_len = 0, len = 0, i;
+	char	base_file[96] = "EMPTY_BASE";
+	char	mesh_file[96] = "EMPTY_MESH";
+	int	sfrv = 0;		/* *scanf return value */
+
+	strcpy(base_file, OUT_file);
+	while (base_file[len++] != '\0')
+		/* the length of the base_file */;
+	full_len = len;
+	while (base_file[len--] != '.' && len > 0)
+		/* find the last '.' in base_file */;
+	if (len == 0)	len = full_len;
+	base_file[++len] = '\0';	/* end base_file at the last '.' */
+
+	// GnuPlot file
+	strcpy(plotpath, base_file);
+	strcat(plotpath, ".plt");
+
+	// Internal force file
+	strcpy(infcpath, base_file);
+	strcat(infcpath, ".if");
+
+	while (base_file[len] != '/' && base_file[len] != '\\' && len > 0)
+	{
+		len--;	/* find the last '/' or '\' in base_file */
+	}
+			
+	i = 0; 
+	
+	while (base_file[len] != '\0')
+	{
+		mesh_file[i++] = base_file[len++];
+	}
+	
+	mesh_file[i] = '\0';
+	strcat(mesh_file, "-msh");
+	OutputPath(mesh_file, meshpath, FRAME3DD_PATHMAX, NULL);
+
+	if (debug) {
+		fprintf(stderr, "OUT_FILE  = %s \n", OUT_file);
+		fprintf(stderr, "BASE_FILE = %s \n", base_file);
+		fprintf(stderr, "PLOTPATH  = %s \n", plotpath);
+		fprintf(stderr, "MESH_FILE = %s \n", mesh_file);
+		fprintf(stderr, "MESHPATH  = %s \n", meshpath);
+	}
+
+	sfrv = fscanf(fp, "%d %d %lf %f %f", shear, geom, exagg_static, scale, dx);
+	if (sfrv != 5) sferr("shear, geom, exagg_static, scale, or dx variables");
+
+	if (*shear != 0 && *shear != 1) {
+		errorMsg(" Rember to specify shear deformations with a 0 or a 1 \n after the frame element property info.\n");
+		exit(71);
+	}
+
+	if (*geom != 0 && *geom != 1) {
+		errorMsg(" Rember to specify geometric stiffness with a 0 or a 1 \n after the frame element property info.\n");
+		exit(72);
+	}
+
+	if (*exagg_static < 0.0) {
+		errorMsg(" Remember to specify an exageration factor greater than zero.\n");
+		exit(73);
+	}
+
+	if (*dx <= 0.0 && *dx != -1) {
+		errorMsg(" Remember to specify a frame element increment greater than zero.\n");
+		exit(74);
+	}
+
+
+	/* over-ride values from input data file with command-line options */
+	if (shear_flag != -1)	*shear = shear_flag;
+	if (geom_flag != -1)	*geom = geom_flag;
+	if (exagg_flag != -1.0)	*exagg_static = exagg_flag;
+	if (anlyz_flag != -1.0)	*anlyz = anlyz_flag;
+
+
+	return;
+}
+
+/*
+* READ_REACTION_DATA - Read fixed node displacement boundary conditions
+* 29 Dec 2009
+*/
+void StiffnessIO::ReadReactionData(
+	FILE *fp, int DoF, int nN, int &nR, VXi &q, VXi &r, int &sumR, int verbose
+	)
+{
+	int		i, j, l;
+	int		sfrv = 0;		/* *scanf return value */
+	char	errMsg[MAXL];
+
+	r.setZero();
+
+	sfrv = fscanf(fp, "%d", &nR);	/* read restrained degrees of freedom */
+	if (sfrv != 1) sferr("number of reactions in reaction data");
+
+	if (verbose) 
+	{
+		fprintf(stdout, " number of nodes with reactions ");
+		dots(stdout, 21);
+
+		// Number of reaction node
+		fprintf(stdout, " nR =%4d ", nR);
+	}
+
+	if (nR < 0 || nR > DoF / 6) 
+	{
+		fprintf(stderr, " number of nodes with reactions ");
+		dots(stderr, 21);
+		fprintf(stderr, " nR = %3d \n", nR);
+		sprintf(errMsg, "\n  error: valid ranges for nR is 0 ... %d \n", DoF / 6);
+		errorMsg(errMsg);
+		exit(80);
+	}
+
+	for (i = 0; i < nR; i++)
+	{
+		sfrv = fscanf(fp, "%d", &j);
+		if (sfrv != 1) sferr("node number in reaction data");
+
+		for (l = 5; l >= 0; l--)
+		{
+			int r_tmp;
+			sfrv = fscanf(fp, "%d", &r_tmp);
+			r[6 * j - l - 1] = r_tmp;
+
+			if (sfrv != 1) sferr("reaction value in reaction data");
+
+			if (j > nN)
+			{
+				sprintf(errMsg, "\n  error in reaction data: node number %d is greater than the number of nodes, %d \n", j, nN);
+				errorMsg(errMsg);
+				exit(81);
+			}
+
+			if (r[6 * j - l - 1] != 0 && r[6 * j - l - 1] != 1)
+			{
+				sprintf(errMsg, "\n  error in reaction data: Reaction data must be 0 or 1\n   Data for node %d, DoF %d is %d\n", j, 6 - l, r[6 * j - l - 1]);
+				errorMsg(errMsg);
+				exit(82);
+			}
+		}
+		
+		if (verbose)
+		{
+			printf("j = %d, ", j);
+			for (int k = 0; k < 6; k++)
+			{
+				printf("( x, y, z, xx, yy, zz) = ( %d, %d, %d, %d, %d, %d )\n", r[6 * (j - 1)], r[6 * (j - 1) + 1], r[6 * (j - 1)+2]
+					, r[6 * (j - 1) + 3], r[6 * (j - 1) + 4], r[6 * (j - 1)+5]);
+			}
+		}
+		sumR = 0;
+		for (l = 5; l >= 0; l--) 	sumR += r[6 * j - l - 1];
+		if (sumR == 0) 
+		{
+			sprintf(errMsg, "\n  error: node %3d has no reactions\n   Remove node %3d from the list of reactions\n   and set nR to %3d \n",
+				j, j, nR - 1);
+			errorMsg(errMsg);
+			exit(83);
+		}
+	}
+
+	sumR = 0;	
+	for (i = 0; i < DoF; i++)
+	{
+		sumR += r[i];
+	}
+
+	if (sumR < 4) {
+		sprintf(errMsg, 
+			"\n  Warning:  un-restrained structure   %d imposed reactions.\n  At least 4 reactions are required to support static loads.\n"
+			, sumR);
+		errorMsg(errMsg);
+		/*	exit(84); */
+	}
+
+	if (sumR >= DoF) {
+		sprintf(errMsg, "\n  error in reaction data:  Fully restrained structure\n   %d imposed reactions >= %d degrees of freedom\n"
+			, sumR, DoF);
+		errorMsg(errMsg);
+		exit(85);
+	}
+
+	for (i = 0; i < DoF; i++)
+	{
+		if (r[i])
+		{
+			q[i] = 0;
+		}
+		else
+		{
+			q[i] = 1;
+		}
+	}
+
+	return;
+}
+
 ///*
 //* READ_AND_ASSEMBLE_LOADS
 //* Read load information data, assemble load vectors in global coordinates
@@ -1781,3 +2001,264 @@ void StiffnessIO::ReadNodeData(FILE *fp, int nN, vec3 &xyz, VX &r)
 //
 //	return;
 //}
+
+void StiffnessIO::Debug(int verbose)
+{
+	// path define
+	char	IN_file[FILENMAX],	// the input  data filename
+		OUT_file[FILENMAX],	// the output data filename
+		title[MAXL],		// the title of the analysis
+		errMsg[MAXL],		// the text of an error message
+		meshpath[FRAME3DD_PATHMAX] = "EMPTY_MESH", // mesh data path
+		plotpath[FRAME3DD_PATHMAX] = "EMPTY_PLOT", // plot file path
+		infcpath[FRAME3DD_PATHMAX] = "EMPTY_INFC", // int  file path
+		modepath[FRAME3DD_PATHMAX] = "EMPTY_MODE"; // mode data path
+	char strippedInputFile[FRAME3DD_PATHMAX] = "EMPTY_TEMP"; // temp data path
+
+	FILE	*fp;		// input and output file
+
+	vec3	xyz;		// X,Y,Z node coordinates (global)
+
+	VX	rj,					// node size radius, for finite sizes
+		Ax, Asy, Asz,		// cross section areas, incl. shear
+		Jx, Iy, Iz,			// section inertias		
+		E, G,				// elastic modulus and shear moduli
+		p;					// roll of each member, radians	
+	std::vector<MX> U,			// uniform distributed member loads
+					W,			// trapizoidal distributed member loads
+					P,			// member concentrated loads	
+					T;			// member temperature  loads
+
+	MX	Dp;			// prescribed node displacements
+	VX	d, EMs,			// member densities and extra inertia
+		NMs, 			// mass of a node
+		NMx, NMy, NMz,	// inertia of a node in global coord	
+		gX,			// gravitational acceleration in global X 
+		gY,			// gravitational acceleration in global Y
+		gZ;			// gravitational acceleration in global Z
+
+	int pan = 1.0,				// >0: pan during animation; 0: don't
+		scale = 1.0,			// zoom scale for 3D plotting in Gnuplot
+		dx = 1.0;				// x-increment for internal force data
+
+	MX			K;					// equilibrium stiffness matrix
+	double		traceK = 0.0;		// trace of the global stiffness matrix
+	MX			M;					// global mass matrix
+	double		traceM = 0.0;		// trace of the global mass matrix
+
+	std::vector<MX>		eqF_mech,	// equivalent end forces from mechenism loads global
+						eqF_temp;	// equivalent end forces from temp loads global
+	std::vector<VX>		F_mech,		// mechanical load vectors, all load cases	
+						F_temp,		// thermal load vectors, all load cases
+						F, 			// total load vectors for a load case
+						R,			// total reaction force vector
+						dR,			// incremental reaction force vector 
+						D,			// displacement vector
+						dD,			// incremental displacement vector
+						//dDdD = 0.0,	// dD' * dD
+						dF;			// equilibrium error in nonlinear anlys
+	VX			L,			// node-to-node length of each element
+				Le;			// effcve lngth, accounts for node size
+
+	MX				Q;					// local member node end-forces
+	double			tol = 1.0e-9,		// tolerance for modal convergence
+					shift = 0.0,		// shift-factor for rigid-body-modes
+					struct_mass,		// mass of structural system	
+					total_mass;			// total structural mass and extra mass 
+	
+	double	*f = NULL,			// resonant frequencies	
+			**V = NULL,			// resonant mode-shapes
+			rms_resid = 1.0,	// root mean square of residual displ. error
+			error = 1.0,		// rms equilibrium error and reactions
+			Cfreq = 0.0,		// frequency used for Guyan condensation
+			**Kc, **Mc,			// condensed stiffness and mass matrices
+			exagg_static = 10,	// exaggerate static displ. in mesh data
+			exagg_modal = 10;	// exaggerate modal displ. in mesh data
+
+	// peak internal forces, moments, and displacments
+	// in each frame element and each load case 
+	double	**pkNx, **pkVy, **pkVz, **pkTx, **pkMy, **pkMz,
+		**pkDx, **pkDy, **pkDz, **pkRx, **pkSy, **pkSz;
+
+	int	nN = 0,		// number of Nodes
+		nE = 0,		// number of frame Elements
+		nL = 0, lc = 0,	// number of Load cases
+		DoF = 0, i, j,	// number of Degrees of Freedom
+		nR = 0;		// number of restrained nodes
+	VXi nD,			// number of prescribed nodal displ'nts
+		nF,			// number of loaded nodes
+		nU,			// number of members w/ unifm dist loads
+		nW,			// number of members w/ trapz dist loads
+		nP,			// number of members w/ conc point loads
+		nT;			// number of members w/ temp. changes
+	int	nI = 0,		// number of nodes w/ extra inertia
+		nX = 0,		// number of elemts w/ extra mass
+		nC = 0;		// number of condensed nodes
+	VXi N1, N2;	// begin and end node numbers
+
+	int	shear = 0,	// indicates shear deformation
+	geom = 0,		// indicates  geometric nonlinearity
+	anlyz = 1;		// 1: stiffness analysis, 0: data check	
+	
+	VXi	q, r;
+	int	sumR,		// reaction data, total no. of reactions
+		nM = 0,		// number of desired modes
+		Mmethod,	// 1: Subspace Jacobi, 2: Stodola
+		nM_calc,	// number of modes to calculate
+		lump = 1,	// 1: lumped, 0: consistent mass matrix
+		iter = 0,	// number of iterations	
+		ok = 1,		// number of (-ve) diag. terms of L D L'
+		anim[128],	// the modes to be animated
+		Cdof = 0,	// number of condensed degrees o freedom
+		Cmethod = 0,	// matrix condensation method
+		*c = NULL,		// vector of DoF's to condense
+		*m = NULL,		// vector of modes to condense
+		filetype = 0,	// 1 if .CSV, 2 if file is Matlab
+		debug = 0,		// 1: debugging screen output, 0: none
+		axial_strain_warning = 0, // 0: "ok", 1: strain > 0.001
+		ExitCode = 0;	// error code returned by Frame3DD
+
+	int	shear_flag = -1,		//   over-ride input file value	
+		geom_flag = -1,			//   over-ride input file value
+		anlyz_flag = -1,		//   over-ride input file value
+		D3_flag = -1,			//   over-ride 3D plotting check
+		lump_flag = -1,			//   over-ride input file value
+		modal_flag = -1,		//   over-ride input file value	
+		write_matrix = -1,		//   write stiffness and mass matrix
+		axial_sign = -1,		//   suppress 't' or 'c' in output data
+		condense_flag = -1;		// over-ride input file value	
+
+	int	sfrv = 0;		// *scanf return value for err checking
+
+	double	exagg_flag = -1.0,	// over-ride input file value
+			tol_flag = -1.0,	// over-ride input file value
+			shift_flag = -1.0;	// over-ride input file value
+
+	float	pan_flag = -1.0; // over-ride input file value
+
+	char	extn[16];	// Input Data file name extension
+
+	ParseOptions(IN_file, OUT_file,
+		&shear_flag, &geom_flag, &anlyz_flag, &exagg_flag,
+		&D3_flag,
+		&lump_flag, &modal_flag, &tol_flag, &shift_flag,
+		&pan_flag, &write_matrix, &axial_sign, &condense_flag,
+		&verbose, &debug);
+
+	//This is deprecated
+	//string in_file = "F:\\FiberPrintProject\\TestData\\Frame3ddData\\" + string(IN_file);
+	//fp = fopen(in_file.c_str(), "r");
+
+	/* open the input data file */
+
+	fp = fopen("F:\\FiberPrintProject\\TestData\\Frame3ddData\\exE.3dd", "r");
+	if (fp == NULL)
+	{ 
+		/* open input data file */
+		sprintf(errMsg, "\n ERROR: cannot open input data file '%s'\n", IN_file);
+		errorMsg(errMsg);
+		exit(11);
+	}
+
+	//OutputPath("frame3dd.3dd", strippedInputFile, FRAME3DD_PATHMAX, NULL);
+	sprintf(strippedInputFile, "F:\\FiberPrintProject\\TestData\\Frame3ddData\\frame3dd.3dd");
+
+	ParseInput(fp, strippedInputFile);	/* strip comments from input data */
+	fclose(fp);
+
+	if ((fp = fopen(strippedInputFile, "r")) == NULL) 
+	{ /* open stripped input file */
+		sprintf(errMsg, "\n ERROR: cannot open stripped input data file '%s'\n", strippedInputFile);
+		errorMsg(errMsg);
+		exit(13);
+	}
+
+	StiffnessGetline(fp, title, MAXL);
+	if (verbose) 
+	{	
+		/*  display analysis title */
+		fprintf(stdout, "\n");
+		fprintf(stdout, " ** %s ** \n", title);
+		color(0);
+		fprintf(stdout, "\n");
+	}
+	
+	if (verbose) 
+	{	/*  display analysis title */
+		fprintf(stdout, " ** %s ** \n", title);
+	}
+
+	sfrv = fscanf(fp, "%d", &nN);		/* number of nodes	*/
+
+	if (verbose) 
+	{	
+		/* display nN */
+		fprintf(stdout, " number of nodes ");
+		dots(stdout, 36);	
+		fprintf(stdout, " nN =%4d ", nN);
+	}
+
+	rj.resize(nN);		/* rigid radius around each node */
+	rj.setZero();
+
+	xyz.resize(nN) ;	/* node coordinates */
+
+	ReadNodeData(fp, nN, xyz, rj);
+	if (verbose){ printf("\nNode Reading completed.\n");}
+
+	DoF = 6 * nN;		/* total number of degrees of freedom	*/
+
+	q.resize(DoF);	/* allocate memory for reaction data ... */
+	r.resize(DoF);	/* allocate memory for reaction data ... */
+	
+	ReadReactionData(fp, DoF, nN, nR, q, r, sumR, verbose);
+	if (verbose){ printf(" \nReaction Data Reading complete\n"); }
+
+	sfrv = fscanf(fp, "%d", &nE);	/* number of frame elements	*/
+	if (sfrv != 1)	sferr("nE value for number of frame elements");
+
+	if (verbose) 
+	{	
+		/* display nE */
+		fprintf(stdout, " number of frame elements");
+		dots(stdout, 28);
+		fprintf(stdout, " nE =%4d\n", nE);
+	}
+
+	if (nN > nE + 1)
+	{	/* not enough elements */
+		fprintf(stderr, "\n  warning: %d nodes and %d members...", nN, nE);
+		fprintf(stderr, " not enough elements to connect all nodes.\n");
+	}
+
+	/* allocate memory for frame elements ... */
+	L.resize(nE);	/* length of each element		*/
+	Le.resize(nE);	/* effective length of each element	*/
+
+	N1.resize(nE);	/* node #1 of each element		*/
+	N2.resize(nE);	/* node #2 of each element		*/
+	N1.setZero();
+	N2.setZero();
+
+	Ax.resize(nE);	/* cross section area of each element	*/
+	Asy.resize(nE);	/* shear area in local y direction 	*/
+	Asz.resize(nE);	/* shear area in local z direction	*/
+	Jx.resize(nE);	/* torsional moment of inertia 		*/
+	Iy.resize(nE);	/* bending moment of inertia about y-axis */
+	Iz.resize(nE);	/* bending moment of inertia about z-axis */
+
+	E.resize(nE);	/* frame element Young's modulus	*/
+	G.resize(nE);	/* frame element shear modulus		*/
+	p.resize(nE);	/* element rotation angle about local x axis */
+	d.resize(nE);	/* element mass density			*/
+
+	ReadFrameElementData(fp, nN, nE, xyz, rj, L, Le, N1, N2,
+		Ax, Asy, Asz, Jx, Iy, Iz, E, G, p, d, verbose);
+	if (verbose) 	fprintf(stdout, " Reading Frame Element Data complete\n");
+
+	ReadRunData(fp, OUT_file, &shear, shear_flag, &geom, geom_flag,
+		meshpath, plotpath, infcpath,
+		&exagg_static, exagg_flag, &scale, &dx,
+		&anlyz, anlyz_flag, debug);
+	getchar();
+}
