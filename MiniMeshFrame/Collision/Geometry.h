@@ -98,7 +98,7 @@ namespace Geometry
 			}
 		}
 	private:
-		double data_[3];
+		double			data_[3];
 	};
 
 	//For Vector3d(dot product)
@@ -123,6 +123,7 @@ namespace Geometry
 		temp = dot(vec1, vec2) / (vec1.norm()*vec2.norm());
 		return acos(temp);
 	}
+
 
 
 	//For Vector3d
@@ -157,8 +158,6 @@ namespace Geometry
 		point = Geometry::Vector3d(result[0], result[1], result[2]);
 		point = point - origin;
 	}
-	
-
-
-
 }
+
+

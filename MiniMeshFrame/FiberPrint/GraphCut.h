@@ -11,11 +11,11 @@
 #include <Eigen/Core>
 
 #include "WireFrame\WireFrame.h"
-#include "Stiffness.h"
+#include "Stiffness\Stiffness.h"
 #include "FiberPrintPARM.h"
 
-#include "QPMosek.h"
-#include "QPFactory.h"
+#include "QP/QPMosek.h"
+#include "QP/QPFactory.h"
 #include "Statistics.h"
 
 using namespace std;
@@ -61,8 +61,6 @@ public:
 
 	vector<int>				*GetLabel()				{ return &layer_label_; }
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
-
-	void Debug();
 
 public:
 //private:

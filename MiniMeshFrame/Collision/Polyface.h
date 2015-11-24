@@ -1,8 +1,10 @@
 #pragma once
-
-#include "Geometry.h"
-#include <gl\GLU.h>
+#include <windows.h>
+#include <GLU.h>
 #include <glut.h>
+#include "Geometry.h"
+
+using namespace std;
 
 typedef Geometry::Vector3d GeoV3;
 
@@ -52,15 +54,18 @@ public:
 	{
 		GeoV3 normal;
 		normal = Geometry::cross(v1() - v0(), v2() - v0());
+
+		if (normal.norm() == 0)
+			return;
 		normal.normalize();
 		normal_ = Trans(normal);
 	}
 
-	virtual void Print() {}
-	virtual void Render(WireFrame* ptr_frame, double alpha) {}
+	virtual void				Print() {}
+	virtual void				Render(WireFrame* ptr_frame, double alpha) {}
 
 public:
-	vector<point>	vert_list_;
-	point			normal_;
+	vector<point>			vert_list_;
+	point						normal_;
 };
 

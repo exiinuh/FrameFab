@@ -2,7 +2,6 @@
 
 #include "Polyface.h"
 
-
 class Triangle : public Polyface
 {
 public:
@@ -46,6 +45,7 @@ public:
 
 	void Render(WireFrame* ptr_frame, double alpha)
 	{
+		
 		glBegin(GL_TRIANGLES);
 		glColor4f(1.0, 1.0, 0, alpha);
 		glNormal3fv(normal_);
@@ -53,6 +53,13 @@ public:
 		glVertex3fv(ptr_frame->Unify(v1()));
 		glVertex3fv(ptr_frame->Unify(v2()));
 		glEnd();
+	}
+	void Add(point base)
+	{
+		for (int i = 0; i < vert_list_.size(); i++)
+		{
+			vert_list_[i] += base;
+		}
 	}
 };
 

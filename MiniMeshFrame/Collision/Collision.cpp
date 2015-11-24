@@ -5,15 +5,14 @@ Collision::Collision()
 {
 }
 
-Collision::Collision(WireFrame  *ptr_frame, DualGraph *ptr_dualgraph)
+Collision::Collision(DualGraph *ptr_dualgraph)
 {
 	extruder_ = new ExtruderCone();
-	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = ptr_dualgraph; 
 
 	range_list_ = new vector<vector<Range*>>;
 	range_state_ = new vector<vector<int>>;
-	bulk_list_ = new vector<Bulk*>;
+	bulk_list_ = new vector<BaseBulk*>;
 }
 
 /*
@@ -28,20 +27,20 @@ Collision::~Collision()
 {
 }
 
-
-int   Collision::AboveCollisionAnalysis(Bulk *bulk, point target_start, point target_end)
+//For bulk
+int Collision::AboveCollisionAnalysis(CommonBulk *bulk, point target_start, point target_end)
 {
 	collision_point_.clear();
 
-	if (UpCollisionBulk(bulk, target_end))
-		collision_point_.push_back(UpIntersectBulk(bulk, target_end));
-	if (UpCollisionBulk(bulk, target_start))
-		collision_point_.push_back(UpIntersectBulk(bulk, target_start));
+	if (bulk->IfAboveDownCol(target_end))
+		collision_point_.push_back(bulk->AboveDownCol(target_end));
+	if (bulk->IfAboveDownCol(target_start))
+		collision_point_.push_back(bulk->AboveDownCol(target_start));
 
 	if (collision_point_.size() == 1)
 	{
 		//add point 
-		if (UpCollisionBulk(bulk, target_end))
+		if (bulk->IfAboveDownCol(target_end))
 		{
 			collision_point_.push_back(point(target_start.x(), target_start.y(), collision_point_[0].z()));
 		}
@@ -60,17 +59,43 @@ int   Collision::AboveCollisionAnalysis(Bulk *bulk, point target_start, point ta
 				return 2;
 		}
 
-int Collision::AboveDetection(Bulk *bulk, point target_start, point target_end)
+//For SpecialBulk
+int		Collision ::AboveCollisionAnalysis(SpecialBulk *SpecialBulk, point target_start, point target_end)
 {
-	if (!UpCollisionBulk(bulk, target_end) && !UpCollisionBulk(bulk, target_start))
-		return 0;
+	collision_point_.clear();
 
+	if (SpecialBulk->IfAboveDownCol(target_end))
+		collision_point_.push_back(SpecialBulk->AboveDownCol(target_end));
+	if (SpecialBulk->IfAboveDownCol(target_start))
+		collision_point_.push_back(SpecialBulk->AboveDownCol(target_start));
 
+	if (collision_point_.size() == 1)
+	{
+		//add point 
+		if (SpecialBulk->IfAboveDownCol(target_end))
+		{
+			collision_point_.push_back(point(target_start.x(), target_start.y(), collision_point_[0].z()));
+		}
+		else
+		{
+			collision_point_.push_back(point(target_end.x(), target_end.y(), collision_point_[0].z()));
+		}
+	}
+
+	double angle_1, angle_2;
+	angle_1 = SpecialBulk->Angle(collision_point_[0]);
+	angle_2 = SpecialBulk->Angle(collision_point_[1]);
+	if (JointAngle(angle_1, angle_2))
+		return 1;
+	else
+		return 2;
 }
 
 void Collision::DetectFrame()
 {
 	cout << " Detect Collision begins..." << endl;
+
+	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 
 	double height = extruder_->Height();
 	double angle = extruder_->Angle();
@@ -82,61 +107,162 @@ void Collision::DetectFrame()
 	range_state_->clear();
 	bulk_list_->clear();
 
-	vector<Range*> temp_range_, org_temp_range_;
-	vector<int> temp_state_, org_temp_state_;
-
-	int M = ptr_frame_->SizeOfEdgeList();
 	int Nd = ptr_dualgraph_->SizeOfVertList();
-
-	temp_range_.resize(Nd);
-	temp_state_.resize(Nd);
-	org_temp_range_.resize(2 * Nd);
-	org_temp_state_.resize(2 * Nd);
 
 	for (int i = 0; i < Nd; i++)
 	{
-		range_list_->push_back(temp_range_);
-		range_state_->push_back(temp_state_);
+		range_list_->push_back(vector<Range*>(Nd));
+		range_state_->push_back(vector<int>(Nd));
 	}
 
 	for (int i = 0; i < Nd; i++)
 	{
-
-		//if (i%int(Nd / 10) == 0)
-		//	cout << double(i) / double(Nd) * 100 << "%" << endl;
+		if (i%int(Nd / 10) == 0)
+			cout << double(i) / double(Nd) * 100 << "%" << endl;
 
 		//Fix Polyhedron
-		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
+		WF_edge *e = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));
 		point start = e->pvert_->Position();
 		point end = e->ppair_->pvert_->Position();
-		Bulk *bulk;
+
+		CommonBulk   *bulk;
+		SpecialBulk	 *special_bulk;
+
+	     if (end.z() < start.z())
+			{
+				point temp = start;
+				start = end;
+				end = temp;
+			}
 
 		//Exception
-
 		if (Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), 0.0) || Equal(Geometry::angle((start - end), GeoV3(0, 0, 1)), pi))
 		{
 			bulk = NULL;
 			bulk_list_->push_back(bulk);
+
+		
 			//for dual_list
 			for (int j = 0; j < Nd; j++)
 			{
-				(*range_state_)[i][j] = -1;
-				Range *temp_range;
-				temp_range = new Range{ pi / 2, pi / 2, pi / 2, pi / 2 };
+				Range *temp_range = new Range();
+				WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
+				point target_start = e_ij->pvert_->Position();
+				point target_end = e_ij->ppair_->pvert_->Position();
+				
+				(*range_state_)[i][j] = 0;
+				temp_range = new Range{ pi / 2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle }; // But in fact it is a 2 dime Optimization£¬ and we use pi/2 as its angle, fixed
 				(*range_list_)[i][j] = temp_range;
+
+			
+				if (Distance(target_start, target_end, start, end) < extruder_->Height()*tan(extruder_->Angle()))
+				{
+					if (target_end.z()>start.z() || target_start.z() > start.z())
+					{
+	                          (*range_state_)[i][j] = 2;
+					         temp_range = new Range{ -1,-1,-1,-1 };
+					          (*range_list_)[i][j] = temp_range;
+					}
+				}
 			}
 			continue;
 		}
 
-		bulk = new Bulk(extruder_, start, end);
-		bulk_list_->push_back(bulk);
+		//Sharp Case
+		if (abs(Geometry::angle(Geometry::Vector3d(0, 0, 1), Geometry::Vector3d(end - start))) < extruder_->Angle())
+		{
+			special_bulk = new SpecialBulk(extruder_, start, end);
+			bulk_list_->push_back(special_bulk);
 
+			for (int j = 0; j< Nd; j++)
+			{
+				//For Specific Edge
+				Range *temp_range = new Range();
+				WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
+				point target_start = e_ij->pvert_->Position();
+				point target_end = e_ij->ppair_->pvert_->Position();
+
+				switch (DetectCollision(special_bulk, target_start, target_end))
+				{
+					//for dual_list
+				case 0:
+					//Exception Onface
+					if ((special_bulk->IfAboveUpCol(target_end) 
+						&& special_bulk->IfAboveDownCol(target_end)) 
+						||     (special_bulk->IfAboveUpCol(target_start) && special_bulk->IfAboveDownCol(target_start)))
+					{
+						if (AboveCollisionAnalysis(special_bulk, target_start, target_end) == 2)
+						{
+							(*range_state_)[i][j] = 2;
+							temp_range = new Range{ -1, -1, -1, -1 };
+							(*range_list_)[i][j] = temp_range;
+						}
+						else
+						{
+							(*range_state_)[i][j] = 1;
+							*temp_range = allowed_angle_;
+							(*range_list_)[i][j] = temp_range;
+						}
+						break;
+					}
+					if ((!special_bulk->IfAboveUpCol(target_end) 
+						&& !special_bulk->IfAboveUpCol(target_start)) 
+						&& (special_bulk->IfAboveDownCol(target_end) || special_bulk->IfAboveDownCol(target_start)))
+					{
+						if (AboveCollisionAnalysis(special_bulk, target_start, target_end) == 2)
+						{
+							(*range_state_)[i][j] = 2;
+							temp_range = new Range{ -1, -1, -1, -1 };
+							(*range_list_)[i][j] = temp_range;
+						}
+						else
+						{
+							(*range_state_)[i][j] = 1;
+							*temp_range = allowed_angle_;
+							(*range_list_)[i][j] = temp_range;
+						}
+						break;
+					}
+					else
+					{
+						(*range_state_)[i][j] = 0;
+					}
+
+					temp_range = new Range{ pi / 2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
+					(*range_list_)[i][j] = temp_range;
+					break;
+
+				case 1:
+					(*range_state_)[i][j] = 1;
+					*temp_range = allowed_angle_;
+					(*range_list_)[i][j] = temp_range;
+					break;
+
+				case 2:
+					(*range_state_)[i][j] = 2;
+					temp_range = new Range{ -1, -1, -1, -1 };
+					(*range_list_)[i][j] = temp_range;
+					break;
+
+				default:
+					std::system("pause");
+					break;
+				}
+			}
+			continue;
+		}
+
+
+
+
+		//Normal
+		bulk = new CommonBulk(extruder_, start, end);
+		bulk_list_->push_back(bulk);
 		for (int j = 0; j< Nd; j++)
 		{
-
 			//For Specific Edge
 			Range *temp_range = new Range();
-			WF_edge *e_ij = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(j));
+			WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
 			point target_start = e_ij->pvert_->Position();
 			point target_end = e_ij->ppair_->pvert_->Position();
 
@@ -144,7 +270,24 @@ void Collision::DetectFrame()
 			{
 				//for dual_list
 			case 0:
-				if ((!AboveCollisionBulk(bulk, target_end) && !AboveCollisionBulk(bulk, target_start))&&(UpCollisionBulk(bulk, target_end) || UpCollisionBulk(bulk, target_start))  )
+				//Exception Onface
+				if ((bulk->IfAboveUpCol(target_end) && bulk->IfAboveDownCol(target_end)) || (bulk->IfAboveUpCol(target_start) && bulk->IfAboveDownCol(target_start)))
+				{
+					if (AboveCollisionAnalysis(bulk, target_start, target_end) == 2)
+					{
+						(*range_state_)[i][j] = 2;
+						temp_range = new Range{ -1, -1, -1, -1 };
+						(*range_list_)[i][j] = temp_range;
+					}
+					else
+					{
+						(*range_state_)[i][j] = 1;
+						*temp_range = allowed_angle_;
+						(*range_list_)[i][j] = temp_range;
+					}
+					break;
+				}
+				if ((!bulk->IfAboveUpCol(target_end) && !bulk->IfAboveUpCol(target_start)) && (bulk->IfAboveDownCol(target_end) || bulk->IfAboveDownCol( target_start)))
 				{
 					if (AboveCollisionAnalysis(bulk,target_start, target_end) == 2)
 					{ 
@@ -196,8 +339,9 @@ void Collision::DetectFrame()
 	}
 
 
-	Range temp = Range{ pi/2 - wave_angle, pi / 2, pi / 2, pi / 2 + wave_angle };
-	Range temp_ = Range{ -1, -1, -1, -1 };
+
+
+
 	/*for (int i = 0; i < (*bulk_list_)[33]->face_list_.size(); i++)
 	{
 		(*bulk_list_)[33]->face_list_[i]->Print();
@@ -206,85 +350,28 @@ void Collision::DetectFrame()
 	DetectCollision((*bulk_list_)[33], ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(80))->pvert_->Position(), ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(80))->ppair_->pvert_->Position());
 
 */
-	for (int i = 0; i < Nd; i++)
-	{
-		cout << i << endl;
-		cout << "--------------------------" << endl;
-		for (int j = 0; j < Nd; j++)
-		{
-			if (!Equal(*(*range_list_)[i][j], temp) && !Equal(*(*range_list_)[i][j], temp_))
-			Print(*(*range_list_)[i][j]);
-		}
-
-	}
 
 
-	cout << endl;
+	//
+	//for (int i = 0; i < Nd; i++)
+	//{
+	//	cout << i << endl;
+	//	cout << "--------------------------" << endl;
+	//	for (int j = 0; j < Nd; j++)
+	//	{
+	//		if (!Equal(*(*range_list_)[i][j], temp) && !Equal(*(*range_list_)[i][j], temp_))
+	//		Print(*(*range_list_)[i][j]);
+	//	}
+
+	//}
+
+
+	//cout << endl;
 	cout << " Detect Collision done." << endl;
 }
 
-bool Collision::AboveCollisionBulk(Bulk *bulk, point p)
-{
-	point p_end(p.x(), p.y(), MAX);
-
-	for (int i = 6; i<9; i++)
-	{
-		if (bulk->IfTriIntersect(i, p, p_end))
-		{
-			return true;
-		}
-	}
-		if (bulk->IfParaIntersect(12, p, p_end))
-		{
-			return true;
-		}
-		return false;
-}
-
-point Collision::UpIntersectBulk(Bulk *bulk, point p)
-{
-	point p_end(p.x(), p.y(), -MAX);
-
-	for (int i = 6; i<9; i++)
-	{
-		if (bulk->IfTriIntersect(i, p, p_end))
-		{
-			point temp = bulk->TriIntersect(i, p, p_end);
-			return temp;
-		}
-	}
-
-	if (bulk->IfParaIntersect(12, p, p_end))
-	{
-		point temp = bulk->TriIntersect(12, p, p_end);
-		return temp;
-	}
-}
-
-bool  Collision::UpCollisionBulk(Bulk *bulk, point p)
-{
-	point p_end(p.x(), p.y(), -MAX);
-
-	for (int i = 6; i<9; i++)
-	{
-		if (bulk->IfTriIntersect(i, p, p_end))
-		{
-			
-			return true;
-		}
-	}
-
-	if (bulk->IfParaIntersect(12, p, p_end))
-	{
-		return true;
-	}
-
-	return false;
-}
-
-
-//for bulk
-int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
+//For bulk
+int Collision::DetectCollision(CommonBulk *bulk, point target_start, point target_end)
 {
 
 	point start = bulk->StartPoint();
@@ -293,7 +380,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 	collision_point_.clear();
 	collision_state_.clear();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		if (bulk->IfTriIntersect(i, target_start, target_end))
 		{
@@ -306,7 +393,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		}
 	}
 
-	for (int i = 10; i < 13; i++)
+	for (int i = 8; i < 14; i++)
 	{
 		if (bulk->IfParaIntersect(i, target_start, target_end))
 		{
@@ -349,7 +436,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 	//Normal Situation
 	if (collision_point_.size() == 0)
 	{
-		if (Inside(bulk, target_start) && Inside(bulk, target_end))
+		if (bulk->Inside(target_start) && bulk->Inside( target_end))
 		{
 			double angle_1 = bulk->Angle(target_start);
 			double angle_2 = bulk->Angle(target_end);
@@ -365,11 +452,20 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 	{
 		
 		point inside;
-		if (Inside(bulk, target_start) && !Equal(collision_point_[0], target_start))
+		if (bulk->Inside(target_start) && !Equal(collision_point_[0], target_start))
 		{
 			inside = target_start;
 		}
-		else if (Inside(bulk, target_end) && !Equal(collision_point_[0], target_end))
+		else if (bulk->Inside(target_end) && !Equal(collision_point_[0], target_end))
+		{
+			inside = target_end;
+		}
+		else if (Equal(collision_point_[0], target_end) && (bulk->Inside(target_start)))
+		{
+			inside = target_start;
+			
+		}
+		else if (Equal(collision_point_[0], target_start) && (bulk->Inside( target_end)))
 		{
 			inside = target_end;
 		}
@@ -383,7 +479,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		if (Equal(collision_point_[0], start) || Equal(collision_point_[0], end))
 		{
 			angle_1 = bulk->Angle(inside); 
-			angle_2 = angle_1;
+			angle_2 =pi/2;
 		}
 		else
 		{
@@ -409,7 +505,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		if (Equal(collision_point_[0], start) || Equal(collision_point_[0], end))
 		{
 			angle_1 = bulk->Angle(collision_point_[1]); 
-			angle_2 = angle_1;
+			angle_2 = pi/2;
 			if (JointAngle(angle_1, angle_2))
 				return 1;
 			else
@@ -418,7 +514,7 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 		else if (Equal(collision_point_[1], start) || Equal(collision_point_[1], end))
 		{
 			angle_1 = bulk->Angle(collision_point_[0]); 
-			angle_2 = angle_1;
+			angle_2 = pi / 2;
 			if (JointAngle(angle_1, angle_2))
 				return 1;
 			else
@@ -438,45 +534,170 @@ int Collision::DetectCollision(Bulk *bulk, point target_start, point target_end)
 }
 
 
-bool Collision::Inside(Bulk *bulk, point p)
+//For SpecialBulk
+int     Collision::DetectCollision(SpecialBulk *SpecialBulk, point target_start, point target_end)
 {
-	vector<point> inside_collision;
-	vector<int> state;
-	point temp;
-	point p_end(p.x(), p.y(), MAX);
 
-	for (int i = 0; i < 10; i++)
+	point start = SpecialBulk->StartPoint();
+	point end = SpecialBulk->EndPoint();
+
+	collision_point_.clear();
+	collision_state_.clear();
+
+	for (int i = 0; i < 8; i++)
 	{
-		if (bulk->IfTriIntersect(i, p, p_end))
+		if (SpecialBulk->IfTriIntersect(i, target_start, target_end))
 		{
-			point temp = bulk->TriIntersect(i, p, p_end);
-			if (!CheckPoint(temp, inside_collision))
+			point temp = SpecialBulk->TriIntersect(i, target_start, target_end);
+			if (!CheckPoint(temp, collision_point_))
 			{
-				inside_collision.push_back(temp);
-				state.push_back(i);
+				collision_point_.push_back(temp);
+				collision_state_.push_back(i);
 			}
 		}
 	}
 
-	for (int i = 10; i < 13; i++)
+	// special point 15
+	for (int i = 8; i < 15; i++)
 	{
-		if (bulk->IfParaIntersect(i, p, p_end))
+		if (SpecialBulk->IfParaIntersect(i, target_start, target_end))
 		{
-			point temp = bulk->ParaIntersect(i, p, p_end);
-
-			if (!CheckPoint(temp, inside_collision))
+			point temp = SpecialBulk->ParaIntersect(i, target_start, target_end);
+			if (!CheckPoint(temp, collision_point_))
 			{
-				inside_collision.push_back(temp);
-				state.push_back(i);
+				collision_point_.push_back(temp);
+				collision_state_.push_back(i);
 			}
 		}
 	}
 
-	if (state.size() == 1)
-		return true;
-	return false;
+	vector<point> temp_;
+	if (collision_point_.size() > 2)
+	{
+		point min = collision_point_[0];
+		point max = collision_point_[0];
+		point temp;
+		for (int i = 0; i < collision_point_.size(); i++)
+		{
+			temp = collision_point_[i];
+			if ((min - target_start).length() >(temp - target_start).length())
+				min = temp;
+			if ((max - target_start).length() < (temp - target_start).length())
+				max = temp;
+		}
+
+		temp_.push_back(min);
+		temp_.push_back(max);
+		collision_point_ = temp_;
+	}
+
+
+
+
+	//Exception Situation  
+	if ((target_end == start&&target_start == end) || (target_end == end&&target_start == start))
+		return 0;
+
+	//Normal Situation
+	if (collision_point_.size() == 0)
+	{
+		if (SpecialBulk->Inside(target_start) && SpecialBulk->Inside(target_end))
+		{
+			double angle_1 = SpecialBulk->Angle(target_start);
+			double angle_2 = SpecialBulk->Angle(target_end);
+			if (JointAngle(angle_1, angle_2))
+				return 1;
+			else
+				return 2;
+		}
+		return 0;
+	}
+
+	if (collision_point_.size() == 1)
+	{
+
+		point inside;
+		if (SpecialBulk->Inside(target_start) && !Equal(collision_point_[0], target_start))
+		{
+			inside = target_start;
+		}
+		else if (SpecialBulk->Inside(target_end) && !Equal(collision_point_[0], target_end))
+		{
+			inside = target_end;
+		}
+		else if (Equal(collision_point_[0], target_end) && (SpecialBulk->Inside(target_start)))
+		{
+			inside = target_start;
+
+		}
+		else if (Equal(collision_point_[0], target_start) && (SpecialBulk->Inside(target_end)))
+		{
+			inside = target_end;
+		}
+		else
+		{
+			return 0;
+		}
+
+		double angle_1, angle_2;
+
+		if (Equal(collision_point_[0], start) || Equal(collision_point_[0], end))
+		{
+			angle_1 = SpecialBulk->Angle(inside);
+			angle_2 = pi / 2;
+		}
+		else
+		{
+			angle_1 = SpecialBulk->Angle(inside);
+			angle_2 = SpecialBulk->Angle(collision_point_[0]);
+		}
+		if (JointAngle(angle_1, angle_2))
+			return 1;
+		else
+			return 2;
+	}
+
+	if (collision_point_.size() == 2)
+	{
+
+		double angle_1, angle_2;
+		if ((Equal(collision_point_[0], start) && Equal(collision_point_[1], end)) ||
+			(Equal(collision_point_[0], end) && Equal(collision_point_[1], start)))
+		{
+			return 0;
+		}
+
+		if (Equal(collision_point_[0], start) || Equal(collision_point_[0], end))
+		{
+			angle_1 = SpecialBulk->Angle(collision_point_[1]);
+			angle_2 = pi / 2;
+			if (JointAngle(angle_1, angle_2))
+				return 1;
+			else
+				return 2;
+		}
+		else if (Equal(collision_point_[1], start) || Equal(collision_point_[1], end))
+		{
+			angle_1 = SpecialBulk->Angle(collision_point_[0]);
+			angle_2 = pi / 2;
+			if (JointAngle(angle_1, angle_2))
+				return 1;
+			else
+				return 2;
+		}
+		else
+		{
+			angle_1 = SpecialBulk->Angle(collision_point_[0]);
+			angle_2 = SpecialBulk->Angle(collision_point_[1]);
+			if (JointAngle(angle_1, angle_2))
+				return 1;
+			else
+				return 2;
+		}
+	}
+	return -1;
+
 }
-
 
 bool Collision::JointAngle(double angle_1, double angle_2)
 {
@@ -514,7 +735,7 @@ bool Collision::JointAngle(double angle_1, double angle_2)
 
 }
 
-/*
+
 double Collision::Distance(Triangle face, point start, point end)
 {
 	gte::DCPQuery<double, gte::Segment3<double>, gte::Triangle3<double>> query;
@@ -522,29 +743,31 @@ double Collision::Distance(Triangle face, point start, point end)
 	gte::Segment <3, double> line;
 	line.p[0][0] = start.x(); line.p[0][1] = start.y(); line.p[0][2] = start.z();
 	line.p[1][0] = end.x(); line.p[1][1] = end.y(); line.p[1][2] = end.z();
-
+	
+	
 	gte::Triangle<3, double> triangle;
-	triangle.v[0][0] = face.v0().x(); triangle.v[0][1] = face.v0_.y(); triangle.v[0][2] = face.v0_.z();
-	triangle.v[1][0] = face.v1_.x(); triangle.v[1][1] = face.v1_.y(); triangle.v[1][2] = face.v1_.z();
-	triangle.v[2][0] = face.v2_.x(); triangle.v[2][1] = face.v2_.y(); triangle.v[2][2] = face.v2_.z();
+	triangle.v[0][0] = face.v0().x(); triangle.v[0][1] = face.v0().y(); triangle.v[0][2] = face.v0().z();
+	triangle.v[1][0] = face.v1().x(); triangle.v[1][1] = face.v1().y(); triangle.v[1][2] = face.v1().z();
+	triangle.v[2][0] = face.v2().x(); triangle.v[2][1] = face.v2().y(); triangle.v[2][2] = face.v2().z();
 
 	auto result = query(line, triangle);
-	
-	std::cout << result.distance << std::endl;
 	return result.distance;
 }
 
 
-double Collision::Distance(Parallelogram face, point start, point end)
+double	 Collision::Distance(point target_start, point target_end, point start, point end)
 {
-	double t0 = Distance(face.t0_, start, end);
-	double t1 = Distance(face.t1_, start, end);
-	if (t1 > t0)
-		return t0;
-	else
-		return t1;
+	gte::DCPQuery<double, gte::Segment3<double>, gte::Segment3<double>> query;
+	gte::Segment <3, double> line;
+	line.p[0][0] = start.x(); line.p[0][1] = start.y(); line.p[0][2] = start.z();
+	line.p[1][0] = end.x(); line.p[1][1] = end.y(); line.p[1][2] = end.z();
+
+	gte::Segment <3, double> line_0;
+	line_0.p[0][0] = target_start.x(); line_0.p[0][1] = target_start.y(); line_0.p[0][2] = target_start.z();
+	line_0.p[1][0] = target_end.x(); line_0.p[1][1] = target_end.y(); line_0.p[1][2] = target_end.z();
+	auto result = query(line, line_0);
+	return result.distance;
 }
-*/
 
 //Check the point is in the vector
 bool Collision::CheckPoint(point temp, vector<point> collision_point)
@@ -598,14 +821,44 @@ void Collision::SegementTriangleTest()
 }
 
 
-void Collision::Test()
+void Collision::Debug()
 {
-	range_list_->clear();
-	range_state_->clear();
-	//extruder_.Default();
-	//DetectFrame();
+//113
+//+		position_	{v=0x06738b94 {11.0578365, 4.74550581, 9.83846569} }	trimesh::Vec<3,float>
+//+		position_	{v=0x03fea654 {12.1713638, -0.765893996, 23.1887951} }	trimesh::Vec<3,float>
 
-	cout << 23333333333 << endl;
+//105
+//+		position_	{v=0x03ffefc4 {6.59659815, -2.64607501, 22.3574867} }	trimesh::Vec<3,float>
+//+		position_	{v=0x0683cabc {7.71587706, -0.578864992, 30.1668682} }	trimesh::Vec<3,float>
+
+
+	point a = point(11.0578365, 4.74550581, 9.83846569);
+	point b = point(12.1713638, -0.765893996, 23.1887951);
+
+	point c = point(6.59659815, -2.64607501, 22.3574867);
+	point d = point(7.71587706, -0.578864992, 30.1668682);
+
+	point c_max = point(-4.64264679, -3.46753812, MAX);
+
+	SpecialBulk* temp = new SpecialBulk(extruder_, a,b);
+	temp->Print();
+
+    point target_start_ = c;
+    point target_end_ =d;
+    cout << DetectCollision(temp, target_start_, target_end_) << endl;
+	
+	cout << temp->Inside(d) << endl;
+
+	cout << temp->IfAboveUpCol(d) << " " << temp->IfBelowDownCol(d) <<endl;
+
+	//cout << IfAboveUpCol(temp, c) << endl;
+	//cout << IfBelowDownCol(temp, c) << endl;
+
+	cout << temp->IfParaIntersect(11, c, c_max) << endl;
+	
+	cout << temp->IfTriIntersect(1, b, c) << endl;
+
+	//cout << ptr_dualgraph_->e_dual_id(45) << " " << ptr_dualgraph_->e_dual_id(125) << " " << ptr_dualgraph_->e_dual_id(123) << " " << endl;
 }
 
 

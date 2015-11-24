@@ -146,7 +146,14 @@ void WireFrame::LoadFromOBJ(const char *path)
 					bound_id = bound_id * 10 + c - '0';
 				}
 
-				(*pvert_list_)[bound_id - 1]->SetFixed();
+				(*pvert_list_)[bound_id - 1]->SetFixed(true);
+				WF_edge *e = (*pvert_list_)[bound_id - 1]->pedge_;
+				while (e != NULL)
+				{
+					e->SetPillar(true);
+					e->ppair_->SetPillar(true);
+					e = e->pnext_;
+				}
 			}
 		}
 
@@ -188,7 +195,7 @@ void WireFrame::WriteToOBJ(const char *path)
 
 	for (int i = 0; i < N; i++)
 	{
-		if ((*pvert_list_)[i]->IsFixed())
+		if ((*pvert_list_)[i]->isFixed())
 		{
 			fprintf(fp, "b %d\n", i + 1);
 		}
@@ -256,7 +263,7 @@ void WireFrame::Unify()
 	{
 		(*pvert_list_)[i]->SetID(i);
 
-		if (!(*pvert_list_)[i]->IsFixed())
+		if (!(*pvert_list_)[i]->isFixed())
 		{
 			point p = (*pvert_list_)[i]->Position();
 			if (p.x() > maxx_)
@@ -402,7 +409,7 @@ void WireFrame::ProjectBound(vector<int> *bound)
 			v_pos.z() = minz_ - (maxz_ - minz_)*0.1;
 
 			WF_vert *v = InsertVertex(v_pos);
-			v->SetFixed();
+			v->SetFixed(true);
 			
 			int j = SizeOfVertList() - 1; 
 			InsertEdge(i, j);

@@ -67,10 +67,8 @@ DualGraph::~DualGraph()
 
 void DualGraph::Dualization()
 {
-	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
-	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
-	int N = ptr_frame_->SizeOfVertList();
-	int M = ptr_frame_->SizeOfEdgeList();
+	maxz_ = ptr_frame_->maxZ();
+	minz_ = ptr_frame_->minZ();
 
 	// first time & all exsits
 	fill(exist_vert_.begin(), exist_vert_.end(), true);
@@ -80,12 +78,10 @@ void DualGraph::Dualization()
 }
 
 
-void DualGraph::Dualization(VectorXd *ptr_x)
+void DualGraph::UpdateDualization(VectorXd *ptr_x)
 {
-	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
-	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
-	int N = ptr_frame_->SizeOfVertList();
-	int M = ptr_frame_->SizeOfEdgeList();
+	maxz_ = -1e20;
+
 	int Nd = Nd_;
 
 	fill(exist_vert_.begin(), exist_vert_.end(), false);
@@ -94,12 +90,22 @@ void DualGraph::Dualization(VectorXd *ptr_x)
 	{
 		if ((*ptr_x)[e_id])
 		{
-			int i = (*vert_list_)[e_id]->orig_id();
-			int j = edges[i]->ppair_->ID();
-			int u = edges[i]->pvert_->ID();
-			int v = edges[i]->ppair_->pvert_->ID();
-			exist_vert_[u] = exist_vert_[v] = true;
-			exist_edge_[i] = exist_edge_[j] = true;
+			WF_edge *ei = ptr_frame_->GetEdge((*vert_list_)[e_id]->orig_id());
+			WF_edge *ej = ei->ppair_;
+			WF_vert *u = ej->pvert_;
+			WF_vert *v = ei->pvert_;
+
+			if (u->Position().z() > maxz_)
+			{
+				maxz_ = u->Position().z();
+			}
+			if (v->Position().z() > maxz_)
+			{
+				maxz_ = v->Position().z();
+			}
+
+			exist_vert_[u->ID()] = exist_vert_[v->ID()] = true;
+			exist_edge_[ei->ID()] = exist_edge_[ej->ID()] = true;
 		}
 	}
 
@@ -117,8 +123,6 @@ void DualGraph::Dualization(VectorXd *ptr_x)
 
 void DualGraph::Establish()
 {
-	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
-	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -126,7 +130,8 @@ void DualGraph::Establish()
 	int Nd = 0;
 	for (int i = 0; i < M; i++)
 	{
-		int j = edges[i]->ppair_->ID();
+		WF_edge *ei = ptr_frame_->GetEdge(i);
+		int j = ei->ppair_->ID();
 		if (i < j)
 		{
 			if (exist_edge_[i])
@@ -134,6 +139,7 @@ void DualGraph::Establish()
 				(*vert_list_)[i]->SetDualId(Nd);
 				(*vert_list_)[j]->SetDualId(Nd);
 				(*vert_list_)[Nd]->SetOrigId(i);
+				(*vert_list_)[Nd]->SetHeight((ei->CenterPos()).z());
 				Nd++;
 			}
 			else
@@ -145,8 +151,6 @@ void DualGraph::Establish()
 	}
 
 	int Fd = 0;
-	double maxz = ptr_frame_->maxZ();
-	double minz = ptr_frame_->minZ();
 	for (int i = 0; i < N; i++)
 	{
 		if (!exist_vert_[i])
@@ -160,12 +164,13 @@ void DualGraph::Establish()
 		Fd++;
 
 		// edge_list_
-		if (verts[i]->Degree() > 1)
+		if (ptr_frame_->GetDegree(i) > 1)
 		{
-			double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+			//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+			double w = exp(- 3 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
 			int u;
 			int v;
-			WF_edge *edge = verts[i]->pedge_;
+			WF_edge *edge = ptr_frame_->GetNeighborEdge(i);
 			while (edge->pnext_ != NULL)
 			{
 				WF_edge *next_edge = edge->pnext_;
@@ -179,10 +184,10 @@ void DualGraph::Establish()
 				edge = next_edge;
 			}
 
-			if (verts[i]->Degree() > 2)
+			if (ptr_frame_->GetDegree(i) > 2)
 			{
 				u = (*vert_list_)[edge->ID()]->dual_id();
-				v = (*vert_list_)[verts[i]->pedge_->ID()]->dual_id();
+				v = (*vert_list_)[ptr_frame_->GetNeighborEdge(i)->ID()]->dual_id();
 
 				if (u != -1 && v != -1)
 				{
@@ -197,10 +202,9 @@ void DualGraph::Establish()
 	Fd_ = Fd;
 }
 
-
+/*
 void DualGraph::Debug()
 {
-	/*
 	vector<HE_edge*> edges = *(ptr_mesh_->get_edges_list());
 	int M = edges.size();
 	for (int i = 0; i < M; i++)
@@ -215,5 +219,5 @@ void DualGraph::Debug()
 		puts("");
 		getchar();
 	}
-	*/
 }
+*/
