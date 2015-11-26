@@ -15,6 +15,7 @@ public:
 	double		g_;
 	double		youngs_modulus_;
 	double		shear_modulus_;
+	double		poisson_ratio_;
 
 	// ADMM
 	double		penalty_;		// penalty  : penalty factor used in ADMM  

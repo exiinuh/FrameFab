@@ -1,3 +1,18 @@
+/*
+* ==========================================================================
+*
+*       file: GCommon.h
+*
+*    Description:  GCommon.h provides some common configuration for fiberprint project.
+*
+*	 Version:  1.0
+*	 Created:  Nov/25/2015
+*
+*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
+*	 Company:  GCL@USTC
+* ==========================================================================
+*/
+
 #ifndef FIBERPRINT_COMMON_H
 #define FIBERPRINT_COMMON_H
 
@@ -9,7 +24,7 @@
 #define FILENMAX 128
 
 #ifndef VERSION
-#define VERSION "20151119+"
+#define VERSION "20151125+"
 #endif
 
 #ifndef F_PI
@@ -20,5 +35,5 @@
 // Zvert=0: Y axis is vertical... rotate about Z-axis, then rotate about Y-axis
 #define Zvert 1	
 
-#endif /* FRAME_COMMON_H */
+#endif /* FIBERPRINT_COMMON_H */
 

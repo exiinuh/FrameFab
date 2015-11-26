@@ -148,11 +148,11 @@ void MainWindow::CreateLabels()
 	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
 
 
-	label_radius_		= new QLabel(QString("Radius(cm): "));
-	label_density_		= new QLabel(QString("Density(g/cm^3): "));
+	label_radius_		= new QLabel(QString("Radius(mm): "));
+	label_density_		= new QLabel(QString("Density(Ton/mm^3): "));
 	label_g_			= new QLabel(QString("Gravity(m/s^2): "));
-	label_youngsmodulus_= new QLabel(QString("Young's modulus(Pa): "));
-	label_shearmodulus_ = new QLabel(QString("Shear modulus(N/m^2): "));
+	label_youngsmodulus_= new QLabel(QString("Young's modulus(MPa): "));
+	label_shearmodulus_ = new QLabel(QString("Shear modulus(MPa): "));
 
 	label_penalty_	= new QLabel(QString("ADMM penalty: "));
 	label_Dtol_		= new QLabel(QString("ADMM D tolerance: "));

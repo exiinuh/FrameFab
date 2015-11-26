@@ -186,4 +186,3 @@ private:
 	double				unify_size_;
 	double				delta_tol_;
 };
-

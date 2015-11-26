@@ -18,9 +18,11 @@
 #include "FiberPrint\FiberPrintPARM.h"
 #include "CoordTrans.h"
 
+#include "StiffnessIO.h"
+#include "StiffnessSolver.h"
+
 using namespace std;
 using namespace Eigen;
-
 
 class Stiffness
 {
@@ -57,18 +59,23 @@ public:
 
 public:
 	//private:
-	DualGraph	*ptr_dualgraph_;
+	DualGraph			*ptr_dualgraph_;
+	FiberPrintPARM		*ptr_parm_;
 
-	SpMat		K_;						// x-Weighted global stiffness matrix, 6n*6n
-	vector<MX>	eK_;					// elastic K, indexed by dual id
-	VX			F_;
-	vector<VX>	Fe_;
+	StiffnessIO			stiff_io_;
+	StiffnessSolver		stiff_solver_;
 
-	double		r_;						// radius of frame
-	double		nr_;					// radius of node
-	double		density_;
-	double		g_;
-	double		G_;						// shear modulus
-	double		E_;						// young's modulus;
-	double		v_;						// possion ratio
+
+	SpMat			K_;						// x-Weighted global stiffness matrix, 6n*6n
+	vector<MX>		eK_;					// elastic K, indexed by dual id
+	VX				F_;
+	vector<VX>		Fe_;
+
+	double			r_;						// radius of frame
+	double			nr_;					// radius of node
+	double			density_;
+	double			g_;
+	double			G_;						// shear modulus
+	double			E_;						// young's modulus;
+	double			v_;						// possion ratio
 };

@@ -247,8 +247,8 @@ void StiffnessSolver::LDLImprovePM(
 {
 	double  sdp;		// accumulate the r.h.s. in double precision
 	VX		dx,		// the residual error
-			dc,		// update to partial r.h.s. vector, c
-	double 	rms_resid_new = 0.0, // the RMS error of the mprvd solution
+		dc;		// update to partial r.h.s. vector, c
+	double 	rms_resid_new = 0.0; // the RMS error of the mprvd solution
 	
 	int	j, i, pd;
 
@@ -331,6 +331,86 @@ void StiffnessSolver::LDLImprovePM(
 	return;
 }
 
+/*
+* LUDecomp - Solves [A]{x} = {b}, simply and efficiently, by performing an		Nov/25/2015
+*			 LU-decomposition of matrix [A]. No pivoting is performed.
+*
+* {b} is updated using [LU] and then back-substitution is done to obtain {x}.
+* {b} is replaced by {x} and [A] is replaced by the LU-reduction of itself.
+*/
+void StiffnessSolver::LUDecomp(
+	MX  &A,		/**< the system matrix, and its LU-reduction			 */
+	int n,      /**< the dimension of the matrix						 */
+	VX  &b,		/**< the right hand side vector, and the solution vector */
+	int reduce, /**< 1: do a forward reduction; 0: don't				 */
+	int solve,  /**< 1: do a back substitution for {x};  0: don't		 */
+	int &info   /**< 1: positive diagonal  and  successful LU decomp'n   */
+	)
+{
+	double	pivot;		/* a diagonal element of [A]		*/
+	int	i, j, k;
+
+	info = 1;
+	if (reduce) 
+	{			
+		/* forward reduction of [A]	*/
+
+		for (k = 0; k < n; k++) 
+		{
+			if (0.0 == (pivot = A(k,k))) 
+			{
+				fprintf(stderr, " lu_dcmp: zero found on the diagonal\n");
+				fprintf(stderr, " A[%d][%d] = %11.4e\n", k, k, A(k,k));
+				info = 0;
+				return;
+			}
+			for (i = k + 1; i < n; i++) 
+			{
+				A(i,k) /= pivot;
+				for (j = k + 1; j < n; j++)
+				{
+					A(i,j) -= A(i,k) * A(k,j);
+				}
+			}
+		}
+	}		/* the forward reduction of [A] is now complete	*/
+
+	if (solve) 
+	{		
+		/* back substitution to solve for {x}	*/
+
+		/* {b} is run through the same forward reduction as was [A]	*/
+
+		for (k = 0; k < n; k++)
+		{
+			for (i = k + 1; i < n; i++)	
+			{
+				b[i] -= A(i,k) * b(k);
+			}
+		}
+		/* now back substitution is conducted on {b};  [A] is preserved */
+
+		for (j = n - 1; j >= 1; j--)
+		{
+			for (i = 0; i <= j - 1; i++)	
+			{
+				b[i] -= b[j] * A(i,j) / A(j,j);
+			}
+		}
+
+		/* finally we solve for the {x} vector			*/
+
+		for (i = 0; i < n; i++)
+		{
+			b[i] /= A(i,i);
+		}
+	}
+
+	/* {b} is now {x} and is ready to be returned	*/
+
+	return;
+}
+
 void StiffnessSolver::Debug()
 {
 	MX K_comp(3, 3);
@@ -347,8 +427,19 @@ void StiffnessSolver::Debug()
 	VXi r(3);
 	r << 0, 0, 0;
 
-	VX R,x,F;
+	VX R(3),x(3);
 	int info;
 	double rms_resid;
 	SolveSystem(K_comp, x, F, R, 3, q, r, 1, info, rms_resid);
+	cout << "LDLt info " << info << endl;
+	cout << "Stiffness solver result" << x << endl;
+
+	Eigen::FullPivLU<MX> lu(K_comp);
+	x = lu.solve(F);
+
+	cout << "Eigen LU result : " << x << endl;
+
+	LUDecomp(K_comp, 3, F, 1, 1, info);
+	cout << "LU info" << info << endl;
+	cout << "LU result : " << F << endl;
 }

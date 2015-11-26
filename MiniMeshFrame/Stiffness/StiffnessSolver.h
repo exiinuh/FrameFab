@@ -17,8 +17,9 @@
 *			1. Partitioned matrix equation : http://people.duke.edu/~hpgavin/cee421/SolveMatrixEquation.pdf.
 * ==========================================================================
 */
-#ifndef _STIFFNESS_SOLVER_H
-#define _STIFFNESS_SOLVER_H
+#ifndef STIFFNESS_SOLVER_H
+#define STIFFNESS_SOLVER_H
+
 #include <iostream>
 #include <Eigen/dense>
 #include <Eigen/sparse>
@@ -69,7 +70,7 @@ public:
 
 	void Debug();
 
-private:
+public:
 	/*
 	* LDLDecompPM  -  Solves partitioned matrix equations		Nov/24/2015
 	*
@@ -112,6 +113,27 @@ private:
 	*/
 	void LDLImprovePM(MX &A, int n, VX &d, const VX &b, VX &x, VX &c,
 		const VXi &q, const VXi &r, double &rms_resid, int &info);
+
+	/*
+	* LUDecomp - Solves [A]{x} = {b}, simply and efficiently, by performing an		Nov/25/2015
+	*			 LU-decomposition of matrix [A]. No pivoting is performed.
+	* @param A is a diagonally dominant matrix of dimension [1..n][1..n].
+	* @param b is a r.h.s. vector of dimension [1..n].
+	*
+	* {b} is updated using [LU] and then back-substitution is done to obtain {x}.
+	* {b} is replaced by {x} and [A] is replaced by the LU-reduction of itself.
+	*  usage:  MX A, VX b;
+	*		   int   n, reduce, solve, info;
+	*		   lu_dcmp ( A, n, b, reduce, solve, info);
+	*/
+	void LUDecomp(
+		MX  &A,		/**< the system matrix, and its LU-reduction			 */
+		int n,      /**< the dimension of the matrix						 */
+		VX  &b,		/**< the right hand side vector, and the solution vector */
+		int reduce, /**< 1: do a forward reduction; 0: don't				 */
+		int solve,  /**< 1: do a back substitution for {x};  0: don't		 */
+		int &info   /**< 1: positive diagonal  and  successful LU decomp'n   */
+		);
 };
 
 #endif

@@ -18,6 +18,7 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph)
 Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
 {
 	ptr_dualgraph_ = ptr_dualgraph;
+	ptr_parm_ = ptr_parm;
 
 	r_ = ptr_parm->radius_;
 	nr_ = 0.0;
@@ -25,7 +26,7 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
 	g_ = ptr_parm->g_;
 	G_ = ptr_parm->shear_modulus_;
 	E_ = ptr_parm->youngs_modulus_;
-	v_ = 0.16;
+	v_ = ptr_parm->poisson_ratio_;
 
 	Init();
 }
@@ -94,6 +95,7 @@ void Stiffness::CreateF(const VectorXd *ptr_x)
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
+	CreateFe();
 	F_.resize(6 * Fd);
 	F_.setZero();
 
@@ -119,7 +121,7 @@ void Stiffness::CreateElasticK()
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	double material = G_ - E_;
+	//double material = G_ - E_;
 	double Ax = M_PI * r_ * r_;
 	double Asy = Ax * (6 + 12 * v_ + 6 * v_*v_) / (7 + 12 * v_ + 4 * v_*v_);
 	double Asz = Asy;
@@ -191,6 +193,7 @@ void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
 
 	vector<Triplet<double>> K_list;
 
+	CreateElasticK();
 	K_.resize(6 * Fd, 6 * Fd);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -254,29 +257,57 @@ void Stiffness::CalculateD(VectorXd *ptr_D)
 
 void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 {
-	CreateGlobalK(ptr_x);
-	CreateF(ptr_x);
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//BiCGSTAB<SparseMatrix<double>> solver;
-	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	FullPivLU<MatrixXd> solver;
+	VX x(Nd);
+	x.setOnes();
 
-	cout << "Stiffness: Calculating Initial D." << endl;
-	
-	//K_.makeCompressed();
-	
-	solver.compute(K_);
-	//assert(solver.info() == Success);
+	vector<int> q(Fd);
+	vector<int> r(Fd);
+	for (int i = 0; i < Fd; i++)
+	{
+		int u = ptr_dualgraph_->v_orig_id(i);
+		if (ptr_dualgraph_->ptr_frame_->isFixed(u))
+		{
+			// restained node with known displacement but unknown reaction force
+			q[i] = 0;
+			r[i] = 1;
+		}
+		else
+		{
+			// free node with known external force but unknown displacement
+			q[i] = 1;
+			r[i] = 0;
+		}
+	}
 
-	//cout << "column number of K_ : " << K_.cols() << endl;
-	//cout << solver.rank() << endl;
-	//getchar();
-	
-	(*ptr_D) = solver.solve(F_);
-	//assert(solver.info() == Success);
+	CreateGlobalK(&x);
+	CreateF(&x);
 
-	cout << "Stiffness: Initial D Calculation Completed." << endl;
+	stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_);
+
+	getchar();
+	////SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
+	////BiCGSTAB<SparseMatrix<double>> solver;
+	////SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
+	//FullPivLU<MatrixXd> solver;
+
+	//cout << "Stiffness: Calculating Initial D." << endl;
+	//
+	////K_.makeCompressed();
+	//
+	//solver.compute(K_);
+	////assert(solver.info() == Success);
+
+	////cout << "column number of K_ : " << K_.cols() << endl;
+	////cout << solver.rank() << endl;
+	////getchar();
+	//
+	//(*ptr_D) = solver.solve(F_);
+	////assert(solver.info() == Success);
+
+	//cout << "Stiffness: Initial D Calculation Completed." << endl;
 }
 
 

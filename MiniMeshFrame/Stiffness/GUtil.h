@@ -106,7 +106,7 @@ static FILE *openFile(const char *path, const char *fileName, const char *mode, 
 
 	if (mode == 0)	return 0;
 
-	sprintf(pathToFile, "%s%s", path, fileName);
+	sprintf_s(pathToFile, "%s%s", path, fileName);
 #if DEBUG
 	printf(" openFile ... file name = %s\n", pathToFile);
 #endif

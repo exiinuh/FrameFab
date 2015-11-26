@@ -18,6 +18,9 @@
 #include "QP/QPFactory.h"
 #include "Statistics.h"
 
+#include "StiffnessIO.h"
+#include "StiffnessSolver.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -62,11 +65,15 @@ public:
 	vector<int>				*GetLabel()				{ return &layer_label_; }
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
+	void		Debug();
+
 public:
 //private:
 	WireFrame		*ptr_frame_;
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
+	StiffnessIO		stiff_io_;
+	StiffnessSolver stiff_solver_;
 
 	SpMat			A_;
 	SpMat			C_;
