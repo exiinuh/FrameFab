@@ -8,13 +8,13 @@ FiberPrintPARM::FiberPrintPARM()
 	/*
 	*	For Your Inference; Unit Transfer
 	*	Gpa = 10^3Mpa = 10^9pa
-	*   Ton/mm^3 = g/cm^3, Ton = 10^3 kg = 10^6 g
+	*   1 kg/m^3 = 1e-3 g/cm^3 = 1e-12 Ton/mm^3
 	*/
 	
 	/* 
 	* Test case 1: Acrylonitrile Butadiene Styrene (ABS)
 	* Data Source : http://www.grantadesign.com/education/datasheets/ABS.htm
-	* Density ;						1.21 Ton/mm^3
+	* Density ;						1210 * 1e-12 Ton/mm^3
 	* Elastic(Young's) Modulus :    1100 Mpa
 	* Shear Modulus :				1032 Mpa
 	* radius of the element :		0.4	 mm
@@ -25,7 +25,7 @@ FiberPrintPARM::FiberPrintPARM()
 	* Gravity acceleration along Z axis:   gZ = -9806.33 mm/s^2
 	*/
 
-	density_ = 1.21;
+	density_ = 1210 * 1e-12;
 	youngs_modulus_ = 1100;
 	shear_modulus_ = 1032;
 	radius_ = 0.4;

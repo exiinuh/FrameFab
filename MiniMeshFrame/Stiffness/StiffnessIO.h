@@ -103,6 +103,12 @@ public:
 	*/
 	void WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
 
+	/*
+	* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015
+	* to the named file, use only upper-triangular part
+	*/
+	void SaveUpperMatrix(char filename[], const MX &A, int n);
+
 	void Debug(int verbose);		// 1 : copious screenpaly, 0 : none 
 
 public:

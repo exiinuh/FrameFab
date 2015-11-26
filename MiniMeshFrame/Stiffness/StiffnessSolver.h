@@ -63,7 +63,7 @@ public:
 	* @param rms_resid  : the RMS error of the solution residual 
 	*/
 	void SolveSystem(		
-		MX &K, VX &D, VX &F, VX &R, 
+		SpMat &K, VX &D, VX &F, VX &R, 
 		int Dof, VXi &q, VXi &r, 
 		int verbose, int &info, double &rms_resid
 		);

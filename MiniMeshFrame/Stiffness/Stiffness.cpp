@@ -95,7 +95,7 @@ void Stiffness::CreateF(const VectorXd *ptr_x)
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	CreateFe();
+	//CreateFe();
 	F_.resize(6 * Fd);
 	F_.setZero();
 
@@ -117,11 +117,13 @@ void Stiffness::CreateF(const VectorXd *ptr_x)
 
 void Stiffness::CreateElasticK()
 {
-	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
+	WireFrame		  *ptr_frame   = ptr_dualgraph_->ptr_frame_;
+	vector<WF_edge *> wf_edge_list = *ptr_frame->GetEdgeList();
+	vector<WF_vert *> wf_vert_list = *ptr_frame->GetVertList();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	//double material = G_ - E_;
 	double Ax = M_PI * r_ * r_;
 	double Asy = Ax * (6 + 12 * v_ + 6 * v_*v_) / (7 + 12 * v_ + 4 * v_*v_);
 	double Asz = Asy;
@@ -129,12 +131,16 @@ void Stiffness::CreateElasticK()
 	double Iyy = Jxx / 2;
 	double Izz = Iyy;
 
+	double   t0, t1, t2, t3, t4, t5, t6, t7, t8;     /* coord transf matrix entries */
+
 	eK_.resize(Nd);
 	for (int i = 0; i < Nd; i++)
 	{
 		eK_[i].setZero();
 
-		WF_edge *ei = ptr_frame->GetNeighborEdge(ptr_dualgraph_->v_orig_id(i));
+		//WF_edge *ei = ptr_frame->GetNeighborEdge(ptr_dualgraph_->v_orig_id(i));
+		WF_edge *ei = wf_edge_list[ptr_dualgraph_->e_orig_id(i)];
+
 		int u = ei->ppair_->pvert_->ID();
 		int v = ei->pvert_->ID();
 		double L = ei->Length();
@@ -142,6 +148,12 @@ void Stiffness::CreateElasticK()
 
 		MatrixXd eKuv(12, 12);
 		eKuv.setZero();
+
+		point node_u = wf_vert_list[u]->Position();
+		point node_v = wf_vert_list[v]->Position();
+
+		transf_.CreateTransMatrix(node_u, node_v, t0, t1, t2, t3, t4, t5, t6, t7, t8, 0);
+		
 
 		double Ksy = 12.0 * E_ * Izz / (G_ * Asy * Le * Le);
 		double Ksz = 12.0 * E_ * Iyy / (G_ * Asz * Le * Le);
@@ -169,12 +181,25 @@ void Stiffness::CreateElasticK()
 		eKuv(10, 5) = eKuv(5, 10) = (2.0 - Ksz) * E_ * Iyy / (Le * (1.0 + Ksz));
 		eKuv(11, 5) = eKuv(5, 11) = (2.0 - Ksy) * E_ * Izz / (Le * (1.0 + Ksy));
 
+		transf_.TransLocToGlob(t0, t1, t2, t3, t4, t5, t6, t7, t8, eKuv, 0, 0);
+
 		for (int k = 0; k < 12; k++)
 		{
 			for (int l = 0; l < 12; l++)
 			{
 				if (eKuv(k, l) != eKuv(l, k))
 				{
+					if (fabs(eKuv(k,l) / eKuv(l,k) - 1.0) > 1.0e-6
+						&& 
+						(fabs(eKuv(k,l) / eKuv(k,k)) > 1e-6 || fabs(eKuv(l,k) / eKuv(k,k)) > 1e-6)
+						)
+					{
+						fprintf(stderr, "elastic_K: element stiffness matrix not symetric ...\n");
+						fprintf(stderr, " ... k[%d][%d] = %15.6e \n", k, l, eKuv(k,l));
+						fprintf(stderr, " ... k[%d][%d] = %15.6e   ", l, k, eKuv(l,k));
+						fprintf(stderr, " ... relative error = %e \n", fabs(eKuv(k,l) / eKuv(l,k) - 1.0));
+					}
+
 					eKuv(k, l) = eKuv(l, k) = (eKuv(k, l) + eKuv(l, k)) / 2;
 				}
 			}
@@ -193,7 +218,6 @@ void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
 
 	vector<Triplet<double>> K_list;
 
-	CreateElasticK();
 	K_.resize(6 * Fd, 6 * Fd);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -255,7 +279,7 @@ void Stiffness::CalculateD(VectorXd *ptr_D)
 }
 
 
-void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
+void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd)
 {
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
@@ -282,32 +306,33 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x)
 		}
 	}
 
+	if (write_3dd)
+	{
+		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_);
+	}
+	
+	Init();
 	CreateGlobalK(&x);
 	CreateF(&x);
 
-	stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_);
+	if (write_matrix)
+	{
+		FILE	*fp;
+		char matrix_file[FILENMAX];
+		char matrix_path[FILENMAX];
+		char *title = "FiberPrint TestFile -- static analysis (N,mm,g)\n";
+		char errMsg[512];
 
+		sprintf_s(matrix_file, "%s", "Ks_fiber");
+
+		stiff_io_.OutputPath(matrix_file, matrix_path, FRAME3DD_PATHMAX, NULL);
+		stiff_io_.SaveUpperMatrix(matrix_path, K_, K_.cols());
+	}
+
+	// Solving Process
+	
+	
 	getchar();
-	////SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	////BiCGSTAB<SparseMatrix<double>> solver;
-	////SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//FullPivLU<MatrixXd> solver;
-
-	//cout << "Stiffness: Calculating Initial D." << endl;
-	//
-	////K_.makeCompressed();
-	//
-	//solver.compute(K_);
-	////assert(solver.info() == Success);
-
-	////cout << "column number of K_ : " << K_.cols() << endl;
-	////cout << solver.rank() << endl;
-	////getchar();
-	//
-	//(*ptr_D) = solver.solve(F_);
-	////assert(solver.info() == Success);
-
-	//cout << "Stiffness: Initial D Calculation Completed." << endl;
 }
 
 

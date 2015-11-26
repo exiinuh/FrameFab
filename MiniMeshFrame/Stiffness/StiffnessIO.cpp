@@ -733,17 +733,17 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	double	Izz = Iyy;
 
 	fprintf(fp, "\n");
-	fprintf(fp, "%d					# number of frame element\n");
-	fprintf(fp, "#.e n1 n2 Ax    Asy     Asz     Jxx     Iyy     Izz     E       G   roll density\n");
-	fprintf(fp, "#   .  .  mm^2  mm^2    mm^2    mm^4    mm^4    mm^4    MPa     MPa	deg		T/mm^3\n");
+	fprintf(fp, "%d					# number of frame element\n", nE);
+	fprintf(fp, "#.e n1 n2 Ax    Asy     Asz     Jxx     Iyy     Izz     E		G		roll	density\n");
+	fprintf(fp, "#   .  .  mm^2  mm^2    mm^2    mm^4    mm^4    mm^4    MPa		MPa		deg		T/mm^3\n");
 	for (int i = 0; i < nE; i++)
 	{
 		int e_id = ptr_dualgraph->e_orig_id(i);
 		int vert_id   = wf_edge_list[e_id]->pvert_->ID();
 		int vert_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
 
-		fprintf(fp, "%d %d %d	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f\n",
-			i + 1, vert_id, vert_id_2,
+		fprintf(fp, "%d %d %d	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.2f	%.14f\n",
+			i + 1, vert_id + 1, vert_id_2 + 1,
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
 
@@ -751,7 +751,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 
 	// parse option for stiffness matrix
 	fprintf(fp, "%d				# 1: include shear deformation\n", 1);
-	fprintf(fp, "%d				# 1: include geometric stiffness\n", 1);
+	fprintf(fp, "%d				# 1: include geometric stiffness\n", 0);
 	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 10.0);
 	fprintf(fp, "%.1f				# zoom scale for 3D plotting\n", 2.5);
 	fprintf(fp, "%d				# x-axis increment for internal forces, mm\n", -1);
@@ -760,7 +760,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	// load case parsing
 	fprintf(fp, "\n");
 	fprintf(fp, "%d				# number of static load cases\n", 1);
-	fprintf(fp, "				# Begin static Load Case 1\n", 1);
+	fprintf(fp, "				# Begin static Load Case 1 of 1\n");
 
 	fprintf(fp, "\n");
 	fprintf(fp, "# gravitational acceleration for self-weight loading (global)\n");
@@ -769,19 +769,82 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "  0			 0				 %.2f\n", g);
 
 	fprintf(fp,"\n");
-	fprintf(fp, "%d				# number of loaded nodes\n", 0);
-
-	fprintf(fp, "%d				# number of uniform loads\n", 0);
-	fprintf(fp, "%d				# number of trapezoidal loads\n", 0);
+	fprintf(fp, "%d				# number of loaded nodes\n",				0);
+	fprintf(fp, "%d				# number of uniform loads\n",				0);
+	fprintf(fp, "%d				# number of trapezoidal loads\n",			0);
 	fprintf(fp, "%d				# number of internal concentrated loads\n", 0);
-	fprintf(fp, "%d				# number of temperature loads\n", 0);
-	fprintf(fp, "%d				# number of nodes with prescribed displacement\n", 0);
+	fprintf(fp, "%d				# number of temperature loads\n",			0);
 
-	fprintf(fp, "				# End static Load Case 1\n", 1);
+	fprintf(fp, "%d				# number of nodes with prescribed displacement\n", nR);
+	fprintf(fp, "#.node  X-disp1  Y-disp1  Z-disp1  X-rot'n  Y-rot'n  Z-rot'n\n");
+	fprintf(fp, "#       mm		mm	   mm	radian	radian	radian\n");
+	for (int i = 0; i < nR; i++)
+	{
+		fprintf(fp, "%d  0  0  0  0  0  0\n", res_index[i]);
+	}
 
+	fprintf(fp, "				# End static Load Case 1 of 1\n");
+
+	// Dynamic Modes
+	fprintf(fp, "%d				#number of dynamic modes\n",0);
 	fprintf(fp, "# End of transfer data file for fiber test");
 	
 	fclose(fp);
+}
+
+/*
+* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015
+* to the named file, use only upper-triangular part
+*/
+void StiffnessIO::SaveUpperMatrix(char filename[], const MX &A, int n)
+{
+	FILE    *fp_m;
+	int     i, j;
+	time_t	now;
+
+	if ((fp_m = fopen(filename, "w")) == NULL) 
+	{
+		printf(" error: cannot open file: %s \n", filename);
+		exit(1016);
+	}
+
+	(void)time(&now);
+	fprintf(fp_m, "%% filename: %s - %s\n", filename, ctime(&now));
+	fprintf(fp_m, "%% type: matrix \n");
+	fprintf(fp_m, "%% rows: %d\n", n);
+	fprintf(fp_m, "%% columns: %d\n", n);
+	for (i = 0; i < n; i++) 
+	{
+		for (j = 0; j < n; j++) 
+		{
+			if (i > j) 
+			{
+				if (fabs(A(j,i)) > 1.e-99)
+				{
+					fprintf(fp_m, "%21.12e", A(j,i));
+				}
+				else
+				{
+					fprintf(fp_m, "    0                ");
+				}
+			}
+			else 
+			{
+				if (fabs(A(i, j)) > 1.e-99)
+				{
+					fprintf(fp_m, "%21.12e", A(i,j));
+				}
+				else
+				{
+					fprintf(fp_m, "    0                ");
+				}
+			}
+		}
+		fprintf(fp_m, "\n");
+	}
+	fclose(fp_m);
+	return;
+
 }
 
 void StiffnessIO::Debug(int verbose)

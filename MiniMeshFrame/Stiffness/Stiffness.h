@@ -1,4 +1,33 @@
-#pragma once
+/*
+* ==========================================================================
+*
+*       class: Stiffness
+*
+*    Description:  This class is a part of FiberPrint, which takes in charge of 
+*				   stiffness matrix related problem arised in GraphCut submodule.
+*
+*	 Capability :  Create elastic Stiffness matrix
+*				   Calculate displacement for gravity force involved only frame structure
+*				   Output Gnuplot file for explicit displacement display
+*				   Output .3dd file for frame3dd analysis
+*
+*	 Version:  1.0
+*	 Created:  Oct/15/2015 by Xin Hu
+*	 Updated:  Nov/26/2015 by Yijiang H.
+*
+*	 Author:   Xin Hu,  Yijiang Huang, Guoxian Song
+*	 Company:  GCL@USTC
+*	 Note:	   The core stiffness matrix construction part of this file 
+*			is modified from frame3dd_io.c, which is a part of Frame3dd.
+*			You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
+*
+*			You can download Gnuplot at	http://sourceforge.net/projects/gnuplot/
+* ==========================================================================
+*/
+
+
+#ifndef FIBERPRINT_STIFFNESS_H
+#define FIBERPRINT_STIFFNESS_H
 
 #include <iostream>
 #include <assert.h>
@@ -28,9 +57,11 @@ class Stiffness
 {
 public:
 	typedef Eigen::SparseMatrix<double> SpMat;
-	typedef Eigen::MatrixXd MX;
-	typedef Eigen::VectorXd VX;
+	typedef Eigen::MatrixXd				MX;
+	typedef Eigen::VectorXd				VX;
+	typedef trimesh::point				point;
 
+public:
 	Stiffness();
 	Stiffness(DualGraph *ptr_dualgraph);
 	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
@@ -45,7 +76,7 @@ public:
 
 	// Socket to GraphCut
 	void		CalculateD(VectorXd *ptr_D);
-	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x);
+	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
@@ -57,7 +88,7 @@ public:
 
 	void		Debug();
 
-public:
+private:
 	//private:
 	DualGraph			*ptr_dualgraph_;
 	FiberPrintPARM		*ptr_parm_;
@@ -65,6 +96,7 @@ public:
 	StiffnessIO			stiff_io_;
 	StiffnessSolver		stiff_solver_;
 
+	CoordTrans			transf_;
 
 	SpMat			K_;						// x-Weighted global stiffness matrix, 6n*6n
 	vector<MX>		eK_;					// elastic K, indexed by dual id
@@ -79,3 +111,4 @@ public:
 	double			E_;						// young's modulus;
 	double			v_;						// possion ratio
 };
+#endif

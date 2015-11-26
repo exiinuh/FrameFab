@@ -1,7 +1,7 @@
 #include "StiffnessSolver.h"
 
 void StiffnessSolver::SolveSystem(
-		MX &K, VX &D, VX &F, VX &R, 
+		SpMat &K, VX &D, VX &F, VX &R, 
 		int DoF, VXi &q, VXi &r, 
 		int verbose, int &info, double &rms_resid)
 {
@@ -9,21 +9,21 @@ void StiffnessSolver::SolveSystem(
 
 	diag.resize(DoF);
 
-	MX K_comp = K;
-	//int row = K.rows(), col = K.cols();
-	//MX K_comp(row, col);
-	//K_comp.setZero();
+	//MX K_comp = K;
+	int row = K.rows(), col = K.cols();
+	MX K_comp(row, col);
+	K_comp.setZero();
 
-	//for (int k = 0; k < K.outerSize(); ++k)
-	//{
-	//	for (SpMat::InnerIterator it(K, k); it; ++it)
-	//	{
-	//		int		r = it.row();
-	//		int		c = it.col();
-	//		double	v = it.value();
-	//		K_comp(r, c) = v;
-	//	}
-	//}
+	for (int k = 0; k < K.outerSize(); ++k)
+	{
+		for (SpMat::InnerIterator it(K, k); it; ++it)
+		{
+			int		r = it.row();
+			int		c = it.col();
+			double	v = it.value();
+			K_comp(r, c) = v;
+		}
+	}
 
 	/*  L D L' decomposition of K[q,q] into lower triangle of K[q,q] and diag[q] */
 	/*  vectors F and D are unchanged */
@@ -413,33 +413,4 @@ void StiffnessSolver::LUDecomp(
 
 void StiffnessSolver::Debug()
 {
-	MX K_comp(3, 3);
-	K_comp << 2, -1, 0,
-		-1, 2, -1,
-		0, -1, 2;
-	
-	VX F(3);
-	F << 1, 1, 1;
-
-	VXi q(3);
-	q << 1, 1, 1;
-	
-	VXi r(3);
-	r << 0, 0, 0;
-
-	VX R(3),x(3);
-	int info;
-	double rms_resid;
-	SolveSystem(K_comp, x, F, R, 3, q, r, 1, info, rms_resid);
-	cout << "LDLt info " << info << endl;
-	cout << "Stiffness solver result" << x << endl;
-
-	Eigen::FullPivLU<MX> lu(K_comp);
-	x = lu.solve(F);
-
-	cout << "Eigen LU result : " << x << endl;
-
-	LUDecomp(K_comp, 3, F, 1, 1, info);
-	cout << "LU info" << info << endl;
-	cout << "LU result : " << F << endl;
 }

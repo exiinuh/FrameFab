@@ -67,7 +67,7 @@ void CoordTrans::CreateTransMatrix(
 						+ (u.z() - v.z())*(u.z() - v.z()));
 
 	double	Cx, Cy, Cz, den,		/* direction cosines	*/
-		Cp, Sp;			/* cosine and sine of roll angle */
+			Cp, Sp;					/* cosine and sine of roll angle */
 
 	Cx = (v.x() - u.x()) / L;
 	Cy = (v.y() - u.y()) / L;

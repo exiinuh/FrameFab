@@ -166,11 +166,11 @@ void MainWindow::CreateLabels()
 
 void MainWindow::CreateLineEdits()
 {
-	line_radius_		= new QLineEdit(tr("0.0015"), this);
-	line_density_		= new QLineEdit(tr("0.001"), this);
-	line_g_				= new QLineEdit(tr("9.80"), this);
-	line_youngsmodulus_	= new QLineEdit(tr("1586"), this);
-	line_shearmodulus_	= new QLineEdit(tr("1387"), this);
+	line_radius_		= new QLineEdit(tr("0.4"), this);
+	line_density_		= new QLineEdit(tr("1210 * 1e-12"), this);
+	line_g_				= new QLineEdit(tr("-9806.33"), this);
+	line_youngsmodulus_	= new QLineEdit(tr("1100"), this);
+	line_shearmodulus_	= new QLineEdit(tr("1032"), this);
 
 	line_penalty_	= new QLineEdit(tr("100"), this);
 	line_Dtol_		= new QLineEdit(tr("0.1"), this);
