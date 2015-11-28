@@ -26,14 +26,14 @@
 #include <Eigen/dense>
 
 #include "CoordTrans.h"
-#include "Statistics.h"
+#include "I_O\Statistics.h"
 
 #include "GCommon.h"
 #include "GUtil.h"
 #include "StiffnessSolver.h"
 
-#include "FiberPrintPARM.h"
-#include "DualGraph.h"
+#include "FiberPrint\FiberPrintPARM.h"
+#include "FiberPrint\DualGraph.h"
 
 /* maximum number of load cases */
 #define _NL_ 32

@@ -103,8 +103,8 @@ void GraphCut::SetStartingPoints(int count)
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
 
 	x_.resize(Nd_);
-	D_.resize(6 * Fd_);		// every node has 6 degree of freedom
-	lambda_.resize(3 * Fd_);
+	D_.resize(6 * Fd_);
+	lambda_.resize(6 * Fd_);
 	a_.resize(Nd_);
 
 	// Set all label x = 1 and calculate KD = F to obtain inital D_0	
@@ -146,12 +146,18 @@ void GraphCut::CreateAandC()
 }
 
 
-void GraphCut::SetBoundary(VX &d, SpMat &W)
+void GraphCut::SetBoundary()
 {
 	// Set lower boundary and upper boundary
 	// equality constraints W*x = d
 	// Identify Base nodes(1) and Upper Nodes(2)
 	// Here we just take the edge with biggest height
+	d_.resize(Nd_);
+	d_.setZero();
+
+	W_.resize(Nd_, Nd_);
+	W_.setZero();
+
 	VectorXi bound(Nd_);
 	bound.setZero();
 
@@ -181,22 +187,21 @@ void GraphCut::SetBoundary(VX &d, SpMat &W)
 		}
 	}
 
-	d.setZero();
 	vector<Eigen::Triplet<double>> W_list;
 	for (int e_id = 0; e_id < Nd_; e_id++)
 	{
 		if (bound[e_id] == 1)
 		{
-			d[e_id] = 1;
+			d_[e_id] = 1;
 			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
 		}
 		if (bound[e_id] == 2)
 		{
-			d[e_id] = 0;
+			d_[e_id] = 0;
 			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
 		}
 	}
-	W.setFromTriplets(W_list.begin(), W_list.end());
+	W_.setFromTriplets(W_list.begin(), W_list.end());
 }
 
 
@@ -260,6 +265,7 @@ bool GraphCut::TerminationCriteria()
 	}
 }
 
+
 void GraphCut::MakeLayers()
 {
 	InitState();
@@ -271,12 +277,10 @@ void GraphCut::MakeLayers()
 		SetStartingPoints(cut_count);
 		CreateAandC();
 
-		VX d(Nd_);
-		SpMat W(Nd_, Nd_);
-		SetBoundary(d, W);
+		SetBoundary();
 
 		//ptr_stiff_->Debug();
-		ptr_stiff_->CalculateD(&D_, &x_,1,1);
+		ptr_stiff_->CalculateD(&D_, &x_, 0, 0);
 
 		//ptr_stiff_->CalculateD(&D_, &x_);
 
@@ -284,65 +288,63 @@ void GraphCut::MakeLayers()
 		cout << "****************************************" << endl;
 		cout << "GraphCut Round : " << cut_count << endl;
 		cout << "Initial energy before entering ADMM: " << old_energy << endl;
+		cout << "---------------------------------" << endl;
 
 		int ADMM_count = 0;
+		VX x_prev;
+		VX D_prev;
 		record.clear();
-
-		cout << "---------------------------------" << endl;
 		do
 		{
-			cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
-			
-			string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
-			Statistics s_x(str, x_);
-			s_x.GenerateVectorFile();
-
-			VX x_prev = x_;
-			CalculateX(d, W);
-
-			VX D_prev = D_;
-			CalculateD();
-
-			UpdateLambda();
-			
-			//Residual calculation
-			SpMat Q_prev;
-			SpMat Q_new;
-			CalculateQ(D_prev, Q_prev);
-			CalculateQ(D_, Q_new);
-
-			//ptr_stiff_->CreateK(&x_);
-			SpMat K_new = *(ptr_stiff_->WeightedK());
-
-			/*dual_res_ = penalty_ * (x_ - x_prev).transpose() * Q_prev.transpose() * Q_prev
-				+ lambda_.transpose() * (Q_prev - Q_new);*/
-			dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-				+ lambda_.transpose() * (Q_prev - Q_new);
-			primal_res_ = Q_new * x_;
-
-
-			double obj_func = x_.dot(H1_ * x_);
-			record.push_back(obj_func);
-
-			cout << "new energy func value record: " << obj_func << endl;
-			cout << "dual_residual : " << dual_res_.norm() << endl;
-			cout << "primal_residual : " << primal_res_.norm() << endl;
-
-			for (int i = 0; i < record.size(); i++)
+			do
 			{
-				cout << record[i] << " << ";
-			}
-			putchar('\n');
-			
-			ADMM_count++;
-			if (ADMM_count >= 20)
-			{
-				break;
-			}
-		} while (!TerminationCriteria());
+				cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
+
+				string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
+				Statistics s_x(str, x_);
+				s_x.GenerateVectorFile();
+
+				/*-------------------ADMM loop-------------------*/
+				x_prev = x_;
+				CalculateX();
+
+				D_prev = D_;
+				CalculateD();
+
+				UpdateLambda();
+
+				//Residual calculation
+				SpMat Q_prev;
+				SpMat Q_new;
+				CalculateQ(D_prev, Q_prev);
+				CalculateQ(D_, Q_new);
+
+				ptr_stiff_->CreateGlobalK(&x_);
+				SpMat K_new = *(ptr_stiff_->WeightedK());
+
+				dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
+					+ lambda_.transpose() * (Q_prev - Q_new);
+				primal_res_ = Q_new * x_;
+
+				/*-------------------output info-------------------*/
+				double obj_func = x_.dot(H1_ * x_);
+				record.push_back(obj_func);
+
+				cout << "new energy func value record: " << obj_func << endl;
+				cout << "dual_residual : " << dual_res_.norm() << endl;
+				cout << "primal_residual : " << primal_res_.norm() << endl;
+
+				for (int i = 0; i < record.size(); i++)
+				{
+					cout << record[i] << " << ";
+				}
+				putchar('\n');
+
+			} while (++ADMM_count < 20 && !TerminationCriteria());
+		} while (!UpdateC(x_prev));
 
 		UpdateCut();													// Update New Cut information to Rendering (layer_label_)
-		
+
 		printf("One iteration done!\n");
 		cut_count++;
 	} while (!CheckLabel(cut_count));
@@ -350,11 +352,10 @@ void GraphCut::MakeLayers()
 	ptr_dualgraph_->Dualization();										// for sequence analyzer
 	
 	printf("All done!\n");
-
 }
 
 
-void GraphCut::CalculateX(VX &d, SpMat &W)
+void GraphCut::CalculateX()
 {
 	// Construct Hessian Matrix for D-Qp problem
 	SpMat Q;
@@ -367,9 +368,9 @@ void GraphCut::CalculateX(VX &d, SpMat &W)
 	a_ = Q.transpose() * lambda_;
 	
 	// Inequality constraints A*x <= b
-	SpMat A(3 * Fd_, 3 * Fd_);
+	SpMat A(6 * Fd_, 6 * Fd_);
 	A.setZero();
-	VX b(3 * Fd_);
+	VX b(6 * Fd_);
 	b.setZero();
 
 	// Variable constraints x >= lb, x <= ub
@@ -377,7 +378,7 @@ void GraphCut::CalculateX(VX &d, SpMat &W)
 	lb.setZero();
 	ub.setOnes();
 
-	qp_->solve(H, a_, A, b, W, d, lb, ub, x_, NULL, NULL, debug_);
+	qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
 }
 
 
@@ -398,17 +399,22 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 				int v = edge->pvert_->ID();
 				int j = ptr_dualgraph_->v_dual_id(v);
 
-				//MX eKuu = ptr_stiff_->Me(edge->ID());
-				//MX eKeu = ptr_stiff_->Me(edge->ID());
-				//VX Fe = ptr_stiff_->Fe(edge->ID());
-				//VX Di()
-				//VX Di(_D[3 * i], _D[3 * i + 1], _D[3 * i + 2]);
-				//VX Dj(_D[3 * j], _D[3 * j + 1], _D[3 * j + 2]);
-				//VX Gamma = M * (Dj - Di) - 0.5 * Fe;
+				MX eKuu = ptr_stiff_->eKv(edge->ID());
+				MX eKeu = ptr_stiff_->eKe(edge->ID());
+				VX Fe = ptr_stiff_->Fe(edge->ID());
+				VX Di(6);
+				VX Dj(6);
+				for (int k = 0; k < 6; k++)
+				{
+					Di[k] = _D[6 * i + k];
+					Dj[k] = _D[6 * j + k];
+				}
+				VX Gamma = eKuu * Di + eKeu * Dj - Fe;
 
-				//Q_list.push_back(Triplet<double>(3 * i, e_id, Gamma[0]));
-				//Q_list.push_back(Triplet<double>(3 * i + 1, e_id, Gamma[1]));
-				//Q_list.push_back(Triplet<double>(3 * i + 2, e_id, Gamma[2]));
+				for (int k = 0; k < 6; k++)
+				{
+					Q_list.push_back(Triplet<double>(6 * i, e_id, Gamma[k]));
+				}
 			}
 
 			edge = edge->pnext_;
@@ -422,50 +428,50 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 void GraphCut::CalculateD()
 {
 	// Construct Hessian Matrix for D-Qp problem
-	//ptr_stiff_->CreateK(&x_);
-	//SpMat K = *(ptr_stiff_->WeightedK());
-	//SpMat Q = penalty_ * K.transpose() * K;
+	ptr_stiff_->CreateGlobalK(&x_);
+	SpMat K = *(ptr_stiff_->WeightedK());
+	SpMat Q = penalty_ * K.transpose() * K;
 
-	//// Construct Linear coefficient for D-Qp problem
-	//ptr_stiff_->CreateFv(&x_);
-	//VX F = *(ptr_stiff_->WeightedF());
+	// Construct Linear coefficient for D-Qp problem
+	ptr_stiff_->CreateF(&x_);
+	VX F = *(ptr_stiff_->WeightedF());
 
-	//VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
-	//
-	//// Inequality constraints A*D <= b
-	//SpMat A(3 * Fd_, 3 * Fd_);
-	//A.setIdentity();	
-	//VX b(3 * Fd_);
-	//b.setOnes();
-	//b = b * D_tol_;
+	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
+	
+	// Inequality constraints A*D <= b
+	SpMat A(6 * Fd_, 6 * Fd_);
+	A.setIdentity();	
+	VX b(6 * Fd_);
+	b.setOnes();
+	b = b * D_tol_;
 
-	//// Equality constraints C*D = d
-	//SpMat C(3 * Fd_, 3 * Fd_);
-	//C.setZero();
-	//VX d(3 * Fd_);
-	//d.setZero();
+	// Equality constraints C*D = d
+	SpMat C(6 * Fd_, 6 * Fd_);
+	C.setZero();
+	VX d(6 * Fd_);
+	d.setZero();
 
-	//// Variable constraints D >= lb, D <= ub
-	//VX lb(3 * Fd_), ub(3 * Fd_);
-	//lb.setOnes();
-	//ub.setOnes();
-	//lb = lb * (-MYINF);
-	//ub = ub * MYINF;
+	// Variable constraints D >= lb, D <= ub
+	VX lb(6 * Fd_), ub(6 * Fd_);
+	lb.setOnes();
+	ub.setOnes();
+	lb = lb * (-MYINF);
+	ub = ub * MYINF;
 
-	//qp_->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
+	qp_->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
 }
 
 
 void GraphCut::UpdateLambda()
 {
-	//// Recompute K(x_{k+1}) and F(x_{k+1})
-	//ptr_stiff_->CreateK(&x_);
-	//SpMat K = *(ptr_stiff_->WeightedK());
+	// Recompute K(x_{k+1}) and F(x_{k+1})
+	ptr_stiff_->CreateGlobalK(&x_);
+	SpMat K = *(ptr_stiff_->WeightedK());
 
-	//ptr_stiff_->CreateFv(&x_);
-	//VX F = *(ptr_stiff_->WeightedF());
+	ptr_stiff_->CreateF(&x_);
+	VX F = *(ptr_stiff_->WeightedF());
 
-	//lambda_ = lambda_ + penalty_ * (K * D_ - F);
+	lambda_ = lambda_ + penalty_ * (K * D_ - F);
 }
 
 
@@ -519,17 +525,54 @@ void GraphCut::UpdateCut()
 	}
 }
 
-void	GraphCut::Debug()
+
+bool GraphCut::UpdateC(VX &x_prev)
+{
+	C_.setZero();
+	vector<Triplet<double>> C_list;
+	VX C = C_.diagonal();
+	for (int i = 0; i < Md_; i++)
+	{
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+		double r = 1.0 / (1e-5 + fabs(x_prev[u] - x_prev[v]));
+		C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r));
+	}
+	C_.setFromTriplets(C_list.begin(), C_list.end());
+
+	H1_ = SpMat(Nd_, Nd_);
+	H1_ = A_.transpose() * C_ * A_;
+
+	double max_error = 0;
+	for (int i = 0; i < Nd_; i++)
+	{
+		double error = fabs(x_prev[i] - x_[i]) / x_prev[i];
+		if (error > max_error)
+		{
+			max_error = error;
+		}
+	}
+	if (max_error < 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void GraphCut::Debug()
 {
 	InitState();
 
 	int cut_count = 0;
 	SetStartingPoints(cut_count);
+	CreateAandC();
 
-	VX d(Nd_);
-	SpMat W(Nd_, Nd_);
-	SetBoundary(d, W);
+	SetBoundary();
 
-	ptr_stiff_->CalculateD(&D_, &x_, 1, 1);
+	//ptr_stiff_->Debug();
+	ptr_stiff_->CalculateD(&D_, &x_, 0, 0);
 
 }

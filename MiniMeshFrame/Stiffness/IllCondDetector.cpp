@@ -180,6 +180,7 @@ bool IllCondDetector::StabAnalysis()
 	return true;
 }
 
+
 void IllCondDetector::Debug()
 {
 	/* 3x3 matrix A

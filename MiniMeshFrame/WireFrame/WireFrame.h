@@ -104,6 +104,17 @@ private:
 };
 
 
+class WF_face
+{
+public:
+	WF_face(){ bound_points_ = new vector<WF_vert*>; }
+	~WF_face(){ delete bound_points_; }
+
+public:
+	vector<WF_vert*>	*bound_points_;
+};
+
+
 class WireFrame
 {
 public:
@@ -116,8 +127,10 @@ public:
 	void		WriteToOBJ(const char *path);
 
 	WF_vert*	InsertVertex(const Vec3f p);
-	void		InsertEdge(int u, int v);
-	void		InsertOneWayEdge(WF_vert *u, WF_vert *v);
+	void		InsertEdge(WF_vert *u, WF_vert *v);
+	WF_edge*	InsertOneWayEdge(WF_vert *u, WF_vert *v);
+	void		InsertFace(vector<WF_vert*>	&bound_points);
+	void		InsertModifiedFace(vector<WF_vert*>	&bound_points);
 
 	void		InsertSupport(int u);
 	void		InsertSupport(int u, int v);
@@ -126,10 +139,13 @@ public:
 	point		Unify(Vec3f p);
 
 	void		SimplifyFrame();
+	void		RefineFrame();
 	void		ProjectBound(vector<int> *bound);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
+	inline int					SizeOfFaceList()		{ return pface_list_->size(); }
+
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
 	inline WF_edge				*GetEdge(int i)			{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]; }
@@ -156,6 +172,14 @@ public:
 		return sqrt(u.x()*u.x() + u.y()*u.y() + u.z()*u.z());
 	}
 
+	inline double Dist(point u, point v)
+	{
+		double dx = u.x() - v.x();
+		double dy = u.y() - v.y();
+		double dz = u.z() - v.z();
+		return sqrt(dx*dx + dy*dy + dz*dz);
+	}
+
 	inline point CrossProduct(point u, point v)
 	{
 		return point(u.y() * v.z() - u.z() * v.y(), u.z() * v.x() - u.x() * v.z(),
@@ -173,6 +197,7 @@ public:
 private:
 	vector<WF_vert*>	*pvert_list_;
 	vector<WF_edge*>	*pedge_list_;
+	vector<WF_face*>	*pface_list_;
 
 	double				maxx_;
 	double				maxy_;
@@ -186,3 +211,4 @@ private:
 	double				unify_size_;
 	double				delta_tol_;
 };
+

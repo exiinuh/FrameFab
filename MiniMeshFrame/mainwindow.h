@@ -5,6 +5,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QToolButton>
+#include <QSpinBox>
 #include "ui_mainwindow.h"
 #include "qinputdialog.h"
 
@@ -23,7 +24,6 @@ class QLabel;
 class QPushButton;
 class QCheckBox;
 class QRadioButton;
-class QToolButton;
 class QGroupBox;
 class RenderingWidget;
 
@@ -40,7 +40,7 @@ private:
 	void	CreateMenus();
 	void	CreateToolBars();
 	void	CreateLabels();
-	void	CreateLineEdits();
+	void	CreateSpinBoxes();
 	void	CreateCheckBoxes();
 	void	CreateRadioButtons();
 	void	CreatePushButtons();
@@ -60,14 +60,18 @@ signals:
 public slots:
 	void	OpenFile();
 
-	void	AddEdgeClicked(bool down);
 	void	ChooseBoundClicked(bool down);
-	void	SetStartClicked(bool down);
+	void	AddEdgeClicked(bool down);
+	void	AddFaceClicked(bool down);
 
 	void	GetParameters();
 
+	void	OrderStep();
+	void	SetOrderSlider(int value);
+	void	SetMaxOrderSlider(int max_value);
+
 	void	ShowMeshInfo(int npoint, int nedge);
-	void	ShowCapturedVert(int id);
+	void	ShowCapturedVert(int id, int degree);
 	void	ShowCapturedEdge(int id, double len);
 	void	ShowScale(int size);
 	void	EdgeModeChange();
@@ -121,21 +125,21 @@ private:
 	QLabel				*label_beta_;
 	QLabel				*label_gamma_;
 
-	// Lineedits
-	QLineEdit			*line_radius_;
-	QLineEdit			*line_density_;
-	QLineEdit			*line_g_;
-	QLineEdit			*line_youngsmodulus_;
-	QLineEdit			*line_shearmodulus_;
+	// Spinboxes
+	QDoubleSpinBox		*spinbox_radius_;
+	QDoubleSpinBox		*spinbox_density_;
+	QDoubleSpinBox		*spinbox_g_;
+	QDoubleSpinBox		*spinbox_youngsmodulus_;
+	QDoubleSpinBox		*spinbox_shearmodulus_;
 
-	QLineEdit			*line_penalty_;
-	QLineEdit			*line_Dtol_;
-	QLineEdit			*line_pritol_;
-	QLineEdit			*line_dualtol_;
+	QDoubleSpinBox		*spinbox_penalty_;
+	QDoubleSpinBox		*spinbox_Dtol_;
+	QDoubleSpinBox		*spinbox_pritol_;
+	QDoubleSpinBox		*spinbox_dualtol_;
 
-	QLineEdit			*line_alpha_;
-	QLineEdit			*line_beta_;
-	QLineEdit			*line_gamma_;
+	QDoubleSpinBox		*spinbox_alpha_;
+	QDoubleSpinBox		*spinbox_beta_;
+	QDoubleSpinBox		*spinbox_gamma_;
 
 	// Checkboxes
 	QCheckBox			*checkbox_point_;
@@ -150,18 +154,18 @@ private:
 	QRadioButton		*radiobutton_none_;
 
 	// Pushbuttons
+	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_rotatexy_;
 	QPushButton			*pushbutton_rotatexz_;
 	QPushButton			*pushbutton_rotateyz_;
 	QPushButton			*pushbutton_simplify_;
-	QPushButton			*pushbutton_orientation_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
 
 	// Toolbuttons
-	QToolButton			*toolbutton_addedge_;
 	QToolButton			*toolbutton_choosebound_;
-	QToolButton			*toolbutton_setstart_;
+	QToolButton			*toolbutton_addedge_;
+	QToolButton			*toolbutton_addface_;
 
 	// Sliders
 	QSlider				*slider_layer_;
@@ -173,7 +177,6 @@ private:
 	QGroupBox			*groupbox_edge_;
 	QGroupBox			*groupbox_separator_;
 	QGroupBox			*groupbox_orderdisplay_;
-	QGroupBox			*groupbox_ordersettings_;
 	QGroupBox			*groupbox_edit_;
 	QGroupBox			*groupbox_scale_;
 	QGroupBox			*groupbox_fiber_;

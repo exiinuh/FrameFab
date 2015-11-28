@@ -346,13 +346,20 @@ point  SpecialBulk::BelowUpCol(point p)
 
 double SpecialBulk::Angle(point p)
 {
+
 	if ((p - start_) == point(0, 0, 0))
 		return pi / 2;
-
 	GeoV3 temp= Geometry::Vector3d(p - start_);
 
-	double len = Geometry::dot(temp, vector_t_);
-	temp = temp - vector_t_*len;
+	if (Geometry::dot(temp, vector_tz_) == 0)
+		return pi / 2;
+	
+	double l = -Geometry::dot(temp, vector_tzz_);
+	double angle = pi-Geometry::angle(vector_tzz_, vector_t_);
+
+	GeoV3 t = vector_t_*(l / cos(angle));
+	temp = temp - t;
+
 	return  Geometry::angle(temp, vector_tz_);
 
 }

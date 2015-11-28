@@ -2,8 +2,7 @@
 
 
 FiberPrintPARM::FiberPrintPARM()
-			   :radius_(0.0015), density_(0.001), g_(9.80), youngs_modulus_(1586), shear_modulus_(1387),
-			   penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3), alpha_(1.0), beta_(10000.0), gamma_(100.0), poisson_ratio_(0.16)
+			   :penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3), alpha_(1.0), beta_(10000.0), gamma_(100.0)
 {
 	/*
 	*	For Your Inference; Unit Transfer
@@ -25,19 +24,19 @@ FiberPrintPARM::FiberPrintPARM()
 	* Gravity acceleration along Z axis:   gZ = -9806.33 mm/s^2
 	*/
 
+	radius_ = 0.4;
 	density_ = 1210 * 1e-12;
+	g_ = -9806.33;
 	youngs_modulus_ = 1100;
 	shear_modulus_ = 1032;
-	radius_ = 0.4;
 	poisson_ratio_ = 0.39;
-	g_ = -9806.33;
 }
 
 
 FiberPrintPARM::FiberPrintPARM(double radius, double density, double g, double youngs_modulus, double shear_modulus,
 	double penalty, double D_tol, double pri_tol, double dual_tol, double alpha, double beta, double gamma)
 			   :radius_(radius), density_(density), g_(g), youngs_modulus_(youngs_modulus), shear_modulus_(shear_modulus),
-			   penalty_(penalty), D_tol_(D_tol), pri_tol_(pri_tol), dual_tol_(dual_tol), alpha_(alpha), beta_(beta), gamma_(gamma), poisson_ratio_(0.16)
+			   penalty_(penalty), D_tol_(D_tol), pri_tol_(pri_tol), dual_tol_(dual_tol), alpha_(alpha), beta_(beta), gamma_(gamma)
 {
 }
 

@@ -25,21 +25,20 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateMenus();
 	CreateToolBars();
 	CreateLabels();
-	CreateLineEdits();
+	CreateSpinBoxes();
 	CreateCheckBoxes();
+	CreateSliders();
 	CreateRadioButtons();
 	CreatePushButtons();
 	CreateToolButtons();
-	CreateSliders();
 	CreateGroups();
 
 	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
-
-	QVBoxLayout *layout_left = new QVBoxLayout; 
+	
+	QVBoxLayout *layout_left = new QVBoxLayout;
 	layout_left->addWidget(groupbox_render_);
 	layout_left->addWidget(groupbox_edge_);
 	layout_left->addWidget(groupbox_orderdisplay_);
-	layout_left->addWidget(groupbox_ordersettings_);
 	layout_left->addWidget(groupbox_edit_);
 	layout_left->addWidget(groupbox_scale_);
 	layout_left->addWidget(groupbox_separator_);
@@ -58,13 +57,15 @@ MainWindow::MainWindow(QWidget *parent)
 	this->centralWidget()->setLayout(layout_main);
 
 	toolbar_file_->setVisible(false);
-
+	
 	Reset();
 }
 
 
 MainWindow::~MainWindow()
 {
+	delete renderingwidget_;
+	renderingwidget_ = NULL;
 }
 
 
@@ -123,16 +124,16 @@ void MainWindow::CreateToolBars()
 
 void MainWindow::CreateLabels()
 {
-	label_meshinfo_ = new QLabel(QString("MeshInfo: p: %1 e: %2").arg(0).arg(0));
+	label_meshinfo_ = new QLabel(QString("MeshInfo: p: %1 e: %2").arg(0).arg(0), this);
 	label_meshinfo_->setAlignment(Qt::AlignCenter);
 	label_meshinfo_->setMinimumSize(label_meshinfo_->sizeHint());
 
-	label_operatorinfo_ = new QLabel(QString("Scale: 1.0"));
+	label_operatorinfo_ = new QLabel(QString("Scale: 1.0"), this);
 	label_operatorinfo_->setAlignment(Qt::AlignVCenter);
 	
-	label_modeinfo_ = new QLabel();
+	label_modeinfo_ = new QLabel(this);
 
-	label_capture_ = new QLabel();
+	label_capture_ = new QLabel(this);
 
 	statusBar()->addWidget(label_meshinfo_);
 	connect(renderingwidget_, SIGNAL(meshInfo(int, int)), this, SLOT(ShowMeshInfo(int, int)));
@@ -144,42 +145,104 @@ void MainWindow::CreateLabels()
 	connect(renderingwidget_, SIGNAL(modeInfo(QString)), label_modeinfo_, SLOT(setText(QString)));
 
 	statusBar()->addWidget(label_capture_);
-	connect(renderingwidget_, SIGNAL(CapturedVert(int)), this, SLOT(ShowCapturedVert(int)));
+	connect(renderingwidget_, SIGNAL(CapturedVert(int, int)), this, SLOT(ShowCapturedVert(int, int)));
 	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
 
 
-	label_radius_		= new QLabel(QString("Radius(mm): "));
-	label_density_		= new QLabel(QString("Density(Ton/mm^3): "));
-	label_g_			= new QLabel(QString("Gravity(m/s^2): "));
-	label_youngsmodulus_= new QLabel(QString("Young's modulus(MPa): "));
-	label_shearmodulus_ = new QLabel(QString("Shear modulus(MPa): "));
+	label_radius_		= new QLabel(QString("Radius: "), this);
+	label_density_		= new QLabel(QString("Density: "), this);
+	label_g_			= new QLabel(QString("Gravity: "), this);
+	label_youngsmodulus_= new QLabel(QString("Young's modulus: "), this);
+	label_shearmodulus_ = new QLabel(QString("Shear modulus: "), this);
 
-	label_penalty_	= new QLabel(QString("ADMM penalty: "));
-	label_Dtol_		= new QLabel(QString("ADMM D tolerance: "));
-	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "));
-	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "));
-	label_alpha_	= new QLabel(QString("TSP alpha: "));
-	label_beta_		= new QLabel(QString("TSP beta: "));
-	label_gamma_	= new QLabel(QString("TSP gamma: "));
+	label_penalty_	= new QLabel(QString("ADMM penalty: "), this);
+	label_Dtol_		= new QLabel(QString("ADMM D tolerance: "), this);
+	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "), this);
+	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "), this);
+	label_alpha_	= new QLabel(QString("TSP alpha: "), this);
+	label_beta_		= new QLabel(QString("TSP beta: "), this);
+	label_gamma_	= new QLabel(QString("TSP gamma: "), this);
 }
 
 
-void MainWindow::CreateLineEdits()
+void MainWindow::CreateSpinBoxes()
 {
-	line_radius_		= new QLineEdit(tr("0.4"), this);
-	line_density_		= new QLineEdit(tr("1210 * 1e-12"), this);
-	line_g_				= new QLineEdit(tr("-9806.33"), this);
-	line_youngsmodulus_	= new QLineEdit(tr("1100"), this);
-	line_shearmodulus_	= new QLineEdit(tr("1032"), this);
+	spinbox_radius_ = new QDoubleSpinBox(this);
+	spinbox_radius_->setDecimals(2);
+	spinbox_radius_->setRange(0.01, 0.5);
+	spinbox_radius_->setValue(0.4);
+	spinbox_radius_->setSingleStep(0.01);
+	spinbox_radius_->setSuffix(" mm");
 
-	line_penalty_	= new QLineEdit(tr("100"), this);
-	line_Dtol_		= new QLineEdit(tr("0.1"), this);
-	line_pritol_	= new QLineEdit(tr("0.001"), this);
-	line_dualtol_	= new QLineEdit(tr("0.001"), this);
+	spinbox_density_ = new QDoubleSpinBox(this);
+	spinbox_density_->setDecimals(0);
+	spinbox_density_->setRange(500, 5000);
+	spinbox_density_->setValue(1210);
+	spinbox_density_->setSingleStep(10);
+	spinbox_density_->setSuffix(" *10^-12 Ton/mm^3");
 
-	line_alpha_		= new QLineEdit(tr("1.0"), this);
-	line_beta_		= new QLineEdit(tr("10000.0"), this);
-	line_gamma_		= new QLineEdit(tr("100.0"), this);
+	spinbox_g_ = new QDoubleSpinBox(this);
+	spinbox_g_->setDecimals(2);
+	spinbox_g_->setRange(-12000.00, -7000.00);
+	spinbox_g_->setValue(-9806.33);
+	spinbox_g_->setSingleStep(100);
+	spinbox_g_->setSuffix(" mm/s^2");
+
+	spinbox_youngsmodulus_ = new QDoubleSpinBox(this);
+	spinbox_youngsmodulus_->setDecimals(0);
+	spinbox_youngsmodulus_->setRange(0, 10000);
+	spinbox_youngsmodulus_->setValue(1100);
+	spinbox_youngsmodulus_->setSingleStep(1);
+	spinbox_youngsmodulus_->setSuffix(" MPa");
+
+	spinbox_shearmodulus_ = new QDoubleSpinBox(this);
+	spinbox_shearmodulus_->setDecimals(0);
+	spinbox_shearmodulus_->setRange(0, 10000);
+	spinbox_shearmodulus_->setValue(1032);
+	spinbox_shearmodulus_->setSingleStep(1);
+	spinbox_shearmodulus_->setSuffix(" MPa");
+
+	spinbox_penalty_ = new QDoubleSpinBox(this);
+	spinbox_penalty_->setDecimals(2);
+	spinbox_penalty_->setRange(0, 10000);
+	spinbox_penalty_->setValue(100);
+	spinbox_penalty_->setSingleStep(1);
+
+	spinbox_Dtol_ = new QDoubleSpinBox(this);
+	spinbox_Dtol_->setDecimals(4);
+	spinbox_Dtol_->setRange(0, 1);
+	spinbox_Dtol_->setValue(0.1);
+	spinbox_Dtol_->setSingleStep(0.01);
+
+	spinbox_pritol_ = new QDoubleSpinBox(this);
+	spinbox_pritol_->setDecimals(4);
+	spinbox_pritol_->setRange(0, 1);
+	spinbox_pritol_->setValue(0.001);
+	spinbox_pritol_->setSingleStep(0.0001);
+
+	spinbox_dualtol_ = new QDoubleSpinBox(this);
+	spinbox_dualtol_->setDecimals(4);
+	spinbox_dualtol_->setRange(0, 1);
+	spinbox_dualtol_->setValue(0.001);
+	spinbox_dualtol_->setSingleStep(0.0001);
+
+	spinbox_alpha_ = new QDoubleSpinBox(this);
+	spinbox_alpha_->setDecimals(2);
+	spinbox_alpha_->setRange(0, 100000);
+	spinbox_alpha_->setValue(1);
+	spinbox_alpha_->setSingleStep(1);
+
+	spinbox_beta_ = new QDoubleSpinBox(this);
+	spinbox_beta_->setDecimals(2);
+	spinbox_beta_->setRange(0, 100000);
+	spinbox_beta_->setValue(10000);
+	spinbox_beta_->setSingleStep(1);
+
+	spinbox_gamma_ = new QDoubleSpinBox(this);
+	spinbox_gamma_->setDecimals(2);
+	spinbox_gamma_->setRange(0, 100000);
+	spinbox_gamma_->setValue(100);
+	spinbox_gamma_->setSingleStep(1);
 }
 
 
@@ -194,6 +257,32 @@ void MainWindow::CreateCheckBoxes()
 
 	checkbox_axes_ = new QCheckBox(tr("Axes"), this);
 	connect(checkbox_axes_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawAxes(bool)));
+}
+
+
+void MainWindow::CreateSliders()
+{
+	/*
+	slider_layer_ = new QSlider(Qt::Horizontal, this);
+	slider_layer_->setMinimum(0);
+	slider_layer_->setMaximum(10);
+	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
+	*/
+
+	slider_order_ = new QSlider(Qt::Horizontal, this);
+	slider_order_->setMinimum(0);
+	slider_order_->setMaximum(50);
+	slider_order_->setSingleStep(1);
+	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
+	connect(renderingwidget_, SIGNAL(SetOrderSlider(int)), this, SLOT(SetOrderSlider(int)));
+	connect(renderingwidget_, SIGNAL(SetMaxOrderSlider(int)), this, SLOT(SetMaxOrderSlider(int)));
+
+	slider_scale_ = new QSlider(Qt::Horizontal, this);
+	slider_scale_->setMinimum(1);
+	slider_scale_->setMaximum(20);
+	slider_scale_->setValue(10);
+	connect(slider_scale_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(ScaleFrame(int)));
+	connect(slider_scale_, SIGNAL(valueChanged(int)), this, SLOT(ShowScale(int)));
 }
 
 
@@ -220,15 +309,15 @@ void MainWindow::CreateRadioButtons()
 
 void MainWindow::CreatePushButtons()
 {
+	pushbutton_nextedge_ = new QPushButton(tr("Next edge"), this);
+	connect(pushbutton_nextedge_, SIGNAL(clicked()), this, SLOT(OrderStep()));
+
 	pushbutton_rotatexy_ = new QPushButton(tr("RotateXY"), this);
 	pushbutton_rotatexz_ = new QPushButton(tr("RotateXZ"), this);
 	pushbutton_rotateyz_ = new QPushButton(tr("RotateYZ"), this);
 	connect(pushbutton_rotatexy_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXY()));
 	connect(pushbutton_rotatexz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXZ()));
 	connect(pushbutton_rotateyz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateYZ()));
-
-	pushbutton_orientation_ = new QPushButton(tr("Change\norientation"), this);
-	connect(pushbutton_orientation_, SIGNAL(clicked()), renderingwidget_, SLOT(ChangeOrientation()));
 
 	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
 	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
@@ -245,45 +334,24 @@ void MainWindow::CreatePushButtons()
 
 void MainWindow::CreateToolButtons()
 {
-	toolbutton_addedge_ = new QToolButton();
-	toolbutton_addedge_->setText(tr("Insert\nedge"));
-	toolbutton_addedge_->setMaximumSize(100, 50);
-	connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
-
-	toolbutton_choosebound_ = new QToolButton();
+	toolbutton_choosebound_ = new QToolButton(this);
 	toolbutton_choosebound_->setText(tr("Choose frame\nboundary"));
 	toolbutton_choosebound_->setMaximumSize(200, 150);
 	connect(toolbutton_choosebound_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBound()));
 
-	toolbutton_setstart_ = new QToolButton();
-	toolbutton_setstart_->setText(tr("Set as\nstart edge"));
-	toolbutton_setstart_->setMaximumSize(84, 50);
-	connect(toolbutton_setstart_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToSetStart()));
+	toolbutton_addedge_ = new QToolButton(this);
+	toolbutton_addedge_->setText(tr("Insert\nedge"));
+	toolbutton_addedge_->setMaximumSize(100, 50);
+	connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
 
-	connect(renderingwidget_, SIGNAL(AddEdgePressed(bool)), this, SLOT(AddEdgeClicked(bool)));
+	toolbutton_addface_ = new QToolButton(this);
+	toolbutton_addface_->setText(tr("Set face"));
+	toolbutton_addface_->setMaximumSize(84, 50);
+	connect(toolbutton_addface_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddFace()));
+
 	connect(renderingwidget_, SIGNAL(ChooseBoundPressed(bool)), this, SLOT(ChooseBoundClicked(bool)));
-	connect(renderingwidget_, SIGNAL(SetStartPressed(bool)), this, SLOT(SetStartClicked(bool)));
-}
-
-
-void MainWindow::CreateSliders()
-{
-	slider_layer_ = new QSlider(Qt::Horizontal);
-	slider_layer_->setMinimum(0);
-	slider_layer_->setMaximum(10);
-	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
-
-	slider_order_ = new QSlider(Qt::Horizontal);
-	slider_order_->setMinimum(0);
-	slider_order_->setMaximum(20);
-	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
-
-	slider_scale_ = new QSlider(Qt::Horizontal);
-	slider_scale_->setMinimum(1);
-	slider_scale_->setMaximum(20);
-	slider_scale_->setValue(10);
-	connect(slider_scale_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(ScaleFrame(int)));
-	connect(slider_scale_, SIGNAL(valueChanged(int)), this, SLOT(ShowScale(int)));
+	connect(renderingwidget_, SIGNAL(AddEdgePressed(bool)), this, SLOT(AddEdgeClicked(bool)));
+	connect(renderingwidget_, SIGNAL(AddFacePressed(bool)), this, SLOT(AddFaceClicked(bool)));
 }
 
 
@@ -320,14 +388,7 @@ void MainWindow::CreateGroups()
 
 	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
 	orderdisplay_layout->addWidget(slider_order_);
-	
-	// order settings group
-	groupbox_ordersettings_ = new QGroupBox(tr("Settings"), this);
-	groupbox_ordersettings_->setFlat(true);
-
-	QVBoxLayout* ordersettings_layout = new QVBoxLayout(groupbox_ordersettings_);
-	ordersettings_layout->addWidget(pushbutton_orientation_);
-	ordersettings_layout->addWidget(toolbutton_setstart_);
+	orderdisplay_layout->addWidget(pushbutton_nextedge_);
 
 	// edit group
 	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
@@ -338,6 +399,7 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
 	edit_layout->addWidget(toolbutton_addedge_);
+	edit_layout->addWidget(toolbutton_addface_);
 	edit_layout->addWidget(pushbutton_simplify_);
 
 	// scale group
@@ -354,7 +416,7 @@ void MainWindow::CreateGroups()
 	// fiber group
 	groupbox_fiber_ = new QGroupBox(tr("Fiber"), this);
 
-	QVBoxLayout* fiber_layout = new QVBoxLayout(groupbox_fiber_);
+	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
 	fiber_layout->addWidget(toolbutton_choosebound_);
 	fiber_layout->addWidget(pushbutton_project_);
@@ -362,33 +424,33 @@ void MainWindow::CreateGroups()
 	// parameter group
 	groupbox_para_ = new QGroupBox(tr("Parameter"), this);
 
-	QVBoxLayout* para_layout = new QVBoxLayout(groupbox_para_);
+	QVBoxLayout *para_layout = new QVBoxLayout(groupbox_para_);
 	para_layout->addWidget(label_radius_);
-	para_layout->addWidget(line_radius_);
+	para_layout->addWidget(spinbox_radius_);
 	para_layout->addWidget(label_density_);
-	para_layout->addWidget(line_density_);
+	para_layout->addWidget(spinbox_density_);
 	para_layout->addWidget(label_g_);
-	para_layout->addWidget(line_g_);
+	para_layout->addWidget(spinbox_g_);
 	para_layout->addWidget(label_youngsmodulus_);
-	para_layout->addWidget(line_youngsmodulus_);
+	para_layout->addWidget(spinbox_youngsmodulus_);
 	para_layout->addWidget(label_shearmodulus_);
-	para_layout->addWidget(line_shearmodulus_);
+	para_layout->addWidget(spinbox_shearmodulus_);
 
 	para_layout->addWidget(label_penalty_);
-	para_layout->addWidget(line_penalty_);
+	para_layout->addWidget(spinbox_penalty_);
 	para_layout->addWidget(label_Dtol_);
-	para_layout->addWidget(line_Dtol_);
+	para_layout->addWidget(spinbox_Dtol_);
 	para_layout->addWidget(label_pritol_);
-	para_layout->addWidget(line_pritol_);
+	para_layout->addWidget(spinbox_pritol_);
 	para_layout->addWidget(label_dualtol_);
-	para_layout->addWidget(line_dualtol_);
+	para_layout->addWidget(spinbox_dualtol_);
 
 	para_layout->addWidget(label_alpha_);
-	para_layout->addWidget(line_alpha_);
+	para_layout->addWidget(spinbox_alpha_);
 	para_layout->addWidget(label_beta_);
-	para_layout->addWidget(line_beta_);
+	para_layout->addWidget(spinbox_beta_);
 	para_layout->addWidget(label_gamma_);
-	para_layout->addWidget(line_gamma_);
+	para_layout->addWidget(spinbox_gamma_);
 }
 
 
@@ -410,41 +472,59 @@ void MainWindow::OpenFile()
 }
 
 
-void MainWindow::AddEdgeClicked(bool down)
-{
-	toolbutton_addedge_->setDown(down);
-}
-
-
 void MainWindow::ChooseBoundClicked(bool down)
 {
 	toolbutton_choosebound_->setDown(down);
 }
 
 
-void MainWindow::SetStartClicked(bool down)
+void MainWindow::AddEdgeClicked(bool down)
 {
-	toolbutton_setstart_->setDown(down);
+	toolbutton_addedge_->setDown(down);
+}
+
+
+void MainWindow::AddFaceClicked(bool down)
+{
+	toolbutton_addface_->setDown(down);
 }
 
 
 void MainWindow::GetParameters()
 {
 	emit(SendParameters(
-		line_radius_->text().toDouble(),
-		line_density_->text().toDouble(),
-		line_g_->text().toDouble(),
-		line_youngsmodulus_->text().toDouble(),
-		line_shearmodulus_->text().toDouble(),
-		line_penalty_->text().toDouble(),
-		line_Dtol_->text().toDouble(),
-		line_pritol_->text().toDouble(),
-		line_dualtol_->text().toDouble(),
-		line_alpha_->text().toDouble(),
-		line_beta_->text().toDouble(),
-		line_gamma_->text().toDouble()
+		spinbox_radius_->value(),
+		spinbox_density_->value(),
+		spinbox_g_->value(),
+		spinbox_youngsmodulus_->value(),
+		spinbox_shearmodulus_->value(),
+		spinbox_penalty_->value(),
+		spinbox_Dtol_->value(),
+		spinbox_pritol_->value(),
+		spinbox_dualtol_->value(),
+		spinbox_alpha_->value(),
+		spinbox_beta_->value(),
+		spinbox_gamma_->value()
 		)
 	);
+}
+
+
+void MainWindow::OrderStep()
+{
+	slider_order_->setValue(slider_order_->value() + 1);
+}
+
+
+void MainWindow::SetOrderSlider(int value)
+{
+	slider_order_->setValue(value);
+}
+
+
+void MainWindow::SetMaxOrderSlider(int max_value)
+{
+	slider_order_->setMaximum(max_value);
 }
 
 
@@ -454,11 +534,11 @@ void MainWindow::ShowMeshInfo(int npoint, int nedge)
 }
 
 
-void MainWindow::ShowCapturedVert(int id)
+void MainWindow::ShowCapturedVert(int id, int degree)
 {
 	if (id != -1)
 	{
-		label_capture_->setText(QString("Captured vertex: %1").arg(id));
+		label_capture_->setText(QString("Captured vertex: %1  Degree: %2").arg(id).arg(degree));
 	}
 	else
 	{
@@ -500,7 +580,6 @@ void MainWindow::EdgeModeChange()
 				emit(EdgeMode(HEAT));
 
 				groupbox_orderdisplay_->setVisible(false);
-				groupbox_ordersettings_->setVisible(false);
 				groupbox_edit_->setVisible(true);
 				groupbox_scale_->setVisible(true);
 
@@ -517,7 +596,6 @@ void MainWindow::EdgeModeChange()
 				emit(EdgeMode(CUT));
 
 				groupbox_orderdisplay_->setVisible(false);
-				groupbox_ordersettings_->setVisible(false);
 				groupbox_edit_->setVisible(true);
 				groupbox_scale_->setVisible(true);
 
@@ -534,7 +612,6 @@ void MainWindow::EdgeModeChange()
 				emit(EdgeMode(BULK));
 
 				groupbox_orderdisplay_->setVisible(false);
-				groupbox_ordersettings_->setVisible(false);
 				groupbox_edit_->setVisible(true);
 				groupbox_scale_->setVisible(true);
 
@@ -553,7 +630,6 @@ void MainWindow::EdgeModeChange()
 				groupbox_edit_->setVisible(false);
 				groupbox_scale_->setVisible(false);
 				groupbox_orderdisplay_->setVisible(true);
-				groupbox_ordersettings_->setVisible(true);
 
 				return;
 			}
@@ -564,7 +640,6 @@ void MainWindow::EdgeModeChange()
 		emit(EdgeMode(EDGE));
 
 		groupbox_orderdisplay_->setVisible(false);
-		groupbox_ordersettings_->setVisible(false);
 		groupbox_edit_->setVisible(true);
 		groupbox_scale_->setVisible(true);
 	}
@@ -575,7 +650,6 @@ void MainWindow::EdgeModeChange()
 		emit(EdgeMode(NONE));
 
 		groupbox_orderdisplay_->setVisible(false);
-		groupbox_ordersettings_->setVisible(false);
 		groupbox_edit_->setVisible(true);
 		groupbox_scale_->setVisible(true);
 	}
@@ -598,7 +672,7 @@ void MainWindow::ShowAbout()
 
 void MainWindow::Reset()
 {
-	slider_layer_->setValue(0);
+	//slider_layer_->setValue(0);
 	slider_order_->setValue(0);
 	slider_scale_->setValue(10);
 	label_operatorinfo_->setText(QString("Scale: 1.0"));
@@ -608,7 +682,6 @@ void MainWindow::Reset()
 	edge_render_ = NONE;
 
 	groupbox_orderdisplay_->setVisible(false);
-	groupbox_ordersettings_->setVisible(false);
 	groupbox_edit_->setVisible(true);
 	groupbox_scale_->setVisible(true);
 }

@@ -30,7 +30,15 @@ enum OperationMode
 	NORMAL,
 	CHOOSEBOUND,
 	ADDEDGE,
-	SETSTART,
+	ADDFACE,
+};
+
+
+struct AddingFace
+{
+	vector<bool>		is_captured_vert_;
+	vector<bool>		is_captured_edge_;
+	vector<WF_vert*>	corner_points_;
 };
 
 
@@ -45,6 +53,11 @@ class RenderingWidget : public QGLWidget
 public:
 	RenderingWidget(QWidget *parent, MainWindow* mainwindow=0);
 	~RenderingWidget();
+
+public:
+	void	InitDrawData();
+	void	InitCapturedData();
+	void	InitFiberData();
 
 protected:
 	void	initializeGL();
@@ -64,14 +77,17 @@ public:
 	void	keyReleaseEvent(QKeyEvent *e);
 
 signals:
-	void	AddEdgePressed(bool);
 	void	ChooseBoundPressed(bool);
-	void	SetStartPressed(bool);
+	void	AddEdgePressed(bool);
+	void	AddFacePressed(bool);
+
+	void	SetOrderSlider(int);
+	void	SetMaxOrderSlider(int);
 
 	void	meshInfo(int, int);
 	void	operatorInfo(QString);
 	void	modeInfo(QString);
-	void	CapturedVert(int);
+	void	CapturedVert(int, int);
 	void	CapturedEdge(int, double);
 
 	void	Reset();
@@ -80,6 +96,7 @@ private:
 	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
 	bool	CaptureVertex(QPoint mouse);
 	bool	CaptureEdge(QPoint mouse);
+	bool	CaptureRing(QPoint mouse);
 
 	void	Render();
 	void	SetLight();
@@ -96,11 +113,9 @@ public slots:
 	void	CheckDrawAxes(bool bv);
 
 	void	SwitchToNormal();
-	void	SwitchToAddEdge();
 	void	SwitchToChooseBound();
-	void	SwitchToSetStart();
-
-	void	ChangeOrientation();
+	void	SwitchToAddEdge();
+	void	SwitchToAddFace();
 
 private:
 	void	DrawAxes(bool bv);
@@ -155,7 +170,8 @@ public:
 	bool				is_simplified_;
 
 	vector<WF_vert*>	captured_verts_;
-	int					captured_edge_;
+	WF_edge				*captured_edge_;
+	AddingFace			capturing_face_;
 	vector<int>			bound_;
 
 	float				scale_;

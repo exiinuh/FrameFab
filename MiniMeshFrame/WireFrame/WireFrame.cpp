@@ -6,6 +6,7 @@ WireFrame::WireFrame()
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
+	pface_list_ = new vector<WF_face*>;
 }
 
 
@@ -28,6 +29,15 @@ WireFrame::~WireFrame()
 	}
 	delete pedge_list_;
 	pedge_list_ = NULL;
+
+	int F = pface_list_->size();
+	for (int i = 0; i < F; i++)
+	{
+		delete (*pface_list_)[i];
+		(*pface_list_)[i] = NULL;
+	}
+	delete pface_list_;
+	pface_list_ = NULL;
 }
 
 
@@ -41,6 +51,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 		fseek(fp, 0, SEEK_SET);
 		char pLine[512];
 		char *tok;
+		vector<WF_vert*> tmp_points;
 		while (fgets(pLine, 512, fp))
 		{
 			if (pLine[0] == 'v' && pLine[1] == ' ')
@@ -55,8 +66,10 @@ void WireFrame::LoadFromOBJ(const char *path)
 					tmp[strcspn(tmp, " ")] = 0;
 					p[i] = (float)atof(tmp);
 				}
+
 				p = point(p.x(), p.y(), p.z());
-				InsertVertex(p);
+				WF_vert *u = InsertVertex(p);
+				tmp_points.push_back(u);
 			}
 		}
 
@@ -72,7 +85,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 				c = fgetc(fp);
 			}
 
-			if ((c = fgetc(fp)) != ' ')
+			if (c == '\n' || c == EOF || (c = fgetc(fp)) != ' ')
 			{
 				continue;
 			}
@@ -83,14 +96,20 @@ void WireFrame::LoadFromOBJ(const char *path)
 				while (c = fgetc(fp), c != '\n' && c != EOF && !isdigit(c))
 					;
 
+				if (c == '\n' || c == EOF)
+				{
+					break;
+				}
+
 				for (curv = 0; isdigit(c); c = fgetc(fp))
 				{
 					curv = curv * 10 + c - '0';
 				}
+				curv--;
 
 				if (prev != -1)
 				{
-					InsertEdge(prev - 1, curv - 1);
+					InsertEdge(tmp_points[prev], tmp_points[curv]);
 				}
 
 				prev = curv;
@@ -103,21 +122,24 @@ void WireFrame::LoadFromOBJ(const char *path)
 		{
 			if (pLine[0] == 'f' && pLine[1] == ' ')
 			{
-				vector<int> pts;
-				pts.resize(3);
-
+				vector<WF_vert*> bound_points;
 				tok = strtok(pLine, " ");
 				char tmp[128];
-				for (int i = 0; i<3; i++)
+				while (tok = strtok(NULL, " "))
 				{
-					tok = strtok(NULL, " ");
 					strcpy(tmp, tok);
 					tmp[strcspn(tmp, " ")] = 0;
-					pts[i] = (int)atof(tmp) - 1;
+					int u = (int)atof(tmp) - 1;
+					bound_points.push_back(tmp_points[u]);
 				}
-				InsertEdge(pts[0], pts[1]);
-				InsertEdge(pts[1], pts[2]);
-				InsertEdge(pts[2], pts[0]);
+
+				int Bn = bound_points.size();
+				for (int i = 0; i < Bn - 1; i++)
+				{
+					InsertEdge(bound_points[i], bound_points[i + 1]);
+				}
+				InsertEdge(bound_points[Bn - 1], bound_points[0]);
+				InsertFace(bound_points);
 			}
 		}
 
@@ -173,6 +195,7 @@ void WireFrame::WriteToOBJ(const char *path)
 	FILE *fp = fopen(path, "wb+");
 	int N = SizeOfVertList();
 	int M = SizeOfEdgeList();
+	int F = SizeOfFaceList();
 
 	for (int i = 0; i < N; i++)
 	{
@@ -193,6 +216,18 @@ void WireFrame::WriteToOBJ(const char *path)
 		}
 	}
 
+	for (int i = 0; i < F; i++)
+	{
+		fprintf(fp, "f");
+		vector<WF_vert*> bound_points = *((*pface_list_)[i]->bound_points_);
+		int n = bound_points.size();
+		for (int j = 0; j < n; j++)
+		{
+			fprintf(fp, " %d", bound_points[j]->ID() + 1);
+		}
+		fprintf(fp, "\n");
+	}
+
 	for (int i = 0; i < N; i++)
 	{
 		if ((*pvert_list_)[i]->isFixed())
@@ -207,38 +242,52 @@ void WireFrame::WriteToOBJ(const char *path)
 
 WF_vert* WireFrame::InsertVertex(Vec3f p)
 {
+	// detect duplication
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		if (Dist(p, (*pvert_list_)[i]->Position()) < 1e-3)
+		{
+			return ( *pvert_list_)[i];
+		}
+	}
+
 	WF_vert *vert = new WF_vert(p);
 	pvert_list_->push_back(vert);
-	int N = pvert_list_->size();
-	vert->SetID(N - 1);
 	return vert;
 }
 
 
-void WireFrame::InsertEdge(int u, int v)
+void WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
 {
-	WF_edge *edge = (*pvert_list_)[u]->pedge_;
-	while (edge != NULL)
+	// detect duplication
+	WF_edge *e = u->pedge_;
+	while (e != NULL)
 	{
-		if (edge->pvert_->ID() == v)
+		if (e->pvert_ == v)
 		{
 			return;
 		}
-		edge = edge->pnext_;
+		e = e->pnext_;
 	}
 
-	InsertOneWayEdge((*pvert_list_)[u], (*pvert_list_)[v]);
-	InsertOneWayEdge((*pvert_list_)[v], (*pvert_list_)[u]);
-	int M = pedge_list_->size();
-	(*pedge_list_)[M - 1]->SetID(M - 1);
-	(*pedge_list_)[M - 2]->SetID(M - 2);
-	(*pedge_list_)[M - 1]->ppair_ = (*pedge_list_)[M - 2];
-	(*pedge_list_)[M - 2]->ppair_ = (*pedge_list_)[M - 1];
+	WF_edge *e1 = InsertOneWayEdge(u, v);
+	WF_edge *e2 = InsertOneWayEdge(v, u);
+	if (e1 != NULL)
+	{
+		e1->ppair_ = e2;
+		e2->ppair_ = e1;
+	}
 }
 
 
-void WireFrame::InsertOneWayEdge(WF_vert *u, WF_vert *v)
+WF_edge* WireFrame::InsertOneWayEdge(WF_vert *u, WF_vert *v)
 {
+	if (u == v)
+	{
+		return NULL;
+	}
+
 	WF_edge *edge = new WF_edge();
 	edge->pvert_ = v;
 	edge->pnext_ = u->pedge_;
@@ -246,6 +295,21 @@ void WireFrame::InsertOneWayEdge(WF_vert *u, WF_vert *v)
 	u->IncreaseDegree();
 	
 	pedge_list_->push_back(edge);
+	return edge;
+}
+
+
+void WireFrame::InsertFace(vector<WF_vert*>	&bound_points)
+{
+	WF_face *f = new WF_face();
+
+	int N = bound_points.size();
+	for (int i = 0; i < N; i++)
+	{
+		f->bound_points_->push_back(bound_points[i]);
+	}
+
+	pface_list_->push_back(f);
 }
 
 
@@ -397,6 +461,196 @@ void WireFrame::SimplifyFrame()
 }
 
 
+void WireFrame::RefineFrame()
+{
+	int M = SizeOfEdgeList();
+	vector<WF_vert*> split(M);
+	for (int i = 0; i < M; i++)
+	{
+		split[i] = NULL;
+	}
+
+	int F = SizeOfFaceList();
+	vector<WF_face*>	*pface_list = pface_list_;
+	vector<WF_vert*>	center_points(F);
+	vector<vector<WF_edge*>>	bound_edges(F);
+	vector<vector<double>>		length(F);
+	pface_list_ = new vector<WF_face*>;
+
+	for (int i = 0; i < F; i++)
+	{
+		vector<WF_vert*> bound_points = *((*pface_list)[i]->bound_points_);
+		int Fn = bound_points.size();
+		double l = 0;
+		point center = point(0.0, 0.0, 0.0);
+		for (int j = 0; j < Fn; j++)
+		{
+			center += bound_points[j]->Position();
+
+			int k = j + 1;
+			if (k >= Fn)
+			{
+				k -= Fn;
+			}
+			WF_edge *e = bound_points[j]->pedge_;
+			while (e != NULL)
+			{
+				if (e->pvert_ == bound_points[k])
+				{
+					break;
+				}
+				e = e->pnext_;
+			}
+			bound_edges[i].push_back(e);
+			l += e->Length();
+
+			if (bound_points[k]->Degree() > 2)
+			{
+				length[i].push_back(l);
+				l = 0;
+			}
+		}
+
+		center /= Fn;
+		center_points[i] = InsertVertex(center);
+	}
+
+	for (int i = 0; i < F; i++)
+	{
+		vector<WF_vert*> bound_points = *((*pface_list)[i]->bound_points_);
+		int Fn = bound_points.size();
+		int Bi = 0;
+		int Bn = length[i].size();						// number of boundary
+
+		vector<WF_vert*> cur_bound;
+		WF_vert *first_part = NULL;
+		WF_vert *first_stop = NULL;
+		WF_vert *center_p = center_points[i];
+
+		double sum_l = 0;
+		for (int j = 0; j < Fn; j++)
+		{
+			double l = length[i][Bi];
+			double half_l = l / 2;
+			double tol_l = l / 2;
+
+			WF_edge *e = bound_edges[i][j];
+			WF_vert *u = e->ppair_->pvert_;
+			WF_vert *v = e->pvert_;
+			sum_l += e->Length();
+			cur_bound.push_back(u);
+
+			WF_vert *partition = NULL;
+			if (half_l <= sum_l)
+			{
+				if (sum_l - half_l < tol_l)				// tolerence
+				{
+					if (half_l - sum_l + e->Length() > sum_l - half_l)
+					{
+						partition = v;
+						cur_bound.push_back(v);
+					}
+					else
+					{
+						partition = u;
+					}
+				}
+				else
+				{
+					point p = (u->Position() + v->Position()) * (float)0.5;
+					WF_vert *new_p = InsertVertex(p);
+
+					split[e->ID()] = split[e->ppair_->ID()] = new_p;
+					partition = new_p;
+					cur_bound.push_back(new_p);
+				}
+
+				cur_bound.push_back(center_p);
+
+				if (first_part == NULL)
+				{
+					first_part = partition;
+					first_stop = u;
+				}
+				else
+				{
+					InsertFace(cur_bound);
+				}
+
+				cur_bound.clear();
+				if (partition != v)
+				{
+					cur_bound.push_back(partition);
+				}
+				while (j < Fn - 1 && bound_points[j + 1]->Degree() <= 2)
+				{
+					j++;
+					cur_bound.push_back(bound_points[j]);
+				}
+
+				Bi++;
+				sum_l = 0;
+				InsertEdge(center_p, partition);
+			}
+		}
+
+		for (int j = 0; j < Fn; j++)
+		{
+			cur_bound.push_back(bound_points[j]);
+			if (bound_points[j] == first_stop)
+			{
+				if (first_stop != first_part)
+				{
+					cur_bound.push_back(first_part);
+				}
+				break;
+			}
+		}
+		cur_bound.push_back(center_p);
+		InsertFace(cur_bound);
+	}
+
+	for (int i = 0; i < F; i++)
+	{
+		vector<WF_vert*> bound_points = *((*pface_list)[i]->bound_points_);
+		int Fn = bound_edges[i].size();
+		int Pi = 0;
+		for (int j = 0; j < Fn; j++)
+		{
+			WF_edge *e = bound_edges[i][j];
+			if (split[e->ID()] != NULL)
+			{
+				WF_vert *u = e->ppair_->pvert_;
+				WF_vert *v = e->pvert_;
+				WF_vert *new_p = split[e->ID()];
+				split[e->ID()] = split[e->ppair_->ID()] = NULL;
+
+				WF_edge *new_e1 = InsertOneWayEdge(new_p, u);
+				WF_edge *new_e2 = InsertOneWayEdge(new_p, v);
+				if (new_e1 != NULL && new_e2 != NULL)
+				{
+					e->pvert_ = new_p;
+					e->ppair_->pvert_ = new_p;
+					new_e1->ppair_ = e;
+					new_e2->ppair_ = e->ppair_;
+					e->ppair_->ppair_ = new_e2;
+					e->ppair_ = new_e1;
+				}
+			}
+		}
+	}
+
+	Unify();
+
+	for (int i = 0; i < F; i++)
+	{
+		delete (*pface_list)[i];
+		(*pface_list)[i] = NULL;
+	}
+	delete pface_list;
+}
+
+
 void WireFrame::ProjectBound(vector<int> *bound)
 {
 	int N = SizeOfVertList();
@@ -411,14 +665,7 @@ void WireFrame::ProjectBound(vector<int> *bound)
 			WF_vert *v = InsertVertex(v_pos);
 			v->SetFixed(true);
 			
-			int j = SizeOfVertList() - 1; 
-			InsertEdge(i, j);
-			/*
-			if (j > N)
-			{
-				InsertEdge(j - 1, j);
-			}
-			*/
+			InsertEdge(u, v);
 		}
 	}
 	

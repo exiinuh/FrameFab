@@ -323,7 +323,6 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_);
 	}
 	
-	Init();
 	CreateGlobalK(&x);
 	CreateF(&x);
 

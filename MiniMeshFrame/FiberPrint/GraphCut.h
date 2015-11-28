@@ -1,3 +1,20 @@
+/*
+* ==========================================================================
+*
+*       class: GraphCut
+*
+*    Description:  This file is a part of implementation fo paper "WirePrint : a fast&stable way to fabricate wireframe"
+*				   The GraphCut submodule takes charge of dividing the wireframe into several structually-stable sections, 
+*				   scaling the problem down, enabling further tool path searching part numerically tractable.
+*
+*	 Version:  1.0
+*	 Created:  Oct/10/2015
+*
+*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
+*	 Company:  GCL@USTC
+* ==========================================================================
+*/
+
 #pragma once
 
 #include <iostream>
@@ -16,10 +33,7 @@
 
 #include "QP/QPMosek.h"
 #include "QP/QPFactory.h"
-#include "Statistics.h"
-
-#include "StiffnessIO.h"
-#include "StiffnessSolver.h"
+#include "I_O\Statistics.h"
 
 using namespace std;
 using namespace Eigen;
@@ -44,19 +58,20 @@ public:
 	void		InitState();
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		CreateAandC();						// Construct edge-incidence matrix A and weight diagonal matrix C
-	void		SetBoundary(VX &d, SpMat &W);
+	void		SetBoundary();
 
 	//Termination
 	bool		CheckLabel(int iter_count);			// Stopping Criterion for iteratively apply ADMM to find several cuts
 	bool		TerminationCriteria();				// Termination Criteria for ADMM process of a single cut using a threshold node number
 
 	//ADMM
-	void		MakeLayers();						// Main loop of ADMM
-	void		CalculateX(VX &d, SpMat &W);		// QP optimization for x at every iteration
+	void		MakeLayers();						// Main loop of cut
+	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
+	bool		UpdateC(VX &x_prev);
 
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
 	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
@@ -66,14 +81,11 @@ public:
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
 	void		Debug();
-
 public:
 //private:
 	WireFrame		*ptr_frame_;
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
-	StiffnessIO		stiff_io_;
-	StiffnessSolver stiff_solver_;
 
 	SpMat			A_;
 	SpMat			C_;
@@ -83,6 +95,9 @@ public:
 	VX				a_;				// linear coefficient used in x_Qp
 	vector<int>		layer_label_;	// passed to render
 	vector<int>		cutting_edge_;
+
+	VX				d_;				// for setting boundary & QP x
+	SpMat			W_;
 
 	VX				dual_res_;		// dual residual for ADMM termination criteria
 	VX				primal_res_;	// dual residual for ADMM termination criteria

@@ -701,7 +701,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "#        mm      mm      mm      m\n\n");
 	for (int i = 0; i < nN; i++)
 	{
-		fprintf(fp, "%d	 %.3f  %.3f  %.3f  %.3f\n", i + 1,
+		fprintf(fp, "%d	 %.4f  %.4f  %.4f  %.4f\n", i + 1,
 			ptr_wf->GetPosition(i).x(), ptr_wf->GetPosition(i).y(), ptr_wf->GetPosition(i).z(),0.0);
 	}
 
@@ -742,7 +742,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 		int vert_id   = wf_edge_list[e_id]->pvert_->ID();
 		int vert_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
 
-		fprintf(fp, "%d %d %d	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.4f	%.2f	%.14f\n",
+		fprintf(fp, "%d %d %d	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.2f	%.14f\n",
 			i + 1, vert_id + 1, vert_id_2 + 1,
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
@@ -766,7 +766,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "# gravitational acceleration for self-weight loading (global)\n");
 	fprintf(fp, "#.gX			 gY			     gZ\n");
 	fprintf(fp, "#.mm/s^2		 mm/s^2			 mm/s^2\n");
-	fprintf(fp, "  0			 0				 %.2f\n", g);
+	fprintf(fp, "  0			 0				 %.6f\n", g);
 
 	fprintf(fp,"\n");
 	fprintf(fp, "%d				# number of loaded nodes\n",				0);

@@ -34,8 +34,10 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 
 void FiberPrintPlugIn::Print()
 {
-	ptr_graphcut_->MakeLayers();
-	ptr_seqanalyzer_->LayerPrint();
+	//ptr_graphcut_->MakeLayers();
+	//ptr_seqanalyzer_->LayerPrint();
+	ptr_graphcut_->Debug();
+
 }
 
 
