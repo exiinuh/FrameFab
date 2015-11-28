@@ -847,6 +847,50 @@ void StiffnessIO::SaveUpperMatrix(char filename[], const MX &A, int n)
 
 }
 
+void StiffnessIO::SaveDisplaceVector(char filename[], const VX &D, int n, DualGraph *ptr_dual_graph)
+{
+	FILE    *fp;
+	int     i, j;
+	time_t	now;
+	int nN = n / 6;
+	vector<DualFace*> dual_face_list = *ptr_dual_graph->GetFaceList();
+	VX tmp_D(D.size());
+
+	if ((fp = fopen(filename, "w")) == NULL)
+	{
+		printf(" error: cannot open file: %s \n", filename);
+		exit(1016);
+	}
+
+	(void)time(&now);
+	fprintf(fp, "%% filename: %s - %s\n", filename, ctime(&now));
+	fprintf(fp, "%% type: vector \n");
+	fprintf(fp, "%% rows: %d\n", n);
+
+	fprintf(fp, "\n");
+	fprintf(fp, "NODE DISPLACEMENTS		(global)\n");
+	fprintf(fp, "#.node		X-dsp	Y-dsp	Z-dsp	X-rot	Y-rot	Z-rot\n");
+	for (i = 0; i < nN; i++)
+	{
+		/* i is the dual face id, convert it back to wf_vert id*/
+		int v_id = dual_face_list[i]->orig_id();
+		for (j = 0; j < 6; j++)
+		{
+			tmp_D[6 * v_id + j] = D[6 * i + j];
+		}
+	}
+
+	for (i = 0; i < nN; i++)
+	{
+		fprintf(fp, "%d		%.6f		%.6f		%.6f		%.6f		%.6f		%.6f\n",
+			i+1, tmp_D[6 * i], tmp_D[6 * i + 1], tmp_D[6 * i + 2], tmp_D[6 * i + 3], tmp_D[6 * i + 4], tmp_D[6 * i + 5]);
+	}
+
+	fclose(fp);
+	return;
+
+}
+
 void StiffnessIO::Debug(int verbose)
 {
 	char OUT_file[FILENMAX],

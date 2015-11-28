@@ -103,7 +103,7 @@ void GraphCut::SetStartingPoints(int count)
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
 
 	x_.resize(Nd_);
-	D_.resize(3 * Fd_);
+	D_.resize(6 * Fd_);		// every node has 6 degree of freedom
 	lambda_.resize(3 * Fd_);
 	a_.resize(Nd_);
 
@@ -276,7 +276,7 @@ void GraphCut::MakeLayers()
 		SetBoundary(d, W);
 
 		//ptr_stiff_->Debug();
-		ptr_stiff_->CalculateD(&D_, &x_);
+		ptr_stiff_->CalculateD(&D_, &x_,1,1);
 
 		//ptr_stiff_->CalculateD(&D_, &x_);
 
@@ -530,7 +530,6 @@ void	GraphCut::Debug()
 	SpMat W(Nd_, Nd_);
 	SetBoundary(d, W);
 
-	//ptr_stiff_->Debug();
-	ptr_stiff_->CalculateD(&D_, &x_);
+	ptr_stiff_->CalculateD(&D_, &x_, 1, 1);
 
 }

@@ -68,7 +68,7 @@ public:
 		int  debug
 		);
 
-	// GnuPlot file output
+	/* GnuPlot file output */
 	/*
 	* GnuPltStaticMesh - create mesh data of deformed and undeformed mesh, use gnuplot	 Nov/25/2015
 	*/
@@ -108,7 +108,13 @@ public:
 	* to the named file, use only upper-triangular part
 	*/
 	void SaveUpperMatrix(char filename[], const MX &A, int n);
-
+	
+	/*
+	* SaveDeformVector - save displacement vector of dimemsion [1...6*N]	Nov/26/2015
+	* to the named file
+	*/		;
+	void SaveDisplaceVector(char filename[], const VX &D, int n, DualGraph *ptr_dual_graph);
+	
 	void Debug(int verbose);		// 1 : copious screenpaly, 0 : none 
 
 public:

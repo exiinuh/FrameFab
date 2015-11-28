@@ -91,11 +91,12 @@ void Stiffness::CreateFe()
 
 void Stiffness::CreateF(const VectorXd *ptr_x)
 {
+	/* Run only after CreadFe is done! */
+
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	//CreateFe();
 	F_.resize(6 * Fd);
 	F_.setZero();
 
@@ -281,28 +282,39 @@ void Stiffness::CalculateD(VectorXd *ptr_D)
 
 void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd)
 {
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	int Fd = ptr_dualgraph_->SizeOfFaceList();
+	int Nd = ptr_dualgraph_->SizeOfVertList();		// Number of edges in original graph
+	int Fd = ptr_dualgraph_->SizeOfFaceList();		// Number of nodes in original graph
 
 	VX x(Nd);
 	x.setOnes();
 
-	vector<int> q(Fd);
-	vector<int> r(Fd);
+	// Parameter for StiffnessSolver
+	int		verbose = 1,	// 1 : copious screenplay
+			info;
+	double	rms_resid;		// root-mean-square residual for LDL't solving
+	
+	VXi q(Fd*6);
+	VXi r(Fd*6);
 	for (int i = 0; i < Fd; i++)
 	{
 		int u = ptr_dualgraph_->v_orig_id(i);
 		if (ptr_dualgraph_->ptr_frame_->isFixed(u))
 		{
 			// restained node with known displacement but unknown reaction force
-			q[i] = 0;
-			r[i] = 1;
+			for (int k = 0; k < 6; k++)
+			{
+				r[i * 6 + k] = 1;
+				q[i * 6 + k] = 0;
+			}
 		}
 		else
 		{
 			// free node with known external force but unknown displacement
-			q[i] = 1;
-			r[i] = 0;
+			for (int k = 0; k < 6; k++)
+			{
+				r[i * 6 + k] = 0;
+				q[i * 6 + k] = 1;
+			}
 		}
 	}
 
@@ -320,8 +332,6 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 		FILE	*fp;
 		char matrix_file[FILENMAX];
 		char matrix_path[FILENMAX];
-		char *title = "FiberPrint TestFile -- static analysis (N,mm,g)\n";
-		char errMsg[512];
 
 		sprintf_s(matrix_file, "%s", "Ks_fiber");
 
@@ -330,8 +340,24 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 	}
 
 	// Solving Process
+	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
+	fprintf(stdout, " Linear Elastic Analysis ... Mechanical Loads\n");
 	
+	VX React_F(Fd*6);		// restained nodes' reaction force
+	stiff_solver_.SolveSystem(K_, *ptr_D, F_, React_F, K_.cols(), q, r, verbose, info, rms_resid);
 	
+	if (write_matrix)
+	{
+		FILE	*fp;
+		char deform_file[FILENMAX];
+		char deform_path[FILENMAX];
+
+		sprintf_s(deform_file, "%s", "D_fiber");
+
+		stiff_io_.OutputPath(deform_file, deform_path, FRAME3DD_PATHMAX, NULL);
+		
+		stiff_io_.SaveDisplaceVector(deform_path, *ptr_D, ptr_D->size(), ptr_dualgraph_);
+	}
 	getchar();
 }
 
@@ -424,73 +450,4 @@ VectorXd Stiffness::Fe(int ei)
 
 void Stiffness::Debug()
 {
-	/*
-	FILE *fp = fopen("E:\\test.txt", "wb+"); 
-	vector<WF_edge*> &edges = *(ptr_frame_->GetEdgeList());
-	int N = ptr_frame_->SizeOfVertList();
-	int M = ptr_frame_->SizeOfEdgeList();
-	int Nd = M / 2;
-
-	VectorXd x;
-	x.resize(Nd);
-	x.setOnes();
-
-	CreateM();
-	CreateK(&x);
-	CreateFv(&x);
-
-	for (int i = 0; i < N; i++)
-	{
-		if (K_.coeff(i * 3, i * 3) == 0 || K_.coeff(i * 3 + 1, i * 3 + 1) == 0 || K_.coeff(i * 3 + 2, i * 3 + 2) == 0)
-		{
-			for (int p = 0; p < 3; p++)
-			{
-				for (int q = 0; q < 3; q++)
-				{
-					printf("%lf ", K_.coeff(i * 3 + p, i * 3 + q));
-				}
-				printf("\n");
-			}
-		}
-	}
-
-	for (int i = 0; i < Nd; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				//if (M_[i](j, k) != 0)
-				{
-					fprintf(fp, "%.8f   ", M_[i](j, k));
-				}
-			}
-			fprintf(fp, "\r\n");
-		}
-		fprintf(fp, "\r\n");
-	}
-
-
-	for (int i = 0; i < 3 * N; i++)
-	{
-		for (int j = 0; j < 3 * N; j++)
-		{
-			if (K_.coeff(i, j) != 0)
-			{
-				fprintf(fp, "(%d, %d)   %.4f\r\n", i + 1, j + 1, K_.coeff(i, j));
-			}
-		}
-	}
-	fclose(fp);
-
-	VectorXd D;
-	D.resize(3 * N);
-	D.setZero();
-	CalculateD(&D, &x);
-	for (int i = 0; i < N; i++)
-	{
-		cout << D[i * 3] << " " << D[i * 3 + 1] << " " << D[i * 3 + 2] << endl;
-	}
-	getchar();
-	*/
 }

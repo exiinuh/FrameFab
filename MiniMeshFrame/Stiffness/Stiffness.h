@@ -59,6 +59,8 @@ public:
 	typedef Eigen::SparseMatrix<double> SpMat;
 	typedef Eigen::MatrixXd				MX;
 	typedef Eigen::VectorXd				VX;
+	typedef Eigen::VectorXi				VXi;
+	typedef	Eigen::MatrixXi				MXi;
 	typedef trimesh::point				point;
 
 public:
