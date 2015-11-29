@@ -91,7 +91,6 @@ void GraphCut::SetStartingPoints(int count)
 	{
 		ptr_dualgraph_->Dualization();
 		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
-		
 	}
 	else
 	{
@@ -101,7 +100,7 @@ void GraphCut::SetStartingPoints(int count)
 	Nd_ = ptr_dualgraph_->SizeOfVertList();
 	Md_ = ptr_dualgraph_->SizeOfEdgeList();
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
-
+	
 	x_.resize(Nd_);
 	D_.resize(6 * Fd_);
 	lambda_.resize(6 * Fd_);
@@ -138,8 +137,8 @@ void GraphCut::CreateAandC()
 	}
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 	
-	Statistics s_C("C", C_);
-	s_C.GenerateSpFile();
+	//Statistics s_C("C", C_);
+	//s_C.GenerateSpFile();
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
@@ -280,7 +279,7 @@ void GraphCut::MakeLayers()
 		SetBoundary();
 
 		//ptr_stiff_->Debug();
-		ptr_stiff_->CalculateD(&D_, &x_, 0, 0);
+		ptr_stiff_->CalculateD(&D_, &x_, 0, 1, cut_count);
 
 		//ptr_stiff_->CalculateD(&D_, &x_);
 
@@ -301,8 +300,8 @@ void GraphCut::MakeLayers()
 				cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
 
 				string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
-				Statistics s_x(str, x_);
-				s_x.GenerateVectorFile();
+				//Statistics s_x(str, x_);
+				//s_x.GenerateVectorFile();
 
 				/*-------------------ADMM loop-------------------*/
 				x_prev = x_;
@@ -391,6 +390,7 @@ void GraphCut::CalculateQ(const VX _D, SpMat &Q)
 	{
 		int u = ptr_dualgraph_->v_orig_id(i);
 		WF_edge *edge = ptr_frame_->GetNeighborEdge(u);
+		
 		while (edge != NULL)
 		{
 			int e_id = ptr_dualgraph_->e_dual_id(edge->ID());
@@ -573,6 +573,6 @@ void GraphCut::Debug()
 	SetBoundary();
 
 	//ptr_stiff_->Debug();
-	ptr_stiff_->CalculateD(&D_, &x_, 0, 0);
+	//ptr_stiff_->CalculateD(&D_, &x_, 1, 1);
 
 }

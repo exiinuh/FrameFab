@@ -660,15 +660,16 @@ void StiffnessIO::GnuPltCubicBentBeam(
 //	return;
 //}
 
-void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
+void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int cut_count)
 {
 	FILE	*fp;
 	char OUT_file[FILENMAX];
 	char OUT_path[FILENMAX];
-	char *title = "FiberPrint TestFile -- static analysis (N,mm,g)\n";
+	string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	sprintf_s(OUT_file, "%s", "FiberTest.3dd");
+	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	sprintf_s(OUT_file, "%s", str.c_str());
 
 	OutputPath(OUT_file, OUT_path, FRAME3DD_PATHMAX, NULL);
 
@@ -679,13 +680,14 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 		exit(11);
 	}
 
-	fprintf(fp, title);
+	fprintf(fp, title_s.c_str());
 	fprintf(fp, "\n");
 
-	int nN = ptr_dualgraph->ptr_frame_->SizeOfVertList();
+	int nN = ptr_dualgraph->SizeOfFaceList();
 	int nE = ptr_dualgraph->SizeOfVertList();
 	WireFrame *ptr_wf = ptr_dualgraph->ptr_frame_;
-	std::vector<WF_edge*> wf_edge_list = *ptr_wf->GetEdgeList();
+	std::vector<WF_edge*> wf_edge_list   = *ptr_wf->GetEdgeList();
+	std::vector<DualFace*> dual_face_list = *ptr_dualgraph->GetFaceList();
 
 	double r = ptr_parm->radius_;
 	double nr = 0.0;
@@ -701,8 +703,10 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "#        mm      mm      mm      m\n\n");
 	for (int i = 0; i < nN; i++)
 	{
+		// using face id in dualgraph to represent node in orig graph
+		int id = dual_face_list[i]->orig_id();
 		fprintf(fp, "%d	 %.4f  %.4f  %.4f  %.4f\n", i + 1,
-			ptr_wf->GetPosition(i).x(), ptr_wf->GetPosition(i).y(), ptr_wf->GetPosition(i).z(),0.0);
+			ptr_wf->GetPosition(id).x(), ptr_wf->GetPosition(id).y(), ptr_wf->GetPosition(id).z(),0.0);
 	}
 
 	// Write nodes with reactions
@@ -710,7 +714,8 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	std::vector<int>	res_index;
 	for (int i = 0; i < nN; i++)
 	{
-		if (ptr_wf->isFixed(i))
+		int id = dual_face_list[i]->orig_id();
+		if (ptr_wf->isFixed(id))
 		{
 			nR++;
 			res_index.push_back(i);
@@ -739,11 +744,14 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	for (int i = 0; i < nE; i++)
 	{
 		int e_id = ptr_dualgraph->e_orig_id(i);
-		int vert_id   = wf_edge_list[e_id]->pvert_->ID();
-		int vert_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
+		int orig_id   = wf_edge_list[e_id]->pvert_->ID();
+		int orig_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
+		
+		int id   = ptr_dualgraph->v_dual_id(orig_id);
+		int id_1 = ptr_dualgraph->v_dual_id(orig_id_2);
 
-		fprintf(fp, "%d %d %d	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.6f	%.2f	%.14f\n",
-			i + 1, vert_id + 1, vert_id_2 + 1,
+		fprintf(fp, "%d %d %d	%f	%f	%f	%f	%f	%f	%f	%f	%f	%.14f\n",
+			i + 1, id + 1, id_1 + 1,
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
 

@@ -78,7 +78,7 @@ public:
 
 	// Socket to GraphCut
 	void		CalculateD(VectorXd *ptr_D);
-	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd);
+	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd, int cut_count);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }

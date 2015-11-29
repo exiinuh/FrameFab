@@ -31,10 +31,11 @@ void StiffnessSolver::SolveSystem(
 	LDLDecompPM(K_comp, DoF, diag, F, D, R, q, r, 1, 0, info);
 	if (info < 0)
 	{
-		fprintf(stderr, " Stiffness Matrix is not positive definite");
-		fprintf(stderr, " The stucture may have mechanism and thus not stable in general");
-		fprintf(stderr, " Please Make sure that all six");
-		fprintf(stderr, " rigid body translations are restrained!\n");
+		fprintf(stderr, "Stiffness Matrix is not positive definite: %d negative elements\n", info);
+		fprintf(stderr, "found on decomp diagonal of K.\n");
+		fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
+		fprintf(stderr, "Please Make sure that all six\n");
+		fprintf(stderr, "rigid body translations are restrained!\n");
 		/* exit(31); */
 	}
 	else
@@ -90,7 +91,7 @@ void StiffnessSolver::LDLDecompPM(
 	info = 0;	/* number of negative elements on the diagonal of D */
 
 	if (reduce)
-	{		
+	{		 
 		/* forward column-wise reduction of [A]	*/
 		for (j = 0; j < n; j++)
 		{
@@ -146,7 +147,12 @@ void StiffnessSolver::LDLDecompPM(
 					return;
 				}
 
-				if (d[j] < 0.0) { info--; }
+				if (d[j] < 0.0) 
+				{
+					fprintf(stderr, " ldl_dcmp_pm(): negative number found on diagonal ...\n");
+					fprintf(stderr, " d[%d] = %11.4e\n", j, d[j]);
+					info--; 
+				}
 			}
 		}
 

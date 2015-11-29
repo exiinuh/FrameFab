@@ -77,9 +77,11 @@ void Stiffness::CreateFe()
 		Fei[0] = Fei[6] = density_ * Ax * L * gx / 2.0;
 		Fei[1] = Fei[7] = density_ * Ax * L * gy / 2.0;
 		Fei[2] = Fei[8] = density_ * Ax * L * gz / 2.0;
+		
 		Fei[3] = density_ * Ax * L * L / 12.0 * ((-t3*t7 + t4*t6)*gy + (-t3*t8 + t5*t6)*gz);
 		Fei[4] = density_ * Ax * L * L / 12.0 * ((-t4*t6 + t3*t7)*gx + (-t4*t8 + t5*t7)*gz);
 		Fei[5] = density_ * Ax * L * L / 12.0 * ((-t5*t6 + t3*t8)*gx + (-t5*t7 + t4*t8)*gy);
+		
 		Fei[9] = density_ * Ax * L * L / 12.0 * ((t3*t7 - t4*t6)*gy + (t3*t8 - t5*t6)*gz);
 		Fei[10] = density_ * Ax * L * L / 12.0 * ((t4*t6 - t3*t7)*gx + (t4*t8 - t5*t7)*gz);
 		Fei[11] = density_ * Ax * L * L / 12.0 * ((t5*t6 - t3*t8)*gx + (t5*t7 - t4*t8)*gy);
@@ -280,7 +282,7 @@ void Stiffness::CalculateD(VectorXd *ptr_D)
 }
 
 
-void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd)
+void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd, int cut_count)
 {
 	int Nd = ptr_dualgraph_->SizeOfVertList();		// Number of edges in original graph
 	int Fd = ptr_dualgraph_->SizeOfFaceList();		// Number of nodes in original graph
@@ -320,9 +322,10 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 
 	if (write_3dd)
 	{
-		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_);
+		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_, cut_count);
 	}
 	
+	Init();
 	CreateGlobalK(&x);
 	CreateF(&x);
 
@@ -340,7 +343,7 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 
 	// Solving Process
 	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
-	fprintf(stdout, " Linear Elastic Analysis ... Mechanical Loads\n");
+	fprintf(stdout, "Linear Elastic Analysis ... Mechanical Loads\n");
 	
 	VX React_F(Fd*6);		// restained nodes' reaction force
 	stiff_solver_.SolveSystem(K_, *ptr_D, F_, React_F, K_.cols(), q, r, verbose, info, rms_resid);
@@ -357,7 +360,8 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 		
 		stiff_io_.SaveDisplaceVector(deform_path, *ptr_D, ptr_D->size(), ptr_dualgraph_);
 	}
-	getchar();
+
+	//getchar();
 }
 
 
@@ -433,14 +437,14 @@ VectorXd Stiffness::Fe(int ei)
 	{
 		for (int j = 0; j < 6; j++)
 		{
-			tmpF[j] = Fe_[ei][j];
+			tmpF[j] = Fe_[dual_id][j];
 		}
 	}
 	else
 	{
-		for (int j = 6; j < 12; j++)
+		for (int j = 0; j < 6; j++)
 		{
-			tmpF[j] = Fe_[ei][j];
+			tmpF[j] = Fe_[dual_id][j + 6];
 		}
 	}
 	return tmpF;

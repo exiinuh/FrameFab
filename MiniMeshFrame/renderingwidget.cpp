@@ -1369,8 +1369,10 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	updateGL();
 	*/
 	
-	FiberPrintPARM *ptr_parm = new FiberPrintPARM(radius, density, g, youngs_modulus, shear_modulus, penalty,
-													D_tol, pri_tol, dual_tol, alpha, beta, gamma);
+	//FiberPrintPARM *ptr_parm = new FiberPrintPARM(radius, density, g, youngs_modulus, shear_modulus, penalty,
+	//												D_tol, pri_tol, dual_tol, alpha, beta, gamma);
+
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM();
 
 	delete ptr_fiberprint_;
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm);

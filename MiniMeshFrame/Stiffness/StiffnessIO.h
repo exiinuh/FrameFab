@@ -99,9 +99,9 @@ public:
 		);
 
 	/*
-	* WriteInputData - write input data to a .3dd file			Nov/26/2015
+	* WriteInputData - write input data to a .3dd file			Nov/29/2015
 	*/
-	void WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
+	void WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int cut_count);
 
 	/*
 	* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015
