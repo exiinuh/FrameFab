@@ -118,7 +118,8 @@ void CoordTrans::TransLocToGlob(
 	t.setZero();
 	mt.setZero();
 
-	for (i = 0; i <= 3; i++) {
+	for (i = 0; i < 4; i++)
+	{
 		t(3 * i, 3 * i) = t0;
 		t(3 * i, 3 * i + 1) = t1;
 		t(3 * i, 3 * i + 2) = t2;

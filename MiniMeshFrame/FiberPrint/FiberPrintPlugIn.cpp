@@ -6,12 +6,12 @@ FiberPrintPlugIn::FiberPrintPlugIn()
 }
 
 
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
-{
-	ptr_frame_ = ptr_frame;
-	ptr_graphcut_ = new GraphCut(ptr_frame);
-	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
-}
+//FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
+//{
+//	ptr_frame_ = ptr_frame;
+//	ptr_graphcut_ = new GraphCut(ptr_frame);
+//	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
+//}
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)

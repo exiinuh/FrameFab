@@ -703,10 +703,11 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "#        mm      mm      mm      m\n\n");
 	for (int i = 0; i < nN; i++)
 	{
-		// using face id in dualgraph to represent node in orig graph
-		int id = dual_face_list[i]->orig_id();
-		fprintf(fp, "%d	 %.4f  %.4f  %.4f  %.4f\n", i + 1,
-			ptr_wf->GetPosition(id).x(), ptr_wf->GetPosition(id).y(), ptr_wf->GetPosition(id).z(),0.0);
+		// using face dual id here
+		int o_id = ptr_dualgraph->v_dual_id(i);
+
+		fprintf(fp, "%d	 %f  %f  %f  %f\n", i + 1,
+			ptr_wf->GetPosition(o_id).x(), ptr_wf->GetPosition(o_id).y(), ptr_wf->GetPosition(o_id).z(),0.0);
 	}
 
 	// Write nodes with reactions
@@ -715,10 +716,11 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	for (int i = 0; i < nN; i++)
 	{
 		int id = dual_face_list[i]->orig_id();
+
 		if (ptr_wf->isFixed(id))
 		{
 			nR++;
-			res_index.push_back(i);
+			res_index.push_back(i+1);
 		}
 	}
 	fprintf(fp, "\n");
@@ -882,9 +884,10 @@ void StiffnessIO::SaveDisplaceVector(char filename[], const VX &D, int n, DualGr
 	{
 		/* i is the dual face id, convert it back to wf_vert id*/
 		int v_id = dual_face_list[i]->orig_id();
+		int v_dual_id = ptr_dual_graph->v_dual_id(v_id);
 		for (j = 0; j < 6; j++)
 		{
-			tmp_D[6 * v_id + j] = D[6 * i + j];
+			tmp_D[6 * v_dual_id + j] = D[6 * i + j];
 		}
 	}
 

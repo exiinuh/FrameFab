@@ -9,13 +9,13 @@ GraphCut::GraphCut()
 }
 
 
-GraphCut::GraphCut(WireFrame *ptr_frame)
-		 :debug_(false), penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3)
-{
-	ptr_frame_ = ptr_frame;
-	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_dualgraph_);
-}
+//GraphCut::GraphCut(WireFrame *ptr_frame)
+//		 :debug_(false), penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3)
+//{
+//	ptr_frame_ = ptr_frame;
+//	ptr_dualgraph_ = new DualGraph(ptr_frame_);
+//	ptr_stiff_ = new Stiffness(ptr_dualgraph_);
+//}
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
@@ -50,7 +50,7 @@ void GraphCut::InitState()
 	N_ = ptr_frame_->SizeOfVertList();
 	M_ = ptr_frame_->SizeOfEdgeList();
 
-	/* set termination tolerance */
+	// set termination tolerance 
 	stop_n_ = floor(N_ / 5);						
 
 	qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
@@ -58,24 +58,61 @@ void GraphCut::InitState()
 	layer_label_.resize(M_);
 	fill(layer_label_.begin(), layer_label_.end(), 0);
 
-	/* Find nodes with max height */
-	int max_id = 0;
-	for (int i = 1; i < N_; i++)
+	// upper dual id 
+	vector<int> queue;
+	vector<int> layer(N_);
+	fill(layer.begin(), layer.end(), -1);
+	int h = 0;
+	int t = 0;
+	for (int i = 0; i < N_; i++)
 	{
-		if (ptr_frame_->GetPosition(i).z() > ptr_frame_->GetPosition(max_id).z())
+		if (ptr_frame_->isFixed(i))
 		{
-			max_id = i;
+			queue.push_back(i);
+			layer[i] = 0;
+			t++;
 		}
 	}
-
-	/* upper dual id */
-	WF_edge *edge = ptr_frame_->GetNeighborEdge(max_id);					
-	while (edge != NULL)
+	while (h < t)
 	{
-		cutting_edge_.push_back(edge->ID()); 
-		edge = edge->pnext_;
+		int u = queue[h];
+		WF_edge *e = ptr_frame_->GetNeighborEdge(u);
+		while (e != NULL)
+		{
+			int v = e->pvert_->ID();
+			if (layer[v] == -1)
+			{
+				layer[v] = layer[u] + 1;
+				queue.push_back(v);
+				t++;
+			}
+			e = e->pnext_;
+		}
+		h++; 
 	}
 
+	vector<bool> visited(M_);
+	fill(visited.begin(), visited.end(), false);
+	int max_layer = layer[queue[N_ - 1]];
+	for (int i = N_ - 1; i >= 0 && layer[queue[i]] == max_layer; i--)
+	{
+		int u = queue[i];
+		WF_edge *e = ptr_frame_->GetNeighborEdge(u);
+		while (e != NULL)
+		{
+			visited[e->ID()] = visited[e->ppair_->ID()] = true;
+			e = e->pnext_;
+		}
+	}
+	for (int i = 0; i < M_; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(i);
+		if (e->ID() < e->ppair_->ID())
+			if(visited[e->ID()])
+		{
+			cutting_edge_.push_back(e->ID());
+		}
+	}
 
 	cout << "penalty : " << penalty_ << endl;
 	cout << "primal tolerance : " << pri_tol_ << endl;
@@ -101,12 +138,14 @@ void GraphCut::SetStartingPoints(int count)
 	Md_ = ptr_dualgraph_->SizeOfEdgeList();
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
 	
+	r_.resize(Nd_, Nd_);
 	x_.resize(Nd_);
 	D_.resize(6 * Fd_);
 	lambda_.resize(6 * Fd_);
 	a_.resize(Nd_);
 
-	// Set all label x = 1 and calculate KD = F to obtain inital D_0	
+	// Set all label x = 1 and calculate KD = F to obtain inital D_0
+	r_.setOnes();
 	x_.setOnes();
 	D_.setZero();
 	lambda_.setZero();
@@ -133,7 +172,9 @@ void GraphCut::CreateAandC()
 	vector<Triplet<double>> C_list;
 	for (int i = 0; i < Md_; i++)
 	{
-		C_list.push_back(Triplet<double>(i, i, pow(dual_edge[i]->w(), 2)));
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+		C_list.push_back( Triplet<double>(i, i, pow(dual_edge[i]->w(), 2) * r_(u, v)) );
 	}
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 	
@@ -279,9 +320,7 @@ void GraphCut::MakeLayers()
 		SetBoundary();
 
 		//ptr_stiff_->Debug();
-		ptr_stiff_->CalculateD(&D_, &x_, 0, 1, cut_count);
-
-		//ptr_stiff_->CalculateD(&D_, &x_);
+		ptr_stiff_->CalculateD(&D_, &x_, 1, 1, cut_count);
 
 		double old_energy = x_.dot((H1_)*x_);
 		cout << "****************************************" << endl;
@@ -289,23 +328,34 @@ void GraphCut::MakeLayers()
 		cout << "Initial energy before entering ADMM: " << old_energy << endl;
 		cout << "---------------------------------" << endl;
 
-		int ADMM_count = 0;
+		int reweight_cout = 0;
 		VX x_prev;
 		VX D_prev;
 		record.clear();
+		record.push_back(old_energy);
+
 		do
 		{
+
+			int ADMM_count = 0;
 			do
 			{
-				cout << "GraphCut Round: " << cut_count << ", ADMM " << ADMM_count << " iteration." << endl;
+				cout << "GraphCut Round: " << cut_count << ", reweight iteration:" << reweight_cout
+					<< ", ADMM " << ADMM_count << " iteration." << endl;
 
-				string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_x";
-				//Statistics s_x(str, x_);
-				//s_x.GenerateVectorFile();
+				string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_" 
+					+ to_string(reweight_cout) + "_x";
+				Statistics s_x(str, x_);
+				s_x.GenerateVectorFile();
 
 				/*-------------------ADMM loop-------------------*/
 				x_prev = x_;
 				CalculateX();
+
+				//string str_p = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
+				//	+ to_string(reweight_cout) + "after_x";
+				//Statistics s_xp(str_p, x_);
+				//s_xp.GenerateVectorFile();
 
 				D_prev = D_;
 				CalculateD();
@@ -340,10 +390,16 @@ void GraphCut::MakeLayers()
 				putchar('\n');
 
 			} while (++ADMM_count < 20 && !TerminationCriteria());
-		} while (!UpdateC(x_prev));
+			
+			string str_e = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count-1) + "_rew_"
+				+ to_string(reweight_cout) + "_EnergyRecord";
+			Statistics s_energy(str_e, record);
+			s_energy.GenerateStdVecFile();
+		
+			reweight_cout++;
+		} while (!UpdateR(x_prev));
 
 		UpdateCut();													// Update New Cut information to Rendering (layer_label_)
-
 		printf("One iteration done!\n");
 		cut_count++;
 	} while (!CheckLabel(cut_count));
@@ -526,22 +582,14 @@ void GraphCut::UpdateCut()
 }
 
 
-bool GraphCut::UpdateC(VX &x_prev)
+bool GraphCut::UpdateR(VX &x_prev)
 {
-	C_.setZero();
-	vector<Triplet<double>> C_list;
-	VX C = C_.diagonal();
 	for (int i = 0; i < Md_; i++)
 	{
 		int u = ptr_dualgraph_->u(i);
 		int v = ptr_dualgraph_->v(i);
-		double r = 1.0 / (1e-5 + fabs(x_prev[u] - x_prev[v]));
-		C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r));
+		r_(u, v) = 1.0 / (1e-5 + fabs(x_prev[u] - x_prev[v]));
 	}
-	C_.setFromTriplets(C_list.begin(), C_list.end());
-
-	H1_ = SpMat(Nd_, Nd_);
-	H1_ = A_.transpose() * C_ * A_;
 
 	double max_error = 0;
 	for (int i = 0; i < Nd_; i++)

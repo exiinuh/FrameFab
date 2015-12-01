@@ -91,7 +91,7 @@ void StiffnessSolver::LDLDecompPM(
 	info = 0;	/* number of negative elements on the diagonal of D */
 
 	if (reduce)
-	{		 
+	{		
 		/* forward column-wise reduction of [A]	*/
 		for (j = 0; j < n; j++)
 		{

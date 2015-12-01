@@ -47,6 +47,7 @@
 #include "FiberPrint\FiberPrintPARM.h"
 #include "CoordTrans.h"
 
+#include "GCommon.h"
 #include "StiffnessIO.h"
 #include "StiffnessSolver.h"
 
@@ -65,7 +66,7 @@ public:
 
 public:
 	Stiffness();
-	Stiffness(DualGraph *ptr_dualgraph);
+	//Stiffness(DualGraph *ptr_dualgraph);
 	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
 	~Stiffness();
 

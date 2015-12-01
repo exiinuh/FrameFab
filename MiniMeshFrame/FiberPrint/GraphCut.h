@@ -49,7 +49,7 @@ class GraphCut
 
 public:
 	GraphCut();
-	GraphCut(WireFrame *ptr_frame);
+	//GraphCut(WireFrame *ptr_frame);
 	GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
 	~GraphCut();
 
@@ -71,7 +71,7 @@ public:
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
-	bool		UpdateC(VX &x_prev);
+	bool		UpdateR(VX &x_prev);
 
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
 	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
@@ -89,6 +89,7 @@ public:
 
 	SpMat			A_;
 	SpMat			C_;
+	MX				r_;				// for updation of C
 	VX				x_;
 	VX				D_;
 	VX				lambda_;

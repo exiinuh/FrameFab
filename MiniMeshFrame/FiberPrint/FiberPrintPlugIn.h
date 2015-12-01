@@ -12,7 +12,7 @@ class FiberPrintPlugIn
 {
 public:
 	FiberPrintPlugIn();
-	FiberPrintPlugIn(WireFrame *ptr_frame);
+	//FiberPrintPlugIn(WireFrame *ptr_frame);
 	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
 	~FiberPrintPlugIn();
 
