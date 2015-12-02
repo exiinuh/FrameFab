@@ -126,7 +126,7 @@ void DualGraph::Establish()
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
 
-	// vert_list_
+	// vert list
 	int Nd = 0;
 	for (int i = 0; i < M; i++)
 	{
@@ -150,48 +150,65 @@ void DualGraph::Establish()
 		}
 	}
 
+	// face list
 	int Fd = 0;
 	for (int i = 0; i < N; i++)
 	{
-		if (!exist_vert_[i])
+		if (exist_vert_[i] && !ptr_frame_->isFixed(i))
 		{
-			continue;
+			(*face_list_)[i]->SetDualId(Fd);
+			(*face_list_)[Fd]->SetOrigId(i);
+			Fd++;
 		}
+	}
 
-		// face_list_
-		(*face_list_)[i]->SetDualId(Fd);
-		(*face_list_)[Fd]->SetOrigId(i);
-		Fd++;
+    Fd_free_ = Fd;
 
-		// edge_list_
-		if (ptr_frame_->GetDegree(i) > 1)
+	// fix points always at the end of list
+	for (int i = 0; i < N; i++)
+	{
+		if (exist_vert_[i] && ptr_frame_->isFixed(i))
 		{
-			//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
-			double w = exp(- 3 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
-			int u;
-			int v;
-			WF_edge *edge = ptr_frame_->GetNeighborEdge(i);
-			while (edge->pnext_ != NULL)
-			{
-				WF_edge *next_edge = edge->pnext_;
-				u = (*vert_list_)[edge->ID()]->dual_id();
-				v = (*vert_list_)[next_edge->ID()]->dual_id();
+			(*face_list_)[i]->SetDualId(Fd);
+			(*face_list_)[Fd]->SetOrigId(i);
+			Fd++;
+		}
+	}
 
-				if (u != -1 && v != -1)
+	// edge list 
+	for (int i = 0; i < N; i++)
+	{
+		if (exist_vert_[i])
+		{
+			if (ptr_frame_->GetDegree(i) > 1)
+			{
+				//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+				double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
+				int u;
+				int v;
+				WF_edge *edge = ptr_frame_->GetNeighborEdge(i);
+				while (edge->pnext_ != NULL)
 				{
-					edge_list_->push_back(new DualEdge(u, v, w));
+					WF_edge *next_edge = edge->pnext_;
+					u = (*vert_list_)[edge->ID()]->dual_id();
+					v = (*vert_list_)[next_edge->ID()]->dual_id();
+
+					if (u != -1 && v != -1)
+					{
+						edge_list_->push_back(new DualEdge(u, v, w));
+					}
+					edge = next_edge;
 				}
-				edge = next_edge;
-			}
 
-			if (ptr_frame_->GetDegree(i) > 2)
-			{
-				u = (*vert_list_)[edge->ID()]->dual_id();
-				v = (*vert_list_)[ptr_frame_->GetNeighborEdge(i)->ID()]->dual_id();
-
-				if (u != -1 && v != -1)
+				if (ptr_frame_->GetDegree(i) > 2)
 				{
-					edge_list_->push_back(new DualEdge(u, v, w));
+					u = (*vert_list_)[edge->ID()]->dual_id();
+					v = (*vert_list_)[ptr_frame_->GetNeighborEdge(i)->ID()]->dual_id();
+
+					if (u != -1 && v != -1)
+					{
+						edge_list_->push_back(new DualEdge(u, v, w));
+					}
 				}
 			}
 		}

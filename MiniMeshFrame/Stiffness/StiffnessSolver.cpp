@@ -56,6 +56,62 @@ void StiffnessSolver::SolveSystem(
 
 }
 
+void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
+{
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+    solver.compute(K);
+    info = 0;
+    
+    if (solver.info() != Eigen::Success)
+    {
+        fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Decomposition!\n");
+        return;
+    }
+
+    VX Diag = solver.vectorD();
+    
+    if (verbose)
+    {
+        fprintf(stdout, "---LDLt Decomposition Diagnoal vector D---\n");
+    }
+    
+    for (int i = 0; i < Diag.size(); i++)
+    {
+        if (Diag[i] == 0.0)
+        {
+            fprintf(stderr, " SolveSystem(Ver.Eigen): zero found on diagonal ...\n");
+            fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
+        }
+
+        if (Diag[i] < 0.0)
+        {
+            fprintf(stderr, " SolveSystem(Ver.Eigen): negative number found on diagonal ...\n");
+            fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
+            info--;
+        }
+        
+        if (verbose)
+        {
+            fprintf(stdout, "d[%d] = %.5f\n", i, Diag[i]);
+        }
+    }
+
+    if (info < 0)
+    {
+            fprintf(stderr, "Stiffness Matrix is not positive definite: %d negative elements\n", info);
+            fprintf(stderr, "found on decomp diagonal of K.\n");
+            fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
+            fprintf(stderr, "Please Make sure that all six\n");
+            fprintf(stderr, "rigid body translations are restrained!\n");
+    }
+
+    D = solver.solve(F);
+    if (solver.info() != Eigen::Success)
+    {
+        fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Solving!\n");
+    }
+}
+
 /*
 * LDLDecompPM - Solves partitioned matrix equations		Nov / 24 / 2015
 * Function:
@@ -139,7 +195,6 @@ void StiffnessSolver::LDLDecompPM(
 						A(j, i) /= d[i];
 					}
 				}
-
 				if (d[j] == 0.0)
 				{
 					fprintf(stderr, " ldl_dcmp_pm(): zero found on diagonal ...\n");
@@ -153,6 +208,7 @@ void StiffnessSolver::LDLDecompPM(
 					fprintf(stderr, " d[%d] = %11.4e\n", j, d[j]);
 					info--; 
 				}
+
 			}
 		}
 

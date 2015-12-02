@@ -103,6 +103,7 @@ public:
 	int		SizeOfVertList()	{ return Nd_; }
 	int		SizeOfEdgeList()	{ return Md_; }
 	int		SizeOfFaceList()	{ return Fd_; }
+    int     SizeOfFreeFace()    { return Fd_free_; }
 
 	int		u(int ei)			{ return (*edge_list_)[ei]->u(); }
 	int		v(int ei)			{ return (*edge_list_)[ei]->v(); }
@@ -147,6 +148,7 @@ private:
 	int						Nd_;
 	int						Md_;
 	int						Fd_;
+    int                     Fd_free_;
 
 	double					maxz_;
 	double					minz_;

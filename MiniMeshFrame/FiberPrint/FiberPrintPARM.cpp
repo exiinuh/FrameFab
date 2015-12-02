@@ -2,7 +2,7 @@
 
 
 FiberPrintPARM::FiberPrintPARM()
-			   :penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3), alpha_(1.0), beta_(10000.0), gamma_(100.0)
+			   :penalty_(10e2), D_tol_(0.1), pri_tol_(1e-4), dual_tol_(1e-4), alpha_(1.0), beta_(10000.0), gamma_(100.0)
 {
 	/*
 	*	For Your Inference; Unit Transfer
@@ -25,7 +25,8 @@ FiberPrintPARM::FiberPrintPARM()
 	*/
 
 	radius_ = 0.4;
-	density_ = 1210 * 1e-12;
+	//density_ = 1210 * 1e-12;
+	density_ = 12600 * 1e-12;
 	g_ = -9806.33;
 	youngs_modulus_ = 1100;
 	shear_modulus_ = 1032;

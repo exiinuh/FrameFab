@@ -7,6 +7,7 @@
 *
 *	 Version:  1.0
 *	 Created:  Nov/24/2015
+*    Update :  Dec/2 /2015
 *
 *	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
 *	 Company:  GCL@USTC
@@ -15,6 +16,8 @@
 *			Related matrix computation issue raised in matrix structural analysis can be 
 *			found at
 *			1. Partitioned matrix equation : http://people.duke.edu/~hpgavin/cee421/SolveMatrixEquation.pdf.
+*           2. Information about Eigen library's SimplicialLDLt can be found at Eigen library's online doc
+*              http://eigen.tuxfamily.org/dox/classEigen_1_1SimplicialLDLT.html
 * ==========================================================================
 */
 #ifndef STIFFNESS_SOLVER_H
@@ -23,6 +26,7 @@
 #include <iostream>
 #include <Eigen/dense>
 #include <Eigen/sparse>
+#include <Eigen/SparseCholesky>
 
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))
@@ -67,6 +71,21 @@ public:
 		int Dof, VXi &q, VXi &r, 
 		int verbose, int &info, double &rms_resid
 		);
+    
+    /*
+    * SolveSystem  -  solve {F} =   [K]{D} via L D L' decomposition        2/Dec/2015
+    *                 This override function is implemented for sovling Kqq * d_q = F_q,
+    *                 where no partitioned LDLt is needed.
+    * @param K   : stiffness matrix for the restrained frame
+    * @param D   : displacement vector to be solved
+    * @param F   : mechenical force(external load vector)
+    * @param verbose	:  =1 for copious screenplay
+    * @param info: <0 : not stiffness matrix positive definite
+    * Note: This function use eigen library SimplicialLDLt module to solve the linear system.
+    */
+    void SolveSystem(
+        SpMat &K, VX &D, VX &F, int verbose, int &info  
+        );
 
 	void Debug();
 

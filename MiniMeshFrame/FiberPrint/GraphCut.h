@@ -9,9 +9,14 @@
 *
 *	 Version:  1.0
 *	 Created:  Oct/10/2015
+*    Updated:  Nov/02/2015
 *
-*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
+*	 Author:   Xin Hu, Yijiang Huang, Guoxian Song
 *	 Company:  GCL@USTC
+*
+*    WARNING:  DO NOT insert node and edge after you dualize the graph, 
+*    as we append all project fixed point at the end of dual face.
+*    Further inserting will cause stiffness matrix and force creation error.
 * ==========================================================================
 */
 
@@ -49,7 +54,7 @@ class GraphCut
 
 public:
 	GraphCut();
-	//GraphCut(WireFrame *ptr_frame);
+	GraphCut(WireFrame *ptr_frame);
 	GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
 	~GraphCut();
 
@@ -61,8 +66,8 @@ public:
 	void		SetBoundary();
 
 	//Termination
-	bool		CheckLabel(int iter_count);			// Stopping Criterion for iteratively apply ADMM to find several cuts
-	bool		TerminationCriteria();				// Termination Criteria for ADMM process of a single cut using a threshold node number
+	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
+	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
 
 	//ADMM
 	void		MakeLayers();						// Main loop of cut
@@ -71,7 +76,7 @@ public:
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
-	bool		UpdateR(VX &x_prev);
+	bool		UpdateR(VX &x_prev, int count);
 
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
 	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
@@ -112,6 +117,7 @@ public:
 	int				Nd_;			// Nd :   Number of node in dual graph
 	int				Md_;			// Md :   Number of edges in dual graph
 	int				Fd_;			// Fd :   Number of faces in dual graph
+    int             Ns_;
 	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
 	int				stop_n_;		// stop_n   : termination criteria for GraphCut process, number of dual nodes in LowerSet

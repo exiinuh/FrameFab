@@ -66,20 +66,20 @@ public:
 
 public:
 	Stiffness();
-	//Stiffness(DualGraph *ptr_dualgraph);
+	Stiffness(DualGraph *ptr_dualgraph);
 	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
 	~Stiffness();
 
 public:
 	void		Init();
 	void		CreateFe();
-	void		CreateF(const VectorXd *ptr_x);
+	void		CreateF(const VectorXd &x);
 	void		CreateElasticK();
-	void		CreateGlobalK(const VectorXd *ptr_x);
+	void		CreateGlobalK(const VectorXd &x);
 
 	// Socket to GraphCut
-	void		CalculateD(VectorXd *ptr_D);
-	void		CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd, int cut_count);
+	void		CalculateD(VectorXd &D);
+	void		CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
@@ -105,6 +105,8 @@ private:
 	vector<MX>		eK_;					// elastic K, indexed by dual id
 	VX				F_;
 	vector<VX>		Fe_;
+
+	int				Ns_;
 
 	double			r_;						// radius of frame
 	double			nr_;					// radius of node

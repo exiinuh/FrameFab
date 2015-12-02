@@ -6,13 +6,13 @@ Stiffness::Stiffness()
 }
 
 
-//Stiffness::Stiffness(DualGraph *ptr_dualgraph)
-//:r_(0.0015), nr_(0), density_(0.001), g_(9.80), G_(1586), E_(1387), v_(0.16)
-//{
-//	ptr_dualgraph_ = ptr_dualgraph;
-//
-//	Init();
-//}
+Stiffness::Stiffness(DualGraph *ptr_dualgraph)
+:r_(0.0015), nr_(0), density_(0.001), g_(9.80), G_(1586), E_(1387), v_(0.16)
+{
+	ptr_dualgraph_ = ptr_dualgraph;
+
+	Init();
+}
 
 
 Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
@@ -41,6 +41,8 @@ void Stiffness::Init()
 {
 	CreateFe();
 	CreateElasticK();
+
+    Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 }
 
 
@@ -91,7 +93,7 @@ void Stiffness::CreateFe()
 }
 
 
-void Stiffness::CreateF(const VectorXd *ptr_x)
+void Stiffness::CreateF(const VectorXd &x)
 {
 	/* Run only after CreadFe is done! */
 
@@ -99,7 +101,7 @@ void Stiffness::CreateF(const VectorXd *ptr_x)
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
-	F_.resize(6 * Fd);
+	F_.resize(6 * Ns_);
 	F_.setZero();
 
 	for (int i = 0; i < Nd; i++)
@@ -111,8 +113,15 @@ void Stiffness::CreateF(const VectorXd *ptr_x)
 
 		for (int j = 0; j < 6; j++)
 		{
-			F_[dual_u * 6 + j] += (*ptr_x)[i] * Fe_[i][j];
-			F_[dual_v * 6 + j] += (*ptr_x)[i] * Fe_[i][j + 6];
+            // only unrestrained node is added into stiffness equation
+            if (dual_u < Ns_)
+            {
+                F_[dual_u * 6 + j] += x[i] * Fe_[i][j];
+            }
+            if (dual_v < Ns_)
+            {
+                F_[dual_v * 6 + j] += x[i] * Fe_[i][j + 6];
+            }
 		}
 	}
 }
@@ -157,32 +166,27 @@ void Stiffness::CreateElasticK()
 
 		transf_.CreateTransMatrix(node_u, node_v, t0, t1, t2, t3, t4, t5, t6, t7, t8, 0);
 		
+		double Ksy = 12. * E_ * Izz / (G_ * Asy * Le * Le);
+		double Ksz = 12. * E_ * Iyy / (G_ * Asz * Le * Le);
 
-		double Ksy = 12.0 * E_ * Izz / (G_ * Asy * Le * Le);
-		double Ksz = 12.0 * E_ * Iyy / (G_ * Asz * Le * Le);
+        int n1 = ptr_dualgraph_->v_dual_id(u);
+        int n2 = ptr_dualgraph_->v_dual_id(v);
 
-		//eKuv(0, 0) = eKuv(6, 6) = E_ * Ax / Le;
-		//eKuv(1, 1) = eKuv(7, 7) = 12.0 * E_ * Izz / (Le * Le * Le * (1.0 + Ksy));
-		//eKuv(2, 2) = eKuv(8, 8) = 12.0 * E_ * Iyy / (Le * Le * Le * (1.0 + Ksz));
-		//eKuv(3, 3) = eKuv(9, 9) = G_ * Jxx / Le;
-		//eKuv(4, 4) = eKuv(10, 10) = (4.0 + Ksz) * E_ * Iyy / (Le * (1.0 + Ksz));
-		//eKuv(5, 5) = eKuv(11, 11) = (4.0 + Ksy) * E_ * Izz / (Le * (1.0 + Ksy));
+        //fprintf(stdout, "---elastic_K---Node : %d & %d\n", n1+1, n2+1);
+        ////fprintf(stdout, "t0-t8 : %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+        ////    t0, t1, t2, t3, t4, t5, t6, t7, t8);
 
-		//eKuv(4, 2) = eKuv(2, 4) = -6.0 * E_ *Iyy / (Le * Le * (1.0 + Ksz));
-		//eKuv(5, 1) = eKuv(1, 5) = 6.0 * E_ *Izz / (Le * Le * (1.0 + Ksy));
-
-		//eKuv(6, 0) = eKuv(0, 6) = -eKuv(0, 0);
-		//eKuv(7, 1) = eKuv(1, 7) = -eKuv(1, 1);
-		//eKuv(8, 2) = eKuv(2, 8) = -eKuv(2, 2);
-		//eKuv(9, 3) = eKuv(3, 9) = -eKuv(3, 3);
-
-		//eKuv(10, 2) = eKuv(2, 10) = eKuv(4, 2);
-		//eKuv(11, 1) = eKuv(1, 11) = eKuv(5, 1);
-		//eKuv(10, 8) = eKuv(8, 10) = eKuv(8, 4) = eKuv(4, 8) = -eKuv(4, 2);
-		//eKuv(11, 7) = eKuv(7, 11) = eKuv(7, 5) = eKuv(5, 7) = -eKuv(5, 1);
-
-		//eKuv(10, 5) = eKuv(5, 10) = (2.0 - Ksz) * E_ * Iyy / (Le * (1.0 + Ksz));
-		//eKuv(11, 5) = eKuv(5, 11) = (2.0 - Ksy) * E_ * Izz / (Le * (1.0 + Ksy));
+        //fprintf(stdout, "E: %.15f\n", E_);
+        //fprintf(stdout, "G: %.15f\n", G_);
+        //fprintf(stdout, "Le: %.15f\n", Le);
+        ////fprintf(stdout, "Jxx: %f\n", Jxx);
+        //fprintf(stdout, "Iyy: %.15f\n", Iyy);
+        //fprintf(stdout, "Izz: %.15f\n", Izz);
+        //fprintf(stdout, "Asy: %.15f\n", Asy);
+        //fprintf(stdout, "Asz: %.15f\n", Asz);
+        //fprintf(stdout, "---\n");
+        //fprintf(stdout, "Ksz: %.15f\n", Ksz);
+        //fprintf(stdout, "Ksy: %.15f\n", Ksy);
 
 		eKuv(0,0) = eKuv(6,6) = E_ * Ax / Le;
 		eKuv(1,1) = eKuv(7,7) = 12. * E_ * Izz / (Le * Le * Le * (1. + Ksy));
@@ -235,7 +239,7 @@ void Stiffness::CreateElasticK()
 }
 
 
-void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
+void Stiffness::CreateGlobalK(const VectorXd &x)
 {
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
@@ -243,9 +247,7 @@ void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
 
 	vector<Triplet<double>> K_list;
 
-	//cout << "---IN GLOBAL MATRIX CREATION---" << endl;
-
-	K_.resize(6 * Fd, 6 * Fd);
+	K_.resize(6 * Ns_, 6 * Ns_);
 	for (int i = 0; i < Nd; i++)
 	{
 		WF_edge *ei = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));
@@ -255,32 +257,47 @@ void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
 		int dual_u = ptr_dualgraph_->v_dual_id(u);
 		int dual_v = ptr_dualgraph_->v_dual_id(v);
 
-		//cout << "->EDGE DUAL ID - " << i+1 << endl;
-		//cout << "---NODE id = " << dual_u + 1 << endl;
-		//cout << "---NODE id = " << dual_v + 1 << endl;
-		//cout << "\n";
-
-		for (int k = 0; k < 6; k++)
+		if (dual_u < Ns_ && dual_v < Ns_)
 		{
-			for (int l = 0; l < 6; l++)
+            // dual_u and dual_v are both unrestrained node
+			for (int k = 0; k < 6; k++)
 			{
-				K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l,
-					(*ptr_x)[i] * eK_[i](k, l)));
-				K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l,
-					(*ptr_x)[i] * eK_[i](k + 6, l + 6)));
-				K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_v * 6 + l, 
-					(*ptr_x)[i] * eK_[i](k, l + 6)));
-				K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_u * 6 + l,
-					(*ptr_x)[i] * eK_[i](k + 6, l)));
-
-				//K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l,
-				//	eK_[i](k, l)));
-				//K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l,
-				//	eK_[i](k + 6, l + 6)));
-				//K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_v * 6 + l, 
-				//	eK_[i](k, l + 6)));
-				//K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_u * 6 + l,
-				//	eK_[i](k + 6, l)));
+				for (int l = 0; l < 6; l++)
+				{
+					K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l,
+						x[i] * eK_[i](k, l)));
+					K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l,
+						x[i] * eK_[i](k + 6, l + 6)));
+					K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_v * 6 + l,
+						x[i] * eK_[i](k, l + 6)));
+					K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_u * 6 + l,
+						x[i] * eK_[i](k + 6, l)));
+				}
+			}
+		}
+		else
+		if (dual_u < Ns_)
+		{
+            // dual_u is free while dual_v is restrained
+			for (int k = 0; k < 6; k++)
+			{
+				for (int l = 0; l < 6; l++)
+				{
+					K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l,
+						x[i] * eK_[i](k, l)));
+				}
+			}
+		}
+		else
+		if (dual_v < Ns_)
+		{
+			for (int k = 0; k < 6; k++)
+			{
+				for (int l = 0; l < 6; l++)
+				{
+					K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l,
+						x[i] * eK_[i](k + 6, l + 6)));
+				}
 			}
 		}
 	}
@@ -288,14 +305,14 @@ void Stiffness::CreateGlobalK(const VectorXd *ptr_x)
 }
 
 
-void Stiffness::CalculateD(VectorXd *ptr_D)
+void Stiffness::CalculateD(VectorXd &D)
 {
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	VX x(Nd); 
 	x.setOnes();
 
-	CreateGlobalK(&x);
-	CreateF(&x);
+	CreateGlobalK(x);
+	CreateF(x);
 
 	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
 	//BiCGSTAB<SparseMatrix<double>> solver;
@@ -313,50 +330,23 @@ void Stiffness::CalculateD(VectorXd *ptr_D)
 	//cout << solver.rank() << endl;
 	//getchar();
 
-	(*ptr_D) = solver.solve(F_);
+	D = solver.solve(F_);
 	//assert(solver.info() == Success);
 
 	cout << "Stiffness: Initial D Calculation Completed." << endl;
 }
 
 
-void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_matrix, int write_3dd, int cut_count)
+void Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count)
 {
+	D.resize(6 * Ns_);
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();		// Number of edges in original graph
 	int Fd = ptr_dualgraph_->SizeOfFaceList();		// Number of nodes in original graph
-
-	VX x(Nd);
-	x.setOnes();
 
 	// Parameter for StiffnessSolver
 	int		verbose = 1,	// 1 : copious screenplay
 			info;
-	double	rms_resid;		// root-mean-square residual for LDL't solving
-	
-	VXi q(Fd*6);
-	VXi r(Fd*6);
-	for (int i = 0; i < Fd; i++)
-	{
-		int u = ptr_dualgraph_->v_orig_id(i);
-		if (ptr_dualgraph_->ptr_frame_->isFixed(u))
-		{
-			// restained node with known displacement but unknown reaction force
-			for (int k = 0; k < 6; k++)
-			{
-				r[i * 6 + k] = 1;
-				q[i * 6 + k] = 0;
-			}
-		}
-		else
-		{
-			// free node with known external force but unknown displacement
-			for (int k = 0; k < 6; k++)
-			{
-				r[i * 6 + k] = 0;
-				q[i * 6 + k] = 1;
-			}
-		}
-	}
 
 	if (write_3dd)
 	{
@@ -364,8 +354,8 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 	}
 	
 	Init();
-	CreateGlobalK(&x);
-	CreateF(&x);
+	CreateGlobalK(x);
+	CreateF(x);
 
 	if (write_matrix)
 	{
@@ -383,9 +373,8 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
 	fprintf(stdout, "Linear Elastic Analysis ... Mechanical Loads\n");
 	
-	VX React_F(Fd*6);		// restained nodes' reaction force
-	stiff_solver_.SolveSystem(K_, *ptr_D, F_, React_F, K_.cols(), q, r, verbose, info, rms_resid);
-	
+	stiff_solver_.SolveSystem(K_, D, F_, verbose, info);
+
 	if (write_matrix)
 	{
 		FILE	*fp;
@@ -396,7 +385,7 @@ void Stiffness::CalculateD(VectorXd *ptr_D, const VectorXd *ptr_x, int write_mat
 
 		stiff_io_.OutputPath(deform_file, deform_path, FRAME3DD_PATHMAX, NULL);
 		
-		stiff_io_.SaveDisplaceVector(deform_path, *ptr_D, ptr_D->size(), ptr_dualgraph_);
+		stiff_io_.SaveDisplaceVector(deform_path, D, D.size(), ptr_dualgraph_);
 	}
 
 	//getchar();
