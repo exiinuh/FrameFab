@@ -1,10 +1,9 @@
 #pragma once
-#include"WireFrame\WireFrame.h"
+#include "GCommon.h"
+#include "WireFrame\WireFrame.h"
 #include "Triangle.h"
 
 using namespace std;
-
-static const double pi = 3.1415926;
 
 class ExtruderCone
 {
@@ -23,7 +22,7 @@ public:
 	void Rotation(double angle,point start, point end);
 
 	void RotateTri(Triangle temp);
-     point Muti(point s);
+    point Muti(point s);
 	void Render(WireFrame* ptr_frame, double alpha);
 private:
 	double	angle_;

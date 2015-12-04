@@ -41,12 +41,6 @@ void FiberPrintPlugIn::Print()
 }
 
 
-void FiberPrintPlugIn::SetStartEdge(int id)
-{
-	ptr_seqanalyzer_->SetStartEdge(id);
-}
-
-
 void FiberPrintPlugIn::Debug()
 {
 

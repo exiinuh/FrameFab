@@ -66,7 +66,7 @@ public:
 	* @param info		: <0 : not stiffness matrix positive definite
 	* @param rms_resid  : the RMS error of the solution residual 
 	*/
-	void SolveSystem(		
+	bool SolveSystem(		
 		SpMat &K, VX &D, VX &F, VX &R, 
 		int Dof, VXi &q, VXi &r, 
 		int verbose, int &info, double &rms_resid
@@ -83,7 +83,7 @@ public:
     * @param info: <0 : not stiffness matrix positive definite
     * Note: This function use eigen library SimplicialLDLt module to solve the linear system.
     */
-    void SolveSystem(
+    bool SolveSystem(
         SpMat &K, VX &D, VX &F, int verbose, int &info  
         );
 

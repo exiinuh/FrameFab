@@ -148,6 +148,7 @@ public:
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
+	inline WF_vert				*GetVert(int u)			{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]; }
 	inline WF_edge				*GetEdge(int i)			{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]; }
 	inline WF_edge				*GetNeighborEdge(int u)	{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->pedge_; }
 

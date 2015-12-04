@@ -62,8 +62,10 @@ public:
 	//Initialization
 	void		InitState();
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
-	void		CreateAandC();						// Construct edge-incidence matrix A and weight diagonal matrix C
 	void		SetBoundary();
+	void		CreateA();							// Construct edge-incidence matrix A
+	void		CreateC(int cut, int rew);					
+    // Construct weight diagonal matrix C and H1
 
 	//Termination
 	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts

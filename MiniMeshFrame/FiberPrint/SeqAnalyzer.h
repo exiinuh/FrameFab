@@ -42,8 +42,6 @@ public:
 
 public:
 	void			LayerPrint();
-	void			GenerateQueue(int l, int Nl);
-	void			SetStartEdge(int id);
 
 	vector<QueueInfo>		*GetQueue()			{ return layer_queue_; }
 	vector<vector<int>>		*GetRangeState()	{ return ptr_collision_->GetRangeState(); }

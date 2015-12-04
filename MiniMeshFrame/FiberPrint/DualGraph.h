@@ -82,19 +82,20 @@ public:
 	~DualGraph();
 
 public:
-	/* dualization on the whole frame */
-	void	Dualization();
 
-	/* update from graphcut */
-	void	UpdateDualization(VectorXd *ptr_x);
+	void	Dualization();									// dualization on the whole frame
 
+	void	UpdateDualization(VectorXd *ptr_x);				// update from graphcut
 	void	Establish();
 
-	/* insert a trail edge ei from frame */
-	void	UpdateDualization(int ei);
+	void	UpdateDualization(WF_edge *e);					// insert a trail edge ei from frame 
+	void	RemoveUpdation(WF_edge *e);						// remove the trail edge
 
-	/* remove the trail edge */
-	void	RemoveUpdation(int ei);
+	void	InsertVertex(WF_edge *e);
+	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w);
+	void	InsertFace(WF_vert *p);
+	void	DeleteVertex(WF_edge *e);
+	void	DeleteFace(WF_vert *p);
 
 	vector<DualVertex*>		*GetVertList()		{ return vert_list_; }
 	vector<DualEdge*>		*GetEdgeList()		{ return edge_list_; }
@@ -132,7 +133,7 @@ public:
 			return false;
 		}
 	}
-	//void					Debug();
+	void					Debug();
 
 public:
 	WireFrame				*ptr_frame_;
@@ -142,7 +143,7 @@ private:
 	vector<DualVertex*>		*vert_list_;				// dual vert: original edge
 	vector<DualFace*>		*face_list_;				// dual face: original vert
 
-	vector<bool>			exist_vert_;
+	vector<int>				exist_vert_;
 	vector<bool>			exist_edge_;
 
 	int						Nd_;

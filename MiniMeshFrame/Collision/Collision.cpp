@@ -1,6 +1,5 @@
 #include"Collision.h"
 
-
 Collision::Collision()
 {
 }
@@ -93,6 +92,7 @@ int		Collision ::AboveCollisionAnalysis(SpecialBulk *SpecialBulk, point target_s
 
 void Collision::DetectFrame()
 {
+	cout << "---------------------------" << endl;
 	cout << " Detect Collision begins..." << endl;
 
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
@@ -877,14 +877,3 @@ void Collision::Print()
 	current_bulk_.top_right_.Print();
 	*/
 }
-
-
-
-
-
-
-
-
-
-
-

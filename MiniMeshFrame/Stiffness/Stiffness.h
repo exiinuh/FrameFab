@@ -78,8 +78,8 @@ public:
 	void		CreateGlobalK(const VectorXd &x);
 
 	// Socket to GraphCut
-	void		CalculateD(VectorXd &D);
-	void		CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count);
+	bool		CalculateD(VectorXd &D);
+	bool		CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }

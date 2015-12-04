@@ -1267,93 +1267,14 @@ void RenderingWidget::DrawOrder(bool bv)
 			glColor3f(1.0, 1.0, 1.0);
 			glVertex3fv(e->pvert_->RenderPos().data());
 			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-			glEnd();	
+			glEnd();
 		}
 
-		if (print_order_>0)
+		if (print_order_ > 0)
 		{
 			ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
 		}
-		/*
-		const std::vector<int> print_queue = *(ptr_fiberprint_->GetQueue());
-		Orientation orientation = ptr_fiberprint_->ptr_seqanalyzer_->GetOrientation();
-		int Nd = ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList();
-
-		if (orientation == SEQUENCE)
-		{
-			int max_order = min(print_order_, Nd);
-			for (int i = 0; i < max_order; i++)
-			{
-				int ei = dual_vert[print_queue[i]]->orig_id();
-				WF_edge *e = edges[ei];
-				glBegin(GL_LINE_LOOP);
-				glColor3f(1.0, 1.0, 1.0);
-				glVertex3fv(e->pvert_->RenderPos().data());
-				glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-				glEnd();
-			}
-		}
-		else
-		{
-			if (print_order_ > 0)
-			{
-				int ei = dual_vert[print_queue[0]]->orig_id();
-				WF_edge *e = edges[ei];
-				glBegin(GL_LINE_LOOP);
-				glColor3f(1.0, 1.0, 1.0);
-				glVertex3fv(e->pvert_->RenderPos().data());
-				glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-				glEnd();
-			}
-
-			int max_order = max(0, Nd - print_order_);
-			for (int i = Nd - 1; i > max_order; i--)
-			{
-				int ei = dual_vert[print_queue[i]]->orig_id();
-				WF_edge *e = edges[ei];
-				glBegin(GL_LINE_LOOP);
-				glColor3f(1.0, 1.0, 1.0);
-				glVertex3fv(e->pvert_->RenderPos().data());
-				glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-				glEnd();
-			}
-		}
-		*/
-		
 	}
-	/*
-	else
-	if (op_mode_ == SETSTART)
-	{
-		int M = ptr_frame_->SizeOfEdgeList();
-
-		for (int i = 0; i < M; i++)
-		{
-			WF_edge *e = edges[i];
-			WF_edge *e_pair = edges[i]->ppair_;
-
-			if (e->ID() < e_pair->ID())
-			{
-				glBegin(GL_LINE_LOOP);
-
-				if (captured_edge_ == i)
-				{
-					glColor3f(1.0, 0.0, 0.0);
-				}
-				else
-				{
-					glColor3f(1.0, 1.0, 1.0);
-				}
-
-				glVertex3fv(e->pvert_->RenderPos().data());
-				glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-
-				glEnd();
-			}
-		}
-	}
-	*/
-	//updateGL();
 
 }
 
@@ -1374,7 +1295,7 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 
 	FiberPrintPARM *ptr_parm = new FiberPrintPARM();
 
-	delete ptr_fiberprint_;
+	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm);
 	ptr_fiberprint_->Print();
 

@@ -134,13 +134,14 @@ void GraphCut::SetStartingPoints(int count)
 		ptr_dualgraph_->UpdateDualization(&x_);
 	}
 
-    Ns_ = ptr_dualgraph_->SizeOfFreeFace();
-	ptr_stiff_->Init();
-
 	Nd_ = ptr_dualgraph_->SizeOfVertList();
 	Md_ = ptr_dualgraph_->SizeOfEdgeList();
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
+    Ns_ = ptr_dualgraph_->SizeOfFreeFace();
+
+	ptr_stiff_->Init();
 	
+    /* Reweighting Paramter */
 	r_.resize(Nd_, Nd_);
 	x_.resize(Nd_);
 	lambda_.resize(6 * Ns_);
@@ -153,37 +154,6 @@ void GraphCut::SetStartingPoints(int count)
 	a_.setZero();
 
 	//ptr_stiff_->Debug();
-}
-
-
-void GraphCut::CreateAandC()
-{
-	vector<DualEdge*> dual_edge = *(GetDualEdgeList());
-
-	A_.resize(Md_, Nd_); 
-	vector<Triplet<double>> A_list;
-	for (int i = 0; i < Md_; i++)
-	{
-		A_list.push_back(Triplet<double>(i, dual_edge[i]->u(), 1));
-		A_list.push_back(Triplet<double>(i, dual_edge[i]->v(), -1));
-	}
-	A_.setFromTriplets(A_list.begin(), A_list.end());
-
-	C_.resize(Md_, Md_);
-	vector<Triplet<double>> C_list;
-	for (int i = 0; i < Md_; i++)
-	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
-		C_list.push_back( Triplet<double>(i, i, pow(dual_edge[i]->w(), 2) * r_(u, v)) );
-	}
-	C_.setFromTriplets(C_list.begin(), C_list.end());
-	
-	//Statistics s_C("C", C_);
-	//s_C.GenerateSpFile();
-
-	H1_ = SpMat(Nd_, Nd_);
-	H1_ = A_.transpose() * C_ * A_;
 }
 
 
@@ -243,6 +213,51 @@ void GraphCut::SetBoundary()
 		}
 	}
 	W_.setFromTriplets(W_list.begin(), W_list.end());
+}
+
+
+void GraphCut::CreateA()
+{
+	A_.resize(Md_, Nd_); 
+	vector<Triplet<double>> A_list;
+	for (int i = 0; i < Md_; i++)
+	{
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
+		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
+	}
+	A_.setFromTriplets(A_list.begin(), A_list.end());
+}
+
+
+void GraphCut::CreateC(int cut, int rew)
+{
+	C_.resize(Md_, Md_);
+	vector<Triplet<double>> C_list;
+    vector<double> v_r;
+    vector<double> v_c;
+
+	for (int i = 0; i < Md_; i++)
+	{
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+		C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v)));
+        v_r.push_back(r_(u, v));
+        v_c.push_back(pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v));
+    }
+	C_.setFromTriplets(C_list.begin(), C_list.end());
+
+    //string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
+    //Statistics s_c(str_c, v_c);
+    //s_c.GenerateStdVecFile();
+
+    //string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
+    //Statistics s_r(str_r, v_r);
+    //s_r.GenerateStdVecFile();
+
+	H1_ = SpMat(Nd_, Nd_);
+	H1_ = A_.transpose() * C_ * A_;
 }
 
 
@@ -317,48 +332,38 @@ void GraphCut::MakeLayers()
 	// Initial Cutting Edge Setting
 	InitState();
 
-	vector<double> cut_energy;
-    vector<double> deform_energy;
-
 	int cut_count = 0;
+	vector<double> cut_energy;
+    vector<double> res_energy;
 	do
 	{
+        /* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints(cut_count);
-		CreateAandC();
+		CreateA();
 
-		ptr_stiff_->CalculateD(D_, x_, 1, 1, cut_count);
+		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
 
+        /* set x for intial cut setting */
 		SetBoundary();
+
 		/* 
 		* energy specify:
-		* cut		 energy : x^t * A^t * C * A * x
+		* cut		 energy : | A * x |
 		* defomation energy : norm(K D - F)
 		*/
 		ptr_stiff_->CreateGlobalK(x_);
         ptr_stiff_->CreateF(x_);
 		SpMat K_init = *(ptr_stiff_->WeightedK());
 		VX	  F_init = *(ptr_stiff_->WeightedF());
-		SpMat Q_init;
-			
-		CalculateQ(D_, Q_init);
+	
 
-		//Statistics s_K("K", K_init);
-		//Statistics s_F("F", F_init);
-		//Statistics s_Q("Q", Q_init);
-
-		//s_K.GenerateSpFile();
-		//s_F.GenerateVectorFile();
-		//s_Q.GenerateSpFile();
-
-		double icut_energy = x_.dot((H1_)*x_);
+        double icut_energy = 0;
+        VX V_Cut = A_ * x_;
+        for (int i = 0; i < Md_; i++)
+        {
+            icut_energy += abs(V_Cut[i]);
+        }
 		double ideform_energy = (K_init * D_ - F_init).norm();
-		
-		VX error = (K_init * D_ - F_init) - Q_init * x_;
-		//double rel_err = error.maxCoeff() / (K_init * D_ - F_init).maxCoeff();
-		//cout << "relative error : " << rel_err << endl;
-
-		Statistics s_error("error", error);
-		s_error.GenerateVectorFile();
 
 		cout << "****************************************" << endl;
 		cout << "GraphCut Round : " << cut_count << endl;
@@ -369,13 +374,27 @@ void GraphCut::MakeLayers()
 		int rew_count = 0;
 		VX x_prev;
 		VX D_prev;
+        
+        /* Output energy list for reweighting process in a single 
+           graph cut problem, energy.size() = number of reweighting
+           process performed.
+           cut energy = |A_ * x_| = sum_{e_ij} w_ij * |x_i - x_j|
+           res energy = (K(x)D - F(x)).norm()
+        */
+
+        cut_energy.clear();
+        res_energy.clear();
+
+        cut_energy.push_back(icut_energy);
+        res_energy.push_back(ideform_energy);
 
 		do
 		{
+            /* Reweighting loop for cut */
+
 			int ADMM_count = 0;
 			x_prev = x_;
-            cut_energy.clear();
-            deform_energy.clear();
+			CreateC(cut_count, rew_count);
 
 			do
 			{
@@ -384,23 +403,11 @@ void GraphCut::MakeLayers()
 
 				/*-------------------ADMM loop-------------------*/
 				CalculateX();
-				string str = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
-					+ to_string(rew_count) + "_x";
-				Statistics s_x(str, x_);
-				s_x.GenerateVectorFile();
 
 				D_prev = D_;
 				CalculateD();
-				string str_d = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
-					+ to_string(rew_count) + "_D";
-				Statistics s_d(str_d, D_);
-				s_d.GenerateVectorFile();
 
 				UpdateLambda();
-				string str_l = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
-					+ to_string(rew_count) + "_lambda";
-				Statistics s_l(str_l, lambda_);
-				s_l.GenerateVectorFile();
 
 				/*-------------------Residual Calculation-------------------*/
 				SpMat Q_prev;
@@ -414,63 +421,68 @@ void GraphCut::MakeLayers()
 				SpMat K_new = *(ptr_stiff_->WeightedK());
                 VX    F_new = *(ptr_stiff_->WeightedF());
 
-				dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
+				dual_res_   = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
 					+ lambda_.transpose() * (Q_prev - Q_new);
-				primal_res_ = Q_new * x_;
-                VX compare_p_res = K_new * D_ - F_new;
+                primal_res_ = K_new * D_ - F_new;
 
-				/*-------------------Output Info-------------------*/				
+				/*-------------------Screenplay-------------------*/				
                 double new_cut_energy = x_.dot(H1_ * x_);
-                cut_energy.push_back(new_cut_energy);
-                deform_energy.push_back(compare_p_res.norm());
 
-                cout << "new energy func value record: " << new_cut_energy << endl;
-                cout << "dual_residual : " << dual_res_.norm() << endl;
-                cout << "primal_residual(Q) : " << primal_res_.norm() << endl;
-                cout << "primal_residual(KD-F) : " << compare_p_res.norm() << endl;
-
-                cout << "Cut Energy: ";
-                for (int i = 0; i < cut_energy.size(); i++)
-				{
-					cout << cut_energy[i] << " << ";
-				}
-
-                cout << "\n";
-
-                cout << "Deform Energy: ";
-                for (int i = 0; i < deform_energy.size(); i++)
-                {
-                    cout << deform_energy[i] << " << ";
-                }
-
-                cout << "\n";
+                cout << "new quadratic func value record: " << new_cut_energy << endl;
+                cout << "dual_residual : "                 << dual_res_.norm() << endl;
+                cout << "primal_residual(KD-F) : "         << primal_res_.norm() << endl;
 
                 cout << "---------------------" << endl;
 				ADMM_count++;
 			} while (!TerminationCriteria(ADMM_count));
 
-			string str_e = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
-				+ to_string(rew_count) + "_EnergyRecord";
-			Statistics s_cenergy(str_e, cut_energy);
-			s_cenergy.GenerateStdVecFile();
+            /* One reweighting process ended! */
+            /* Output energy and residual */
 
-            string str_d = "cut_" + to_string(cut_count) + "_iter_" + to_string(ADMM_count) + "_rew_"
-                + to_string(rew_count) + "_DeformRecord";
-            Statistics s_denergy(str_d, deform_energy);
-            s_denergy.GenerateStdVecFile();
+            double energy = 0;
+            VX V_Cut = A_ * x_;
+            for (int i = 0; i < Md_; i++)
+            {
+                energy += ptr_dualgraph_->Weight(i) * abs(V_Cut[i]);
+            }
 
-			rew_count++;
-		} while (!UpdateR(x_prev, rew_count));
+            /*-------------------Screenplay-------------------*/
+            double res_tmp = primal_res_.norm();
+            cout << "Cut " << cut_count << " Reweight " << rew_count << " completed." << endl;
+            cout << "Cut Energy :" << energy  << endl;
+            cout << "Res Energy :" << res_tmp << endl;
+            cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 
-		UpdateCut();													// Update New Cut information to Rendering (layer_label_)
+            cut_energy.push_back(energy);
+            res_energy.push_back(res_tmp);
 
-		printf("One iteration done!\n");
+            /* write x distribution to a file */
+            string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+            Statistics tmp_x(str_x, x_);
+            tmp_x.GenerateVectorFile();
+
+            rew_count++;
+        } while (!UpdateR(x_prev, rew_count));
+
+        /* Output reweighting energy history for last cut process */
+        string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
+        Statistics s_eC(str_eC, cut_energy);
+        s_eC.GenerateStdVecFile();
+
+        string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+        Statistics s_eR(str_eR, res_energy);
+        s_eR.GenerateStdVecFile();
+
+        /* Update New Cut information to Rendering (layer_label_) */
+		UpdateCut();
+
+        fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
 	} while (!CheckLabel(cut_count));
 
 	ptr_dualgraph_->Dualization();										// for sequence analyzer
 	
-	printf("All done!\n");
+	fprintf(stdout, "All done!\n");
 }
 
 
@@ -674,35 +686,44 @@ void GraphCut::UpdateCut()
 
 bool GraphCut::UpdateR(VX &x_prev, int count)
 {
+    double max_improv = 0;
+    for (int i = 0; i < Nd_; i++)
+    {
+        /* if No significant improvment found */
+        double improv = fabs(x_prev[i] - x_[i]) / x_prev[i];
+        if (improv > max_improv)
+        {
+            max_improv = improv;
+        }
+    }
+
+    cout << "---UpdateR Rew Check---"     << endl;
+    cout << "Reweighting Process No."     << count-1    << endl;
+    cout << "Max Relative Improvement = " << max_improv << endl;
+    cout << "---" << endl;
+
+    vector<DualEdge*> dual_edge = *(GetDualEdgeList());
+
 	for (int i = 0; i < Md_; i++)
 	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
-		r_(u, v) = 1.0 / (1e-5 + fabs(x_prev[u] - x_prev[v]));
+		int    u = ptr_dualgraph_->u(i);
+		int    v = ptr_dualgraph_->v(i);
+        double w = dual_edge[i]->w();
+
+        r_(u, v) = 1.0 / (1e-5 + w * abs(x_[u] - x_[v]));
 	}
 
-	if (count < 5)
-	{
-		return false;
-	}
 
-	double max_error = 0;
-	for (int i = 0; i < Nd_; i++)
-	{
-		double error = fabs(x_prev[i] - x_[i]) / x_prev[i];
-		if (error > max_error)
-		{
-			max_error = error;
-		}
-	}
-	if (max_error < 1)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+    if (max_improv < 1e-2 || count > 20)
+    {
+        /* Exit Reweighting */
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }
 
 void GraphCut::Debug()

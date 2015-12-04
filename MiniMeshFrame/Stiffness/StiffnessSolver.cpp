@@ -1,6 +1,6 @@
 #include "StiffnessSolver.h"
 
-void StiffnessSolver::SolveSystem(
+bool StiffnessSolver::SolveSystem(
 		SpMat &K, VX &D, VX &F, VX &R, 
 		int DoF, VXi &q, VXi &r, 
 		int verbose, int &info, double &rms_resid)
@@ -36,7 +36,8 @@ void StiffnessSolver::SolveSystem(
 		fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
 		fprintf(stderr, "Please Make sure that all six\n");
 		fprintf(stderr, "rigid body translations are restrained!\n");
-		/* exit(31); */
+		
+		return false;
 	}
 	else
 	{
@@ -54,9 +55,10 @@ void StiffnessSolver::SolveSystem(
 		if (verbose) fprintf(stdout, "LDL^t Solving completed\n");
 	}
 
+	return true;
 }
 
-void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
+bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
 {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.compute(K);
@@ -65,7 +67,7 @@ void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     if (solver.info() != Eigen::Success)
     {
         fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Decomposition!\n");
-        return;
+        return false;
     }
 
     VX Diag = solver.vectorD();
@@ -81,6 +83,7 @@ void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
         {
             fprintf(stderr, " SolveSystem(Ver.Eigen): zero found on diagonal ...\n");
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
+			return false;
         }
 
         if (Diag[i] < 0.0)
@@ -88,6 +91,7 @@ void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
             fprintf(stderr, " SolveSystem(Ver.Eigen): negative number found on diagonal ...\n");
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
             info--;
+			return false;
         }
         
         if (verbose)
@@ -98,18 +102,23 @@ void StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 
     if (info < 0)
     {
-            fprintf(stderr, "Stiffness Matrix is not positive definite: %d negative elements\n", info);
-            fprintf(stderr, "found on decomp diagonal of K.\n");
-            fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
-            fprintf(stderr, "Please Make sure that all six\n");
-            fprintf(stderr, "rigid body translations are restrained!\n");
+		fprintf(stderr, "Stiffness Matrix is not positive definite: %d negative elements\n", info);
+		fprintf(stderr, "found on decomp diagonal of K.\n");
+		fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
+		fprintf(stderr, "Please Make sure that all six\n");
+		fprintf(stderr, "rigid body translations are restrained!\n");
+
+		return false;
     }
 
     D = solver.solve(F);
     if (solver.info() != Eigen::Success)
     {
         fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Solving!\n");
+		return false;
     }
+
+	return true;
 }
 
 /*

@@ -28,7 +28,7 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
 	E_ = ptr_parm->youngs_modulus_;
 	v_ = ptr_parm->poisson_ratio_;
 
-	Init();
+	Init(); 
 }
 
 
@@ -305,47 +305,22 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 }
 
 
-void Stiffness::CalculateD(VectorXd &D)
+bool Stiffness::CalculateD(VectorXd &D)
 {
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	VX x(Nd); 
 	x.setOnes();
 
-	CreateGlobalK(x);
-	CreateF(x);
-
-	//SparseQR<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	//BiCGSTAB<SparseMatrix<double>> solver;
-	//SparseLU<SparseMatrix<double>, COLAMDOrdering<int>> solver;
-	FullPivLU<MatrixXd> solver;
-
-	cout << "Stiffness: Calculating Initial D." << endl;
-
-	//K_.makeCompressed();
-
-	solver.compute(K_);
-	//assert(solver.info() == Success);
-
-	//cout << "column number of K_ : " << K_.cols() << endl;
-	//cout << solver.rank() << endl;
-	//getchar();
-
-	D = solver.solve(F_);
-	//assert(solver.info() == Success);
-
-	cout << "Stiffness: Initial D Calculation Completed." << endl;
+	return CalculateD(D, x, 0, 0, 0);
 }
 
 
-void Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count)
+bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count)
 {
 	D.resize(6 * Ns_);
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();		// Number of edges in original graph
-	int Fd = ptr_dualgraph_->SizeOfFaceList();		// Number of nodes in original graph
-
 	// Parameter for StiffnessSolver
-	int		verbose = 1,	// 1 : copious screenplay
+	int		verbose = 0,	// 1 : copious screenplay
 			info;
 
 	if (write_3dd)
@@ -353,7 +328,7 @@ void Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_, cut_count);
 	}
 	
-	Init();
+	//Init();
 	CreateGlobalK(x);
 	CreateF(x);
 
@@ -373,7 +348,10 @@ void Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
 	fprintf(stdout, "Linear Elastic Analysis ... Mechanical Loads\n");
 	
-	stiff_solver_.SolveSystem(K_, D, F_, verbose, info);
+	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
+	{
+		return false;
+	}
 
 	if (write_matrix)
 	{
@@ -388,7 +366,7 @@ void Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 		stiff_io_.SaveDisplaceVector(deform_path, D, D.size(), ptr_dualgraph_);
 	}
 
-	//getchar();
+	return true;
 }
 
 

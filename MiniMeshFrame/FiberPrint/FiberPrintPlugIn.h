@@ -19,8 +19,6 @@ public:
 public:
 	void			Print();
 
-	void			SetStartEdge(int id);
-
 	vector<DualVertex*>	*GetDualVertList()	{ return ptr_graphcut_->GetDualVertList(); }
 	vector<int>			*GetLabel()			{ return ptr_graphcut_->GetLabel(); }
 	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }

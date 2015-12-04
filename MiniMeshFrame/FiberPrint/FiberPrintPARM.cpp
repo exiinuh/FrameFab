@@ -2,7 +2,7 @@
 
 
 FiberPrintPARM::FiberPrintPARM()
-			   :penalty_(10e2), D_tol_(0.1), pri_tol_(1e-4), dual_tol_(1e-4), alpha_(1.0), beta_(10000.0), gamma_(100.0)
+			   :penalty_(1e3), D_tol_(0.1), pri_tol_(1e-3), dual_tol_(1e-3), alpha_(1.0), beta_(10000.0), gamma_(100.0)
 {
 	/*
 	*	For Your Inference; Unit Transfer
