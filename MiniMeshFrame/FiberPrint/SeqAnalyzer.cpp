@@ -122,6 +122,7 @@ void SeqAnalyzer::LayerPrint()
 		vector<bool> visited(Nl);
 		fill(visited.begin(), visited.end(), false);
 
+		/* h record the overall already printed dual verts */
 		int h = layer_queue_->size();
 		int t = h + Nl;
 
@@ -133,7 +134,7 @@ void SeqAnalyzer::LayerPrint()
 			int i = (*layer_queue_)[h].layer_id_;
 			int dual_i = (*layer_queue_)[h].dual_id_;
 			int orig_i = ptr_dualgraph->e_orig_id(dual_i);
-			double height_i = ptr_dualgraph->Height(dual_i);
+			double height_i = ptr_dualgraph->Height(dual_i);	// central point height of this original edge
 
 			double	min_cost = 1e20;
 			int		cost_id = -1;
@@ -150,6 +151,7 @@ void SeqAnalyzer::LayerPrint()
 			/* update printed subgraph */
 			ptr_subgraph->UpdateDualization(ptr_frame->GetEdge(orig_i));
 
+			/* Trial Strategy			  */
 			/* next edge in current layer */
 			for (int j = 0; j < Nl; j++)
 			{
