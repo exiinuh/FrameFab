@@ -240,6 +240,43 @@ void WireFrame::WriteToOBJ(const char *path)
 }
 
 
+void WireFrame::ExportPoints(const char *path)
+{
+	FILE *fp = fopen(path, "wb+");
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		point p = (*pvert_list_)[i]->RenderPos();
+		fprintf(fp, "%lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	fclose(fp);
+}
+
+
+void WireFrame::ExportLines(const char *path)
+{
+	FILE *fp = fopen(path, "wb+");
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (e1->ID() < e2->ID())
+		{
+			point p1 = e2->pvert_->RenderPos();
+			point p2 = e1->pvert_->RenderPos();
+			fprintf(fp, "%lf %lf %lf ", p1.x(), p1.y(), p1.z());
+			fprintf(fp, "%lf %lf %lf\n", p2.x(), p2.y(), p2.z());
+		}
+	}
+
+	fclose(fp);
+}
+
+
 WF_vert* WireFrame::InsertVertex(Vec3f p)
 {
 	// detect duplication

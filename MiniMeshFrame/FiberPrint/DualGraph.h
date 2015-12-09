@@ -114,7 +114,10 @@ public:
 	int		v_dual_id(int i)	{ return (*face_list_)[i]->dual_id(); }
 	double	Weight(int ei)		{ return (*edge_list_)[ei]->w(); }
 	double	Height(int ei)		{ return (*vert_list_)[ei]->Height(); }
-	
+
+	bool isExistingVert(int u)	{ return (exist_vert_[u] > 0); }
+	bool isExistingEdge(int ei)	{ return exist_edge_[ei]; }
+
 	bool isAdjacent(int i, int j)
 	{
 		WF_edge *e1 = ptr_frame_->GetEdge(e_orig_id(i));
@@ -143,8 +146,8 @@ private:
 	vector<DualVertex*>		*vert_list_;				// dual vert: original edge
 	vector<DualFace*>		*face_list_;				// dual face: original vert
 
-	vector<int>				exist_vert_;
-	vector<bool>			exist_edge_;
+	vector<int>				exist_vert_;				// indexed by original id
+	vector<bool>			exist_edge_;				// indexed by original id
 
 	int						Nd_;
 	int						Md_;

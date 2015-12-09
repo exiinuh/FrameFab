@@ -15,7 +15,6 @@ enum EdgeRenderMode
 	NONE,
 	EDGE,
 	HEAT,
-	CUT,
 	BULK,
 	ORDER,
 };
@@ -38,7 +37,6 @@ public:
 private:
 	void	CreateActions();
 	void	CreateMenus();
-	void	CreateToolBars();
 	void	CreateLabels();
 	void	CreateSpinBoxes();
 	void	CreateCheckBoxes();
@@ -85,25 +83,20 @@ private:
 
 	// Basic
 	QMenu				*menu_file_;
-	QMenu				*menu_edit_;
+	QMenu				*menu_display_;
 	QMenu				*menu_help_;
-
-	QToolBar			*toolbar_file_;
-	QToolBar			*toolbar_edit_;
-	QToolBar			*toolbar_basic_;
 
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
-	QAction				*action_saveas_;
+	QAction				*action_exportpoints_;
+	QAction				*action_exportlines_;
+
+	QAction				*action_background_;
 
 	QAction				*action_aboutqt_;
 	QAction				*action_about_;
 	
-	// Basic Operator Tool
-	QAction				*action_loadmesh_;
-	QAction				*action_background_;
-
 	// Labels
 	QLabel				*label_meshinfo_;
 	QLabel				*label_operatorinfo_;
@@ -148,7 +141,6 @@ private:
 
 	// Radiobuttons
 	QRadioButton		*radiobutton_heat_;
-	QRadioButton		*radiobutton_cut_;
 	QRadioButton		*radiobutton_bulk_;
 	QRadioButton		*radiobutton_order_;
 	QRadioButton		*radiobutton_none_;
@@ -159,6 +151,7 @@ private:
 	QPushButton			*pushbutton_rotatexz_;
 	QPushButton			*pushbutton_rotateyz_;
 	QPushButton			*pushbutton_simplify_;
+	QPushButton			*pushbutton_refine_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
 

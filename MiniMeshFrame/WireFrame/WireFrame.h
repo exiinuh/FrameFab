@@ -125,6 +125,8 @@ public:
 public:
 	void		LoadFromOBJ(const char *path);
 	void		WriteToOBJ(const char *path);
+	void		ExportPoints(const char *path);
+	void		ExportLines(const char *path);
 
 	WF_vert*	InsertVertex(const Vec3f p);
 	void		InsertEdge(WF_vert *u, WF_vert *v);

@@ -151,15 +151,15 @@ double CommonBulk::Angle(point p)
 {
 	GeoV3 temp = GeoV3(p - start_);
 	if ((p - start_) == point(0, 0, 0))
-		return pi / 2;
+		return F_PI / 2;
 
 	double len = Geometry::dot(temp, vector_tz_);
 	GeoV3 v = temp - vector_tz_*len;
 	len = -Geometry::dot(v, vector_tzz_);
 	double angle = -Geometry::angle(vector_t_, vector_tzz_);
 
-	if (abs(angle - pi / 2) <= eps)
-		return pi / 2;
+	if (abs(angle - F_PI / 2) <= eps)
+		return F_PI / 2;
 
 	len = len / cos(angle);
 	temp = temp - vector_t_*len;

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Polyface.h"
 
 class Triangle : public Polyface
@@ -54,6 +53,7 @@ public:
 		glVertex3fv(ptr_frame->Unify(v2()));
 		glEnd();
 	}
+
 	void Add(point base)
 	{
 		for (int i = 0; i < vert_list_.size(); i++)

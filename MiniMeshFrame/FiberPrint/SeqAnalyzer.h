@@ -1,11 +1,38 @@
+/*
+* ==========================================================================
+*
+*       class: SequenceAnalyzer
+*
+*    Description:  perform tool path searching algorithm to generate
+*				   a collision-free, structurally stable 
+*
+*	 Version:  1.0
+*	 Created:  Oct/20/2015
+*    Update :  Dec/08/2015
+*
+*	 Author:   Xin Hu, Guoxian Song, Yijiang Huang
+*	 Company:  GCL@USTC
+*	 Note:
+*			   Ver1.0: Backtracking Greedy Approach:
+*					   At every decision state, a trail solution is performed,
+*				unvisited current layer edges that are connected to already printed
+*				structure and calculate their adjacency,collision and stiffness weight.
+*				The total printing cost is weighted sum of the three: wp_ * P + wl_ * L + ws_ * S
+*				P: adjacency cost
+*
+*				L: collision cost	- range(dual_i, dual_j) is the prohibited angle range for printing edge i
+*				because of the existence of edge j. Larger prohibited angle means that edge i is difficult to print
+*				due to edge j's blocking, thus we give it larger cost to discourage greedy approach from choosing it.
+*
+*				S: stiffness cost
+* ==========================================================================
+*/
 #pragma once
-
 #include <cmath>
 
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
 #include "Collision\Collision.h"
-//#include "TSP\TSPSolver.h"
 
 typedef struct Set
 {
@@ -41,38 +68,32 @@ public:
 	~SeqAnalyzer();
 
 public:
-	void			LayerPrint();
+	bool			LayerPrint();
+	
+	/* GenerateSeq - Generate  
+	*
+	*/
+	bool			GenerateSeq(int l, int h, int t);
 
 	vector<QueueInfo>		*GetQueue()			{ return layer_queue_; }
 	vector<vector<int>>		*GetRangeState()	{ return ptr_collision_->GetRangeState(); }
 	vector<BaseBulk*>		*GetBulk()			{ return ptr_collision_->GetBulk(); }
-
-	ExtruderCone	GetExtru(int i){ return (extrulist_)[i]; }
-
-	vector<double>  AngleList(vector<QueueInfo>*layer_queue);
-    double			Divergence( Range *r);
-
-	// @PARM : start_id is for vector
-	double			AngleValue(int start_id, vector<QueueInfo>*layer_queue);
+	ExtruderCone			GetExtru(int i)		{ return (extrulist_)[i]; }
 
 	void			Print(Set *a);
 	void			Print(vector<Set*> *a);
-
-	// AngleDecide : find the suiable angle in those set
-	double			AngleDecide(vector<Set*> *temp);
-
 	void			Debug();
 
 private:
 	GraphCut		*ptr_graphcut_;
 	Collision		*ptr_collision_;
+	DualGraph		*ptr_subgraph_;
 
 	double			alpha_;					
 	double			beta_;
 	double			gamma_;
 	double			stiff_tol_;
-
-	int				start_edge_;
+	double			height_differ_;
 
 	vector<vector<int>>		layers_;
 	vector<QueueInfo>		*layer_queue_;

@@ -4,7 +4,7 @@
 
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
-has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false), is_draw_cut_(false), 
+has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false),
 is_draw_bulk_(false), is_draw_axes_(false), is_simplified_(false), op_mode_(NORMAL), scale_(1.0)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
@@ -31,7 +31,6 @@ void RenderingWidget::InitDrawData()
 {
 	is_draw_edge_ = false;
 	is_draw_heat_ = false;
-	is_draw_cut_ = false;
 	is_draw_bulk_ = false;
 	is_draw_order_ = false;
 }
@@ -501,7 +500,6 @@ void RenderingWidget::Render()
 	DrawPoints(is_draw_point_);
 	DrawEdge(is_draw_edge_);
 	DrawHeat(is_draw_heat_);
-	DrawCut(is_draw_cut_);
 	DrawBulk(is_draw_bulk_);
 	DrawOrder(is_draw_order_);
 }
@@ -578,9 +576,9 @@ void RenderingWidget::ReadFrame()
 
 void RenderingWidget::WriteFrame()
 {
-	if (ptr_frame_->SizeOfVertList() == 0)
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
 	{
-		emit(QString("The Mesh is Empty !"));
+		emit(QString("The mesh is Empty !"));
 		return;
 	}
 	QString filename = QFileDialog::
@@ -592,7 +590,7 @@ void RenderingWidget::WriteFrame()
 
 	ptr_frame_->WriteToOBJ(filename.toLatin1().data());
 
-	emit(operatorInfo(QString("Write Mesh to ") + filename + QString(" Done")));
+	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
 }
 
 
@@ -623,6 +621,46 @@ void RenderingWidget::ScaleFrame(int size)
 }
 
 
+void RenderingWidget::ExportPoints()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Export points"),
+		"..", tr("Points (*.txt)"));
+
+	if (filename.isEmpty())
+		return;
+
+	ptr_frame_->ExportPoints(filename.toLatin1().data());
+
+	emit(operatorInfo(QString("Export points to ") + filename + QString(" Done")));
+}
+
+
+void RenderingWidget::ExportLines()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Export lines"),
+		"..", tr("Lines (*.txt)"));
+
+	if (filename.isEmpty())
+		return;
+
+	ptr_frame_->ExportLines(filename.toLatin1().data());
+
+	emit(operatorInfo(QString("Export lines to ") + filename + QString(" Done")));
+}
+
+
 void RenderingWidget::CheckDrawPoint(bool bv)
 {
 	is_draw_point_ = bv;
@@ -637,7 +675,6 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case NONE:
 		is_draw_edge_ = false;
 		is_draw_heat_ = false;
-		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
 		is_draw_order_ = false;
 		break;
@@ -645,7 +682,6 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case EDGE:
 		is_draw_edge_ = true;
 		is_draw_heat_ = false;
-		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
 		is_draw_order_ = false;
 		break;
@@ -653,15 +689,6 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case HEAT:
 		is_draw_edge_ = false;
 		is_draw_heat_ = true;
-		is_draw_cut_ = false;
-		is_draw_bulk_ = false;
-		is_draw_order_ = false;
-		break;
-
-	case CUT:
-		is_draw_edge_ = false;
-		is_draw_heat_ = false;
-		is_draw_cut_ = true;
 		is_draw_bulk_ = false;
 		is_draw_order_ = false;
 		break;
@@ -669,7 +696,6 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case BULK:
 		is_draw_edge_ = false;
 		is_draw_heat_ = false;
-		is_draw_cut_ = false;
 		is_draw_bulk_ = true;
 		is_draw_order_ = false;
 		break;
@@ -677,7 +703,6 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case ORDER:
 		is_draw_edge_ = false;
 		is_draw_heat_ = false;
-		is_draw_cut_ = false;
 		is_draw_bulk_ = false;
 		is_draw_order_ = true;
 		break;
@@ -1060,79 +1085,6 @@ void RenderingWidget::DrawHeat(bool bv)
 }
 
 
-void RenderingWidget::DrawCut(bool bv)
-{
-	/*
-	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == 0)
-	{
-		return;
-	}
-
-	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
-	int M = ptr_frame_->SizeOfEdgeList();
-
-	const vector<int> cut = *(ptr_fiberprint_->GetCut());
-	vector<bool> is_cut(M);
-	fill(is_cut.begin(), is_cut.end(), false);
-	for (int i = 0; i < cut.size(); i++)
-	{
-		is_cut[cut[i]] = true;
-	}
-
-
-	for (int i = 0; i < M; i++)
-	{
-		int j = edges[i]->ppair_->ID();
-		if (i < j)
-		{
-			WF_edge *e = edges[i];
-			WF_edge *e_pair = edges[i]->ppair_;
-
-			if (is_cut[i])
-			{
-				glColor3f(1.0, 0.0, 0.0);
-			}
-			else
-			{
-			}
-			glBegin(GL_LINE_LOOP);
-
-			int tag = (Label[i] % 6);
-			switch (tag)
-			{
-			case 0:
-				glColor3f(1.0, 0.0, 0.0);
-				break;
-			case 1:
-				glColor3f(0.0, 1.0, 0.0);
-				break;
-			case 2:
-				glColor3f(0.0, 0.0, 1.0);
-				break;
-			case 3:
-				glColor3f(1.0, 1.0, 0.0);
-				break;
-			case 4:
-				glColor3f(1.0, 0.0, 1.0);
-				break;
-			case 5:
-				glColor3f(1.0, 1.0, 1.0);
-				break;
-
-			default:
-				break;
-			}
-
-			glVertex3fv(e->pvert_->RenderPos().data());
-			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-
-			glEnd();
-		}
-	}
-	*/
-}
-
-
 void RenderingWidget::DrawBulk(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
@@ -1334,6 +1286,19 @@ void RenderingWidget::SimplifyFrame()
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
 	updateGL();
+}
+
+
+void RenderingWidget::RefineFrame()
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+	ptr_frame_->RefineFrame();
+
+	emit(operatorInfo(QString("")));
+	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 }
 
 

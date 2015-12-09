@@ -348,14 +348,14 @@ double SpecialBulk::Angle(point p)
 {
 
 	if ((p - start_) == point(0, 0, 0))
-		return pi / 2;
+		return F_PI / 2;
 	GeoV3 temp= Geometry::Vector3d(p - start_);
 
 	if (Geometry::dot(temp, vector_tz_) == 0)
-		return pi / 2;
+		return F_PI / 2;
 	
 	double l = -Geometry::dot(temp, vector_tzz_);
-	double angle = pi-Geometry::angle(vector_tzz_, vector_t_);
+	double angle = F_PI - Geometry::angle(vector_tzz_, vector_t_);
 
 	GeoV3 t = vector_t_*(l / cos(angle));
 	temp = temp - t;

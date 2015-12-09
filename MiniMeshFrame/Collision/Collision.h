@@ -1,3 +1,24 @@
+/*
+* ==========================================================================
+*
+*       class: Collision
+*
+*    Description:  Collision detection for tool path, obtaining feasible 
+*				   orientation range for extruder
+*
+*	 Version:  1.0
+*	 Created:  Oct/20/2015
+*    Update :  Dec/08/2015
+*
+*	 Author:   Guoxian Song, Xin Hu, Yijiang Huang
+*	 Company:  GCL@USTC
+*	 Note:     This file uses mathematical part of Geometric Tools Engine, 
+*			   a library of source code for computing in the fields of 
+*			   mathematics, graphics, image analysis, and physics.
+*			   For more info, please refer to http://www.geometrictools.com/index.html
+*			  
+* ==========================================================================
+*/
 #pragma once
 #include <iostream>
 #include <vector>
@@ -6,10 +27,13 @@
 #include "WireFrame\WireFrame.h"
 #include "FiberPrint\DualGraph.h"
 #include "Geometry.h"
+#include "GCommon.h"
 
 #include "CommonBulk.h"
-#include"SpecialBulk.h"
-#include"BaseBulk.h"
+#include "SpecialBulk.h"
+#include "BaseBulk.h"
+
+#include "CylinderBulk.h"
 
 typedef Geometry::Vector3d GeoV3;
 
@@ -26,23 +50,16 @@ class Collision
 public:
 	Collision();
 	Collision(DualGraph *ptr_dualgraph);
-	//Collision(ExtruderCone extruder, point start, point end);
 	~Collision();
 
 public:
 	void		DetectFrame();
 
-	//@ReturnValue : 0 no intersection ;1 some intersection; 2 always intersection; -1 bug
+	/*
+	* @ReturnValue : 0 no intersection ;1 some intersection; 2 always intersection; -1 bug
+	*/
 	int			DetectCollision(CommonBulk *bulk, point target_start, point target_end); 
 	int			DetectCollision(SpecialBulk *SpecialBulk, point target_start, point target_end); 
-	
-	/*
-	bool	IfIntersect(Triangle face, point start, point end);
-	bool	IfIntersect(Parallelogram face, point start, point end);
-	point	Intersect(Triangle face, point start, point end);
-	point	Intersect(Parallelogram face, point start, point end);
-	bool	Inside(point test);
-	*/
 
 	bool		JointAngle(double angle_1, double angle_2);
 	double		Distance(Triangle face, point start, point end);
@@ -60,12 +77,14 @@ public:
 
 	void		Debug();
 
+	/* Screenplay Utility Function*/
 	void		Print();
 	void		Print(point i){ cout << i.x() << " " << i.y() << " " << i.z() << " " << endl; }
-	void		Print(Range a){ cout << a.right_begin / pi * 180 << " " << a.right_end / pi * 180 << " " <<
-									a.left_begin / pi * 180 << " " << a.left_end / pi * 180 << endl; }
+	void		Print(Range a){ cout << a.right_begin / F_PI * 180 << " " << a.right_end / F_PI * 180 << " " <<
+									a.left_begin / F_PI * 180 << " " << a.left_end / F_PI * 180 << endl; }
 
-	inline double Min(double min_0, double min_1, double min_2, double min_3)
+	/* Computation Utility Function */
+	inline double   Min(double min_0, double min_1, double min_2, double min_3)
 	{
 		double min = min_0;
 		if (min > min_1)
@@ -92,17 +111,34 @@ public:
 	vector<BaseBulk*>		*GetBulk()			{ return bulk_list_; }
 
 private:
-	//input
+	/* Interface Data Structure*/
 	DualGraph		*ptr_dualgraph_;
-
 	ExtruderCone	*extruder_;
 
 	vector<point>	collision_point_;
 	vector<int>		collision_state_;
 	Range			allowed_angle_;
 
-	//output  by Test()
-	vector<vector<Range*>>      *range_list_; //           
-	vector<vector<int>>			*range_state_;         // -1- vertical pi/2; 0 all angle; 1 some angle; 2  no angle 
+	/* 
+	* Collision Detect Algo. Ver1.0
+	* Created : before Dec/08/2015 
+	* Output Data Structure
+	* Note: 
+	* range_list_ : store feasible angle range for each printing edge
+	* range_state : 1: vertical pi/2, 0: all angle feasible, 1 : feasible angle existed, 2 : all angle prohibited
+	*/
+	vector<vector<Range*>>      *range_list_;         
+	vector<vector<int>>			*range_state_;  
 	vector<BaseBulk*>			*bulk_list_;
+
+public:
+	/*
+	* Collison Detect Algo. Ver2.0
+	* Created : Dec/08/2015
+	* Output Data Structure
+	* Note : R2 is the marker for variable used in this version
+	*/
+	vector<vector<double>>			R2_range_;
+	vector<vector<int>>				R2_state_;
+	vector <vector<RAngle>>			R2_Angle;
 };

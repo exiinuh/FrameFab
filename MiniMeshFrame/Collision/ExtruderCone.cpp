@@ -1,18 +1,25 @@
 #include"ExtruderCone.h"
 
-
 ExtruderCone::ExtruderCone()
 {
-	normal_ = Vec3f(0, 0, 1);
-	angle_ = pi / 6;						//60 degree for extruder
-	height_ = 10;						// 1 means 10mm
-	wave_angle_ = pi / 18;				// 10 degree for wave 
-	divide_ = 16; // Cone set 16 triangle face
-
+	/*
+	* Extruder Data:
+	* Update: Dec/08/2015
+	* angle(radians) : angle between generatrix and central axis
+	* height(cm)	 : length of the central axis
+	* wave_angle	 : maximal waving angle for rotating orientation
+	* divide		 : used in Collision Detection Algo. Ver1.0
+					   the number of triangle face to approx. the sweeping
+	*				   cone solid
+	*/
+	normal_		= Vec3f(0, 0, 1);
+	angle_		= F_PI / 4;
+	height_		= 0.1;
+	wave_angle_ = F_PI / 18;
+	divide_		= 16;
 
 	GeneCone();
 }
-
 
 ExtruderCone::ExtruderCone(double height, point  base_point, Vec3f normal, double angle)
 {
@@ -20,45 +27,12 @@ ExtruderCone::ExtruderCone(double height, point  base_point, Vec3f normal, doubl
 	base_point_ = base_point;
 	normal_ = normal;
 	angle_ = angle;
-
 }
-
 
 ExtruderCone::~ExtruderCone()
 {
 	
 }
-
-
-double ExtruderCone::Height()
-{
-	return height_;
-}
-
-
-double ExtruderCone::Angle()
-{
-	return angle_;
-}
-
-
-double ExtruderCone::WaveAngle()
-{
-	return wave_angle_;
-}
-
-
-point ExtruderCone::BasePoint()
-{
-	return base_point_;
-}
-
-
-Vec3f ExtruderCone::Normal()
-{
-	return normal_;
-}
-
 
 void ExtruderCone::Test()
 {
@@ -68,23 +42,21 @@ void ExtruderCone::Test()
 void ExtruderCone::GeneCone()
 {
 	vector<Triangle> temp;
-	vector<point> ploy;
+	vector<point>    ploy;
 	double radii = tan(angle_)*height_;
 	for (int i = 0; i < divide_; i++)
 	{
 		point v0 = base_point_;
-		point v1 = point(radii*cos(2 * pi / divide_*(i + 1)), radii*sin(2 * pi / divide_*(i + 1)), height_);
-		point v2 = point(radii*cos(2 * pi / divide_*(i)), radii*sin(2 * pi / divide_*(i)), height_);
+		point v1 = point(radii*cos(2 * F_PI / divide_*(i + 1)), radii*sin(2 * F_PI / divide_*(i + 1)), height_);
+		point v2 = point(radii*cos(2 * F_PI / divide_*(i)), radii*sin(2 * F_PI / divide_*(i)), height_);
 
 		ploy.push_back(v2);
 		temp.push_back(Triangle(base_point_, v1, v2));
 	}
-	side_ = temp;
+	side_	  = temp;
 	side_end_ = side_;
-	top_ = ploy;
+	top_	  = ploy;
 }
-
-
 
 void ExtruderCone::Render(WireFrame* ptr_frame, double alpha)
 {
@@ -160,10 +132,10 @@ void ExtruderCone::Rotation(double angle, point start, point end)
 	for (int i = 0; i < divide_; i++)
 	{
 		
-		Geometry::Vector3d v1 = vec*height_ + u*(radii*cos(2 * pi / divide_*(i + 1))) +zpz*(radii*sin(2 * pi / divide_*(i + 1)));
+		Geometry::Vector3d v1 = vec*height_ + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + zpz*(radii*sin(2 * F_PI / divide_*(i + 1)));
 		point v1_(v1.getX(), v1.getY(), v1.getZ());
 	
-		Geometry::Vector3d v2 = vec*height_ + u*(radii*cos(2 * pi / divide_*(i ))) + zpz*(radii*sin(2 * pi / divide_*(i )));
+		Geometry::Vector3d v2 = vec*height_ + u*(radii*cos(2 * F_PI / divide_*(i))) + zpz*(radii*sin(2 * F_PI / divide_*(i)));
 		point v2_(v2.getX(), v2.getY(), v2.getZ());
 		top_[i] = v2_;
 		side_[i] = Triangle(base_point_, v1_, v2_);
@@ -184,15 +156,14 @@ void ExtruderCone::Rotation(double angle, point start, point end)
 
 void ExtruderCone::RotateTri(Triangle temp)
 {
-
 	for (int i = 0; i < temp.vert_list_.size(); i++)
 	{
-		temp.vert_list_[i] = Muti(temp.vert_list_[i]);
+		temp.vert_list_[i] = Multi(temp.vert_list_[i]);
 	}
 	temp.Normal_();
 }
 
-point ExtruderCone::Muti(point s)
+point ExtruderCone::Multi(point s)
 {
 
 	point temp = s;

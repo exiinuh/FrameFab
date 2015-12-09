@@ -15,15 +15,15 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
+	ui.mainToolBar->setVisible(false);
 
 	renderingwidget_ = new RenderingWidget(this);
 //	setCentralWidget(renderingwidget_);
 
 	setGeometry(200, 150, 1000, 700);
-
+	
 	CreateActions();
 	CreateMenus();
-	CreateToolBars();
 	CreateLabels();
 	CreateSpinBoxes();
 	CreateCheckBoxes();
@@ -55,8 +55,6 @@ MainWindow::MainWindow(QWidget *parent)
 	layout_main->setStretch(1, 1);
 	layout_main->addLayout(layout_right);
 	this->centralWidget()->setLayout(layout_main);
-
-	toolbar_file_->setVisible(false);
 	
 	Reset();
 }
@@ -84,16 +82,14 @@ void MainWindow::CreateActions()
 	action_save_->setShortcuts(QKeySequence::Save);
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteFrame()));
-	
-	action_saveas_ = new QAction(tr("Save As..."), this);
-	action_saveas_->setShortcuts(QKeySequence::SaveAs);
-	action_saveas_->setStatusTip(tr("Save the document under a new name"));
-//	connect(action_saveas_, SIGNAL(triggered()), imagewidget_, SLOT(SaveAs()));
 
-	action_loadmesh_ = new QAction(tr("readOBJ"), this);
-	action_background_ = new QAction(tr("ChangeBackground"), this);
+	action_exportpoints_ = new QAction(tr("Export points"), this);
+	connect(action_exportpoints_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportPoints()));
 
-	connect(action_loadmesh_, SIGNAL(triggered()), renderingwidget_, SLOT(ReadFrame()));
+	action_exportlines_ = new QAction(tr("Export lines"), this);
+	connect(action_exportlines_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLines()));
+
+	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
 }
 
@@ -105,20 +101,14 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_new_);
 	menu_file_->addAction(action_open_);
 	menu_file_->addAction(action_save_);
-	menu_file_->addAction(action_saveas_);
-}
 
+	menu_file_->addSeparator();
+	menu_file_->addAction(action_exportpoints_);
+	menu_file_->addAction(action_exportlines_);
 
-void MainWindow::CreateToolBars()
-{
-	toolbar_file_ = addToolBar(tr("File"));
-	toolbar_file_->addAction(action_new_);
-	toolbar_file_->addAction(action_open_);
-	toolbar_file_->addAction(action_save_);
-
-	toolbar_basic_ = addToolBar(tr("Basic"));
-	toolbar_basic_->addAction(action_loadmesh_);
-	toolbar_basic_->addAction(action_background_);
+	menu_display_ = menuBar()->addMenu(tr("&Display"));
+	menu_display_->setStatusTip(tr("Display settings"));
+	menu_display_->addAction(action_background_);
 }
 
 
@@ -291,9 +281,6 @@ void MainWindow::CreateRadioButtons()
 	radiobutton_heat_ = new QRadioButton(tr("Heat"), this);
 	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
-	radiobutton_cut_ = new QRadioButton(tr("Cut"), this);
-	connect(radiobutton_cut_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
-
 	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
 	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
 
@@ -321,6 +308,9 @@ void MainWindow::CreatePushButtons()
 
 	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
 	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
+
+	pushbutton_refine_ = new QPushButton(tr("Refine"), this);
+	connect(pushbutton_refine_, SIGNAL(clicked()), renderingwidget_, SLOT(RefineFrame()));
 
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
 	pushbutton_project_ = new QPushButton(tr("Project"), this);
@@ -375,8 +365,6 @@ void MainWindow::CreateGroups()
 
 	QVBoxLayout* edge_layout = new QVBoxLayout(groupbox_edge_);
 	edge_layout->addWidget(radiobutton_heat_);
-	edge_layout->addWidget(radiobutton_cut_);
-	//edge_layout->addWidget(slider_layer_);
 	edge_layout->addWidget(radiobutton_bulk_);
 	edge_layout->addWidget(radiobutton_order_);
 
@@ -401,6 +389,7 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(toolbutton_addedge_);
 	edit_layout->addWidget(toolbutton_addface_);
 	edit_layout->addWidget(pushbutton_simplify_);
+	edit_layout->addWidget(pushbutton_refine_);
 
 	// scale group
 	groupbox_scale_ = new QGroupBox(tr("Scale"), this);
@@ -578,22 +567,6 @@ void MainWindow::EdgeModeChange()
 				radiobutton_heat_->setChecked(true);
 				edge_render_ = HEAT;
 				emit(EdgeMode(HEAT));
-
-				groupbox_orderdisplay_->setVisible(false);
-				groupbox_edit_->setVisible(true);
-				groupbox_scale_->setVisible(true);
-
-				return;
-			}
-		}
-		else
-		if (sender() == radiobutton_cut_)
-		{
-			if (edge_render_ != CUT)
-			{
-				radiobutton_cut_->setChecked(true);
-				edge_render_ = CUT;
-				emit(EdgeMode(CUT));
 
 				groupbox_orderdisplay_->setVisible(false);
 				groupbox_edit_->setVisible(true);

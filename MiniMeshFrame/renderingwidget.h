@@ -107,6 +107,9 @@ public slots:
 	void	WriteFrame();
 	void	ScaleFrame(int size);
 
+	void	ExportPoints();
+	void	ExportLines();
+
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
 	void	CheckLight(bool bv);
@@ -122,7 +125,6 @@ private:
 	void	DrawPoints(bool bv);
 	void	DrawEdge(bool bv);
 	void	DrawHeat(bool bv);
-	void	DrawCut(bool bv);
 	void	DrawBulk(bool bv);
 	void	DrawOrder(bool bv);
 
@@ -133,6 +135,7 @@ public slots:
 	void	PrintLayer(int layer);
 	void	PrintOrder(int order);
 	void	SimplifyFrame();
+	void	RefineFrame();
 	void	ProjectBound();
 
 	void	RotateXY();
@@ -155,7 +158,6 @@ public:
 	bool			is_draw_point_;
 	bool			is_draw_edge_;
 	bool			is_draw_heat_;
-	bool			is_draw_cut_;
 	bool			is_draw_bulk_;
 	bool			is_draw_order_;
 	bool			has_lighting_;
