@@ -2,14 +2,14 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-:alpha_(1.0), beta_(10000), gamma_(100)
+:alpha_(1.0), beta_(10000), gamma_(100), stiff_tol_(0.001), Wl_(10.0), Wp_(1.0)
 {
 	layer_queue_ = new vector<QueueInfo>;
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
-:alpha_(1.0), beta_(10000), gamma_(100)
+:alpha_(1.0), beta_(10000), gamma_(100), stiff_tol_(0.001), Wl_(10.0), Wp_(1.0)
 {
 	ptr_graphcut_ = ptr_graphcut;
 	layer_queue_ = new vector<QueueInfo>;
@@ -26,6 +26,9 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm)
 	alpha_ = ptr_parm->alpha_;
 	beta_ = ptr_parm->beta_;
 	gamma_ = ptr_parm->gamma_;
+	stiff_tol_ = 0.001;
+	Wl_ = 10.0;
+	Wp_ = 1.0;
 }
 
 
@@ -68,6 +71,7 @@ bool SeqAnalyzer::LayerPrint()
 	ptr_collision_->DetectFrame();
 
 	/* split layers */
+	/* label stores layer index of each dual node */
 	vector<int>	label = *(ptr_graphcut_->GetLabel());
 	int max_layer = 0;
 	for (int i = 0; i < Nd; i++)
@@ -91,7 +95,11 @@ bool SeqAnalyzer::LayerPrint()
 	ptr_subgraph_ = new DualGraph(ptr_frame);
 	for (int l = 0; l < max_layer; l++)
 	{
-		/* number of dual verts in current layer */
+		/* 
+		* Nl: number of dual verts in current layer
+		* h : head for printing queue of the layer
+		* t : tail for printing queue of the layer
+		*/
 		int Nl = layers_[l].size();
 		int h = layer_queue_->size();
 		int t = h + Nl;
@@ -106,7 +114,9 @@ bool SeqAnalyzer::LayerPrint()
 			int u = e->ppair_->pvert_->ID();
 			int v = e->pvert_->ID();
 			
-			/* Trial Strategy, only for edges connected to already printed structure for pillar */
+			/* Trial Strategy, only compute for edges connected to 
+			*  already printed structure or pillar edges
+			*/
 			if (e->isPillar() || ptr_subgraph_->isExistingVert(u) || ptr_subgraph_->isExistingVert(v))
 			{
 				QueueInfo start_edge = QueueInfo{ l, st_e, layers_[l][st_e] };
@@ -156,14 +166,8 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	int orig_i = ptr_dualgraph->e_orig_id(dual_i);
 	double height_i = ptr_dualgraph->Height(dual_i);
 
-	double	min_cost = 1e20;
-	int		cost_id = -1;
-	double	min_D = 1e20;
-	int		D_id = -1;
-
 	double	P;							// adjacency weight
 	double	L;							// collision weight
-	double	S;							// stiffness weight
 
 	map<double, int> choice;
 
@@ -182,24 +186,45 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		int dual_j = layers_[l][j];
 		int orig_j = ptr_dualgraph->e_orig_id(dual_j);
 		double height_j = ptr_dualgraph->Height(dual_j);
+
 		if (!ptr_subgraph_->isExistingEdge(orig_j))
-		{
-			/* adjacency weight */
-			if (ptr_frame->isPillar(orig_j))
+		{			
+			/* stiffness */
+			/* insert a trail edge */
+			ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
+
+			/* examinate stiffness on printing subgraph */
+			Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
+			int Ns = ptr_subgraph_->SizeOfFreeFace();
+			VX D(Ns);
+			D.setZero();
+
+			double max_D = -1e20;
+			if (ptr_stiffness->CalculateD(D))
 			{
-				/* fixed points should be in higher priority */
-				P = 1.2;
+				for (int k = 0; k < Ns; k++)
+				{
+					if (D[k] > max_D)
+					{
+						max_D = D[k];
+					}
+				}
 			}
 			else
-			if (ptr_dualgraph->isAdjacent(dual_i, dual_j))
 			{
-				/* they are adjancent */
-				P = 1.5 - log(1 + (height_i - height_j) / height_differ_ / 2);
+				max_D = 1e20;
 			}
-			else
+
+			/* remove the trail edge */
+			ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+
+			delete ptr_stiffness;
+			ptr_stiffness = NULL;
+
+			/* examination failed */
+			if (max_D >= stiff_tol_)
 			{
-				/* they are not adjancent */
-				P = gamma_ * (1.5 - log(1 + (height_i - height_j) / height_differ_ / 2));
+				continue;
 			}
 
 			/* collision weight */
@@ -224,70 +249,47 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 				//{
 				//	angle += range->left_end - range->left_begin;
 				//}
-				//angle = 0;
-				//L = beta_ * angle / 20.0 + alpha_;
+
 				L = angle / 2 * F_PI;
 				break;
 
 			case 2:
-				/* they will collide anyway */
-				// L = beta_ + alpha_;
-				L = 1;
+				/*
+				* they will collide anyway
+				* prohibited printing edge
+				*/
+				continue;
 				break;
 
 			default:
 				break;
 			}
 
-			/* stiffness weight */
-			/* insert a trail edge */
-			ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
-
-			/* examinate stiffness on printing subgraph */
-			Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
-			int Ns = ptr_subgraph_->SizeOfFreeFace();
-			VX D(Ns);
-			D.setZero();
-			if (ptr_stiffness->CalculateD(D))
+			/* adjacency weight */
+			if (ptr_frame->isPillar(orig_j))
 			{
-				S = -1e20;
-				for (int k = 0; k < Ns; k++)
-				{
-					if (D[k] > S)
-					{
-						S = D[k];
-					}
-				}
-				if (S < min_D)
-				{
-					min_D = S;
-					D_id = j;
-				}
-				S *= 1e5;
+				/* fixed points should be in higher priority */
+				P = 1.2;
+			}
+			else
+			if (ptr_dualgraph->isAdjacent(dual_i, dual_j))
+			{
+				/* they are adjancent */
+				P = 1.5 - log(1 + (height_i - height_j) / height_differ_ / 2);
 			}
 			else
 			{
-				S = 1e20;
+				/* they are not adjancent */
+				P = gamma_ * (1.5 - log(1 + (height_i - height_j) / height_differ_ / 2));
 			}
-
-			/* remove the trail edge */
-			ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
-
-			delete ptr_stiffness;
-			ptr_stiffness = NULL;
-
 
 			/* cost weight */
-			//double cost = L * P * S;
-			double cost = wl_ * L + wp_ * P;
-			if (S > tol)
-			{
-				continue;
-			}
+			double cost = Wl_ * L + Wp_ * P;
 			choice.insert(make_pair(cost, j));
 		}
 	}
 
+	/* ranked by weight */
 	map<double, int>::iterator it;
 	for (it = choice.begin(); it != choice.end(); it++)
 	{

@@ -70,9 +70,6 @@ public:
 public:
 	bool			LayerPrint();
 	
-	/* GenerateSeq - Generate  
-	*
-	*/
 	bool			GenerateSeq(int l, int h, int t);
 
 	vector<QueueInfo>		*GetQueue()			{ return layer_queue_; }
@@ -93,9 +90,11 @@ private:
 	double			beta_;
 	double			gamma_;
 	double			stiff_tol_;
+	double			Wl_;
+	double			Wp_;
 	double			height_differ_;
 
-	vector<vector<int>>		layers_;
+	vector<vector<int>>		layers_;			// store dual_node's id for each layers
 	vector<QueueInfo>		*layer_queue_;
 
 	ExtruderCone			extruder_;
