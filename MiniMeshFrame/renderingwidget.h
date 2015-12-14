@@ -130,7 +130,7 @@ private:
 public slots:
 	void	FiberPrintAnalysis(double radius, double density, double g, 
 								double youngs_modulus, double shear_modulus, 
-								double penalty, double D_tol, double pri_tol, 
+								double D_tol, double penalty, double pri_tol,
 								double dual_tol, double gamma, double Wl, double Wp);
 	void	PrintLayer(int layer);
 	void	PrintOrder(int order);

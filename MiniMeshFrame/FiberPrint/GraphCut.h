@@ -123,8 +123,8 @@ public:
 	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
 	int				stop_n_;		// stop_n   : termination criteria for GraphCut process, number of dual nodes in LowerSet
+	double			D_tol_;			// D_tol    : tolerance in stiffness
 	double			penalty_;		// penalty  : penalty factor used in ADMM  
-	double			D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
 	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 

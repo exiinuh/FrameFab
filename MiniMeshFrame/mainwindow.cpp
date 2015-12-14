@@ -222,7 +222,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_penalty_->setFixedWidth(140);
 	spinbox_penalty_->setDecimals(2);
 	spinbox_penalty_->setRange(0, 10000);
-	spinbox_penalty_->setValue(100);
+	spinbox_penalty_->setValue(1000);
 	spinbox_penalty_->setSingleStep(1);
 
 	spinbox_pritol_ = new QDoubleSpinBox(this);
@@ -553,7 +553,7 @@ void MainWindow::GetFiberParas()
 {
 	emit(SendFiberParas(
 		spinbox_radius_->value(),
-		spinbox_density_->value(),
+		spinbox_density_->value() * 1e-12,
 		spinbox_g_->value(),
 		spinbox_youngsmodulus_->value(),
 		spinbox_shearmodulus_->value(),

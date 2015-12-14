@@ -25,8 +25,8 @@ GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm);
 
-	penalty_ = ptr_parm->penalty_;
 	D_tol_ = ptr_parm->D_tol_;
+	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 }
