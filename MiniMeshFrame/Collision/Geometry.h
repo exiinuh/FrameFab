@@ -121,6 +121,12 @@ namespace Geometry
 	{
 		double temp = 0;
 		temp = dot(vec1, vec2) / (vec1.norm()*vec2.norm());
+		//--------------------------
+		if (abs(temp - 1) < eps)
+			return 0;
+		if (abs(temp + 1) < eps)
+			return 3.1415;
+
 		return acos(temp);
 	}
 

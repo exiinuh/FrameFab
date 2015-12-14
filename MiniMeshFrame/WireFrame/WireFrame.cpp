@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-		  :delta_tol_(2e-3), unify_size_(2.0)
+		  :fixed_vert_(0), delta_tol_(2e-3), unify_size_(2.0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -416,9 +416,15 @@ void WireFrame::Unify()
 	scaleV_ = unify_size_ / scaleMax;
 	center_pos_ = point((minx_ + maxx_) / 2.f, (miny_ + maxy_) / 2.f, (minz_ + maxz_) / 2.f);
 
+	fixed_vert_ = 0;
+
 	for (size_t i = 0; i < N; i++)
 	{
 		(*pvert_list_)[i]->SetRenderPos( Unify((*pvert_list_)[i]->Position()) );
+		if ((*pvert_list_)[i]->isFixed())
+		{
+			fixed_vert_++;
+		}
 	}
 }
 
@@ -688,7 +694,7 @@ void WireFrame::RefineFrame()
 }
 
 
-void WireFrame::ProjectBound(vector<int> *bound)
+void WireFrame::ProjectBound(vector<int> *bound, double len)
 {
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
@@ -697,7 +703,7 @@ void WireFrame::ProjectBound(vector<int> *bound)
 		if ((*bound)[i])
 		{
 			point v_pos = u->Position();
-			v_pos.z() = minz_ - (maxz_ - minz_)*0.1;
+			v_pos.z() = minz_ - len;
 
 			WF_vert *v = InsertVertex(v_pos);
 			v->SetFixed(true);
@@ -709,4 +715,29 @@ void WireFrame::ProjectBound(vector<int> *bound)
 	Unify();
 	//InsertEdge(N, SizeOfVertList() - 1);
 	//UpdateFrame();
+}
+
+
+void WireFrame::ModifyProjection(double len)
+{
+	if (SizeOfFixedVert() == 0)
+	{
+		return;
+	}
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		WF_vert *u = (*pvert_list_)[i];
+		if (u->isFixed())
+		{
+			double x = u->Position().x();
+			double y = u->Position().y();
+			double z = u->Position().z();
+			z += u->pedge_->Length();
+			z -= len;
+			u->SetPosition(x, y, z);
+		}
+	}
+	Unify();
 }

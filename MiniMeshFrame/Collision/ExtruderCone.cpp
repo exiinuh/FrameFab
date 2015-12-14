@@ -173,3 +173,89 @@ point ExtruderCone::Multi(point s)
 	
 	return point(x, y, z);
 }
+
+
+void ExtruderCone::Rotation(GeoV3 normal, point start, point end)
+{
+	normal_ = Vec3f(normal.getX(),normal.getY(),normal.getZ());
+
+
+
+	if (start.z() >= end.z())
+	{
+		point temp = start;
+		start = end;
+		end = temp;
+	}
+	start_ = start;
+	end_ = end;
+
+
+	float a = start.x();
+	float b = start.y();
+	float c = start.z();
+	Geometry::Vector3d p = Geometry::Vector3d(point(end - start));
+
+	p.normalize();
+
+	if (Geometry::dot(p, normal) > 0.001)
+		return;
+
+
+	if (p.getZ() == 1)
+	{
+		normal = GeoV3(0, 0, 1);
+		Geometry::Vector3d pz = Geometry::cross(p, normal);
+		pz.normalize();
+		Geometry::Vector3d u = Geometry::Vector3d(0, 1, 0);
+		Geometry::Vector3d v = Geometry::Vector3d(1, 0, 0);
+		double radii = tan(angle_)*height_;
+
+		for (int i = 0; i < divide_; i++)
+		{
+			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
+			point v1_(v1.getX(), v1.getY(), v1.getZ());
+			Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
+			point v2_(v2.getX(), v2.getY(), v2.getZ());
+			top_[i] = v2_;
+
+			side_[i] = Triangle(base_point_, v1_, v2_);
+		}
+		side_end_ = side_;
+		// Move
+		for (int i = 0; i < side_.size(); i++)
+		{
+			side_[i].Add(end);
+			side_end_[i].Add(start);
+		}
+		for (int i = 0; i < top_.size(); i++)
+			top_[i] += end;
+	}
+	else
+	{
+		Geometry::Vector3d pz = Geometry::cross(p, normal);
+		pz.normalize();
+		Geometry::Vector3d u = p;
+		Geometry::Vector3d v = pz;
+		double radii = tan(angle_)*height_;
+		for (int i = 0; i < divide_; i++)
+		{
+			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
+			point v1_(v1.getX(), v1.getY(), v1.getZ());
+			Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
+			point v2_(v2.getX(), v2.getY(), v2.getZ());
+			top_[i] = v2_;
+
+			side_[i] = Triangle(base_point_, v1_, v2_);
+		}
+		side_end_ = side_;
+		// Move
+		for (int i = 0; i < side_.size(); i++)
+		{
+			side_[i].Add(end);
+			side_end_[i].Add(start);
+		}
+		for (int i = 0; i < top_.size(); i++)
+			top_[i] += end;
+	}
+}

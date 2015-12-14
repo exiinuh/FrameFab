@@ -2,14 +2,14 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-:alpha_(1.0), beta_(10000), gamma_(100), stiff_tol_(0.001), Wl_(10.0), Wp_(1.0)
+:gamma_(100), D_tol_(0.1), Wl_(10.0), Wp_(1.0)
 {
 	layer_queue_ = new vector<QueueInfo>;
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
-:alpha_(1.0), beta_(10000), gamma_(100), stiff_tol_(0.001), Wl_(10.0), Wp_(1.0)
+:gamma_(100), D_tol_(0.1), Wl_(10.0), Wp_(1.0)
 {
 	ptr_graphcut_ = ptr_graphcut;
 	layer_queue_ = new vector<QueueInfo>;
@@ -18,17 +18,14 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm)
 {
-
 	ptr_graphcut_ = ptr_graphcut;
 
 	layer_queue_ = new vector<QueueInfo>;
 
-	alpha_ = ptr_parm->alpha_;
-	beta_ = ptr_parm->beta_;
-	gamma_ = ptr_parm->gamma_;
-	stiff_tol_ = 0.001;
-	Wl_ = 10.0;
-	Wp_ = 1.0;
+	gamma_	= ptr_parm->gamma_;
+	D_tol_	= ptr_parm->D_tol_;
+	Wl_		= ptr_parm->Wl_;
+	Wp_		= ptr_parm->Wp_;
 }
 
 
@@ -43,6 +40,13 @@ bool SeqAnalyzer::LayerPrint()
 {
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
 	int Nd = ptr_dualgraph->SizeOfVertList();
+
+
+	Wave.clear();
+	for (int i = 0; i < Nd; i++)
+	{
+		Wave.push_back(0);
+	}
 
 	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
 	int N = ptr_frame->SizeOfVertList();
@@ -69,6 +73,9 @@ bool SeqAnalyzer::LayerPrint()
 	/* detect collision */
 	ptr_collision_ = new Collision(ptr_dualgraph);
 	ptr_collision_->DetectFrame();
+
+	vector<vector<double>> range_list = ptr_collision_->R2_range_;
+	vector<vector<int>> range_state = ptr_collision_->R2_state_;
 
 	/* split layers */
 	/* label stores layer index of each dual node */
@@ -136,22 +143,21 @@ bool SeqAnalyzer::LayerPrint()
 		}
 	}
 	
+	/* Feasible printing orientation */
+	WF_edge* temp_edge;
+	angle_list_ = AngleList(layer_queue_);
 
-	/* generate bulks according to printing sequence */
-	//base_.clear();
+	for (int i = 0; i < layer_queue_->size();i++)
+	{
+		ExtruderCone temp_extruder;
 
-	//anglelist_= AngleList(layer_queue_);
+		/* original edge id */
+		WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_dualgraph->e_orig_id( (*layer_queue_)[i].dual_id_));
+		
+		temp_extruder.Rotation(angle_list_[i], temp_edge->pvert_->Position(), temp_edge->ppair_->pvert_->Position());
 
-	//WF_edge* temp_edge;
-	//for (int i = 0; i < layer_queue_->size();i++)
-	//{
-	//	ExtruderCone temp_extru;
-	//	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_dualgraph->e_orig_id( (*layer_queue_)[i].dual_id_));
-	//	temp_extru.Rotation(anglelist_[i], temp_edge->pvert_->Position(), temp_edge->ppair_->pvert_->Position());
-	//	extrulist_.push_back(temp_extru);
-	//}
-
-	//return true;
+		extruder_list_.push_back(temp_extruder);
+	}
 }
 
 
@@ -188,7 +194,36 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		double height_j = ptr_dualgraph->Height(dual_j);
 
 		if (!ptr_subgraph_->isExistingEdge(orig_j))
-		{			
+		{		
+			/* collision weight */
+			double angle = ptr_collision_->R2_range_[dual_i][dual_j];
+
+			Range *range = ptr_collision_->GetRange(dual_i, dual_j);
+			int	state = ptr_collision_->GetRangeState(dual_i, dual_j);
+			switch (state)
+			{
+			case 0:
+				/* they will not collide anyway */
+				L = 0;
+				break;
+
+			case 1:
+				L = 1 - (angle / 2 * F_PI);
+				break;
+
+			case 2:
+				/*
+				* they will collide anyway
+				* prohibited printing edge
+				*/
+				continue;
+				break;
+
+			default:
+				break;
+			}
+
+
 			/* stiffness */
 			/* insert a trail edge */
 			ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
@@ -200,6 +235,10 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			D.setZero();
 
 			double max_D = -1e20;
+			
+			printf("------------\n");
+			printf("Layers %d, head index %d\n", l, h);
+			printf("Trial Deformation calculation edge %d\n", dual_j);
 			if (ptr_stiffness->CalculateD(D))
 			{
 				for (int k = 0; k < Ns; k++)
@@ -222,48 +261,11 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			ptr_stiffness = NULL;
 
 			/* examination failed */
-			if (max_D >= stiff_tol_)
-			{
-				continue;
-			}
+			//if (max_D >= D_tol_)
+			//{
+			//	continue;
+			//}
 
-			/* collision weight */
-			double angle = 0;
-			Range *range = ptr_collision_->GetRange(dual_i, dual_j);
-			int	state = ptr_collision_->GetRangeState(dual_i, dual_j);
-			switch (state)
-			{
-			case 0:
-				/* they will not collide anyway */
-				L = 0;
-				break;
-
-			case 1:
-				/* they will collide sometimes */
-				/* sum up limited range */
-				//if (range->right_begin != -1 && range->right_end != -1)
-				//{
-				//	angle += range->right_end - range->right_begin;
-				//}
-				//if (range->left_begin != -1 && range->left_end != -1)
-				//{
-				//	angle += range->left_end - range->left_begin;
-				//}
-
-				L = angle / 2 * F_PI;
-				break;
-
-			case 2:
-				/*
-				* they will collide anyway
-				* prohibited printing edge
-				*/
-				continue;
-				break;
-
-			default:
-				break;
-			}
 
 			/* adjacency weight */
 			if (ptr_frame->isPillar(orig_j))
@@ -282,6 +284,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 				/* they are not adjancent */
 				P = gamma_ * (1.5 - log(1 + (height_i - height_j) / height_differ_ / 2));
 			}
+
 
 			/* cost weight */
 			double cost = Wl_ * L + Wp_ * P;
@@ -307,15 +310,135 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	return false;
 }
 
+vector<GeoV3> SeqAnalyzer::AngleList(vector<QueueInfo> *layer_queue)
+{
+	support_ = 0;
+	vector<GeoV3> temp;
+
+	cout << "------------------------ " << endl;
+	cout << "Feasible Angle Computing:" << endl;
+
+	for (int i = 0; i < layer_queue->size(); i++)
+	{
+		cout << "edge " << i << " angle in processing" << endl;
+		temp.push_back(AngleDec(i));
+	}
+	return temp;
+}
+
+GeoV3 SeqAnalyzer::AngleDec(int id)
+{
+	/* sampling number of orientation vector in 2*pi angle range */
+	int divide = 72;
+	vector<GeoV3> normal;
+	
+	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_graphcut_->ptr_dualgraph_->e_orig_id((*layer_queue_)[id].dual_id_));
+	if (temp_edge->isPillar())
+	{
+		support_ += 1;
+		return GeoV3(0, 0, 1);
+	}
+
+	point start, end;
+	start = temp_edge->pvert_->Position();
+	end   = temp_edge->ppair_->pvert_->Position();
+
+	GeoV3 u, v;
+
+	GeoV3 t = end - start;
+	t.normalize();
+	GeoV3 z(0, 0, 1);
+
+	if (Geometry::cross(t, z).norm() < eps)
+	{
+		/* vertical case */
+		u = Geometry::Vector3d(1, 0, 0);
+		v = Geometry::Vector3d(0, 1, 0);
+	}
+	else
+	{
+		/* perpendicular to printing edge */
+		u = Geometry::cross(t, z);
+		u.normalize();
+		v = Geometry::cross(u, t);
+		v.normalize();
+	}
+
+	/* normal contains all sampling vectors */
+	for (int i = 0; i < divide; i++)
+	{
+		normal.push_back(u*cos(2 * F_PI / divide*i) + v*sin(2 * F_PI / divide*i));
+	}
+
+	/* i traverse all the printed edges until current state id */
+	for (int i = 0; i < id; i++)
+	{
+		vector<GeoV3>::iterator it;
+		/* influence from id to i 
+		* i.e. the collision cost of existence of edge i
+		* when printing edge id
+		*/
+		RAngle TestR = ptr_collision_->R2_Angle[(*layer_queue_)[id].dual_id_][(*layer_queue_)[i].dual_id_];
+
+		if (ptr_collision_->R2_state_[(*layer_queue_)[id].dual_id_][(*layer_queue_)[i].dual_id_] == 0)
+			continue;
+
+		for (it = normal.begin(); it != normal.end();)
+		{
+			if (IsColVec(TestR.u, TestR.v, *it ))
+			{
+				it = normal.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+
+	if (normal.size() == 0)
+	{
+		cout << " Infeasible orientation!" << endl;
+		Wave[id] = 0;
+		return GeoV3(0, 0, 1);
+		return GeoV3(0, 0, 1);
+	}
+
+	if (normal.size() == 72)
+	{
+		Wave[id] = 2 * F_PI;
+		return normal[0];
+	}
+
+	ResolveAngle resolve;
+	resolve = ResolveAngle(normal);
+
+	Wave[id] = resolve.wave;
+	return resolve.dec;
+}
+
+bool  SeqAnalyzer::IsColVec(GeoV3 start, GeoV3 end, GeoV3 target)
+{
+	if (Geometry::angle(target, start) <= extruder_.Angle())
+		return true;
+
+	if (Geometry::angle(target, end) <= extruder_.Angle())
+		return true;
+
+	if (abs(Geometry::angle(target, start) + Geometry::angle(target, end) - Geometry::angle(target, end)) < eps)
+		return true;
+
+	return false;
+}
 
 void SeqAnalyzer::Print(Set *a)
 {
-	cout <<a->min<<" "<< a->max<<" " << endl;
+	cout << a->min << " " << a->max << " " << endl;
 }
 
-void  SeqAnalyzer::Print(vector<Set*> *a)
+void SeqAnalyzer::Print(vector<Set*> *a)
 {
-	for (int i = 0; i<a->size(); i++)
+	for (int i = 0; i < a->size(); i++)
 	{
 
 		Print((*a)[i]);

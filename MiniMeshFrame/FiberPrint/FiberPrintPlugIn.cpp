@@ -14,11 +14,13 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
 }
 
 
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
+FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
+	FiberPrintPARM *ptr_parm, char *path)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_graphcut_ = new GraphCut(ptr_frame, ptr_parm);
 	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_, ptr_parm);
+	ptr_procanalyzer_ = new ProcessAnalyzer(ptr_seqanalyzer_, path);
 }
 
 
@@ -40,6 +42,8 @@ void FiberPrintPlugIn::Print()
 	{
 		ptr_frame_->RefineFrame();
 	}
+
+	ptr_procanalyzer_->ProcPrint();
 }
 
 

@@ -20,7 +20,7 @@
 * ==========================================================================
 */
 #pragma once
-#include "GCommon.h"
+#include "Stiffness\GCommon.h"
 #include "WireFrame\WireFrame.h"
 #include "Triangle.h"
 
@@ -47,13 +47,15 @@ public:
 	/* Debug Screenplay Function */
 	void	Test();
 
-	/* Geometric transformation */
+	/* Geometric transformation, for rendering purpose */
 	void	RotateTri(Triangle temp);
     point	Multi(point s);
 	void	Rotation(double angle, point start, point end);
+	void	Rotation(GeoV3 normal, point start, point end);
 
 	/* OpenGL Rendering Interface */
 	void	Render(WireFrame* ptr_frame, double alpha);
+
 private:
 	/* Extruder Property Data */
 	double				angle_;

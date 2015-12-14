@@ -51,9 +51,10 @@ protected:
 	void	keyReleaseEvent(QKeyEvent *e);
 
 signals:
-	void	EdgeMode(int);
-	void	SendParameters(double, double, double, double, double, double, double,
+	void	ChangeEdgeMode(int);
+	void	SendFiberParas(double, double, double, double, double, double, double,
 							double, double, double, double, double);
+	void	SendProjectionParas(double);
 
 public slots:
 	void	OpenFile();
@@ -62,7 +63,11 @@ public slots:
 	void	AddEdgeClicked(bool down);
 	void	AddFaceClicked(bool down);
 
-	void	GetParameters();
+	void	GetFiberParas();
+	void	GetProjectionParas();
+
+	void	CheckEdgeMode();
+	void	SwitchParaBox();
 
 	void	OrderStep();
 	void	SetOrderSlider(int value);
@@ -71,9 +76,7 @@ public slots:
 	void	ShowMeshInfo(int npoint, int nedge);
 	void	ShowCapturedVert(int id, int degree);
 	void	ShowCapturedEdge(int id, double len);
-	void	ShowScale(int size);
-	void	EdgeModeChange();
-
+	void	ShowScale(double scale);
 	void	ShowAbout();
 
 	void	Reset();
@@ -94,7 +97,6 @@ private:
 
 	QAction				*action_background_;
 
-	QAction				*action_aboutqt_;
 	QAction				*action_about_;
 	
 	// Labels
@@ -109,14 +111,16 @@ private:
 	QLabel				*label_youngsmodulus_;
 	QLabel				*label_shearmodulus_;
 
-	QLabel				*label_penalty_;
 	QLabel				*label_Dtol_;
+	QLabel				*label_penalty_;
 	QLabel				*label_pritol_;
 	QLabel				*label_dualtol_;
-
-	QLabel				*label_alpha_;
-	QLabel				*label_beta_;
 	QLabel				*label_gamma_;
+	QLabel				*label_wl_;
+	QLabel				*label_wp_;
+
+	QLabel				*label_scale_;
+	QLabel				*label_prolen_;
 
 	// Spinboxes
 	QDoubleSpinBox		*spinbox_radius_;
@@ -125,14 +129,16 @@ private:
 	QDoubleSpinBox		*spinbox_youngsmodulus_;
 	QDoubleSpinBox		*spinbox_shearmodulus_;
 
-	QDoubleSpinBox		*spinbox_penalty_;
 	QDoubleSpinBox		*spinbox_Dtol_;
+	QDoubleSpinBox		*spinbox_penalty_;
 	QDoubleSpinBox		*spinbox_pritol_;
 	QDoubleSpinBox		*spinbox_dualtol_;
-
-	QDoubleSpinBox		*spinbox_alpha_;
-	QDoubleSpinBox		*spinbox_beta_;
 	QDoubleSpinBox		*spinbox_gamma_;
+	QDoubleSpinBox		*spinbox_wl_;
+	QDoubleSpinBox		*spinbox_wp_;
+
+	QDoubleSpinBox		*spinbox_scale_;
+	QDoubleSpinBox		*spinbox_prolen_;
 
 	// Checkboxes
 	QCheckBox			*checkbox_point_;
@@ -146,14 +152,16 @@ private:
 	QRadioButton		*radiobutton_none_;
 
 	// Pushbuttons
-	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_rotatexy_;
 	QPushButton			*pushbutton_rotatexz_;
 	QPushButton			*pushbutton_rotateyz_;
+	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_simplify_;
 	QPushButton			*pushbutton_refine_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
+	QPushButton			*pushbutton_rightarrow_;
+	QPushButton			*pushbutton_leftarrow_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebound_;
@@ -161,19 +169,19 @@ private:
 	QToolButton			*toolbutton_addface_;
 
 	// Sliders
-	QSlider				*slider_layer_;
 	QSlider				*slider_order_;
-	QSlider				*slider_scale_;
 
 	// Groupboxes
 	QGroupBox			*groupbox_render_;
 	QGroupBox			*groupbox_edge_;
-	QGroupBox			*groupbox_separator_;
 	QGroupBox			*groupbox_orderdisplay_;
 	QGroupBox			*groupbox_edit_;
-	QGroupBox			*groupbox_scale_;
 	QGroupBox			*groupbox_fiber_;
-	QGroupBox			*groupbox_para_;
+	QGroupBox			*groupbox_fiberpara_;
+	QGroupBox			*groupbox_meshpara_;
+	QGroupBox			*groupbox_debug_;
+	QGroupBox			*groupbox_sep1_;
+	QGroupBox			*groupbox_sep2_;
 
 	EdgeRenderMode		edge_render_;
 

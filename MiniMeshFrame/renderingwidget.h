@@ -24,7 +24,6 @@
 #include "FiberPrint\FiberPrintPlugIn.h"
 #include "WireFrame\WireFrame.h"
 
-
 enum OperationMode
 {
 	NORMAL,
@@ -105,7 +104,7 @@ public slots:
 	void	SetBackground();
 	void	ReadFrame();
 	void	WriteFrame();
-	void	ScaleFrame(int size);
+	void	ScaleFrame(double scale);
 
 	void	ExportPoints();
 	void	ExportLines();
@@ -129,14 +128,16 @@ private:
 	void	DrawOrder(bool bv);
 
 public slots:
-	void	FiberPrintAnalysis(double radius, double density, double g, double youngs_modulus, 
-								double shear_modulus, double penalty, double D_tol, double pri_tol, 
-								double dual_tol, double alpha, double beta, double gamma);
+	void	FiberPrintAnalysis(double radius, double density, double g, 
+								double youngs_modulus, double shear_modulus, 
+								double penalty, double D_tol, double pri_tol, 
+								double dual_tol, double gamma, double Wl, double Wp);
 	void	PrintLayer(int layer);
 	void	PrintOrder(int order);
 	void	SimplifyFrame();
 	void	RefineFrame();
-	void	ProjectBound();
+	void	ProjectBound(double len);
+	void	ModifyProjection(double len);
 
 	void	RotateXY();
 	void	RotateXZ();

@@ -6,6 +6,7 @@
 #include <vector>
 #include "GraphCut.h"
 #include "SeqAnalyzer.h"
+#include "ProcessAnalyzer.h"
 
 
 class FiberPrintPlugIn
@@ -13,7 +14,8 @@ class FiberPrintPlugIn
 public:
 	FiberPrintPlugIn();
 	FiberPrintPlugIn(WireFrame *ptr_frame);
-	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
+	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
+						char *path);
 	~FiberPrintPlugIn();
 
 public:
@@ -33,6 +35,7 @@ public:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
+	ProcessAnalyzer	*ptr_procanalyzer_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

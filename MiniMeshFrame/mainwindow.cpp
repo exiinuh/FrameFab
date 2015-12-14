@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent)
 	ui.setupUi(this);
 	ui.mainToolBar->setVisible(false);
 
+	this->setWindowTitle("Fiber printing");
+
 	renderingwidget_ = new RenderingWidget(this);
 //	setCentralWidget(renderingwidget_);
 
@@ -40,13 +42,15 @@ MainWindow::MainWindow(QWidget *parent)
 	layout_left->addWidget(groupbox_edge_);
 	layout_left->addWidget(groupbox_orderdisplay_);
 	layout_left->addWidget(groupbox_edit_);
-	layout_left->addWidget(groupbox_scale_);
-	layout_left->addWidget(groupbox_separator_);
+	layout_left->addWidget(groupbox_sep1_);
 	layout_left->addStretch(1);
 
 	QVBoxLayout *layout_right = new QVBoxLayout;
 	layout_right->addWidget(groupbox_fiber_);
-	layout_right->addWidget(groupbox_para_);
+	layout_right->addWidget(groupbox_fiberpara_);
+	layout_right->addWidget(groupbox_meshpara_);
+	layout_right->addWidget(groupbox_debug_);
+	layout_right->addWidget(groupbox_sep2_);
 	layout_right->addStretch(1);
 
 	QHBoxLayout *layout_main = new QHBoxLayout;
@@ -91,6 +95,9 @@ void MainWindow::CreateActions()
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
+
+	action_about_ = new QAction(tr("About"), this);
+	connect(action_about_, SIGNAL(triggered()), this, SLOT(ShowAbout()));
 }
 
 
@@ -109,6 +116,10 @@ void MainWindow::CreateMenus()
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
 	menu_display_->addAction(action_background_);
+
+	menu_help_ = menuBar()->addMenu(tr("&Help"));
+	menu_help_->setStatusTip(tr("Help"));
+	menu_help_->addAction(action_about_);
 }
 
 
@@ -145,19 +156,23 @@ void MainWindow::CreateLabels()
 	label_youngsmodulus_= new QLabel(QString("Young's modulus: "), this);
 	label_shearmodulus_ = new QLabel(QString("Shear modulus: "), this);
 
+	label_Dtol_		= new QLabel(QString("Stiffness tolerance: "), this);
 	label_penalty_	= new QLabel(QString("ADMM penalty: "), this);
-	label_Dtol_		= new QLabel(QString("ADMM D tolerance: "), this);
 	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "), this);
 	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "), this);
-	label_alpha_	= new QLabel(QString("TSP alpha: "), this);
-	label_beta_		= new QLabel(QString("TSP beta: "), this);
-	label_gamma_	= new QLabel(QString("TSP gamma: "), this);
+	label_gamma_	= new QLabel(QString("Seq gamma: "), this);
+	label_wl_		= new QLabel(QString("Seq Wl: "), this);
+	label_wp_		= new QLabel(QString("Seq Wp: "), this);
+
+	label_scale_	= new QLabel(QString("Scale: "), this);
+	label_prolen_	= new QLabel(QString("Projection length: "), this);
 }
 
 
 void MainWindow::CreateSpinBoxes()
 {
 	spinbox_radius_ = new QDoubleSpinBox(this);
+	spinbox_radius_->setFixedWidth(140);
 	spinbox_radius_->setDecimals(2);
 	spinbox_radius_->setRange(0.01, 0.5);
 	spinbox_radius_->setValue(0.4);
@@ -165,13 +180,15 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_radius_->setSuffix(" mm");
 
 	spinbox_density_ = new QDoubleSpinBox(this);
+	spinbox_density_->setFixedWidth(140);
 	spinbox_density_->setDecimals(0);
 	spinbox_density_->setRange(500, 5000);
 	spinbox_density_->setValue(1210);
 	spinbox_density_->setSingleStep(10);
-	spinbox_density_->setSuffix(" *10^-12 Ton/mm^3");
+	spinbox_density_->setSuffix(" *10^-12 T/mm^3");
 
 	spinbox_g_ = new QDoubleSpinBox(this);
+	spinbox_g_->setFixedWidth(140);
 	spinbox_g_->setDecimals(2);
 	spinbox_g_->setRange(-12000.00, -7000.00);
 	spinbox_g_->setValue(-9806.33);
@@ -179,6 +196,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_g_->setSuffix(" mm/s^2");
 
 	spinbox_youngsmodulus_ = new QDoubleSpinBox(this);
+	spinbox_youngsmodulus_->setFixedWidth(140);
 	spinbox_youngsmodulus_->setDecimals(0);
 	spinbox_youngsmodulus_->setRange(0, 10000);
 	spinbox_youngsmodulus_->setValue(1100);
@@ -186,53 +204,83 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_youngsmodulus_->setSuffix(" MPa");
 
 	spinbox_shearmodulus_ = new QDoubleSpinBox(this);
+	spinbox_shearmodulus_->setFixedWidth(140);
 	spinbox_shearmodulus_->setDecimals(0);
 	spinbox_shearmodulus_->setRange(0, 10000);
 	spinbox_shearmodulus_->setValue(1032);
 	spinbox_shearmodulus_->setSingleStep(1);
 	spinbox_shearmodulus_->setSuffix(" MPa");
 
-	spinbox_penalty_ = new QDoubleSpinBox(this);
-	spinbox_penalty_->setDecimals(2);
-	spinbox_penalty_->setRange(0, 10000);
-	spinbox_penalty_->setValue(100);
-	spinbox_penalty_->setSingleStep(1);
-
 	spinbox_Dtol_ = new QDoubleSpinBox(this);
+	spinbox_Dtol_->setFixedWidth(140);
 	spinbox_Dtol_->setDecimals(4);
 	spinbox_Dtol_->setRange(0, 1);
 	spinbox_Dtol_->setValue(0.1);
 	spinbox_Dtol_->setSingleStep(0.01);
 
+	spinbox_penalty_ = new QDoubleSpinBox(this);
+	spinbox_penalty_->setFixedWidth(140);
+	spinbox_penalty_->setDecimals(2);
+	spinbox_penalty_->setRange(0, 10000);
+	spinbox_penalty_->setValue(100);
+	spinbox_penalty_->setSingleStep(1);
+
 	spinbox_pritol_ = new QDoubleSpinBox(this);
+	spinbox_pritol_->setFixedWidth(140);
 	spinbox_pritol_->setDecimals(4);
 	spinbox_pritol_->setRange(0, 1);
 	spinbox_pritol_->setValue(0.001);
 	spinbox_pritol_->setSingleStep(0.0001);
 
 	spinbox_dualtol_ = new QDoubleSpinBox(this);
+	spinbox_dualtol_->setFixedWidth(140);
 	spinbox_dualtol_->setDecimals(4);
 	spinbox_dualtol_->setRange(0, 1);
 	spinbox_dualtol_->setValue(0.001);
 	spinbox_dualtol_->setSingleStep(0.0001);
 
-	spinbox_alpha_ = new QDoubleSpinBox(this);
-	spinbox_alpha_->setDecimals(2);
-	spinbox_alpha_->setRange(0, 100000);
-	spinbox_alpha_->setValue(1);
-	spinbox_alpha_->setSingleStep(1);
-
-	spinbox_beta_ = new QDoubleSpinBox(this);
-	spinbox_beta_->setDecimals(2);
-	spinbox_beta_->setRange(0, 100000);
-	spinbox_beta_->setValue(10000);
-	spinbox_beta_->setSingleStep(1);
-
 	spinbox_gamma_ = new QDoubleSpinBox(this);
+	spinbox_gamma_->setFixedWidth(140);
 	spinbox_gamma_->setDecimals(2);
 	spinbox_gamma_->setRange(0, 100000);
 	spinbox_gamma_->setValue(100);
 	spinbox_gamma_->setSingleStep(1);
+
+	spinbox_wl_ = new QDoubleSpinBox(this);
+	spinbox_wl_->setFixedWidth(140);
+	spinbox_wl_->setDecimals(2);
+	spinbox_wl_->setRange(0, 10000);
+	spinbox_wl_->setValue(10.0);
+	spinbox_wl_->setSingleStep(1);
+
+	spinbox_wp_ = new QDoubleSpinBox(this);
+	spinbox_wp_->setFixedWidth(140);
+	spinbox_wp_->setDecimals(2);
+	spinbox_wp_->setRange(0, 10000);
+	spinbox_wp_->setValue(1.0);
+	spinbox_wp_->setSingleStep(1);
+
+	spinbox_scale_ = new QDoubleSpinBox(this);
+	spinbox_scale_->setFixedWidth(140);
+	spinbox_scale_->setDecimals(1);
+	spinbox_scale_->setRange(0, 1000);
+	spinbox_scale_->setValue(1.0);
+	spinbox_scale_->setSingleStep(1);
+	connect(spinbox_scale_, SIGNAL(valueChanged(double)), this, SLOT(ShowScale(double)));
+	connect(spinbox_scale_, SIGNAL(valueChanged(double)), renderingwidget_, SLOT(ScaleFrame(double)));
+
+	spinbox_prolen_ = new QDoubleSpinBox(this);
+	spinbox_prolen_->setFixedWidth(140);
+	spinbox_prolen_->setDecimals(1);
+	spinbox_prolen_->setRange(0, 1000);
+	spinbox_prolen_->setValue(1.0);
+	spinbox_prolen_->setSingleStep(1);
+	connect(spinbox_prolen_, SIGNAL(valueChanged(double)), renderingwidget_, SLOT(ModifyProjection(double)));
+
+	//pushbutton_scale_ = new QPushButton(tr("Scale"), this);
+	//pushbutton_scale_->setFixedSize(80, 25);
+	//connect(pushbutton_scale_, SIGNAL(clicked()), this, SLOT(CheckScale()));
+	//connect(this, SIGNAL(ChangeScale(double)), renderingwidget_, SLOT(ScaleFrame(double)));
 }
 
 
@@ -252,40 +300,27 @@ void MainWindow::CreateCheckBoxes()
 
 void MainWindow::CreateSliders()
 {
-	/*
-	slider_layer_ = new QSlider(Qt::Horizontal, this);
-	slider_layer_->setMinimum(0);
-	slider_layer_->setMaximum(10);
-	connect(slider_layer_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintLayer(int)));
-	*/
-
 	slider_order_ = new QSlider(Qt::Horizontal, this);
+	slider_order_->setFixedSize(80, 25);
 	slider_order_->setMinimum(0);
 	slider_order_->setMaximum(50);
 	slider_order_->setSingleStep(1);
 	connect(slider_order_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(PrintOrder(int)));
 	connect(renderingwidget_, SIGNAL(SetOrderSlider(int)), this, SLOT(SetOrderSlider(int)));
 	connect(renderingwidget_, SIGNAL(SetMaxOrderSlider(int)), this, SLOT(SetMaxOrderSlider(int)));
-
-	slider_scale_ = new QSlider(Qt::Horizontal, this);
-	slider_scale_->setMinimum(1);
-	slider_scale_->setMaximum(20);
-	slider_scale_->setValue(10);
-	connect(slider_scale_, SIGNAL(valueChanged(int)), renderingwidget_, SLOT(ScaleFrame(int)));
-	connect(slider_scale_, SIGNAL(valueChanged(int)), this, SLOT(ShowScale(int)));
 }
 
 
 void MainWindow::CreateRadioButtons()
 {
 	radiobutton_heat_ = new QRadioButton(tr("Heat"), this);
-	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
 	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
-	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
 	radiobutton_order_ = new QRadioButton(tr("Order"), this);
-	connect(radiobutton_order_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+	connect(radiobutton_order_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
 	radiobutton_none_ = new QRadioButton(tr("None"), this);
 	radiobutton_none_->setVisible(false);
@@ -296,29 +331,49 @@ void MainWindow::CreateRadioButtons()
 
 void MainWindow::CreatePushButtons()
 {
-	pushbutton_nextedge_ = new QPushButton(tr("Next edge"), this);
-	connect(pushbutton_nextedge_, SIGNAL(clicked()), this, SLOT(OrderStep()));
-
 	pushbutton_rotatexy_ = new QPushButton(tr("RotateXY"), this);
 	pushbutton_rotatexz_ = new QPushButton(tr("RotateXZ"), this);
 	pushbutton_rotateyz_ = new QPushButton(tr("RotateYZ"), this);
+	pushbutton_rotatexy_->setFixedSize(80, 25);
+	pushbutton_rotatexz_->setFixedSize(80, 25);
+	pushbutton_rotateyz_->setFixedSize(80, 25);
 	connect(pushbutton_rotatexy_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXY()));
 	connect(pushbutton_rotatexz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXZ()));
 	connect(pushbutton_rotateyz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateYZ()));
 
-	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
-	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
+	pushbutton_nextedge_ = new QPushButton(tr("Next edge"), this);
+	pushbutton_nextedge_->setFixedSize(80, 25);
+	connect(pushbutton_nextedge_, SIGNAL(clicked()), this, SLOT(OrderStep()));
+
+	//pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
+	//pushbutton_simplify_->setFixedSize(80, 25);
+	//connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
 
 	pushbutton_refine_ = new QPushButton(tr("Refine"), this);
+	pushbutton_refine_->setFixedSize(80, 25);
 	connect(pushbutton_refine_, SIGNAL(clicked()), renderingwidget_, SLOT(RefineFrame()));
 
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
-	pushbutton_project_ = new QPushButton(tr("Project"), this);
-	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetParameters())); 
-	connect(this, SIGNAL(SendParameters(double, double, double, double, double, double, double, 
-		double, double, double, double, double)), renderingwidget_, SLOT(FiberPrintAnalysis(double, 
+	pushbutton_fiberprint_->setFixedSize(140, 35);
+	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
+	connect(this, SIGNAL(SendFiberParas(double, double, double, double, double, double, double,
+		double, double, double, double, double)), renderingwidget_, SLOT(FiberPrintAnalysis(double,
 		double, double, double, double, double, double, double, double, double, double, double)));
-	connect(pushbutton_project_, SIGNAL(clicked()), renderingwidget_, SLOT(ProjectBound()));
+
+	pushbutton_project_ = new QPushButton(tr("Project"), this);
+	pushbutton_project_->setFixedSize(140, 35);
+	connect(pushbutton_project_, SIGNAL(clicked()), this, SLOT(GetProjectionParas()));
+	connect(this, SIGNAL(SendProjectionParas(double)), renderingwidget_, SLOT(ProjectBound(double)));
+
+	pushbutton_rightarrow_ = new QPushButton(tr(">>"), this);
+	pushbutton_rightarrow_->setFlat(true);
+	pushbutton_rightarrow_->setFixedSize(20, 20);
+	connect(pushbutton_rightarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
+
+	pushbutton_leftarrow_ = new QPushButton(tr("<<"), this);
+	pushbutton_leftarrow_->setFlat(true);
+	pushbutton_leftarrow_->setFixedSize(20, 20);
+	connect(pushbutton_leftarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
 }
 
 
@@ -326,18 +381,18 @@ void MainWindow::CreateToolButtons()
 {
 	toolbutton_choosebound_ = new QToolButton(this);
 	toolbutton_choosebound_->setText(tr("Choose frame\nboundary"));
-	toolbutton_choosebound_->setMaximumSize(200, 150);
+	toolbutton_choosebound_->setFixedSize(140, 35);
 	connect(toolbutton_choosebound_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBound()));
 
-	toolbutton_addedge_ = new QToolButton(this);
-	toolbutton_addedge_->setText(tr("Insert\nedge"));
-	toolbutton_addedge_->setMaximumSize(100, 50);
-	connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
+	//toolbutton_addedge_ = new QToolButton(this);
+	//toolbutton_addedge_->setText(tr("Insert\nedge"));
+	//toolbutton_addedge_->setMaximumSize(100, 50);
+	//connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
 
-	toolbutton_addface_ = new QToolButton(this);
-	toolbutton_addface_->setText(tr("Set face"));
-	toolbutton_addface_->setMaximumSize(84, 50);
-	connect(toolbutton_addface_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddFace()));
+	//toolbutton_addface_ = new QToolButton(this);
+	//toolbutton_addface_->setText(tr("Set face"));
+	//toolbutton_addface_->setMaximumSize(84, 50);
+	//connect(toolbutton_addface_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddFace()));
 
 	connect(renderingwidget_, SIGNAL(ChooseBoundPressed(bool)), this, SLOT(ChooseBoundClicked(bool)));
 	connect(renderingwidget_, SIGNAL(AddEdgePressed(bool)), this, SLOT(AddEdgeClicked(bool)));
@@ -348,7 +403,7 @@ void MainWindow::CreateToolButtons()
 void MainWindow::CreateGroups()
 {
 	// render group
-	connect(this, SIGNAL(EdgeMode(int)), renderingwidget_, SLOT(CheckEdgeMode(int)));
+	connect(this, SIGNAL(ChangeEdgeMode(int)), renderingwidget_, SLOT(CheckEdgeMode(int)));
 
 	groupbox_render_ = new QGroupBox(tr("Render"), this);
 	groupbox_render_->setFlat(true);
@@ -361,7 +416,7 @@ void MainWindow::CreateGroups()
 	// edge group
 	groupbox_edge_ = new QGroupBox(tr("Edge"), this);
 	groupbox_edge_->setCheckable(true);
-	connect(groupbox_edge_, SIGNAL(clicked(bool)), this, SLOT(EdgeModeChange()));
+	connect(groupbox_edge_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
 	QVBoxLayout* edge_layout = new QVBoxLayout(groupbox_edge_);
 	edge_layout->addWidget(radiobutton_heat_);
@@ -386,24 +441,18 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
-	edit_layout->addWidget(toolbutton_addedge_);
-	edit_layout->addWidget(toolbutton_addface_);
-	edit_layout->addWidget(pushbutton_simplify_);
+	//edit_layout->addWidget(toolbutton_addedge_);
+	//edit_layout->addWidget(toolbutton_addface_);
+	//edit_layout->addWidget(pushbutton_simplify_);
 	edit_layout->addWidget(pushbutton_refine_);
 
-	// scale group
-	groupbox_scale_ = new QGroupBox(tr("Scale"), this);
-	groupbox_scale_->setFlat(true);
-
-	QVBoxLayout* scale_layout = new QVBoxLayout(groupbox_scale_);
-	scale_layout->addWidget(slider_scale_);
-
 	// separator group
-	groupbox_separator_ = new QGroupBox(this);
-	groupbox_separator_->setFlat(true);
+	groupbox_sep1_ = new QGroupBox(this);
+	groupbox_sep1_->setFlat(true);
 
 	// fiber group
 	groupbox_fiber_ = new QGroupBox(tr("Fiber"), this);
+	groupbox_fiber_->setFlat(true);
 
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
@@ -411,35 +460,56 @@ void MainWindow::CreateGroups()
 	fiber_layout->addWidget(pushbutton_project_);
 
 	// parameter group
-	groupbox_para_ = new QGroupBox(tr("Parameter"), this);
+	groupbox_fiberpara_ = new QGroupBox(tr("Printing parameter"), this);
+	groupbox_fiberpara_->setFlat(true);
 
-	QVBoxLayout *para_layout = new QVBoxLayout(groupbox_para_);
-	para_layout->addWidget(label_radius_);
-	para_layout->addWidget(spinbox_radius_);
-	para_layout->addWidget(label_density_);
-	para_layout->addWidget(spinbox_density_);
-	para_layout->addWidget(label_g_);
-	para_layout->addWidget(spinbox_g_);
-	para_layout->addWidget(label_youngsmodulus_);
-	para_layout->addWidget(spinbox_youngsmodulus_);
-	para_layout->addWidget(label_shearmodulus_);
-	para_layout->addWidget(spinbox_shearmodulus_);
+	QVBoxLayout *fiberpara_layout = new QVBoxLayout(groupbox_fiberpara_);
+	fiberpara_layout->addWidget(label_radius_);
+	fiberpara_layout->addWidget(spinbox_radius_);
+	fiberpara_layout->addWidget(label_density_);
+	fiberpara_layout->addWidget(spinbox_density_);
+	fiberpara_layout->addWidget(label_g_);
+	fiberpara_layout->addWidget(spinbox_g_);
+	fiberpara_layout->addWidget(label_youngsmodulus_);
+	fiberpara_layout->addWidget(spinbox_youngsmodulus_);
+	fiberpara_layout->addWidget(label_shearmodulus_);
+	fiberpara_layout->addWidget(spinbox_shearmodulus_);
 
-	para_layout->addWidget(label_penalty_);
-	para_layout->addWidget(spinbox_penalty_);
-	para_layout->addWidget(label_Dtol_);
-	para_layout->addWidget(spinbox_Dtol_);
-	para_layout->addWidget(label_pritol_);
-	para_layout->addWidget(spinbox_pritol_);
-	para_layout->addWidget(label_dualtol_);
-	para_layout->addWidget(spinbox_dualtol_);
+	groupbox_meshpara_ = new QGroupBox(tr("Mesh parameter"), this);
+	groupbox_meshpara_->setFlat(true);
 
-	para_layout->addWidget(label_alpha_);
-	para_layout->addWidget(spinbox_alpha_);
-	para_layout->addWidget(label_beta_);
-	para_layout->addWidget(spinbox_beta_);
-	para_layout->addWidget(label_gamma_);
-	para_layout->addWidget(spinbox_gamma_);
+	QVBoxLayout *meshpara_layout = new QVBoxLayout(groupbox_meshpara_);
+	meshpara_layout->addWidget(label_scale_);
+	meshpara_layout->addWidget(spinbox_scale_);
+	meshpara_layout->addWidget(label_prolen_);
+	meshpara_layout->addWidget(spinbox_prolen_);
+	meshpara_layout->addWidget(pushbutton_rightarrow_);
+
+	// debug group
+	groupbox_debug_ = new QGroupBox(tr("Debug"), this);
+	groupbox_debug_->setFlat(true);
+
+	QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
+	debug_layout->addWidget(label_Dtol_);
+	debug_layout->addWidget(spinbox_Dtol_);
+	debug_layout->addWidget(label_penalty_);
+	debug_layout->addWidget(spinbox_penalty_);
+	debug_layout->addWidget(label_pritol_);
+	debug_layout->addWidget(spinbox_pritol_);
+	debug_layout->addWidget(label_dualtol_);
+	debug_layout->addWidget(spinbox_dualtol_);
+	debug_layout->addWidget(label_gamma_);
+	debug_layout->addWidget(spinbox_gamma_);
+	debug_layout->addWidget(label_wl_);
+	debug_layout->addWidget(spinbox_wl_);
+	debug_layout->addWidget(label_wp_);
+	debug_layout->addWidget(spinbox_wp_);
+
+	debug_layout->addWidget(pushbutton_leftarrow_);
+
+	// separator group
+	groupbox_sep2_ = new QGroupBox(this);
+	groupbox_sep2_->setFlat(true);
 }
 
 
@@ -479,23 +549,114 @@ void MainWindow::AddFaceClicked(bool down)
 }
 
 
-void MainWindow::GetParameters()
+void MainWindow::GetFiberParas()
 {
-	emit(SendParameters(
+	emit(SendFiberParas(
 		spinbox_radius_->value(),
 		spinbox_density_->value(),
 		spinbox_g_->value(),
 		spinbox_youngsmodulus_->value(),
 		spinbox_shearmodulus_->value(),
-		spinbox_penalty_->value(),
 		spinbox_Dtol_->value(),
+		spinbox_penalty_->value(),
 		spinbox_pritol_->value(),
 		spinbox_dualtol_->value(),
-		spinbox_alpha_->value(),
-		spinbox_beta_->value(),
-		spinbox_gamma_->value()
+		spinbox_gamma_->value(),
+		spinbox_wl_->value(),
+		spinbox_wp_->value()
 		)
 	);
+}
+
+
+void MainWindow::GetProjectionParas()
+{
+	emit(SendProjectionParas(spinbox_prolen_->value()));
+}
+
+
+void MainWindow::CheckEdgeMode()
+{
+	if (groupbox_edge_->isChecked())
+	{
+		if (sender() == radiobutton_heat_)
+		{
+			if (edge_render_ != HEAT)
+			{
+				radiobutton_heat_->setChecked(true);
+				edge_render_ = HEAT;
+				emit(ChangeEdgeMode(HEAT));
+
+				groupbox_orderdisplay_->setVisible(false);
+				groupbox_edit_->setVisible(true);
+
+				return;
+			}
+		}
+		else
+		if (sender() == radiobutton_bulk_)
+		{
+			if (edge_render_ != BULK)
+			{
+				radiobutton_bulk_->setChecked(true);
+				edge_render_ = BULK;
+				emit(ChangeEdgeMode(BULK));
+
+				groupbox_orderdisplay_->setVisible(false);
+				groupbox_edit_->setVisible(true);
+
+				return;
+			}
+		}
+		else
+		if (sender() == radiobutton_order_)
+		{
+			if (edge_render_ != ORDER)
+			{
+				radiobutton_order_->setChecked(true);
+				edge_render_ = ORDER;
+				emit(ChangeEdgeMode(ORDER));
+
+				groupbox_edit_->setVisible(false);
+				groupbox_orderdisplay_->setVisible(true);
+
+				return;
+			}
+		}
+
+		radiobutton_none_->setChecked(true);
+		edge_render_ = EDGE;
+		emit(ChangeEdgeMode(EDGE));
+
+		groupbox_orderdisplay_->setVisible(false);
+		groupbox_edit_->setVisible(true);
+	}
+	else
+	{
+		radiobutton_none_->setChecked(true);
+		edge_render_ = NONE;
+		emit(ChangeEdgeMode(NONE));
+
+		groupbox_orderdisplay_->setVisible(false);
+		groupbox_edit_->setVisible(true);
+	}
+}
+
+
+void MainWindow::SwitchParaBox()
+{
+	if (sender() == pushbutton_rightarrow_)
+	{
+		groupbox_fiberpara_->setVisible(false);
+		groupbox_meshpara_->setVisible(false);
+		groupbox_debug_->setVisible(true);
+	}
+	else
+	{
+		groupbox_debug_->setVisible(false);
+		groupbox_fiberpara_->setVisible(true);
+		groupbox_meshpara_->setVisible(true);
+	}
 }
 
 
@@ -549,83 +710,9 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 }
 
 
-void MainWindow::ShowScale(int size)
+void MainWindow::ShowScale(double scale)
 {
-	double scale = size*1.0 / 10;
-	label_operatorinfo_->setText(QString("Scale: %1").arg(scale*scale));
-}
-
-
-void MainWindow::EdgeModeChange()
-{
-	if (groupbox_edge_->isChecked())
-	{
-		if (sender() == radiobutton_heat_)
-		{
-			if (edge_render_ != HEAT)
-			{
-				radiobutton_heat_->setChecked(true);
-				edge_render_ = HEAT;
-				emit(EdgeMode(HEAT));
-
-				groupbox_orderdisplay_->setVisible(false);
-				groupbox_edit_->setVisible(true);
-				groupbox_scale_->setVisible(true);
-
-				return;
-			}
-		}
-		else
-		if (sender() == radiobutton_bulk_)
-		{
-			if (edge_render_ != BULK)
-			{
-				radiobutton_bulk_->setChecked(true);
-				edge_render_ = BULK;
-				emit(EdgeMode(BULK));
-
-				groupbox_orderdisplay_->setVisible(false);
-				groupbox_edit_->setVisible(true);
-				groupbox_scale_->setVisible(true);
-
-				return;
-			}
-		}
-		else
-		if (sender() == radiobutton_order_)
-		{
-			if (edge_render_ != ORDER)
-			{
-				radiobutton_order_->setChecked(true);
-				edge_render_ = ORDER;
-				emit(EdgeMode(ORDER));
-
-				groupbox_edit_->setVisible(false);
-				groupbox_scale_->setVisible(false);
-				groupbox_orderdisplay_->setVisible(true);
-
-				return;
-			}
-		}
-
-		radiobutton_none_->setChecked(true);
-		edge_render_ = EDGE;
-		emit(EdgeMode(EDGE));
-
-		groupbox_orderdisplay_->setVisible(false);
-		groupbox_edit_->setVisible(true);
-		groupbox_scale_->setVisible(true);
-	}
-	else
-	{
-		radiobutton_none_->setChecked(true);
-		edge_render_ = NONE;
-		emit(EdgeMode(NONE));
-
-		groupbox_orderdisplay_->setVisible(false);
-		groupbox_edit_->setVisible(true);
-		groupbox_scale_->setVisible(true);
-	}
+	label_operatorinfo_->setText(QString("Scale: %1").arg(scale));
 }
 
 
@@ -647,7 +734,7 @@ void MainWindow::Reset()
 {
 	//slider_layer_->setValue(0);
 	slider_order_->setValue(0);
-	slider_scale_->setValue(10);
+
 	label_operatorinfo_->setText(QString("Scale: 1.0"));
 
 	groupbox_edge_->setChecked(false);
@@ -656,7 +743,10 @@ void MainWindow::Reset()
 
 	groupbox_orderdisplay_->setVisible(false);
 	groupbox_edit_->setVisible(true);
-	groupbox_scale_->setVisible(true);
+
+	groupbox_debug_->setVisible(false);
+	groupbox_fiberpara_->setVisible(true);
+	groupbox_meshpara_->setVisible(true);
 }
 /*
 void MainWindow::SetSlider()

@@ -8,7 +8,7 @@
 *
 *	 Version:  1.0
 *	 Created:  Oct/20/2015
-*    Update :  Dec/08/2015
+*    Update :  Dec/09/2015
 *
 *	 Author:   Xin Hu, Guoxian Song, Yijiang Huang
 *	 Company:  GCL@USTC
@@ -24,7 +24,6 @@
 *				because of the existence of edge j. Larger prohibited angle means that edge i is difficult to print
 *				due to edge j's blocking, thus we give it larger cost to discourage greedy approach from choosing it.
 *
-*				S: stiffness cost
 * ==========================================================================
 */
 #pragma once
@@ -33,6 +32,7 @@
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
 #include "Collision\Collision.h"
+#include "Collision\ResolveAngle.h"
 
 typedef struct Set
 {
@@ -75,31 +75,50 @@ public:
 	vector<QueueInfo>		*GetQueue()			{ return layer_queue_; }
 	vector<vector<int>>		*GetRangeState()	{ return ptr_collision_->GetRangeState(); }
 	vector<BaseBulk*>		*GetBulk()			{ return ptr_collision_->GetBulk(); }
-	ExtruderCone			GetExtru(int i)		{ return (extrulist_)[i]; }
+	Vec3f					GetNormal(int i)	{ return extruder_list_[i].Normal(); }
+	ExtruderCone			GetExtru(int i)		{ return (extruder_list_)[i]; }
+	int						GetSupport()		{ return support_; }
+	double					GetWave(int id)		{ return Wave[id]; }
 
+	/* Feasible Orientation Generation 		Nov/09/2015*/	
+	/* Collision Ver2.0, angle list data interface */
+	vector<GeoV3>		AngleList(vector<QueueInfo> *layer_queue);
+	/* Collision Ver2.0, angle decision interface  
+	*  
+	*/
+	GeoV3				AngleDec(int id);
+
+	/* IsColVec - Judge if the target vector in the prohibited range*/
+	bool				IsColVec(GeoV3 start, GeoV3 end, GeoV3 target);
+
+	/* Misc function */
 	void			Print(Set *a);
 	void			Print(vector<Set*> *a);
 	void			Debug();
 
-private:
+public:
 	GraphCut		*ptr_graphcut_;
 	Collision		*ptr_collision_;
 	DualGraph		*ptr_subgraph_;
 
-	double			alpha_;					
-	double			beta_;
-	double			gamma_;
-	double			stiff_tol_;
-	double			Wl_;
-	double			Wp_;
-	double			height_differ_;
+private:
+	double			gamma_;						// gamma_	 : amplifier factor for adjacency cost
+	double			D_tol_;						// D_tol_	 : deformation tolerance 
+	double			Wl_;						// Wl_		 : tradeoff weight for printing cost
+	double			Wp_;						// Wp_		 : tradeoff weight for printing cost
+	double			height_differ_;				// height_differ : maximal height difference for the whole wireframe
 
 	vector<vector<int>>		layers_;			// store dual_node's id for each layers
 	vector<QueueInfo>		*layer_queue_;
 
+	/* Printing Orientation Related Data */
 	ExtruderCone			extruder_;
-	vector<point>			base_;
-	vector<double>			anglelist_;
-	vector<ExtruderCone>	extrulist_;
+	vector<double>			Wave;				// Wave: orientation range data for each printing edge, 
+												// index computed by seq analyzer, Output data
+
+	vector<ExtruderCone>	extruder_list_;
+	vector<GeoV3>			angle_list_;
+
+	int support_;
 };
 

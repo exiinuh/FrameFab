@@ -84,15 +84,16 @@ int		Collision ::AboveCollisionAnalysis(SpecialBulk *SpecialBulk, point target_s
 
 void Collision::DetectFrame()
 {
-	cout << "---------------------------" << endl;
+	cout << "--------------------------" << endl;
+	cout << "Collision Detection begins" << endl;
 
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 
-	double height	  = extruder_->Height();
-	double angle	  = extruder_->Angle();
+	double height = extruder_->Height();
+	double angle = extruder_->Angle();
 	double wave_angle = extruder_->WaveAngle();
 	double generatrix = height / cos(angle);
-	double radii	  = height * tan(angle);
+	double radii = height * tan(angle);
 
 	range_list_->clear();
 	range_state_->clear();
@@ -100,58 +101,94 @@ void Collision::DetectFrame()
 
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 
-	/* Initialization data */
 	for (int i = 0; i < Nd; i++)
 	{
 		range_list_->push_back(vector<Range*>(Nd));
 		range_state_->push_back(vector<int>(Nd));
 
 		R2_range_.push_back(vector<double>(Nd));
+
 		R2_Angle.push_back(vector<RAngle>(Nd));
 		R2_state_.push_back(vector<int>(Nd));
 	}
 
-	cout << "Collision Detect: collision cost matrix pre-computation started." << endl;
 
+	//---------------------------
 	for (int i = 0; i < Nd; i++)
-	{	
+	{
 		if (i % int(Nd / 10) == 0)
 		{
-			cout << "Progresssion Rate: " <<  floor(double(i) / double(Nd) * 100) << "%" << endl;
+			cout << "Progression Rate: " << int(double(i) / double(Nd) * 100) << "%" << endl;
 		}
-		
-		/*
-		* Assume we are printing edge i, The following process calculate
-		* the collision cost of existence of edge j for printing i
-		*/
-		WF_edge *e = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));
+
+		//Fix Polyhedron
+		WF_edge *e  = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));
 		point start = e->pvert_->Position();
-		point end = e->ppair_->pvert_->Position();
+		point end   = e->ppair_->pvert_->Position();
 
-		for (int j = 0; j < Nd; j++)
+
+		if (e->isPillar())
 		{
-			WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
-			point target_start = e_ij->pvert_->Position();
-			point target_end   = e_ij->ppair_->pvert_->Position();
-			CylinderBulk temp = CylinderBulk(start, end, target_start, target_end);
+			for (int j = 0; j < Nd; j++)
+			{
+				WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
+				point target_start = e_ij->pvert_->Position();
+				point target_end = e_ij->ppair_->pvert_->Position();
 
-			if (temp.is_collision_ == 0)
-			{
-				(*range_state_)[i][j] = 0;
-				R2_state_[i][j] = 0;
-				(R2_range_)[i][j] = 2 * F_PI;
-			}
-			else
-			{
-				(*range_state_)[i][j] = 1;
-				R2_state_[i][j] = 1;
-				(R2_range_)[i][j] = temp.range_;
-				(R2_Angle)[i][j] = temp.Rangle_;
+
+				if (target_end == start || target_end == end)
+				{
+					(*range_state_)[i][j] = 2;
+					R2_state_[i][j] = 2;
+					(R2_range_)[i][j] = 0;
+				}
+				else if (target_start == start || target_start == end)
+				{
+					(*range_state_)[i][j] = 2;
+					R2_state_[i][j] = 2;
+					(R2_range_)[i][j] = 0;
+				}
+				else
+				{
+					(*range_state_)[i][j] = 0;
+					R2_state_[i][j] = 0;
+					(R2_range_)[i][j] = 2 * F_PI;
+
+				}
 			}
 
 		}
+		else
+		{
+			for (int j = 0; j < Nd; j++)
+			{
+				WF_edge *e_ij = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(j));
+				point target_start = e_ij->pvert_->Position();
+				point target_end = e_ij->ppair_->pvert_->Position();
+				CylinderBulk temp = CylinderBulk(start, end, target_start, target_end);
+
+				if (temp.is_collision_ == 0)
+				{
+					(*range_state_)[i][j] = 0;
+					R2_state_[i][j] = 0;
+					(R2_range_)[i][j] = 2 * F_PI;
+				}
+				else
+				{
+					if (temp.is_collision_ == 1)
+					{
+						(*range_state_)[i][j] = 1;
+						R2_state_[i][j] = 1;
+						(R2_range_)[i][j] = temp.range_;
+						(R2_Angle)[i][j] = temp.Rangle_;
+					}
+				}
+			}
+
+		}
+
 	}
-	
+
 	cout << " Detect Collision done." << endl;
 }
 
@@ -317,7 +354,7 @@ int Collision::DetectCollision(CommonBulk *bulk, point target_start, point targe
 
 
 //For SpecialBulk
-int     Collision::DetectCollision(SpecialBulk *SpecialBulk, point target_start, point target_end)
+int Collision::DetectCollision(SpecialBulk *SpecialBulk, point target_start, point target_end)
 {
 
 	point start = SpecialBulk->StartPoint();

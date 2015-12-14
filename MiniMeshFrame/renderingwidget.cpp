@@ -1,7 +1,6 @@
 ﻿#include "renderingwidget.h"
 
 
-
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
 has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false),
@@ -558,7 +557,6 @@ void RenderingWidget::ReadFrame()
 	ptr_frame_ = new WireFrame();
 	ptr_frame_->LoadFromOBJ(byfilename.data());
 
-	emit(AddEdgePressed(false));
 	emit(ChooseBoundPressed(false));
 
 	emit(modeInfo(QString("Insert edge (I)")));
@@ -594,7 +592,7 @@ void RenderingWidget::WriteFrame()
 }
 
 
-void RenderingWidget::ScaleFrame(int size)
+void RenderingWidget::ScaleFrame(double scale)
 {
 	if (ptr_frame_ == NULL)
 	{
@@ -603,13 +601,13 @@ void RenderingWidget::ScaleFrame(int size)
 
 	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
 	int N = ptr_frame_->SizeOfVertList();
-	float pre_scale = scale_;
-	scale_ = size *1.0 / 10;
+	float size = scale / scale_;
 	for (int i = 0; i < N; i++)
 	{
 		Vec3f p = verts[i]->Position();
-		verts[i]->SetPosition(p/pre_scale*scale_);
+		verts[i]->SetPosition(p * size);
 	}
+	scale_ = scale;
 	ptr_frame_->Unify();
 
 	if (captured_edge_ != NULL)
@@ -1231,24 +1229,36 @@ void RenderingWidget::DrawOrder(bool bv)
 }
 
 
-void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g, double youngs_modulus, 
-											double shear_modulus, double penalty, double D_tol, double pri_tol, 
-											double dual_tol, double alpha, double beta, double gamma)
+void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g,
+											double youngs_modulus, double shear_modulus,
+											double D_tol, double penalty, double pri_tol,
+											double dual_tol, double gamma, double Wl, double Wp)
 {
-	/*
-	ptr_frame_->RefineFrame();
-	int N = ptr_frame_->SizeOfVertList();
-	int M = ptr_frame_->SizeOfEdgeList();
-	updateGL();
-	*/
-	
-	//FiberPrintPARM *ptr_parm = new FiberPrintPARM(radius, density, g, youngs_modulus, shear_modulus, penalty,
-	//												D_tol, pri_tol, dual_tol, alpha, beta, gamma);
+	QString dirname = QFileDialog::
+		getExistingDirectory(this, 
+							tr("Result Directory"),
+							"/home",
+							QFileDialog::ShowDirsOnly
+							| QFileDialog::DontResolveSymlinks);
 
-	FiberPrintPARM *ptr_parm = new FiberPrintPARM();
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+	
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(
+		radius, density, g, youngs_modulus, shear_modulus, 
+		D_tol, penalty, pri_tol, dual_tol, gamma, Wl, Wp);
 
 	delete ptr_fiberprint_; 
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm);
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 	ptr_fiberprint_->Print();
 
 	emit(SetOrderSlider(0));
@@ -1299,21 +1309,30 @@ void RenderingWidget::RefineFrame()
 
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+
+	updateGL();
 }
 
 
-void RenderingWidget::ProjectBound()
+void RenderingWidget::ProjectBound(double len)
 {
 	if (bound_.size() <= 0)
 	{
 		return;
 	}
-	ptr_frame_->ProjectBound(&bound_);
+	ptr_frame_->ProjectBound(&bound_, len);
 	op_mode_ = NORMAL;
 	emit(modeInfo(QString("Insert edge (I) | Choose boundary (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
+	updateGL();
+}
+
+
+void RenderingWidget::ModifyProjection(double len)
+{
+	ptr_frame_->ModifyProjection(len);
 	updateGL();
 }
 

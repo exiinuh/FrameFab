@@ -1,37 +1,35 @@
 #pragma once
 
-#include"FiberPrint\FiberPrintPlugIn.h"
-#include"WireFrame\WireFrame.h"
-#define STOREPATH "I:\\Users\\Alienware\\Desktop\\Result\\"
+#include "FiberPrint\SeqAnalyzer.h"
+#include "WireFrame\WireFrame.h"
 
 
 typedef  struct Process
 {
-    bool extruder_state_;
-	bool fan_state_;
-	point start_;
-	point end_;
+    bool	extruder_state_;
+	bool	fan_state_;
+	point	start_;
+	point	end_;
 
 	// -1 for move; 0 for quick move; 1 for sweep;
 	//2 for up; 3 for down; 4 for flat;5 for vertical; 6 for base; 
 	//7 fusion up
-	 int move_state_; 
-	point vector;
+	int		move_state_; 
+	point	vector;
+
+	double	wave_;
 };
 
 
 class  ProcessAnalyzer
 {
 public:
-	ProcessAnalyzer(FiberPrintPlugIn	*ptr_fiberprint);
-
-
+	ProcessAnalyzer(SeqAnalyzer *ptr_seqanalyzer, char *path);
 	ProcessAnalyzer(WireFrame * frame);
 
+public:
+	vector<Process*> *ProcPrint();
 
-	vector<Process*> * Init();
-
- 
 	/*generate process start point and end point, based on the prior process;
 	  follow the rule:
 
@@ -51,8 +49,6 @@ public:
 	  mainly check existing point
 	  1. fusion don;t need fan
 	  2. branch need fan.
-
-
 	*/
 	Process* SetFan( Process* temp);
 
@@ -60,22 +56,24 @@ public:
 	//Different move for different speed, angle
 	Process* SetExtruderSpeed(Process* temp,int id);
 
-
-
 	// If print is  not continuous, consider break; quick up the break string 
 	void SetBreak(Process* temp);
 
 	//Consider string thick
 	void SetThick();
 
-	vector<Process*> *print_;
-	FiberPrintPlugIn	*ptr_fiberprint_;
-	vector<point> exist_point_;
-
 	bool IfPointInVector(point p);
-	ExtruderCone extruder_;
-	double break_height_;
 
 	void Write();
-	
+
+	Process* SetVector(Process* temp, int id); //And Wave
+
+public:
+	SeqAnalyzer			*ptr_seqanalyzer_;
+	char				*path_;
+
+	vector<Process*>	*print_;
+	vector<point>		exist_point_;
+	ExtruderCone		extruder_;
+	double				break_height_;
 };

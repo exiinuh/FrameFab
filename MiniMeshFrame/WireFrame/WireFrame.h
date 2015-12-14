@@ -142,11 +142,13 @@ public:
 
 	void		SimplifyFrame();
 	void		RefineFrame();
-	void		ProjectBound(vector<int> *bound);
+	void		ProjectBound(vector<int> *bound, double len);
+	void		ModifyProjection(double len);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
 	inline int					SizeOfFaceList()		{ return pface_list_->size(); }
+	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
@@ -209,6 +211,7 @@ private:
 	double				miny_;
 	double				minz_;
 
+	int					fixed_vert_;
 	Vec3f				center_pos_;
 	float				scaleV_;
 	double				unify_size_;

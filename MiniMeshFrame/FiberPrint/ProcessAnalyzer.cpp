@@ -1,144 +1,141 @@
 #include"ProcessAnalyzer.h"
 
 
-ProcessAnalyzer::ProcessAnalyzer(FiberPrintPlugIn	*ptr_fiberprint)
+ProcessAnalyzer::ProcessAnalyzer(SeqAnalyzer *ptr_seqanalyzer, char *path)
 {
+	ptr_seqanalyzer_ = ptr_seqanalyzer;
+	path_ = path;
 
-	ptr_fiberprint_ = ptr_fiberprint;
     break_height_ = 2; //2cm
-	Init();
 
-
-	SetThick();
-
-	Write();
-	
-}
-ProcessAnalyzer::ProcessAnalyzer(WireFrame * ptr_frame_)
-{
-
-	int ttd[85] = { 151, 147, 9, 1, 41, 159, 59, 167, 99, 153, 61, 57, 71, 69, 43, 45, 3, 5, 7, 139, 33, 31, 55, 95,
-		97, 155, 73, 133, 11, 21, 29, 53,
-		137, 37, 39, 141, 19, 17, 15, 13, 135, 81, 83, 63, 65, 157, 105, 103,
-		35, 85, 75, 107, 161, 67, 127, 113,
-		101, 89, 87, 79, 77, 111, 109, 119, 91
-		, 121, 125, 123, 169, 131, 129, 117, 115, 143, 149, 165, 163, 93, 49, 91, 51, 25, 27, 23, 47
-	};
-
-	FILE *s = fopen("I:\\Users\\Alienware\\Desktop\\Result\\Start.txt", "w");
-
-	FILE *e = fopen("I:\\Users\\Alienware\\Desktop\\Result\\End.txt", "w");
-
-	vector<point> S;
-	vector<point> E;
-
-	for (int i = 0; i < 85; i++)
-	{
-		WF_edge* temp = ptr_frame_->GetEdge(ttd[i]);
-		point s_ = temp->pvert_->Position();
-		point e_ = temp->ppair_->pvert_->Position();
-
-
-		point s_p; point e_p;
-		if (i == 0)
-		{
-			if (s_ == ptr_frame_->GetEdge(ttd[i+1])->pvert_->Position() || s_ == ptr_frame_->GetEdge(ttd[i+1])->ppair_->pvert_->Position())
-			{
-				S.push_back(e_);
-				E.push_back(s_);
-				
-			}
-			else
-			{
-				S.push_back(s_);
-				E.push_back(e_);
-			
-			}
-			continue;
-		}
-
-		if (s_ == E[E.size() - 1])
-		{
-			S.push_back(s_);
-			E.push_back(e_);
-			continue;
-		}
-
-		if (e_ == E[E.size() - 1])
-		{
-			S.push_back(e_);
-			E.push_back(s_);
-			continue;
-		}
-
-		if (s_ == ptr_frame_->GetEdge(ttd[i + 1])->pvert_->Position() || s_ == ptr_frame_->GetEdge(ttd[i + 1])->ppair_->pvert_->Position())
-		{
-			S.push_back(e_);
-			E.push_back(s_);
-
-		}
-		else
-		{
-			S.push_back(s_);
-			E.push_back(e_);
-
-		}
-		
-
-	}
-
-
-
-
-	for (int i = 0; i < 85; i++)
-	{
-		
-		point s_ = S[i];
-
-		point e_ = E[i];
-
-		fprintf(s, "%lf ,%lf ,%lf", s_.x(), s_.y(), s_.z());
-		fprintf(s, "\n");
-		fprintf(e, "%lf ,%lf ,%lf", e_.x(), e_.y(), e_.z());
-		fprintf(e, "\n");
-
-	}
-
-	std::fclose(s);
-	std::fclose(e);
-
-
+	//SetThick();
 }
 
+//ProcessAnalyzer::ProcessAnalyzer(WireFrame * ptr_frame_)
+//{
+//
+//	int ttd[85] = { 151, 147, 9, 1, 41, 159, 59, 167, 99, 153, 61, 57, 71, 69, 43, 45, 3, 5, 7, 139, 33, 31, 55, 95,
+//		97, 155, 73, 133, 11, 21, 29, 53,
+//		137, 37, 39, 141, 19, 17, 15, 13, 135, 81, 83, 63, 65, 157, 105, 103,
+//		35, 85, 75, 107, 161, 67, 127, 113,
+//		101, 89, 87, 79, 77, 111, 109, 119, 91
+//		, 121, 125, 123, 169, 131, 129, 117, 115, 143, 149, 165, 163, 93, 49, 91, 51, 25, 27, 23, 47
+//	};
+//
+//	FILE *s = fopen("I:\\Users\\Alienware\\Desktop\\Result\\Start.txt", "w");
+//
+//	FILE *e = fopen("I:\\Users\\Alienware\\Desktop\\Result\\End.txt", "w");
+//
+//	vector<point> S;
+//	vector<point> E;
+//
+//	for (int i = 0; i < 85; i++)
+//	{
+//		WF_edge* temp = ptr_frame_->GetEdge(ttd[i]);
+//		point s_ = temp->pvert_->Position();
+//		point e_ = temp->ppair_->pvert_->Position();
+//
+//
+//		point s_p; point e_p;
+//		if (i == 0)
+//		{
+//			if (s_ == ptr_frame_->GetEdge(ttd[i+1])->pvert_->Position() || s_ == ptr_frame_->GetEdge(ttd[i+1])->ppair_->pvert_->Position())
+//			{
+//				S.push_back(e_);
+//				E.push_back(s_);
+//				
+//			}
+//			else
+//			{
+//				S.push_back(s_);
+//				E.push_back(e_);
+//			
+//			}
+//			continue;
+//		}
+//
+//		if (s_ == E[E.size() - 1])
+//		{
+//			S.push_back(s_);
+//			E.push_back(e_);
+//			continue;
+//		}
+//
+//		if (e_ == E[E.size() - 1])
+//		{
+//			S.push_back(e_);
+//			E.push_back(s_);
+//			continue;
+//		}
+//
+//		if (s_ == ptr_frame_->GetEdge(ttd[i + 1])->pvert_->Position() || s_ == ptr_frame_->GetEdge(ttd[i + 1])->ppair_->pvert_->Position())
+//		{
+//			S.push_back(e_);
+//			E.push_back(s_);
+//
+//		}
+//		else
+//		{
+//			S.push_back(s_);
+//			E.push_back(e_);
+//
+//		}
+//		
+//
+//	}
+//
+//
+//
+//
+//	for (int i = 0; i < 85; i++)
+//	{
+//		
+//		point s_ = S[i];
+//
+//		point e_ = E[i];
+//
+//		fprintf(s, "%lf ,%lf ,%lf", s_.x(), s_.y(), s_.z());
+//		fprintf(s, "\n");
+//		fprintf(e, "%lf ,%lf ,%lf", e_.x(), e_.y(), e_.z());
+//		fprintf(e, "\n");
+//
+//	}
+//
+//	std::fclose(s);
+//	std::fclose(e);
+//
+//
+//}
 
-vector<Process*> * ProcessAnalyzer::Init()
+
+vector<Process*> * ProcessAnalyzer::ProcPrint()
 {
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
 
-	
 	print_ = new vector<Process*>();
 	exist_point_.clear();
 
-
-
-	if (ptr_fiberprint_ == NULL)
+	if (ptr_seqanalyzer_ == NULL)
 	{
 		cout << "Error: sequanalyer=NULL." << endl;
 		return NULL;
 	}
 
-	const std::vector<QueueInfo> print_queue = *(ptr_fiberprint_->GetQueue());
+	const std::vector<QueueInfo> print_queue = *(ptr_seqanalyzer_->GetQueue());
 
 	if (print_queue.size() == 0)
 	{
 		cout << "Error: query number==0." << endl;
 	}
 	
+
 	for (int i = 0; i <print_queue.size(); i++)
 	{
 
 		QueueInfo temp_info = print_queue[i];
         int dual_id = print_queue[i].dual_id_;
-     	WF_edge *e = ptr_fiberprint_->ptr_frame_->GetEdge((*(ptr_fiberprint_->GetDualVertList()))[dual_id]->orig_id());
+     	WF_edge *e = ptr_frame->GetEdge(ptr_dualgraph->e_orig_id(dual_id));
 		
 		if (i == 0)
 		{
@@ -167,9 +164,9 @@ vector<Process*> * ProcessAnalyzer::Init()
 		temp_process = SetPoint(e, i);
 		temp_process = SetFan(temp_process);
 		temp_process = SetExtruderSpeed(temp_process,i);
-	
+		temp_process = SetVector(temp_process,i);
 		if (temp_process->start_ != (*print_)[print_->size() - 1]->end_)
-			SetBreak(temp_process);
+		//	SetBreak(temp_process);
 
 		if (!IfPointInVector(temp_process->start_))
 			exist_point_.push_back(temp_process->start_);
@@ -180,14 +177,16 @@ vector<Process*> * ProcessAnalyzer::Init()
 
 	}
 
+	Write();
 	return print_;
-
 }
 
 
 Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 {
-	
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
+
 	Process* temp_process = new Process();
 	point up, down;
 	//Must
@@ -282,7 +281,7 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 		return temp_process;
 	}
 
-	if (id == (*(ptr_fiberprint_->GetQueue())).size() - 1)
+	if (id == (*(ptr_seqanalyzer_->GetQueue())).size() - 1)
 	{
 		temp_process->end_ = up;
 		temp_process->start_ = down;
@@ -292,9 +291,9 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 	
 	
 
-	QueueInfo temp_info = (*(ptr_fiberprint_->GetQueue()))[id+1];
+	QueueInfo temp_info = (*(ptr_seqanalyzer_->GetQueue()))[id+1];
 	int dual_id = temp_info.dual_id_;
-	WF_edge *later_e = ptr_fiberprint_->ptr_frame_->GetEdge((*(ptr_fiberprint_->GetDualVertList()))[dual_id]->orig_id());
+	WF_edge *later_e = ptr_frame->GetEdge(ptr_dualgraph->e_orig_id(dual_id));
 
 	if (later_e->pvert_->Position() == e->pvert_->Position())
 	{
@@ -378,9 +377,9 @@ Process*  ProcessAnalyzer::SetExtruderSpeed(Process* temp, int id)
 
 
 		
-	else if (abs(angle - pi / 2) < 0.1)
+	else if (abs(angle - F_PI / 2) < 0.1)
 		temp_process->move_state_ = 4;
-	else if (0 < angle&&angle < pi / 2)
+	else if (0 < angle&&angle < F_PI / 2)
 	{
 		if (temp_process->fan_state_ == 1)
 			temp_process->move_state_ = 2;
@@ -389,10 +388,10 @@ Process*  ProcessAnalyzer::SetExtruderSpeed(Process* temp, int id)
 
 	}
 		
-	else if (angle>pi/2)
+	else if (angle>F_PI / 2)
 		temp_process->move_state_ = 3;
 
-	temp_process->vector = ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(id).Normal();
+	temp_process->vector = ptr_seqanalyzer_->GetExtru(id).Normal();
 	return temp_process;
 }
 
@@ -400,7 +399,6 @@ Process*  ProcessAnalyzer::SetExtruderSpeed(Process* temp, int id)
 
 void ProcessAnalyzer::SetBreak(Process* temp)
 {
-	
 	//0
 	Process* up_process = new Process();
 	up_process->start_ =   (*print_)[print_->size() - 1]->end_;
@@ -455,59 +453,73 @@ void ProcessAnalyzer::SetBreak(Process* temp)
 
 void ProcessAnalyzer::Write()
 {
+	string path = path_;
 
+	string point_path	= path + "/Point.txt";
+	string fan_path		= path + "/FanState.txt";
+	string speed_path	= path + "/SpeedState.txt";
+	string vector_path	= path + "/Vector.txt";
+	string istart_path	= path + "/IStart.txt";
+	string iend_path	= path + "/IEnd.txt";
+	string ivector_path = path + "/IVector.txt";
+	string iwave_path	= path + "/IWave.txt";
+	string isupport_path= path + "/ISupport.txt";
+	string ibreak_path	= path + "/IBreak.txt";
 
+	FILE *fp		= fopen(point_path.c_str(), "w+");
+	FILE *fs		= fopen(fan_path.c_str(), "w+");
+	FILE *ss		= fopen(speed_path.c_str(), "w+");
+	FILE *rr		= fopen(vector_path.c_str(), "w+");
+	FILE *start		= fopen(istart_path.c_str(), "w+");
+	FILE *end		= fopen(iend_path.c_str(), "w+");
+	FILE *vector	= fopen(ivector_path.c_str(), "w+");
+	FILE *IWave		= fopen(iwave_path.c_str(), "w+");
+	FILE *ISupport	= fopen(isupport_path.c_str(), "w+");
+	FILE *IBreak	= fopen(ibreak_path.c_str(), "w+");
 
-	FILE *fp = fopen("I:\\Users\\Alienware\\Desktop\\Result\\Point.txt", "w");
+	fprintf(ISupport, "%d", ptr_seqanalyzer_->GetSupport());
 
-	FILE *fs= fopen("I:\\Users\\Alienware\\Desktop\\Result\\FanState.txt", "w");
-	
-	FILE *ss = fopen("I:\\Users\\Alienware\\Desktop\\Result\\SpeedState.txt","w");
-
-	FILE *rr = fopen("I:\\Users\\Alienware\\Desktop\\Result\\Vector.txt", "w");
-
-	if (rr==NULL)
+	if (rr == NULL)
 	{
 		cout << "Error: Vector.txt miss" << endl;
 	}
 	double thick = 0.2;
 
+	//for (int i = 0; i < 7; i++)
+	//{
+	//	point p = (*print_)[5*i]->start_;
+	//	fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+	//	fprintf(fp, "\n");
+	//	p = (*print_)[5*(i+1)]->start_;
+	//	fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+	//	fprintf(fp, "\n");	
+	//	fprintf(fs, "%d", 0);
+	//	fprintf(fs, "\n");
+	//	fprintf(ss, "%d", 6);
+	//	fprintf(ss, "\n");
+	//	point v = point(0, 0, 1);
+	//	fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
+	//	fprintf(rr, "\n");
+	//	fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
+	//	fprintf(rr, "\n");
+	//}
 
-	for (int i = 0; i < 7; i++)
-	{
-		point p = (*print_)[5*i]->start_;
-		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-		fprintf(fp, "\n");
-		p = (*print_)[5*(i+1)]->start_;
-		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-		fprintf(fp, "\n");	
-		fprintf(fs, "%d", 0);
-		fprintf(fs, "\n");
-		fprintf(ss, "%d", 6);
-		fprintf(ss, "\n");
-		point v = point(0, 0, 1);
-		fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
-		fprintf(rr, "\n");
-		fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
-		fprintf(rr, "\n");
-	}
 
-
-	point p = (*print_)[5*7]->start_;
-	fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-	fprintf(fp, "\n");
-	p = (*print_)[0]->start_;
-	fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-	fprintf(fp, "\n");
-	fprintf(fs, "%d", 0);
-	fprintf(fs, "\n");
-	fprintf(ss, "%d", 6);
-	fprintf(ss, "\n");
-	point v = point(0, 0, 1);
-	fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
-	fprintf(rr, "\n");
-	fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
-	fprintf(rr, "\n");
+	//point p = (*print_)[5*7]->start_;
+	//fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+	//fprintf(fp, "\n");
+	//p = (*print_)[0]->start_;
+	//fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+	//fprintf(fp, "\n");
+	//fprintf(fs, "%d", 0);
+	//fprintf(fs, "\n");
+	//fprintf(ss, "%d", 6);
+	//fprintf(ss, "\n");
+	//point v = point(0, 0, 1);
+	//fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
+	//fprintf(rr, "\n");
+	//fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
+	//fprintf(rr, "\n");
 
 
 
@@ -525,16 +537,35 @@ void ProcessAnalyzer::Write()
 			(*print_)[i]->end_.z() += thick;
 		}*/
 
-		
 		point p = (*print_)[i]->start_;
 		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
 		fprintf(fp, "\n");
+
+
+		fprintf(start, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+		fprintf(start, "\n");
+
 
 		 p = (*print_)[i]->end_;
 		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
 		fprintf(fp, "\n");
 
+		fprintf(end, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+		fprintf(end, "\n");
+		
 
+		Vec3f ve = (*print_)[i]->vector;
+
+		fprintf(vector, "%lf ,%lf ,%lf",ve.x(), ve.y(), ve.z());
+		fprintf(vector, "\n");
+
+		Geometry::Vector3d Break(ve.x(), ve.y(), 0);
+		if (Break.norm() < eps)
+			Break = Geometry::Vector3d(1, 0, 0);
+		Break.normalize();
+
+		fprintf(IBreak, "%lf ,%lf ,%lf", Break.getX(), Break.getY(), Break.getZ());
+		fprintf(IBreak, "\n");
 
 		bool e = (*print_)[i]->fan_state_;
 		if (i >= 87)
@@ -547,7 +578,6 @@ void ProcessAnalyzer::Write()
 		fprintf(ss, "\n");
 
 
-
 		point v = (*print_)[i]->vector;
 
 		fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
@@ -556,18 +586,27 @@ void ProcessAnalyzer::Write()
 		fprintf(rr, "%lf, %lf, %lf", v.x(), v.y(), v.z());
 		fprintf(rr, "\n");
 
+
+		fprintf(IWave, "%lf", ptr_seqanalyzer_->GetWave(i));
+		fprintf(IWave, "\n");
 	}
 
-	std::fclose(fp);
-	std::fclose(fs);
-	std::fclose(ss);
-	std::fclose(rr);
+	fclose(fp);
+	fclose(fs);
+	fclose(ss);
+	fclose(rr);
+	fclose(start);
+	fclose(end);
+	fclose(vector);
+	fclose(IWave);
+	fclose(IBreak);
+	fclose(ISupport);
 }
 
 void ProcessAnalyzer::SetThick()
 {
-	double thick = 0.3;// In GH, it will be 0.2*5=1mm;
-	
+	//double thick = 0.3;// In GH, it will be 0.2*5=1mm;
+	double thick = 0.0;// In GH, it will be 0.2*5=1mm;
 	for (int i = 0; i < print_->size(); i++)
 	{
 		Process* temp = (*print_)[i];
@@ -584,10 +623,6 @@ void ProcessAnalyzer::SetThick()
 			(*print_)[i]->end_ += point(0, 0,thick);
 			(*print_)[i]->fan_state_ = 1;
 		}
-
-
-
-
 
 		if (temp->move_state_ == 7)
 		{
@@ -613,9 +648,13 @@ void ProcessAnalyzer::SetThick()
 			(*print_)[i]->start_ += point(0, 0, thick);
 			(*print_)[i]->end_ += point(0, 0, thick);
 		}
+	}	
+}
 
-	}
 
-
-	
+Process* ProcessAnalyzer::SetVector(Process* temp, int id)
+{
+	temp->vector = temp->wave_ = ptr_seqanalyzer_->GetWave(id);
+	temp->vector = ptr_seqanalyzer_->GetNormal(id);
+	return temp;
 }

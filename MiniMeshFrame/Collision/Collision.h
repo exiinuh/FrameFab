@@ -27,7 +27,7 @@
 #include "WireFrame\WireFrame.h"
 #include "FiberPrint\DualGraph.h"
 #include "Geometry.h"
-#include "GCommon.h"
+#include "Stiffness\GCommon.h"
 
 #include "CommonBulk.h"
 #include "SpecialBulk.h"
@@ -137,8 +137,9 @@ public:
 	* Created : Dec/08/2015
 	* Output Data Structure
 	* Note : R2 is the marker for variable used in this version
+	* R2State : 0: no constraints, 1:
 	*/
 	vector<vector<double>>			R2_range_;
 	vector<vector<int>>				R2_state_;
-	vector <vector<RAngle>>			R2_Angle;
+	vector<vector<RAngle>>			R2_Angle;
 };
