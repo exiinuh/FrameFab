@@ -689,10 +689,11 @@ void MainWindow::ShowCapturedVert(int id, int degree)
 	if (id != -1)
 	{
 		label_capture_->setText(QString("Captured vertex: %1  Degree: %2").arg(id).arg(degree));
+		label_capture_->setVisible(true);
 	}
 	else
 	{
-		label_capture_->setText(QString(""));
+		label_capture_->setVisible(false);
 	}
 }
 
@@ -702,10 +703,11 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 	if (id != -1)
 	{
 		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id).arg(len));
+		label_capture_->setVisible(true);
 	}
 	else
 	{
-		label_capture_->setText(QString(""));
+		label_capture_->setVisible(false);
 	}
 }
 

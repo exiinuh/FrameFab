@@ -129,7 +129,7 @@ public:
 	void		ExportLines(const char *path);
 
 	WF_vert*	InsertVertex(const Vec3f p);
-	void		InsertEdge(WF_vert *u, WF_vert *v);
+	WF_edge*	InsertEdge(WF_vert *u, WF_vert *v);
 	WF_edge*	InsertOneWayEdge(WF_vert *u, WF_vert *v);
 	void		InsertFace(vector<WF_vert*>	&bound_points);
 	void		InsertModifiedFace(vector<WF_vert*>	&bound_points);

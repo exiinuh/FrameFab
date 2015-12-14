@@ -295,7 +295,7 @@ WF_vert* WireFrame::InsertVertex(Vec3f p)
 }
 
 
-void WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
+WF_edge* WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
 {
 	// detect duplication
 	WF_edge *e = u->pedge_;
@@ -303,7 +303,7 @@ void WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
 	{
 		if (e->pvert_ == v)
 		{
-			return;
+			return NULL;
 		}
 		e = e->pnext_;
 	}
@@ -315,6 +315,7 @@ void WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
 		e1->ppair_ = e2;
 		e2->ppair_ = e1;
 	}
+	return e1;
 }
 
 
@@ -708,7 +709,9 @@ void WireFrame::ProjectBound(vector<int> *bound, double len)
 			WF_vert *v = InsertVertex(v_pos);
 			v->SetFixed(true);
 			
-			InsertEdge(u, v);
+			WF_edge *e = InsertEdge(u, v);
+			e->SetPillar(true);
+			e->ppair_->SetPillar(true);
 		}
 	}
 	

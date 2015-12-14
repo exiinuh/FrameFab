@@ -170,8 +170,6 @@ public:
 	int					print_layer_;
 	int					print_order_;
 
-	bool				is_simplified_;
-
 	vector<WF_vert*>	captured_verts_;
 	WF_edge				*captured_edge_;
 	AddingFace			capturing_face_;

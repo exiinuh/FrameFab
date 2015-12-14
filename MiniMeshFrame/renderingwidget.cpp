@@ -4,7 +4,7 @@
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
 has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false),
-is_draw_bulk_(false), is_draw_axes_(false), is_simplified_(false), op_mode_(NORMAL), scale_(1.0)
+is_draw_bulk_(false), is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
@@ -45,6 +45,8 @@ void RenderingWidget::InitCapturedData()
 	fill(capturing_face_.is_captured_vert_.begin(), capturing_face_.is_captured_vert_.end(), false);
 	capturing_face_.is_captured_edge_.resize(ptr_frame_->SizeOfEdgeList());
 	fill(capturing_face_.is_captured_edge_.begin(), capturing_face_.is_captured_edge_.end(), false);
+
+	emit(CapturedVert(-1, -1));
 }
 
 
@@ -55,8 +57,6 @@ void RenderingWidget::InitFiberData()
 
 	bound_.resize(ptr_frame_->SizeOfVertList());
 	fill(bound_.begin(), bound_.end(), 0);
-
-	is_simplified_ = false;
 }
 
 
@@ -246,12 +246,14 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 	case Qt::Key_C:
 		SwitchToChooseBound();
 		break;
+	/*
 	case Qt::Key_I:
 		SwitchToAddEdge();
 		break;
 	case Qt::Key_F:
 		SwitchToAddFace();
 		break;
+	*/
 	case Qt::Key_Escape:
 		SwitchToNormal();
 		break;
@@ -344,14 +346,12 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 	switch (op_mode_)
 	{
 	case NORMAL:
-		if (captured_verts_.size() >= 1)
-		{
-			emit(CapturedEdge(-1, -1));
-			emit(CapturedVert(captured_verts_[0]->ID() + 1, captured_verts_[0]->Degree()));
-		}
-		break;
-
 	case CHOOSEBOUND:
+		i = captured_verts_.size();
+		if (i >= 1)
+		{
+			emit(CapturedVert(captured_verts_[i - 1]->ID() + 1, captured_verts_[i - 1]->Degree()));
+		}
 		break;
 
 	case ADDEDGE:
@@ -406,7 +406,6 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 				}
 
 				captured_edge_ = edges[i];
-				emit(CapturedVert(-1, -1));
 				emit(CapturedEdge(i + 1, captured_edge_->Length()));
 				return true;
 			}
@@ -483,7 +482,6 @@ bool RenderingWidget::CaptureRing(QPoint mouse)
 				}
 				
 				emit(CapturedVert(-1, -1));
-				emit(CapturedEdge(-1, -1));
 				return true;
 			}
 		}
@@ -559,7 +557,7 @@ void RenderingWidget::ReadFrame()
 
 	emit(ChooseBoundPressed(false));
 
-	emit(modeInfo(QString("Insert edge (I)")));
+	emit(modeInfo(QString("Choose boundary (C)")));
 	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 	emit(Reset());
@@ -728,8 +726,8 @@ void RenderingWidget::CheckDrawAxes(bool bV)
 
 void RenderingWidget::SwitchToNormal()
 {
-	emit(AddEdgePressed(false));
-	emit(AddFacePressed(false));
+	//emit(AddEdgePressed(false));
+	//emit(AddFacePressed(false));
 	emit(ChooseBoundPressed(false));
 
 	if (ptr_frame_ == NULL)
@@ -738,19 +736,7 @@ void RenderingWidget::SwitchToNormal()
 	}
 	else
 	{
-		if (ptr_fiberprint_ != NULL)
-		{
-			emit(modeInfo(QString("Choose boundary (C) | Insert edge (I) | Set face (F)")));
-		}
-		else
-		if (is_simplified_)
-		{
-			emit(modeInfo(QString("Choose boundary (C) | Insert edge (I) | Set face (F)")));
-		}
-		else
-		{
-			emit(modeInfo(QString("Insert edge (I) | Set face (F)")));
-		}
+		emit(modeInfo(QString("Choose boundary (C)")));
 	}
 
 	if (op_mode_ == CHOOSEBOUND)
@@ -810,14 +796,15 @@ void RenderingWidget::SwitchToChooseBound()
 	}
 	else
 	{
-		if (is_simplified_)
-		{
-			emit(AddEdgePressed(false));
-			emit(AddFacePressed(false));
-			emit(ChooseBoundPressed(true));
-			emit(modeInfo(QString("Choosing boundary...Press again or press ESC to exit.")));
-			op_mode_ = CHOOSEBOUND;
-		}
+		//emit(AddEdgePressed(false));
+		//emit(AddFacePressed(false));
+		captured_edge_ = NULL;
+		captured_verts_.clear();
+		emit(CapturedVert(-1, -1));
+
+		emit(ChooseBoundPressed(true));
+		emit(modeInfo(QString("Choosing boundary...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSEBOUND;
 	}
 }
 
@@ -1289,9 +1276,8 @@ void RenderingWidget::SimplifyFrame()
 		return;
 	}
 	ptr_frame_->SimplifyFrame();
-	is_simplified_ = true;
 
-	emit(modeInfo(QString("Insert edge (I) | Choose boundary (C)")));
+	emit(modeInfo(QString("Choose boundary (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
@@ -1322,7 +1308,7 @@ void RenderingWidget::ProjectBound(double len)
 	}
 	ptr_frame_->ProjectBound(&bound_, len);
 	op_mode_ = NORMAL;
-	emit(modeInfo(QString("Insert edge (I) | Choose boundary (C)")));
+	emit(modeInfo(QString("Choose boundary (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 

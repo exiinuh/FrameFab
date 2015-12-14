@@ -37,7 +37,7 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 void FiberPrintPlugIn::Print()
 {
 	ptr_graphcut_->MakeLayers();
-
+	
 	while (!ptr_seqanalyzer_->LayerPrint())
 	{
 		ptr_frame_->RefineFrame();
