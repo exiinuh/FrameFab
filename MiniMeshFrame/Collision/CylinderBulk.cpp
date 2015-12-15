@@ -86,6 +86,45 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 		return;
 	}
 
+	// angle
+
+	if ((end == target_start))
+	{
+		if (Geometry::angle(start - end, target_end - target_start) > Threshold_angle)
+		{
+			is_collision_ = 0;
+			return;
+		}
+	}
+
+	if ((end == target_end))
+	{
+		if (Geometry::angle(start - end, target_start - target_end) > Threshold_angle)
+		{
+			is_collision_ = 0;
+			return;
+		}
+	}
+
+	if ((start == target_start))
+	{
+		if (Geometry::angle(end - start, target_end - target_start) > Threshold_angle)
+		{
+			is_collision_ = 0;
+			return;
+		}
+	}
+
+	if ((start == target_end))
+	{
+		if (Geometry::angle(end - start, target_start - target_end) > Threshold_angle)
+		{
+			is_collision_ = 0;
+			return;
+		}
+	}
+
+
 	/* If the distance between target edge and printing edge 
 	*  is too big, we claim that their influence on each other 
 	*  are neglectable*/

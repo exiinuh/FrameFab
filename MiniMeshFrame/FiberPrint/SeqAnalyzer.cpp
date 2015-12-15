@@ -318,6 +318,18 @@ vector<GeoV3> SeqAnalyzer::AngleList(vector<QueueInfo> *layer_queue)
 	cout << "------------------------ " << endl;
 	cout << "Feasible Angle Computing:" << endl;
 
+	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_graphcut_->ptr_dualgraph_->e_orig_id((*layer_queue_)[0].dual_id_));
+	double base_value;
+	
+	base_value = temp_edge->pvert_->Position().z();
+	if (base_value > temp_edge->ppair_->pvert_->Position().z())
+		base_value = temp_edge->ppair_->pvert_->Position().z();
+
+	std::array<float, 3>s;
+	s[0] = 0; s[1] = 0; s[2] = 1;
+	table_.normal = s;
+	table_.constant = base_value;
+
 	for (int i = 0; i < layer_queue->size(); i++)
 	{
 		cout << "edge " << i << " angle in processing" << endl;
@@ -342,6 +354,9 @@ GeoV3 SeqAnalyzer::AngleDec(int id)
 	point start, end;
 	start = temp_edge->pvert_->Position();
 	end   = temp_edge->ppair_->pvert_->Position();
+start_ = temp_edge->pvert_->Position();
+	end_   = temp_edge->ppair_->pvert_->Position();
+
 
 	GeoV3 u, v;
 
@@ -428,6 +443,41 @@ bool  SeqAnalyzer::IsColVec(GeoV3 start, GeoV3 end, GeoV3 target)
 	if (abs(Geometry::angle(target, start) + Geometry::angle(target, end) - Geometry::angle(target, end)) < eps)
 		return true;
 
+
+
+	gte::Circle3<float>circle;
+	std::array<float,3> s,n;
+	
+	// Collision with Table
+	GeoV3 low = start_;
+	if (low.getZ()>end_.z());
+	   low = end_;
+	
+	   GeoV3 t = end_ - start_;
+	   t.normalize();
+	   GeoV3 u = target;
+	   u.normalize();
+	   GeoV3 v = Geometry::cross(u, t);
+	   v.normalize();
+
+	  GeoV3 test;
+	   test = low + target*extruder_.Height();
+	   s[0] = test.getX(); s[1] = test.getY(); s[2] = test.getZ();
+	   circle.center = s;
+	   n[0] = target.getX(); n[1] = target.getY(); n[2] = target.getZ();
+	   circle.normal = n;
+	   circle.radius = extruder_.Height()*tan(extruder_.Angle());
+
+	   gte::FIQuery<float, gte::Plane3<float>, gte::Circle3<float>> intersection;
+
+	   auto result = intersection(table_, circle);
+	   if (result.intersect)
+
+	   {
+		  
+		   return true;
+	   }
+	
 	return false;
 }
 

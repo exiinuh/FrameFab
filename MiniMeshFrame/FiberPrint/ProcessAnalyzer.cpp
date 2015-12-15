@@ -115,7 +115,7 @@ vector<Process*> * ProcessAnalyzer::ProcPrint()
 
 	print_ = new vector<Process*>();
 	exist_point_.clear();
-
+	double thick = 1.6;
 	if (ptr_seqanalyzer_ == NULL)
 	{
 		cout << "Error: sequanalyer=NULL." << endl;
@@ -166,13 +166,30 @@ vector<Process*> * ProcessAnalyzer::ProcPrint()
 		temp_process = SetExtruderSpeed(temp_process,i);
 		temp_process = SetVector(temp_process,i);
 		if (temp_process->start_ != (*print_)[print_->size() - 1]->end_)
-		//	SetBreak(temp_process);
+		{
+		}
+			//	SetBreak(temp_process);
 
-		if (!IfPointInVector(temp_process->start_))
-			exist_point_.push_back(temp_process->start_);
-		if (!IfPointInVector(temp_process->end_))
-			exist_point_.push_back(temp_process->end_);
 
+
+		point m = temp_process->start_;
+		point b = temp_process->end_;
+		
+		
+		if (IfPointInVector(temp_process->start_))
+			temp_process->start_ += point(0, 0, thick);
+
+		if (IfPointInVector(temp_process->end_))
+			temp_process->end_ += point(0, 0, thick);
+
+		if (!IfPointInVector(m))
+			exist_point_.push_back(m);
+
+		if (!IfPointInVector(b))
+			exist_point_.push_back(b);
+
+		
+		
 		print_->push_back(temp_process);
 
 	}
@@ -466,6 +483,8 @@ void ProcessAnalyzer::Write()
 	string isupport_path= path + "/ISupport.txt";
 	string ibreak_path	= path + "/IBreak.txt";
 
+	string icut_path = path + "/ICut.txt ";
+
 	FILE *fp		= fopen(point_path.c_str(), "w+");
 	FILE *fs		= fopen(fan_path.c_str(), "w+");
 	FILE *ss		= fopen(speed_path.c_str(), "w+");
@@ -476,6 +495,9 @@ void ProcessAnalyzer::Write()
 	FILE *IWave		= fopen(iwave_path.c_str(), "w+");
 	FILE *ISupport	= fopen(isupport_path.c_str(), "w+");
 	FILE *IBreak	= fopen(ibreak_path.c_str(), "w+");
+
+	FILE *ICut = fopen(ibreak_path.c_str(), "w+");
+
 
 	fprintf(ISupport, "%d", ptr_seqanalyzer_->GetSupport());
 
@@ -546,6 +568,9 @@ void ProcessAnalyzer::Write()
 		fprintf(start, "\n");
 
 
+		fprintf(ICut, " %lf, %lf, %lf", p.x(), p.y(), 0.0);
+		fprintf(ICut, " \n");
+
 		 p = (*print_)[i]->end_;
 		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
 		fprintf(fp, "\n");
@@ -601,6 +626,9 @@ void ProcessAnalyzer::Write()
 	fclose(IWave);
 	fclose(IBreak);
 	fclose(ISupport);
+
+	fclose(ICut);
+
 }
 
 void ProcessAnalyzer::SetThick()
@@ -611,11 +639,11 @@ void ProcessAnalyzer::SetThick()
 	{
 		Process* temp = (*print_)[i];
 
-		if (temp->move_state_ == 0)
-		{
-			(*print_)[i + 3]->end_ += point(0, 0, thick);
-			(*print_)[i + 4]->start_ += point(0, 0, thick);
-		}
+		//if (temp->move_state_ == 0)
+		//{
+		//	(*print_)[i + 3]->end_ += point(0, 0, thick);
+		//	(*print_)[i + 4]->start_ += point(0, 0, thick);
+		//}
 
 		if (temp->move_state_ == 4)
 		{

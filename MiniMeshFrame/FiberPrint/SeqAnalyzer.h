@@ -120,5 +120,7 @@ private:
 	vector<GeoV3>			angle_list_;
 
 	int support_;
+	gte::Plane3<float> table_;
+	point start_, end_;
 };
 

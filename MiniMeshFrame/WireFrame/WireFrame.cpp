@@ -360,6 +360,9 @@ void WireFrame::Unify()
 	miny_ = 1e10;
 	minz_ = 1e10;
 
+	fixed_vert_ = 0;
+	pillar_size_ = 0;
+
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
 	{
@@ -399,6 +402,10 @@ void WireFrame::Unify()
 	for (int i = 0; i < M; i++)
 	{
 		(*pedge_list_)[i]->SetID(i);
+		if ((*pedge_list_)[i]->isPillar())
+		{
+			pillar_size_++;
+		}
 	}
 
 	float scaleX = maxx_ - minx_;
@@ -416,8 +423,6 @@ void WireFrame::Unify()
 
 	scaleV_ = unify_size_ / scaleMax;
 	center_pos_ = point((minx_ + maxx_) / 2.f, (miny_ + maxy_) / 2.f, (minz_ + maxz_) / 2.f);
-
-	fixed_vert_ = 0;
 
 	for (size_t i = 0; i < N; i++)
 	{
