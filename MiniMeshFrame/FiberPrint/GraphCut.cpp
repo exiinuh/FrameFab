@@ -285,7 +285,7 @@ bool GraphCut::CheckLabel(int count)
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
-	if (l < 20)
+	if (l < 30)
 	{
 		return true;
 	}

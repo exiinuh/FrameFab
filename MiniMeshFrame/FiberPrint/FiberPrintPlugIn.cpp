@@ -38,6 +38,9 @@ void FiberPrintPlugIn::Print()
 {
 	ptr_graphcut_->MakeLayers();
 	
+	cout << "Graph Cut completed." << endl;
+	getchar();
+
 	while (!ptr_seqanalyzer_->LayerPrint())
 	{
 		cout << "Model not printable!" << endl;
