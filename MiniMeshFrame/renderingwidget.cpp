@@ -244,7 +244,7 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 	switch (e->key())
 	{
 	case Qt::Key_C:
-		SwitchToChooseBound();
+		//SwitchToChooseBound();
 		break;
 	/*
 	case Qt::Key_I:

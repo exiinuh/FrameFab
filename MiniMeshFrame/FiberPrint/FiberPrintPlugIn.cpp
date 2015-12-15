@@ -40,6 +40,9 @@ void FiberPrintPlugIn::Print()
 	
 	while (!ptr_seqanalyzer_->LayerPrint())
 	{
+		cout << "Model not printable!" << endl;
+		cout << "Press Enter to refine the mesh and continue..." << endl;
+		getchar();
 		ptr_frame_->RefineFrame();
 	}
 

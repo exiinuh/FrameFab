@@ -261,10 +261,10 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			ptr_stiffness = NULL;
 
 			/* examination failed */
-			if (max_D >= D_tol_)
-			{
-				continue;
-			}
+			//if (max_D >= D_tol_)
+			//{
+			//	continue;
+			//}
 
 
 			/* adjacency weight */

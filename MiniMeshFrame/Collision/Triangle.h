@@ -44,7 +44,6 @@ public:
 
 	void Render(WireFrame* ptr_frame, double alpha)
 	{
-		
 		glBegin(GL_TRIANGLES);
 		glColor4f(1.0, 1.0, 0, alpha);
 		glNormal3fv(normal_);
