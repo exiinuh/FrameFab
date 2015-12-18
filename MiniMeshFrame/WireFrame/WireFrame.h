@@ -205,6 +205,9 @@ private:
 	vector<WF_edge*>	*pedge_list_;
 	vector<WF_face*>	*pface_list_;
 
+	int					fixed_vert_;
+	int					pillar_size_;
+
 	double				maxx_;
 	double				maxy_;
 	double				maxz_;
@@ -212,7 +215,6 @@ private:
 	double				miny_;
 	double				minz_;
 
-	int					fixed_vert_;
 	Vec3f				center_pos_;
 	float				scaleV_;
 	double				unify_size_;

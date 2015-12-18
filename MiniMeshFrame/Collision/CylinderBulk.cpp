@@ -1,6 +1,6 @@
 #include "CylinderBulk.h"
 
-const double threhold=50;
+const double threhold=40;
 
 CylinderBulk::CylinderBulk(point start, point end)
 {
@@ -177,6 +177,7 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 	{
 		Rangle_.u = ColAngle(target_end);
 		Rangle_.v = ColAngle(target_end);
+		range_ = 2 * F_PI - extruder_.Angle() * 2;
 		return;
 	}
 
@@ -184,7 +185,54 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 	{
 		Rangle_.u = ColAngle(target_start);
 		Rangle_.v = ColAngle(target_start);
+		range_ = 2 * F_PI - extruder_.Angle() * 2;
 		return;
+	}
+
+
+	if ((DisSegPoint(start, end, target_start) < threhold) && DisSegPoint(start, end, target_end) >threhold)
+	{
+		range_ = 2 * F_PI - extruder_.Angle() * 2;
+		Rangle_.u = ColAngle(target_start);
+		Rangle_.v = Rangle_.u;
+		return;
+
+	}
+
+
+	if ((DisSegPoint(start, end, target_end) < threhold) && DisSegPoint(start, end, target_start) >threhold)
+	{
+		range_ = 2 * F_PI - extruder_.Angle() * 2;
+		Rangle_.u = ColAngle(target_end);
+		Rangle_.v = Rangle_.u;
+		return;
+
+	}
+
+	//-------------------------------------
+
+
+	vector<point> consider;
+	
+	if (IfConsider(start, end, target_start))
+		consider.push_back(target_start);
+
+	if (IfConsider(start, end, target_end))
+		consider.push_back(target_end);
+		
+	if (consider.size() == 0)
+	{
+		is_collision_ = 0;
+		return;
+	}
+
+	if (consider.size() == 1)
+	{
+		range_ = 2 * F_PI - extruder_.Angle() * 2;
+		Rangle_.u = ColAngle(consider[0]);
+		Rangle_.v = Rangle_.u;
+		return;
+
 	}
 
 	Rangle_.u = ColAngle(target_start);
@@ -198,6 +246,23 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 
 	range_ = 2 * F_PI - extruder_.Angle() * 2 - Geometry::angle(ColAngle(target_end), ColAngle(target_start));
 	return;
+}
+
+
+bool  CylinderBulk::IfConsider(point start, point end, point target)
+{
+	if ((start - target).length()>(end - target).length())
+	{
+		if (Geometry::angle((start - end), (target - end)) < Threshold_angle)
+			return true;
+	}
+	else 
+	{
+		if (Geometry::angle((end-start), (target -start)) < Threshold_angle)
+			return true;
+	}
+
+	return false;
 }
 
 
@@ -241,4 +306,18 @@ GeoV3  CylinderBulk::ColAngle(point target)
 	temp = Geometry::cross(t, temp);
 	temp.normalize();
 	return temp;
+}
+
+
+double CylinderBulk::DisSegPoint(point start, point end, point target)
+{
+	gte::DCPQuery<float, gte::Vector<3, float>, gte::Segment<3, float>> distance;
+
+	std::array<float,3> vec;
+	vec[0] = target.x(); vec[1] = target.y(); vec[2] = target.z();
+
+	 auto result=distance(vec, Segement_(start, end));
+	
+	return result.distance;
+
 }

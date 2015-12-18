@@ -443,7 +443,8 @@ bool  SeqAnalyzer::IsColVec(GeoV3 start, GeoV3 end, GeoV3 target)
 	if (abs(Geometry::angle(target, start) + Geometry::angle(target, end) - Geometry::angle(target, end)) < eps)
 		return true;
 
-
+	if (Geometry::angle(target, Geometry::Vector3d(0, 0, -1)) < F_PI/2)
+		return true;
 
 	gte::Circle3<float>circle;
 	std::array<float,3> s,n;

@@ -248,9 +248,9 @@ void GraphCut::CreateC(int cut, int rew)
     }
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 
-    //string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
-    //Statistics s_c(str_c, v_c);
-    //s_c.GenerateStdVecFile();
+	string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
+	Statistics s_c(str_c, v_c);
+	s_c.GenerateStdVecFile();
 
     //string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
     //Statistics s_r(str_r, v_r);
@@ -332,6 +332,7 @@ void GraphCut::MakeLayers()
 	// Initial Cutting Edge Setting
 	InitState();
 
+	debug_ = false;
 	int cut_count = 0;
 	vector<double> cut_energy;
     vector<double> res_energy;

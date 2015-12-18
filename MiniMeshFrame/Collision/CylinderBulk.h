@@ -55,6 +55,11 @@ public:
 	bool	IfParalet(point p);
 	GeoV3	ColAngle(point target);
 
+
+	double DisSegPoint(point start, point end, point target);
+
+	bool IfConsider(point start, point end, point target);
+
 public:
 	/* Geometric Data from Geometric Tool Engine(gte) */
 	gte::Segment3<float> target_edge_;
