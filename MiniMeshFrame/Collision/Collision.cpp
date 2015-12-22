@@ -116,10 +116,10 @@ void Collision::DetectFrame()
 	//---------------------------
 	for (int i = 0; i < Nd; i++)
 	{
-		if (i % int(Nd / 10) == 0)
-		{
-			cout << "Progression Rate: " << int(double(i) / double(Nd) * 100) << "%" << endl;
-		}
+		//if (i % int(Nd / 10) == 0)
+		//{
+		//	cout << "Progression Rate: " << int(double(i) / double(Nd) * 100) << "%" << endl;
+		//}
 
 		//Fix Polyhedron
 		WF_edge *e  = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));

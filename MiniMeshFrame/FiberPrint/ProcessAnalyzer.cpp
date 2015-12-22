@@ -115,7 +115,7 @@ vector<Process*> * ProcessAnalyzer::ProcPrint()
 
 	print_ = new vector<Process*>();
 	exist_point_.clear();
-	double thick = 1.6;
+	double thick = 0;
 	if (ptr_seqanalyzer_ == NULL)
 	{
 		cout << "Error: sequanalyer=NULL." << endl;
@@ -206,6 +206,12 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 
 	Process* temp_process = new Process();
 	point up, down;
+
+	if (e->isPillar())
+		temp_process->pillar = true;
+	else
+		temp_process->pillar = false;
+
 	//Must
 	Geometry::Vector3d vec;
 	if (e->pvert_->Position().z() > e->ppair_->pvert_->Position().z())
@@ -224,20 +230,7 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 
 
 
-	if (Geometry::angle(vec, Geometry::Vector3d(0, 0, 1))<extruder_.Angle())
-	{
-		if (e->pvert_->Position().z() < e->ppair_->pvert_->Position().z())
-		{
-			temp_process->start_ = e->pvert_->Position();
-			temp_process->end_ = e->ppair_->pvert_->Position();
-		}
-		else
-		{
-			temp_process->end_ = e->pvert_->Position();
-			temp_process->start_ = e->ppair_->pvert_->Position();
-		}
-		return temp_process;
-	}
+
 
 
 	if (!IfPointInVector(e->ppair_->pvert_->Position()) && !IfPointInVector(e->pvert_->Position()))
@@ -278,6 +271,12 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 		temp_process->end_ = e->ppair_->pvert_->Position();
 		return temp_process;
 	}
+
+	//prefer up to down
+		temp_process->start_ = up;
+		temp_process->end_ =down;
+		return temp_process;
+	
 
 
 
@@ -485,6 +484,9 @@ void ProcessAnalyzer::Write()
 
 	string icut_path = path + "/ICut.txt ";
 
+	string ipillar = path + "/IPillar.txt";
+
+
 	FILE *fp		= fopen(point_path.c_str(), "w+");
 	FILE *fs		= fopen(fan_path.c_str(), "w+");
 	FILE *ss		= fopen(speed_path.c_str(), "w+");
@@ -498,6 +500,7 @@ void ProcessAnalyzer::Write()
 
 	FILE *ICut = fopen(ibreak_path.c_str(), "w+");
 
+	FILE *IPillar = fopen(ipillar.c_str(), "w+");
 
 	fprintf(ISupport, "%d", ptr_seqanalyzer_->GetSupport());
 
@@ -505,7 +508,7 @@ void ProcessAnalyzer::Write()
 	{
 		cout << "Error: Vector.txt miss" << endl;
 	}
-	double thick = 0.2;
+	double thick = 0;
 
 	//for (int i = 0; i < 7; i++)
 	//{
@@ -592,7 +595,13 @@ void ProcessAnalyzer::Write()
 		fprintf(IBreak, "%lf ,%lf ,%lf", Break.getX(), Break.getY(), Break.getZ());
 		fprintf(IBreak, "\n");
 
+
+
+		fprintf(IPillar, "%d", (*print_)[i]->pillar);
+		fprintf(IPillar, "\n");
+
 		bool e = (*print_)[i]->fan_state_;
+
 		if (i >= 87)
 			e = true;
 		fprintf(fs, "%d", e);
@@ -628,7 +637,7 @@ void ProcessAnalyzer::Write()
 	fclose(ISupport);
 
 	fclose(ICut);
-
+	fclose(IPillar);
 }
 
 void ProcessAnalyzer::SetThick()

@@ -174,7 +174,6 @@ bool QPMosek::solve(const S& H, const V& f,
 				C.innerIndexPtr(),
 				C.valuePtr());
 				*/
-
 			}
 
 
@@ -255,6 +254,7 @@ bool QPMosek::solve(const S& H, const V& f,
 
 				if (_debug){ MYOUT << "H:" << std::endl; }
 
+				/* Hessian Matrix */
 				int c = 0;
 				for (int k = 0; k<H.outerSize(); ++k){
 					for (S::InnerIterator it(H, k); it; ++it)
@@ -572,6 +572,252 @@ bool QPMosek::test() const
 	return false;
 #endif
 }
+
+bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const double& rot_tol, bool _debug)
+{
+	bool success = false;
+
+	//number of variables
+	MSKint32t numvar = H.rows();
+	bool linprog = (numvar == 0);
+	if (linprog){ numvar = f.size(); }
+
+	//number of constraints
+	MSKint32t numcon = numvar / 3;
+
+	MSKint32t     i, j;
+
+	MSKenv_t      env = env_;
+	MSKtask_t     task = NULL;
+	MSKrescodee   r = MSK_RES_OK;
+
+	if (r == MSK_RES_OK)
+	{
+		/* Create the optimization task. */
+		r = MSK_maketask(env, numcon, numvar, &task);
+
+		if (nTasks_>0)
+		{
+			MSK_putintparam(task, MSK_IPAR_NUM_THREADS, nTasks_);
+		}
+
+
+		//set precision: see http://docs.mosek.com/7.0/capi/The_optimizers_for_continuous_problems.html#sec-solve-conic
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_PFEAS, mP_);		//Controls primal feasibility, default 10e-8
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_DFEAS, mP_);		//Controls dual feasibility, default 10e-8
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, mP_);	//Controls relative gap, default 10e-7
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_INFEAS, mP_);		//Controls when the problem is declared infeasible, default 10e-10
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, mP_);	//Controls when the complementarity is reduced enough, default 10e-8
+
+		if (r == MSK_RES_OK)
+		{
+			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
+
+			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-start
+			// if ( r == MSK_RES_OK )
+			//	  r = MSK_putintparam(task,MSK_IPAR_OPTIMIZER,MSK_OPTIMIZER_FREE_SIMPLEX);
+
+			/* Append 'NUMCON' empty constraints.
+			The constraints will initially have no bounds. */
+			if (r == MSK_RES_OK)
+				r = MSK_appendcons(task, numcon);
+
+			/* Append 'NUMVAR' variables.
+			The variables will initially be fixed at zero (x=0). */
+			if (r == MSK_RES_OK)
+				r = MSK_appendvars(task, numvar);
+
+			/* Optionally add a constant term to the objective. */
+			if (r == MSK_RES_OK)
+				r = MSK_putcfix(task, 0.0);
+
+			if (r == MSK_RES_OK)
+			{
+				if (_debug) { MYOUT << "Q: " << std::endl; }
+				for (int i = 0; i < numvar/6; i++)
+				{
+					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
+					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
+					double	  qval[] = { 2, 2, 2 };
+					r = MSK_putqconk(task, 2 * i, 3, qsubi, qsubj, qval);
+
+					MSKint32t qsubri[] = { 6 * i + 3, 6 * i + 4, 6 * i + 5 };
+					MSKint32t qsubrj[] = { 6 * i + 3, 6 * i + 4, 6 * i + 5 };
+					double	  qrval[] = { 2, 2, 2 };
+					r = MSK_putqconk(task, 2 * i + 1, 3, qsubri, qsubrj, qrval);
+				}
+				
+			}
+
+
+			for (j = 0; j<numvar && r == MSK_RES_OK; ++j)
+			{
+
+				/* Set the linear term c_j in the objective.*/
+				if (f.size()>0){
+					if (r == MSK_RES_OK)
+						r = MSK_putcj(task, j, f[j]);
+				}
+				/* Set the bounds on variable j.
+				blx[j] <= x_j <= bux[j] */
+				if (r == MSK_RES_OK){
+
+					r = MSK_putvarbound(task,
+						j,           /* Index of variable.*/
+						MSK_BK_FR,      /* Bound key.*/
+						-MYINF,      /* Numerical value of lower bound.*/
+						MYINF);     /* Numerical value of upper bound.*/
+				}
+			}
+
+			/* Set the bounds on constraints.
+			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
+			for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
+			{
+				if (0 == i % 2)
+				{
+					r = MSK_putconbound(task,
+						i,							/* Index of constraint.*/
+						MSK_BK_UP,	/* Bound key.*/
+						-MYINF,			/* Numerical value of lower bound.*/
+						d_tol);			/* Numerical value of upper bound.*/
+				}
+				else
+				{
+					r = MSK_putconbound(task,
+						i,							/* Index of constraint.*/
+						MSK_BK_UP,	/* Bound key.*/
+						-MYINF,			/* Numerical value of lower bound.*/
+						rot_tol);			/* Numerical value of upper bound.*/
+				}
+
+			}
+
+			if (r == MSK_RES_OK && !linprog)
+			{
+				/*
+				* The lower triangular part of the Q
+				* matrix in the objective is specified.
+				*/
+				unsigned int nnz = H.nonZeros();
+				std::vector<int> hi(nnz + 1), hj(nnz + 1);
+				std::vector<double> hv(nnz);
+
+
+				if (_debug){ MYOUT << "H:" << std::endl; }
+
+				/* Hessian Matrix */
+				int c = 0;
+				for (int k = 0; k<H.outerSize(); ++k){
+					for (S::InnerIterator it(H, k); it; ++it)
+					{
+						if (it.row() >= it.col())
+						{
+							//only lower triangular part
+							hv.at(c) = it.value();
+							hi.at(c) = it.row();
+							hj.at(c) = it.col();
+							//if (_debug){ MYOUT << "(" << it.row() << "," << it.col() << ") " << std::setprecision(16) << it.value() << std::endl; }
+							++c;
+						}
+					}
+				}
+
+				/* Input the Q for the objective. */
+				r = MSK_putqobj(task, nnz, &hi[0], &hj[0], &hv[0]);
+			}
+
+			if (_debug)
+			{
+				MSK_analyzeproblem(task, MSK_STREAM_MSG);
+				MSK_writedata(task, "taskdump.opf");
+			}
+
+			if (storeVariables_)
+			{
+				std::string fileName;
+				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName)){
+					MYERR << __FUNCTION__ << ": No unique filename for QpMosek dump found. Not storing." << std::endl;
+				}
+				else{
+					MSK_writedata(task, fileName.c_str());
+				}
+			}
+
+			if (r == MSK_RES_OK)
+			{
+				MSKrescodee trmcode;
+
+				/* Run optimizer */
+				r = MSK_optimizetrm(task, &trmcode);
+
+				/* Print a summary containing information
+				about the solution for debugging purposes*/
+				if (_debug){ MSK_solutionsummary(task, MSK_STREAM_MSG); }
+
+				if (r == MSK_RES_OK)
+				{
+					MSKsolstae solsta;
+					MSK_getsolsta(task, MSK_SOL_ITR, &solsta);
+					xFlag_ = solsta;
+
+					switch (solsta)
+					{
+					case MSK_SOL_STA_OPTIMAL:
+					case MSK_SOL_STA_NEAR_OPTIMAL:
+						_x.resize(numvar);
+						MSK_getxx(task,
+							MSK_SOL_ITR,    /* Request the interior solution. */
+							_x.data());
+
+						MSK_getprimalobj(task, MSK_SOL_ITR, &fVal_);
+						assert(std::isfinite(fVal_));
+
+						success = true;
+						//printf("Optimal primal solution\n");
+						//for(j=0; j<numvar; ++j)
+						//printf("x[%d]: %e\n",j,xx[j]);
+
+						break;
+					case MSK_SOL_STA_DUAL_INFEAS_CER:
+					case MSK_SOL_STA_PRIM_INFEAS_CER:
+					case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
+					case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
+						//printf("Primal or dual infeasibility certificate found.\n");
+						break;
+
+					case MSK_SOL_STA_UNKNOWN:
+						printf("The status of the solution could not be determined.\n");
+						break;
+					default:
+						//printf("Other solution status.");
+						break;
+					}
+				}
+				else
+				{
+					printf("Error while optimizing.\n");
+				}
+			}
+
+			if (r != MSK_RES_OK)
+			{
+				/* In case of an error print error code and description. */
+				char symname[MSK_MAX_STR_LEN];
+				char desc[MSK_MAX_STR_LEN];
+
+				printf("An error occurred while optimizing.\n");
+				MSK_getcodedesc(r,
+					symname,
+					desc);
+				printf("Error %s - '%s'\n", symname, desc);
+			}
+		}
+		MSK_deletetask(&task);
+	}
+	return success;
+}
+
 
 std::string QPMosek::exitFlagToString(int _xflag) const
 {

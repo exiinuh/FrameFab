@@ -616,8 +616,10 @@ void GraphCut::CalculateD()
 	ub.setOnes();
 	lb = lb * (-MYINF);
 	ub = ub * MYINF;
-
-	qp_->solve(Q, a, A, b, C, d, lb, ub, D_, NULL, NULL, debug_);	
+	
+	/* 10 degree rotation tolerance, from degree to radians */
+	double rot_tol = 10 * F_PI / 180;
+	qp_->solve(Q, a, D_, D_tol_, rot_tol, 1);	
 }
 
 

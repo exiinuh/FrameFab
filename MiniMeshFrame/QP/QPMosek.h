@@ -21,6 +21,11 @@ public:
 		V& _x, const V* _x0 = NULL,
 		const Cones* cones = NULL,
 		bool _debug = false);
+	
+	/* for WirePrint graphcut: CalculateD*/
+	virtual bool solve(const S& H, const V& f, V &_x,
+		const double& d_tol, const double& rot_tol, 
+		bool _debug);
 
 	virtual std::string report() const;
 	virtual double functionValue() const { return fVal_; }

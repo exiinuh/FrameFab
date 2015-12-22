@@ -56,6 +56,11 @@
 			const Cones* cones = NULL,
 			bool _debug = false) = 0;
 
+		// written especially for WirePrint
+		virtual bool solve(const S& H, const V& f, V &_x,
+			const double& d_tol, const double& rot_tol,
+			bool _debug) = 0;
+
 		virtual std::string report() const = 0;
 		virtual double functionValue() const = 0;
 		virtual int exitFlag() const = 0;
