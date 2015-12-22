@@ -342,7 +342,7 @@ void GraphCut::MakeLayers()
 		SetStartingPoints(cut_count);
 		CreateA();
 
-		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
+		ptr_stiff_->CalculateD(D_, x_, 1, 1, cut_count);
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -596,26 +596,6 @@ void GraphCut::CalculateD()
 	VX F = *(ptr_stiff_->WeightedF());
 
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
-	
-	// Inequality constraints A*D <= b
-	SpMat A(6 * Ns_, 6 * Ns_);
-	A.setIdentity();	
-	VX b(6 * Ns_);
-	b.setOnes();
-	b = b * D_tol_;
-
-	// Equality constraints C*D = d
-	SpMat C(6 * Ns_, 6 * Ns_);
-	C.setZero();
-	VX d(6 * Ns_);
-	d.setZero();
-
-	// Variable constraints D >= lb, D <= ub
-	VX lb(6 * Ns_), ub(6 * Ns_);
-	lb.setOnes();
-	ub.setOnes();
-	lb = lb * (-MYINF);
-	ub = ub * MYINF;
 	
 	/* 10 degree rotation tolerance, from degree to radians */
 	double rot_tol = 10 * F_PI / 180;
