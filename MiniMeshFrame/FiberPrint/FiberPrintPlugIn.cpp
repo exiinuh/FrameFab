@@ -39,17 +39,17 @@ void FiberPrintPlugIn::Print()
 	ptr_graphcut_->MakeLayers();
 	
 	cout << "Graph Cut completed." << endl;
-	getchar();
+	//getchar();
 
-	while (!ptr_seqanalyzer_->LayerPrint())
-	{
-		cout << "Model not printable!" << endl;
-		cout << "Press Enter to refine the mesh and continue..." << endl;
-		getchar();
-		ptr_frame_->RefineFrame();
-	}
+	//while (!ptr_seqanalyzer_->LayerPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	cout << "Press Enter to refine the mesh and continue..." << endl;
+	//	getchar();
+	//	ptr_frame_->RefineFrame();
+	//}
 
-	ptr_procanalyzer_->ProcPrint();
+	//ptr_procanalyzer_->ProcPrint();
 }
 
 

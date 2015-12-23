@@ -342,7 +342,7 @@ void GraphCut::MakeLayers()
 		SetStartingPoints(cut_count);
 		CreateA();
 
-		ptr_stiff_->CalculateD(D_, x_, 1, 1, cut_count);
+		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -599,7 +599,7 @@ void GraphCut::CalculateD()
 	
 	/* 10 degree rotation tolerance, from degree to radians */
 	double rot_tol = 10 * F_PI / 180;
-	qp_->solve(Q, a, D_, D_tol_, rot_tol, 1);	
+	qp_->solve(Q, a, D_, D_tol_, rot_tol, debug_);	
 }
 
 

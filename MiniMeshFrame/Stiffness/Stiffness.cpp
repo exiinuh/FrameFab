@@ -161,11 +161,12 @@ void Stiffness::CreateElasticK()
 		double L = ei->Length();
 		double Le = L - 2 * nr_;
 
-		/* for Mass Moment of Inertia (bending about local y,z-axis)
-		note this is slender rod of length L and Mass M, spinning around end
+		/* area moment of inertia (bending about local y,z-axis)
+		* https://en.wikipedia.org/wiki/Bending (beam deflection equation)
+		* https://en.wikipedia.org/wiki/List_of_area_moments_of_inertia (numerical value)
+		* note this is slender rod of length L and Mass M, spinning around end
 		*/
-		double M = Ax * Le * density_;
-		double Iyy = M * Le * Le / 3;
+		double Iyy = F_PI * r_ * r_ * r_ * r_ / 4;
 		double Izz = Iyy;
 
 		MatrixXd eKuv(12, 12);
@@ -180,7 +181,6 @@ void Stiffness::CreateElasticK()
 		{
 			/* for circular cross-sections, the shape factor for shear(fs) = 1.2 (ref. Aslam's book) */
 			double fs = 1.2;
-
 			Ksy = 12. * E_ * Iyy * fs / (G_ * Asy * Le * Le);
 			Ksz = 12. * E_ * Izz * fs / (G_ * Asz * Le * Le);
 		}
