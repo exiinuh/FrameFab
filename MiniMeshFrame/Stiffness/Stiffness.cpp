@@ -7,7 +7,7 @@ Stiffness::Stiffness()
 
 
 Stiffness::Stiffness(DualGraph *ptr_dualgraph)
-:r_(0.0015), nr_(0), density_(0.001), g_(9.80), G_(1586), E_(1387), v_(0.16)
+:r_(0.0015), nr_(0), density_(0.001), g_(9.80), G_(1586), E_(1387), v_(0.16), shear_(0)
 {
 	ptr_dualgraph_ = ptr_dualgraph;
 
@@ -27,6 +27,8 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
 	G_ = ptr_parm->shear_modulus_;
 	E_ = ptr_parm->youngs_modulus_;
 	v_ = ptr_parm->poisson_ratio_;
+
+	shear_ = 0;
 
 	Init(); 
 }
@@ -136,11 +138,24 @@ void Stiffness::CreateElasticK()
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
 
+	/* ref to Matrix Analysis of Strutures Aslam Kassimali, Section 8.2 Table 8.1*/
 	double Ax = F_PI * r_ * r_;
 	double Asy = Ax * (6 + 12 * v_ + 6 * v_*v_) / (7 + 12 * v_ + 4 * v_*v_);
 	double Asz = Asy;
+
+	/* torsion constant */
 	double Jxx = 0.5 * F_PI * r_ * r_ * r_ * r_;
-	double Iyy = Jxx / 2;
+	
+	/* shear deformation constant */
+	double Ksy = 0;
+	double Ksz = 0;
+
+	/* area moment of inertia (bending about local y,z-axis)
+	* https://en.wikipedia.org/wiki/Bending (beam deflection equation)
+	* https://en.wikipedia.org/wiki/List_of_area_moments_of_inertia (numerical value)
+	* note this is slender rod of length L and Mass M, spinning around end
+	*/
+	double Iyy = F_PI * r_ * r_ * r_ * r_ / 4;
 	double Izz = Iyy;
 
 	double   t0, t1, t2, t3, t4, t5, t6, t7, t8;     /* coord transf matrix entries */
@@ -166,8 +181,18 @@ void Stiffness::CreateElasticK()
 
 		transf_.CreateTransMatrix(node_u, node_v, t0, t1, t2, t3, t4, t5, t6, t7, t8, 0);
 		
-		double Ksy = 12. * E_ * Izz / (G_ * Asy * Le * Le);
-		double Ksz = 12. * E_ * Iyy / (G_ * Asz * Le * Le);
+		if (1 == shear_)
+		{
+			/* for circular cross-sections, the shape factor for shear(fs) = 1.2 (ref. Aslam's book) */
+			double fs = 1.2;
+			Ksy = 12. * E_ * Iyy * fs / (G_ * Asy * Le * Le);
+			Ksz = 12. * E_ * Izz * fs / (G_ * Asz * Le * Le);
+		}
+		else
+		{
+			Ksy = 0;
+			Ksz = 0;
+		}
 
         int n1 = ptr_dualgraph_->v_dual_id(u);
         int n2 = ptr_dualgraph_->v_dual_id(v);

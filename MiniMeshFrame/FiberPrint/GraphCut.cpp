@@ -15,7 +15,7 @@ GraphCut::GraphCut()
 GraphCut::GraphCut(WireFrame *ptr_frame)
 		 :debug_(false), 
 		 penalty_(10e2), 
-		 Dt_tol_(0.1), Dr_tol_(0.1), 
+		 Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
 		 pri_tol_(10e-3), dual_tol_(10e-3)
 {
 	ptr_frame_ = ptr_frame;
@@ -570,7 +570,7 @@ void GraphCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 	
 	/* 10 degree rotation tolerance, from degree to radians */
-	qp_->solve(Q, a, D_, Dt_tol_, Dr_tol_, 1);	
+	qp_->solve(Q, a, D_, Dt_tol_, Dr_tol_, debug_);	
 }
 
 

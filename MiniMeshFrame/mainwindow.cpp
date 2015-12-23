@@ -176,7 +176,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_radius_->setFixedWidth(140);
 	spinbox_radius_->setDecimals(2);
 	spinbox_radius_->setRange(0.01, 0.5);
-	spinbox_radius_->setValue(0.4);
+	spinbox_radius_->setValue(0.6);
 	spinbox_radius_->setSingleStep(0.01);
 	spinbox_radius_->setSuffix(" mm");
 
@@ -281,7 +281,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_prolen_->setFixedWidth(140);
 	spinbox_prolen_->setDecimals(1);
 	spinbox_prolen_->setRange(0, 1000);
-	spinbox_prolen_->setValue(1.0);
+	spinbox_prolen_->setValue(10.0);
 	spinbox_prolen_->setSingleStep(1);
 	connect(spinbox_prolen_, SIGNAL(valueChanged(double)), renderingwidget_, SLOT(ModifyProjection(double)));
 
@@ -740,7 +740,7 @@ void MainWindow::ShowAbout()
 		" IO, render with points , edges, triangles or textures and some interactions with mouse."
 		" A fix light source is provided for you."
 		"This is a basic and raw frame for handling meshes. The mesh is of half_edge struct.\n"
-		"Please contact" "<font color=blue> wkcagd@mail.ustc.edu.cn<\font><font color=black>, Kang Wang if you has any questions.<\font><\h3>"
+		"Please contact" "<font color=blue> duckie@mail.ustc.edu.cn<\font><font color=black>, Yijiang Huang if you has any questions.<\font><\h3>"
 		,
 		QMessageBox::Ok);
 }
