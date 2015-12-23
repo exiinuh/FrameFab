@@ -6,7 +6,7 @@
 #include <vector>
 #include "GraphCut.h"
 #include "SeqAnalyzer.h"
-#include "ProcessAnalyzer.h"
+//#include "ProcessAnalyzer.h"
 
 
 class FiberPrintPlugIn
@@ -26,8 +26,7 @@ public:
 	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
 
 	vector<QueueInfo>	*GetQueue()			{ return ptr_seqanalyzer_->GetQueue(); }
-	vector<vector<int>>	*GetRangeState()	{ return ptr_seqanalyzer_->GetRangeState(); }
-	vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
+	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
 	void				Debug();		// return value: edge index in mesh, for cut rendering
 
@@ -35,7 +34,7 @@ public:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
-	ProcessAnalyzer	*ptr_procanalyzer_;
+	//ProcessAnalyzer	*ptr_procanalyzer_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

@@ -56,6 +56,9 @@ public:
 	GeoV3	ColAngle(point target);
 
 
+	GeoV3 ColAngle(point a, point b, point target);
+
+	double DisSegSeg(point start, point end, point target_start, point target_end);
 	double DisSegPoint(point start, point end, point target);
 
 	bool IfConsider(point start, point end, point target);

@@ -1,6 +1,6 @@
 #include "CylinderBulk.h"
 
-const double threhold=40;
+
 
 CylinderBulk::CylinderBulk(point start, point end)
 {
@@ -57,21 +57,25 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 	cylinder_ = Cylinder_(start_, end_);
 
 	/* Distance computation */
-	gte::DCPQuery<float, gte::Vector3<float>, gte::Line3<float>> query;
-	
-	gte::Line<3, float>   line = Line_(start, end);
+	//gte::DCPQuery<float, gte::Vector3<float>, gte::Line3<float>> query;
+	//gte::Line<3, float>   line = Line_(start, end);
+	///* find the maximal distance between target endpoints and printing edge */
+	//auto result = query(Point_(target_start), line);
+	//max = result.distance;
+	//result = query(Point_(target_end), line);
+	//if (result.distance > max)
+	//{
+	//	max = result.distance;
+	//}
+	//cylinder_.radius = max;
 
-	/* find the maximal distance between target endpoints and printing edge */
-	auto result = query(Point_(target_start), line);
-	max = result.distance;
-	result = query(Point_(target_end), line);
 
-	if (result.distance > max)
+	if (DisSegSeg(start, end, target_start, target_end) > threhold)
 	{
-		max = result.distance;
+		is_collision_ = 0;
+		return;
 	}
-	
-	cylinder_.radius = max;
+
 
 	/* target edge and current edge are same */
 	if ( (start == target_start) && (end == target_end))
@@ -90,7 +94,7 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 
 	if ((end == target_start))
 	{
-		if (Geometry::angle(start - end, target_end - target_start) > Threshold_angle)
+		if (Geometry::angle(start - end, target_end - target_start) >(3.1415-1.5*extruder_.Angle()  ) )
 		{
 			is_collision_ = 0;
 			return;
@@ -99,7 +103,7 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 
 	if ((end == target_end))
 	{
-		if (Geometry::angle(start - end, target_start - target_end) > Threshold_angle)
+		if (Geometry::angle(start - end, target_start - target_end) > (3.1415 - 1.5*extruder_.Angle()))
 		{
 			is_collision_ = 0;
 			return;
@@ -108,7 +112,7 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 
 	if ((start == target_start))
 	{
-		if (Geometry::angle(end - start, target_end - target_start) > Threshold_angle)
+		if (Geometry::angle(end - start, target_end - target_start) >(3.1415 - 1.5*extruder_.Angle()))
 		{
 			is_collision_ = 0;
 			return;
@@ -117,7 +121,7 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 
 	if ((start == target_end))
 	{
-		if (Geometry::angle(end - start, target_start - target_end) > Threshold_angle)
+		if (Geometry::angle(end - start, target_start - target_end) > (3.1415 - 1.5*extruder_.Angle()))
 		{
 			is_collision_ = 0;
 			return;
@@ -190,7 +194,8 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 	}
 
 
-	if ((DisSegPoint(start, end, target_start) < threhold) && DisSegPoint(start, end, target_end) >threhold)
+	if ((DisSegPoint(start, end, target_start) < threhold) 
+		&& DisSegPoint(start, end, target_end) >threhold)
 	{
 		range_ = 2 * F_PI - extruder_.Angle() * 2;
 		Rangle_.u = ColAngle(target_start);
@@ -200,7 +205,8 @@ CylinderBulk::CylinderBulk(point start, point end, point target_start, point tar
 	}
 
 
-	if ((DisSegPoint(start, end, target_end) < threhold) && DisSegPoint(start, end, target_start) >threhold)
+	if ((DisSegPoint(start, end, target_end) < threhold) 
+		&& DisSegPoint(start, end, target_start) >threhold)
 	{
 		range_ = 2 * F_PI - extruder_.Angle() * 2;
 		Rangle_.u = ColAngle(target_end);
@@ -309,6 +315,21 @@ GeoV3  CylinderBulk::ColAngle(point target)
 }
 
 
+GeoV3  CylinderBulk::ColAngle(point a, point b,  point target)
+{
+	GeoV3 t = Geometry::Vector3d(b - a);
+
+	GeoV3 temp = Geometry::Vector3d(target - a);
+	temp = Geometry::cross(temp, t);
+	//double angle = Geometry::angle(zt, temp);
+
+	temp = Geometry::cross(t, temp);
+	temp.normalize();
+	return temp;
+}
+
+
+
 double CylinderBulk::DisSegPoint(point start, point end, point target)
 {
 	gte::DCPQuery<float, gte::Vector<3, float>, gte::Segment<3, float>> distance;
@@ -318,6 +339,16 @@ double CylinderBulk::DisSegPoint(point start, point end, point target)
 
 	 auto result=distance(vec, Segement_(start, end));
 	
+	return result.distance;
+
+}
+
+
+double CylinderBulk::DisSegSeg(point start, point end, point target_start, point target_end)
+{
+	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
+	auto result = distance(Segement_(target_start,target_end), Segement_(start, end));
+
 	return result.distance;
 
 }

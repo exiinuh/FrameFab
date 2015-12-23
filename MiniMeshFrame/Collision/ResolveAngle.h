@@ -22,6 +22,10 @@ public:
 	vector< Geometry::Vector3d> list_;
 	vector< Geometry::Vector3d> Resolve();
 
+	
+	
 	void Dec();
+
+	Geometry::Vector3d Ave(vector<Geometry::Vector3d> t);
 };
 

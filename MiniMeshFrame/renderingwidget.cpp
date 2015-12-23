@@ -38,13 +38,15 @@ void RenderingWidget::InitDrawData()
 void RenderingWidget::InitCapturedData()
 {
 	op_mode_ = NORMAL;
+
+	int N = ptr_frame_->SizeOfVertList();
+	int M = ptr_frame_->SizeOfEdgeList();
 	captured_verts_.clear();
-	captured_edge_ = NULL;
-	capturing_face_.corner_points_.clear();
-	capturing_face_.is_captured_vert_.resize(ptr_frame_->SizeOfVertList());
-	fill(capturing_face_.is_captured_vert_.begin(), capturing_face_.is_captured_vert_.end(), false);
-	capturing_face_.is_captured_edge_.resize(ptr_frame_->SizeOfEdgeList());
-	fill(capturing_face_.is_captured_edge_.begin(), capturing_face_.is_captured_edge_.end(), false);
+	is_captured_vert_.resize(N);
+	fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
+	captured_edges_.clear();
+	is_captured_edge_.resize(M);
+	fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
 
 	emit(CapturedVert(-1, -1));
 }
@@ -54,9 +56,6 @@ void RenderingWidget::InitFiberData()
 {
 	print_layer_ = 0;
 	print_order_ = 0;
-
-	bound_.resize(ptr_frame_->SizeOfVertList());
-	fill(bound_.begin(), bound_.end(), 0);
 }
 
 
@@ -146,14 +145,14 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 	{
 	case Qt::LeftButton:
 		ptr_arcball_->MouseDown(e->pos());
-		if (op_mode_ == CHOOSEBOUND || op_mode_ == ADDEDGE)
+		if (op_mode_ == CHOOSEBASE)
 		{
 			CaptureVertex(e->pos());
 		}
 		else
-		if (op_mode_ == ADDFACE)
+		if (op_mode_ == CHOOSECEILING)
 		{
-			CaptureRing(e->pos());
+			CaptureEdge(e->pos());
 		}
 		else
 		{
@@ -167,14 +166,34 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 		current_position_ = e->pos();
 		break;
 	case Qt::RightButton:
-		if (op_mode_ != NORMAL&& captured_verts_.size() > 0)
+		if (op_mode_ == CHOOSEBASE)
 		{
-			captured_verts_.pop_back();
+			if (captured_verts_.size() > 0)
+			{
+				WF_vert *u = captured_verts_[captured_verts_.size() - 1];
+				captured_verts_.pop_back();
+				is_captured_vert_[u->ID()] = false;
+			}
+		}
+		else
+		if (op_mode_ == CHOOSECEILING)
+		{
+			if (captured_edges_.size() > 0)
+			{
+				WF_edge *e = captured_edges_[captured_edges_.size() - 1];
+				captured_edges_.pop_back();
+				is_captured_edge_[e->ID()] = false;
+				is_captured_edge_[e->ppair_->ID()] = false;
+			}
+		}
+		else
+		{
 		}
 		break;
 	default:
 		break;
 	}
+
 	updateGL();
 }
 
@@ -318,8 +337,7 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 
 	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
 	int N = verts.size();
-	int i;
-	for (i = 0; i < N; i++)
+	for (int i = 0; i < N; i++)
 	{
 		double dx = verts[i]->RenderPos().x() - x;
 		double dy = verts[i]->RenderPos().y() - y;
@@ -330,47 +348,23 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 			if (op_mode_ == NORMAL)
 			{
 				captured_verts_.clear();
-				captured_edge_ = NULL;
+				fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
+				captured_edges_.clear();
+				fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
 			}
 
-			captured_verts_.push_back(verts[i]);
-			break;
+			if (!is_captured_vert_[i])
+			{
+				captured_verts_.push_back(verts[i]);
+				is_captured_vert_[i] = true;
+				emit(CapturedVert(i + 1, verts[i]->Degree()));
+			}
+
+			return true;
 		}
 	}
 
-	if (i >= N)
-	{
-		return false;
-	}
-
-	switch (op_mode_)
-	{
-	case NORMAL:
-	case CHOOSEBOUND:
-		i = captured_verts_.size();
-		if (i >= 1)
-		{
-			emit(CapturedVert(captured_verts_[i - 1]->ID() + 1, captured_verts_[i - 1]->Degree()));
-		}
-		break;
-
-	case ADDEDGE:
-		if (captured_verts_.size() >= 2)
-		{
-			ptr_frame_->InsertEdge(captured_verts_[0], captured_verts_[1]);
-			captured_verts_.clear();
-			emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-		}
-		break;
-
-	case ADDFACE:
-		break;
-
-	default:
-		break;
-	}
-
-	return true;
+	return false;
 }
 
 
@@ -402,86 +396,19 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 				if (op_mode_ == NORMAL)
 				{
 					captured_verts_.clear();
-					captured_edge_ = NULL;
+					fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
+					captured_edges_.clear();
+					fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
 				}
-
-				captured_edge_ = edges[i];
-				emit(CapturedEdge(i + 1, captured_edge_->Length()));
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-
-bool RenderingWidget::CaptureRing(QPoint mouse)
-{
-	if (ptr_frame_ == NULL)
-	{
-		return 0;
-	}
-
-	double x = 0;
-	double y = 0;
-	double z = 0;
-	CoordinatesTransform(mouse, &x, &y, &z);
-
-	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
-	int M = edges.size();
-	for (int i = 0; i < M; i++)
-	{
-		int j = edges[i]->ppair_->ID();
-		if (i < j)
-		{
-			WF_vert	o = WF_vert(x, y, z);
-			WF_vert *u1 = edges[i]->pvert_;
-			WF_vert *v1 = edges[i]->ppair_->pvert_;
-
-			double delta = ptr_frame_->ArcHeight(o.RenderPos(), u1->RenderPos(), v1->RenderPos());
-			if (delta < 0.007)
-			{
-				if (!capturing_face_.is_captured_edge_[i])
+	
+				if (!is_captured_edge_[i])
 				{
-					capturing_face_.is_captured_edge_[i] = true;
-					capturing_face_.is_captured_edge_[j] = true;
-
-					vector<WF_vert*> queue;
-					int h = 0;
-					int t = 2;
-					queue.push_back(u1);
-					queue.push_back(v1);
-					while (h < t)
-					{
-						WF_vert *u = queue[h];
-						capturing_face_.is_captured_vert_[u->ID()] = true;
-						if (u->Degree() > 2)
-						{
-							capturing_face_.corner_points_.push_back(u);
-						}
-						else
-						{
-							WF_edge *e = u->pedge_;
-							while (e != NULL)
-							{
-								WF_vert *v = e->pvert_;
-								capturing_face_.is_captured_edge_[e->ID()] = true;
-								capturing_face_.is_captured_edge_[e->ppair_->ID()] = true;
-								if (!capturing_face_.is_captured_vert_[v->ID()])
-								{
-									queue.push_back(v);
-									t++;
-								}
-								e = e->pnext_;
-							}
-						}
-
-						h++;
-					}
+					captured_edges_.push_back(edges[i]);
+					is_captured_edge_[i] = true;
+					is_captured_edge_[edges[i]->ppair_->ID()] = true;
+					emit(CapturedEdge(i + 1, edges[i]->Length()));
 				}
-				
-				emit(CapturedVert(-1, -1));
+
 				return true;
 			}
 		}
@@ -555,9 +482,10 @@ void RenderingWidget::ReadFrame()
 	ptr_frame_ = new WireFrame();
 	ptr_frame_->LoadFromOBJ(byfilename.data());
 
-	emit(ChooseBoundPressed(false));
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
 
-	emit(modeInfo(QString("Choose boundary (C)")));
+	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 	emit(Reset());
@@ -608,9 +536,11 @@ void RenderingWidget::ScaleFrame(double scale)
 	scale_ = scale;
 	ptr_frame_->Unify();
 
-	if (captured_edge_ != NULL)
+	int cape_size = captured_edges_.size();
+	if (cape_size != 0)
 	{
-		emit(CapturedEdge(captured_edge_->ID() + 1, captured_edge_->Length()));
+		emit(CapturedEdge(captured_edges_[cape_size - 1]->ID() + 1, 
+			captured_edges_[cape_size - 1]->Length()));
 	}
 
 	updateGL();
@@ -726,9 +656,8 @@ void RenderingWidget::CheckDrawAxes(bool bV)
 
 void RenderingWidget::SwitchToNormal()
 {
-	//emit(AddEdgePressed(false));
-	//emit(AddFacePressed(false));
-	emit(ChooseBoundPressed(false));
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
 
 	if (ptr_frame_ == NULL)
 	{
@@ -736,121 +665,75 @@ void RenderingWidget::SwitchToNormal()
 	}
 	else
 	{
-		emit(modeInfo(QString("Choose boundary (C)")));
+		emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	}
 
-	if (op_mode_ == CHOOSEBOUND)
+	if (op_mode_ == CHOOSEBASE)
 	{
-		fill(bound_.begin(), bound_.end(), 0);
+		base_.clear();
 		for (int i = 0; i < captured_verts_.size(); i++)
 		{
-			bound_[captured_verts_[i]->ID()] = true;
+			base_.push_back(captured_verts_[i]);
 		}
 	}
 	else
-	if (op_mode_ == ADDFACE)
+	if (op_mode_ == CHOOSECEILING)
 	{
-		vector<bool> visited(ptr_frame_->SizeOfVertList());
-		fill(visited.begin(), visited.end(), false);
-
-		vector<WF_vert*> queue;
-		queue.push_back(capturing_face_.corner_points_[0]);
-		int h = 0;
-		int t = 1;
-		while (h < t)
+		ceiling_.clear();
+		for (int i = 0; i < captured_edges_.size(); i++)
 		{
-			WF_vert *u = queue[h];
-			visited[u->ID()] = true;
-
-			WF_edge *e = u->pedge_;
-			while (e != NULL)
-			{
-				if (!visited[e->pvert_->ID()] && capturing_face_.is_captured_edge_[e->ID()])
-				{
-					queue.push_back(e->pvert_);
-					t++;
-					break;
-				}
-				e = e->pnext_;
-			}
-			h++;
+			ceiling_.push_back(captured_edges_[i]);
 		}
-
-		ptr_frame_->InsertFace(queue);
+		
+		ptr_frame_->MakeCeiling(ceiling_);
 	}
 
 	InitCapturedData();
 }
 
 
-void RenderingWidget::SwitchToChooseBound()
+void RenderingWidget::SwitchToChooseBase()
 {
 	if (ptr_frame_ == NULL)
 	{
 		return;
 	}
 
-	if (op_mode_ == CHOOSEBOUND)
+	if (op_mode_ == CHOOSEBASE)
 	{
 		SwitchToNormal();
 	}
 	else
 	{
-		//emit(AddEdgePressed(false));
-		//emit(AddFacePressed(false));
-		captured_edge_ = NULL;
-		captured_verts_.clear();
+		emit(ChooseCeilingPressed(false));
 		emit(CapturedVert(-1, -1));
 
-		emit(ChooseBoundPressed(true));
-		emit(modeInfo(QString("Choosing boundary...Press again or press ESC to exit.")));
-		op_mode_ = CHOOSEBOUND;
+		emit(ChooseBasePressed(true));
+		emit(modeInfo(QString("Choosing base...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSEBASE;
 	}
 }
 
 
-void RenderingWidget::SwitchToAddEdge()
+void RenderingWidget::SwitchToChooseCeiling()
 {
 	if (ptr_frame_ == NULL)
 	{
 		return;
 	}
 
-	if (op_mode_ == ADDEDGE)
+	if (op_mode_ == CHOOSECEILING)
 	{
 		SwitchToNormal();
 	}
 	else
 	{
-		emit(AddEdgePressed(true));
-		emit(AddFacePressed(false));
-		emit(ChooseBoundPressed(false));
-		emit(modeInfo(QString("Inserting edge...Press again or press ESC to exit.")));
-		op_mode_ = ADDEDGE;
-	}
-}
+		emit(ChooseBasePressed(false));
+		emit(CapturedVert(-1, -1));
 
-
-void RenderingWidget::SwitchToAddFace()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-
-	if (op_mode_ == ADDFACE)
-	{
-		SwitchToNormal();
-	}
-	else
-	{
-		emit(AddEdgePressed(false));
-		emit(AddFacePressed(true));
-		emit(ChooseBoundPressed(false));
-		emit(modeInfo(QString("Setting start edge...Press again or press ESC to exit.")));
-		op_mode_ = ADDFACE;
-
-		updateGL();
+		emit(ChooseCeilingPressed(true));
+		emit(modeInfo(QString("Choosing ceiling...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSECEILING;
 	}
 }
 
@@ -915,47 +798,17 @@ void RenderingWidget::DrawPoints(bool bv)
 	for (size_t i = 0; i <N; i++)
 	{
 		glColor3f(1.0, 1.0, 1.0);
-		switch (op_mode_)
+
+		if (verts[i]->isFixed())
 		{
-		case NORMAL:
-			if (verts[i]->isFixed())
-			{
-				glColor3f(0.0, 1.0, 1.0);
-			}
-			if (bound_.size() >= N && bound_[i])
-			{
-				glColor3f(0.0, 0.0, 1.0);
-			}
-
-		case CHOOSEBOUND:
-		case ADDEDGE:
-			for (int j = 0; j < captured_verts_.size(); j++)
-			{
-				if (i == captured_verts_[j]->ID())
-				{
-					glColor3f(1.0, 0.0, 0.0);
-					break;
-				}
-			}
-			break;
-
-		case ADDFACE:
-			if (capturing_face_.is_captured_vert_[i])
-			{
-				glColor3f(1.0, 0.0, 0.0);
-			}
-			for (int j = 0; j < capturing_face_.corner_points_.size(); j++)
-			{
-				if (i == capturing_face_.corner_points_[j]->ID())
-				{
-					glColor3f(0.0, 1.0, 0.0);
-				}
-			}
-			break;
-
-		default:
-			break;
+			glColor3f(0.0, 1.0, 1.0);
 		}
+
+		if (is_captured_vert_[i])
+		{
+			glColor3f(1.0, 0.0, 0.0);
+		}
+
 		glVertex3fv(verts[i]->RenderPos().data());
 	}
 
@@ -984,24 +837,20 @@ void RenderingWidget::DrawEdge(bool bv)
 			glBegin(GL_LINE_LOOP);
 
 			glColor3f(1.0, 1.0, 1.0);
-			if (op_mode_ == ADDFACE)
+
+			if (e->isPillar())
 			{
-				if (capturing_face_.is_captured_edge_[i])
-				{
-					glColor3f(1.0, 0.0, 0.0);
-				}
+				glColor3f(0.0, 1.0, 1.0);
 			}
-			else
+
+			if (e->isCeiling())
 			{
-				if (captured_edge_ == e)
-				{
-					glColor3f(1.0, 0.0, 0.0);
-				}
-				else
-				if (ptr_frame_->isPillar(i))
-				{
-					glColor3f(0.0, 1.0, 1.0);
-				}
+				glColor3f(1.0, 1.0, 0.0);
+			}
+
+			if (is_captured_edge_[i])
+			{
+				glColor3f(1.0, 0.0, 0.0);
 			}
 
 			glVertex3fv(e->pvert_->RenderPos().data());
@@ -1010,7 +859,6 @@ void RenderingWidget::DrawEdge(bool bv)
 			glEnd();
 		}
 	}
-
 }
 
 
@@ -1072,115 +920,115 @@ void RenderingWidget::DrawHeat(bool bv)
 
 void RenderingWidget::DrawBulk(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
-	{
-		return;
-	}
+	//if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
+	//{
+	//	return;
+	//}
 
-	const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
-	const vector<BaseBulk*> bulk_list = *(ptr_fiberprint_->GetBulk());
-	vector<vector<int>> range_state = *(ptr_fiberprint_->GetRangeState());
-	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
-	int M = ptr_frame_->SizeOfEdgeList();
+	//const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
+	//const vector<BaseBulk*> bulk_list = *(ptr_fiberprint_->GetBulk());
+	//vector<vector<int>> range_state = *(ptr_fiberprint_->GetRangeState());
+	//const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
+	//int M = ptr_frame_->SizeOfEdgeList();
 
-	/*Draw Collision*/
-	for (size_t i = 0; i < M; i++)
-	{
-		WF_edge *e = edges[i];
-		WF_edge *e_pair = edges[i]->ppair_;
+	///*Draw Collision*/
+	//for (size_t i = 0; i < M; i++)
+	//{
+	//	WF_edge *e = edges[i];
+	//	WF_edge *e_pair = edges[i]->ppair_;
 
-		if (e->ID() < e_pair->ID())
-		{
-			glBegin(GL_LINE_LOOP);
+	//	if (e->ID() < e_pair->ID())
+	//	{
+	//		glBegin(GL_LINE_LOOP);
 
-			//decide line color
-			if (captured_edge_ != NULL)
-			{
-				int e_id = dual_vert[i]->dual_id();
-				int cap_id = dual_vert[captured_edge_->ID()]->dual_id();
-				if (captured_edge_->ID() == i)
-				{
-					glColor4f(0.0, 0.0, 1.0, 1);
+	//		//decide line color
+	//		if (captured_edge_ != NULL)
+	//		{
+	//			int e_id = dual_vert[i]->dual_id();
+	//			int cap_id = dual_vert[captured_edge_->ID()]->dual_id();
+	//			if (captured_edge_->ID() == i)
+	//			{
+	//				glColor4f(0.0, 0.0, 1.0, 1);
 
-					// draw bulk
-					if (!has_lighting_)
-					{
-						glDepthMask(GL_FALSE);
-					}
-					
-						BaseBulk *bulk = bulk_list[cap_id];
-					if (bulk)
-					{
-						if (bulk->flag == 1)
-						{
-						bulk->Face(0)->Render(ptr_frame_, 0.1);
-						bulk->Face(1)->Render(ptr_frame_, 0.6);
-						bulk->Face(2)->Render(ptr_frame_, 0.2);
-						bulk->Face(3)->Render(ptr_frame_, 0.2);
-						bulk->Face(4)->Render(ptr_frame_, 0.35);
-						bulk->Face(5)->Render(ptr_frame_, 0.35);
-						bulk->Face(6)->Render(ptr_frame_, 0.4);
-						bulk->Face(7)->Render(ptr_frame_, 0.4);
-						bulk->Face(8)->Render(ptr_frame_, 0.3);
-						bulk->Face(9)->Render(ptr_frame_, 0.3);
-						bulk->Face(10)->Render(ptr_frame_, 0.3);
-						bulk->Face(11)->Render(ptr_frame_, 0.5);
-						bulk->Face(12)->Render(ptr_frame_, 0.3);
-						bulk->Face(13)->Render(ptr_frame_, 0.3);
+	//				// draw bulk
+	//				if (!has_lighting_)
+	//				{
+	//					glDepthMask(GL_FALSE);
+	//				}
+	//				
+	//					BaseBulk *bulk = bulk_list[cap_id];
+	//				if (bulk)
+	//				{
+	//					if (bulk->flag == 1)
+	//					{
+	//					bulk->Face(0)->Render(ptr_frame_, 0.1);
+	//					bulk->Face(1)->Render(ptr_frame_, 0.6);
+	//					bulk->Face(2)->Render(ptr_frame_, 0.2);
+	//					bulk->Face(3)->Render(ptr_frame_, 0.2);
+	//					bulk->Face(4)->Render(ptr_frame_, 0.35);
+	//					bulk->Face(5)->Render(ptr_frame_, 0.35);
+	//					bulk->Face(6)->Render(ptr_frame_, 0.4);
+	//					bulk->Face(7)->Render(ptr_frame_, 0.4);
+	//					bulk->Face(8)->Render(ptr_frame_, 0.3);
+	//					bulk->Face(9)->Render(ptr_frame_, 0.3);
+	//					bulk->Face(10)->Render(ptr_frame_, 0.3);
+	//					bulk->Face(11)->Render(ptr_frame_, 0.5);
+	//					bulk->Face(12)->Render(ptr_frame_, 0.3);
+	//					bulk->Face(13)->Render(ptr_frame_, 0.3);
 
-						}
-						if (bulk->flag == 2)
-						{
-						
-								bulk->Face(0)->Render(ptr_frame_, 0.1);
-								bulk->Face(1)->Render(ptr_frame_, 0.1);
-								bulk->Face(2)->Render(ptr_frame_, 0.1);
-								bulk->Face(3)->Render(ptr_frame_, 0.1);
-								bulk->Face(4)->Render(ptr_frame_, 0.1);
-								bulk->Face(5)->Render(ptr_frame_, 0.1);
-								bulk->Face(6)->Render(ptr_frame_, 0.5);
-								bulk->Face(7)->Render(ptr_frame_, 0.5);
-								bulk->Face(8)->Render(ptr_frame_, 0.3);
-								bulk->Face(9)->Render(ptr_frame_, 0.3);
-								bulk->Face(10)->Render(ptr_frame_, 0.3);
-								bulk->Face(11)->Render(ptr_frame_, 0.5);
-								bulk->Face(12)->Render(ptr_frame_, 0.4);		
-								bulk->Face(13)->Render(ptr_frame_, 0.4);
-								bulk->Face(14)->Render(ptr_frame_, 0.4);
-						}
-						
-					}
-					if (!has_lighting_)
-					{
-						glDepthMask(GL_TRUE);
-					}
-				}
-				else
-				if (range_state[cap_id][e_id] == 1)
-				{
-					glColor4f(0.00, 1, 0.00, 0.4);
-				}
-				else
-				if (range_state[cap_id][e_id] == 2)
-				{
-					glColor4f(1.0, 0.0, 0.0, 1);
-				}
-				else
-				{
-					glColor4f(1.0, 1.0, 1.0, 1);
-				}
-			}
-			else
-			{
-				glColor4f(1.0, 1.0, 1.0, 1);
-			}
+	//					}
+	//					if (bulk->flag == 2)
+	//					{
+	//					
+	//							bulk->Face(0)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(1)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(2)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(3)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(4)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(5)->Render(ptr_frame_, 0.1);
+	//							bulk->Face(6)->Render(ptr_frame_, 0.5);
+	//							bulk->Face(7)->Render(ptr_frame_, 0.5);
+	//							bulk->Face(8)->Render(ptr_frame_, 0.3);
+	//							bulk->Face(9)->Render(ptr_frame_, 0.3);
+	//							bulk->Face(10)->Render(ptr_frame_, 0.3);
+	//							bulk->Face(11)->Render(ptr_frame_, 0.5);
+	//							bulk->Face(12)->Render(ptr_frame_, 0.4);		
+	//							bulk->Face(13)->Render(ptr_frame_, 0.4);
+	//							bulk->Face(14)->Render(ptr_frame_, 0.4);
+	//					}
+	//					
+	//				}
+	//				if (!has_lighting_)
+	//				{
+	//					glDepthMask(GL_TRUE);
+	//				}
+	//			}
+	//			else
+	//			if (range_state[cap_id][e_id] == 1)
+	//			{
+	//				glColor4f(0.00, 1, 0.00, 0.4);
+	//			}
+	//			else
+	//			if (range_state[cap_id][e_id] == 2)
+	//			{
+	//				glColor4f(1.0, 0.0, 0.0, 1);
+	//			}
+	//			else
+	//			{
+	//				glColor4f(1.0, 1.0, 1.0, 1);
+	//			}
+	//		}
+	//		else
+	//		{
+	//			glColor4f(1.0, 1.0, 1.0, 1);
+	//		}
 
-			glVertex3fv(e->pvert_->RenderPos().data());
-			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+	//		glVertex3fv(e->pvert_->RenderPos().data());
+	//		glVertex3fv(e->ppair_->pvert_->RenderPos().data());
 
-			glEnd();
-		}
-	}
+	//		glEnd();
+	//	}
+	//}
 }
 
 
@@ -1209,7 +1057,7 @@ void RenderingWidget::DrawOrder(bool bv)
 
 		if (print_order_ > 0)
 		{
-			ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
+			//ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
 		}
 	}
 
@@ -1217,9 +1065,10 @@ void RenderingWidget::DrawOrder(bool bv)
 
 
 void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g,
-											double youngs_modulus, double shear_modulus,
-											double D_tol, double penalty, double pri_tol,
-											double dual_tol, double gamma, double Wl, double Wp)
+										double youngs_modulus, double shear_modulus,
+										double Dt_tol, double Dr_tol,
+										double penalty, double pri_tol, double dual_tol,
+										double gamma, double Wl, double Wp)
 {
 	QString dirname = QFileDialog::
 		getExistingDirectory(this, 
@@ -1241,8 +1090,11 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 
 	
 	FiberPrintPARM *ptr_parm = new FiberPrintPARM(
-		radius, density, g, youngs_modulus, shear_modulus, 
-		D_tol, penalty, pri_tol, dual_tol, gamma, Wl, Wp);
+		radius, density, g, 
+		youngs_modulus, shear_modulus, 
+		Dt_tol, Dr_tol, 
+		penalty, pri_tol, dual_tol, 
+		gamma, Wl, Wp);
 
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
@@ -1302,11 +1154,11 @@ void RenderingWidget::RefineFrame()
 
 void RenderingWidget::ProjectBound(double len)
 {
-	if (bound_.size() <= 0)
+	if (captured_verts_.size() <= 0)
 	{
 		return;
 	}
-	ptr_frame_->ProjectBound(&bound_, len);
+	ptr_frame_->ProjectBound(base_, len);
 	op_mode_ = NORMAL;
 	emit(modeInfo(QString("Choose boundary (C)")));
 	emit(operatorInfo(QString("")));

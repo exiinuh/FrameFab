@@ -1,13 +1,16 @@
 #pragma once
 
+#include "Stiffness/GCommon.h"
+
 class FiberPrintPARM
 {
 public:
 	FiberPrintPARM();
 	FiberPrintPARM(double radius, double density, double g,
 					double youngs_modulus, double shear_modulus,
-					double D_tol, double penalty, double pri_tol,
-					double dual_tol, double gamma, double Wl, double Wp);
+					double Dt_tol, double Dr_tol, 
+					double penalty, double pri_tol, double dual_tol, 
+					double gamma, double Wl, double Wp);
 	~FiberPrintPARM();
 
 public:
@@ -20,7 +23,8 @@ public:
 	double		poisson_ratio_;
 
 	// stiffness
-	double		D_tol_;			// D_tol    : tolerance in D-Qp problem constraints
+	double		Dt_tol_;		// Dt_tol   : tolerance of offset in stiffness
+	double		Dr_tol_;		// Dr_tol   : tolerance of rotation in stiffness
 
 	// ADMM
 	double		penalty_;		// penalty  : penalty factor used in ADMM  

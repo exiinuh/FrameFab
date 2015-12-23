@@ -35,6 +35,10 @@
 #define Threshold_angle  3*F_PI/4
 #endif
 
+#ifndef  threhold
+#define threhold  85
+#endif
+
 
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis
 // Zvert=0: Y axis is vertical... rotate about Z-axis, then rotate about Y-axis

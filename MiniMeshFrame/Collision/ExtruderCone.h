@@ -38,6 +38,7 @@ public:
 	double	Height() { return height_; }
 	double	Angle()	 { return angle_; }
 	double	WaveAngle() { return wave_angle_; }
+	double ToolLenth(){ return tool_lenth_; }
 	point	BasePoint() { return base_point_; }
 	Vec3f	Normal()	{ return normal_; }
 
@@ -60,6 +61,8 @@ private:
 	/* Extruder Property Data */
 	double				angle_;
 	double				height_;
+	double          tool_lenth_;
+
 	double				wave_angle_;
     vector<Triangle>	side_;
 	point				base_point_;

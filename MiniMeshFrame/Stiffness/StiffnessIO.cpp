@@ -732,12 +732,12 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	}
 
 	// Write Frame Element data
-	double	Ax =  F_PI * r * r;
+	double	Ax = F_PI * r * r;
 	double	Asy = Ax * (6 + 12 * v + 6 * v*v) / (7 + 12 * v + 4 * v*v);
 	double	Asz = Asy;
 	double	Jxx = 0.5 * M_PI * r * r * r * r;
-	double  Ksy = 0;		// shear deformation constant
-	double  Ksz = 0;
+	double	Iyy = Jxx / 2;
+	double	Izz = Iyy;
 
 	fprintf(fp, "\n");
 	fprintf(fp, "%d					# number of frame element\n", nE);
@@ -749,17 +749,8 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 		int orig_id   = wf_edge_list[e_id]->pvert_->ID();
 		int orig_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
 		
-		WF_edge *ei = wf_edge_list[ptr_dualgraph->e_orig_id(i)];
-
-		int u = ei->pvert_->ID();
-		int v = ei->ppair_->pvert_->ID();
-		double L = ei->Length();
-
 		int id   = ptr_dualgraph->v_dual_id(orig_id);
 		int id_1 = ptr_dualgraph->v_dual_id(orig_id_2);
-
-		double Iyy = F_PI * r * r * r * r / 4;
-		double Izz = Iyy;
 
 		fprintf(fp, "%d %d %d	%f	%f	%f	%f	%f	%f	%f	%f	%f	%.14f\n",
 			i + 1, id + 1, id_1 + 1,
@@ -769,7 +760,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	printf("\n\n");
 
 	// parse option for stiffness matrix
-	fprintf(fp, "%d				# 1: include shear deformation\n", 0);
+	fprintf(fp, "%d				# 1: include shear deformation\n", 1);
 	fprintf(fp, "%d				# 1: include geometric stiffness\n", 0);
 	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 10.0);
 	fprintf(fp, "%.1f				# zoom scale for 3D plotting\n", 2.5);

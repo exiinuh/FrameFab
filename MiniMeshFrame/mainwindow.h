@@ -52,16 +52,18 @@ protected:
 
 signals:
 	void	ChangeEdgeMode(int);
-	void	SendFiberParas(double, double, double, double, double, double, double,
-							double, double, double, double, double);
+	void	SendFiberParas(double, double, double, 
+							double, double, 
+							double, double,
+							double, double, double, 
+							double, double, double);
 	void	SendProjectionParas(double);
 
 public slots:
 	void	OpenFile();
 
-	void	ChooseBoundClicked(bool down);
-	void	AddEdgeClicked(bool down);
-	void	AddFaceClicked(bool down);
+	void	ChooseBaseClicked(bool down);
+	void	ChooseCeilingClicked(bool down);
 
 	void	GetFiberParas();
 	void	GetProjectionParas();
@@ -111,7 +113,8 @@ private:
 	QLabel				*label_youngsmodulus_;
 	QLabel				*label_shearmodulus_;
 
-	QLabel				*label_Dtol_;
+	QLabel				*label_Dttol_;
+	QLabel				*label_Drtol_;
 	QLabel				*label_penalty_;
 	QLabel				*label_pritol_;
 	QLabel				*label_dualtol_;
@@ -129,7 +132,8 @@ private:
 	QDoubleSpinBox		*spinbox_youngsmodulus_;
 	QDoubleSpinBox		*spinbox_shearmodulus_;
 
-	QDoubleSpinBox		*spinbox_Dtol_;
+	QDoubleSpinBox		*spinbox_Dttol_;
+	QDoubleSpinBox		*spinbox_Drtol_;
 	QDoubleSpinBox		*spinbox_penalty_;
 	QDoubleSpinBox		*spinbox_pritol_;
 	QDoubleSpinBox		*spinbox_dualtol_;
@@ -164,9 +168,8 @@ private:
 	QPushButton			*pushbutton_leftarrow_;
 
 	// Toolbuttons
-	QToolButton			*toolbutton_choosebound_;
-	QToolButton			*toolbutton_addedge_;
-	QToolButton			*toolbutton_addface_;
+	QToolButton			*toolbutton_choosebase_;
+	QToolButton			*toolbutton_chooseceiling_;
 
 	// Sliders
 	QSlider				*slider_order_;

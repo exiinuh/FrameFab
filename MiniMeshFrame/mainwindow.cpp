@@ -156,7 +156,8 @@ void MainWindow::CreateLabels()
 	label_youngsmodulus_= new QLabel(QString("Young's modulus: "), this);
 	label_shearmodulus_ = new QLabel(QString("Shear modulus: "), this);
 
-	label_Dtol_		= new QLabel(QString("Stiffness tolerance: "), this);
+	label_Dttol_	= new QLabel(QString("Stiff-offset tolerance: "), this);
+	label_Drtol_	= new QLabel(QString("Stiff-offset tolerance: "), this);
 	label_penalty_	= new QLabel(QString("ADMM penalty: "), this);
 	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "), this);
 	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "), this);
@@ -211,12 +212,19 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_shearmodulus_->setSingleStep(1);
 	spinbox_shearmodulus_->setSuffix(" MPa");
 
-	spinbox_Dtol_ = new QDoubleSpinBox(this);
-	spinbox_Dtol_->setFixedWidth(140);
-	spinbox_Dtol_->setDecimals(4);
-	spinbox_Dtol_->setRange(0, 1);
-	spinbox_Dtol_->setValue(0.1);
-	spinbox_Dtol_->setSingleStep(0.01);
+	spinbox_Dttol_ = new QDoubleSpinBox(this);
+	spinbox_Dttol_->setFixedWidth(140);
+	spinbox_Dttol_->setDecimals(4);
+	spinbox_Dttol_->setRange(0, 1);
+	spinbox_Dttol_->setValue(0.1);
+	spinbox_Dttol_->setSingleStep(0.01);
+
+	spinbox_Drtol_ = new QDoubleSpinBox(this);
+	spinbox_Drtol_->setFixedWidth(140);
+	spinbox_Drtol_->setDecimals(4);
+	spinbox_Drtol_->setRange(0, 1);
+	spinbox_Drtol_->setValue(10 * F_PI / 180);
+	spinbox_Drtol_->setSingleStep(0.01);
 
 	spinbox_penalty_ = new QDoubleSpinBox(this);
 	spinbox_penalty_->setFixedWidth(140);
@@ -356,9 +364,20 @@ void MainWindow::CreatePushButtons()
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
 	pushbutton_fiberprint_->setFixedSize(140, 35);
 	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
-	connect(this, SIGNAL(SendFiberParas(double, double, double, double, double, double, double,
-		double, double, double, double, double)), renderingwidget_, SLOT(FiberPrintAnalysis(double,
-		double, double, double, double, double, double, double, double, double, double, double)));
+	connect(this, 
+		SIGNAL(SendFiberParas(
+			double, double, double, 
+			double, double, 
+			double, double,
+			double, double, double, 
+			double, double, double)), 
+		renderingwidget_, 
+		SLOT(FiberPrintAnalysis(
+			double, double, double, 
+			double, double, 
+			double, double, 
+			double, double, double, 
+			double, double, double)));
 
 	pushbutton_project_ = new QPushButton(tr("Project"), this);
 	pushbutton_project_->setFixedSize(140, 35);
@@ -379,24 +398,23 @@ void MainWindow::CreatePushButtons()
 
 void MainWindow::CreateToolButtons()
 {
-	toolbutton_choosebound_ = new QToolButton(this);
-	toolbutton_choosebound_->setText(tr("Choose frame\nboundary"));
-	toolbutton_choosebound_->setFixedSize(140, 35);
-	connect(toolbutton_choosebound_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBound()));
+	toolbutton_choosebase_ = new QToolButton(this);
+	toolbutton_choosebase_->setText(tr("Choose base"));
+	toolbutton_choosebase_->setFixedSize(140, 35);
+	connect(toolbutton_choosebase_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBase()));
 
-	//toolbutton_addedge_ = new QToolButton(this);
-	//toolbutton_addedge_->setText(tr("Insert\nedge"));
-	//toolbutton_addedge_->setMaximumSize(100, 50);
-	//connect(toolbutton_addedge_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddEdge()));
+	toolbutton_chooseceiling_ = new QToolButton(this);
+	toolbutton_chooseceiling_->setText(tr("Choose ceiling"));
+	toolbutton_chooseceiling_->setFixedSize(140, 35);
+	connect(toolbutton_chooseceiling_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseCeiling()));
 
 	//toolbutton_addface_ = new QToolButton(this);
 	//toolbutton_addface_->setText(tr("Set face"));
 	//toolbutton_addface_->setMaximumSize(84, 50);
 	//connect(toolbutton_addface_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddFace()));
 
-	connect(renderingwidget_, SIGNAL(ChooseBoundPressed(bool)), this, SLOT(ChooseBoundClicked(bool)));
-	connect(renderingwidget_, SIGNAL(AddEdgePressed(bool)), this, SLOT(AddEdgeClicked(bool)));
-	connect(renderingwidget_, SIGNAL(AddFacePressed(bool)), this, SLOT(AddFaceClicked(bool)));
+	connect(renderingwidget_, SIGNAL(ChooseBasePressed(bool)), this, SLOT(ChooseBaseClicked(bool)));
+	connect(renderingwidget_, SIGNAL(ChooseCeilingPressed(bool)), this, SLOT(ChooseCeilingClicked(bool)));
 }
 
 
@@ -456,7 +474,8 @@ void MainWindow::CreateGroups()
 
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
-	fiber_layout->addWidget(toolbutton_choosebound_);
+	fiber_layout->addWidget(toolbutton_choosebase_);
+	fiber_layout->addWidget(toolbutton_chooseceiling_);
 	fiber_layout->addWidget(pushbutton_project_);
 
 	// parameter group
@@ -490,8 +509,10 @@ void MainWindow::CreateGroups()
 	groupbox_debug_->setFlat(true);
 
 	QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
-	debug_layout->addWidget(label_Dtol_);
-	debug_layout->addWidget(spinbox_Dtol_);
+	debug_layout->addWidget(label_Dttol_);
+	debug_layout->addWidget(spinbox_Dttol_);
+	debug_layout->addWidget(label_Drtol_);
+	debug_layout->addWidget(spinbox_Drtol_);
 	debug_layout->addWidget(label_penalty_);
 	debug_layout->addWidget(spinbox_penalty_);
 	debug_layout->addWidget(label_pritol_);
@@ -531,21 +552,15 @@ void MainWindow::OpenFile()
 }
 
 
-void MainWindow::ChooseBoundClicked(bool down)
+void MainWindow::ChooseBaseClicked(bool down)
 {
-	toolbutton_choosebound_->setDown(down);
+	toolbutton_choosebase_->setDown(down);
 }
 
 
-void MainWindow::AddEdgeClicked(bool down)
+void MainWindow::ChooseCeilingClicked(bool down)
 {
-	toolbutton_addedge_->setDown(down);
-}
-
-
-void MainWindow::AddFaceClicked(bool down)
-{
-	toolbutton_addface_->setDown(down);
+	toolbutton_chooseceiling_->setDown(down);
 }
 
 
@@ -557,15 +572,14 @@ void MainWindow::GetFiberParas()
 		spinbox_g_->value(),
 		spinbox_youngsmodulus_->value(),
 		spinbox_shearmodulus_->value(),
-		spinbox_Dtol_->value(),
+		spinbox_Dttol_->value(),
+		spinbox_Drtol_->value(),
 		spinbox_penalty_->value(),
 		spinbox_pritol_->value(),
 		spinbox_dualtol_->value(),
 		spinbox_gamma_->value(),
 		spinbox_wl_->value(),
-		spinbox_wp_->value()
-		)
-	);
+		spinbox_wp_->value()));
 }
 
 

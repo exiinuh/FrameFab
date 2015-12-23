@@ -2,7 +2,10 @@
 
 
 GraphCut::GraphCut()
-		 :debug_(false), penalty_(0), D_tol_(0), pri_tol_(0), dual_tol_(0)
+		 :debug_(false), 
+		 penalty_(0), 
+		 Dt_tol_(0), Dr_tol_(0), 
+		 pri_tol_(0), dual_tol_(0)
 {
 	// This default construction function should never be run
 	// We need a mesh to begin with
@@ -10,7 +13,10 @@ GraphCut::GraphCut()
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame)
-		 :debug_(false), penalty_(10e2), D_tol_(0.1), pri_tol_(10e-3), dual_tol_(10e-3)
+		 :debug_(false), 
+		 penalty_(10e2), 
+		 Dt_tol_(0.1), Dr_tol_(0.1), 
+		 pri_tol_(10e-3), dual_tol_(10e-3)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
@@ -25,7 +31,8 @@ GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm);
 
-	D_tol_ = ptr_parm->D_tol_;
+	Dt_tol_ = ptr_parm->Dt_tol_;
+	Dr_tol_ = ptr_parm->Dr_tol_;
 	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
@@ -59,58 +66,14 @@ void GraphCut::InitState()
 	fill(layer_label_.begin(), layer_label_.end(), 0);
 
 	// upper dual id 
-	vector<int> queue;
-	vector<int> layer(N_);
-	fill(layer.begin(), layer.end(), -1);
-	int h = 0;
-	int t = 0;
-	for (int i = 0; i < N_; i++)
-	{
-		if (ptr_frame_->isFixed(i))
-		{
-			queue.push_back(i);
-			layer[i] = 0;
-			t++;
-		}
-	}
-	while (h < t)
-	{
-		int u = queue[h];
-		WF_edge *e = ptr_frame_->GetNeighborEdge(u);
-		while (e != NULL)
-		{
-			int v = e->pvert_->ID();
-			if (layer[v] == -1)
-			{
-				layer[v] = layer[u] + 1;
-				queue.push_back(v);
-				t++;
-			}
-			e = e->pnext_;
-		}
-		h++; 
-	}
-
-	vector<bool> visited(M_);
-	fill(visited.begin(), visited.end(), false);
-	int max_layer = layer[queue[N_ - 1]];
-	for (int i = N_ - 1; i >= 0 && layer[queue[i]] == max_layer; i--)
-	{
-		int u = queue[i];
-		WF_edge *e = ptr_frame_->GetNeighborEdge(u);
-		while (e != NULL)
-		{
-			visited[e->ID()] = visited[e->ppair_->ID()] = true;
-			e = e->pnext_;
-		}
-	}
 	for (int i = 0; i < M_; i++)
 	{
 		WF_edge *e = ptr_frame_->GetEdge(i);
-		if (e->ID() < e->ppair_->ID())
-			if(visited[e->ID()])
+		if (e->isCeiling())
 		{
-			cutting_edge_.push_back(e->ID());
+			cutting_edge_.push_back(i);
+			layer_label_[i]++;
+			layer_label_[e->ppair_->ID()]++;
 		}
 	}
 
@@ -343,6 +306,10 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
+		if (cut_count == 2)
+		{
+			WriteStiffness();
+		}
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -475,10 +442,15 @@ void GraphCut::MakeLayers()
         s_eR.GenerateStdVecFile();
 
         /* Update New Cut information to Rendering (layer_label_) */
+		if (cut_count == 1)
+		{
+			WriteWeight();
+		}
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
+
 	} while (!CheckLabel(cut_count));
 
 	ptr_dualgraph_->Dualization();										// for sequence analyzer
@@ -598,8 +570,7 @@ void GraphCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 	
 	/* 10 degree rotation tolerance, from degree to radians */
-	double rot_tol = 10 * F_PI / 180;
-	qp_->solve(Q, a, D_, D_tol_, rot_tol, debug_);	
+	qp_->solve(Q, a, D_, Dt_tol_, Dr_tol_, 1);	
 }
 
 
@@ -708,6 +679,165 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
     }
 
 }
+
+
+void GraphCut::WriteWeight()
+{
+	FILE *fp = fopen("C:\\Users\\DELL\\Desktop\\point_weight.txt", "w+");
+
+	int N = ptr_frame_->SizeOfVertList();
+	double minz = ptr_dualgraph_->minZ();
+	double maxz = ptr_dualgraph_->maxZ();
+	vector<double> ww(N);
+	for (int i = 0; i < N; i++)
+	{
+		if (ptr_dualgraph_->isExistingVert(i))
+		{
+			if (ptr_frame_->GetDegree(i) > 1)
+			{
+				//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+				double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz) / (maxz - minz), 2));
+				ww[i] = w;
+			}
+			else
+			{
+				ww[i] = 1.0;
+			}
+		}
+	}
+
+	for (int i = 0; i < N; i++)
+	{
+		point p = ptr_frame_->GetVert(i)->RenderPos();
+		fprintf(fp, "%lf %lf %lf ", p.x(), p.y(), p.z());
+
+		double r;
+		double g;
+		double b;
+
+		if (ww[i] < 0.25)
+		{
+			r = 0.0;
+			g = ww[i] * 4.0;
+			b = 1.0;
+		}
+		else
+			if (ww[i] < 0.5)
+			{
+				r = 0.0;
+				g = 1.0;
+				b = (0.5 - ww[i]) * 4.0;
+			}
+			else
+				if (ww[i] < 0.75)
+				{
+					r = (ww[i] - 0.5) * 4.0;
+					g = 1.0;
+					b = 0.0;
+				}
+				else
+				{
+					r = 1.0;
+					g = (1.0 - ww[i]) * 4.0;
+					b = 0.0;
+				}
+
+		fprintf(fp, "%lf %lf %lf\n", r, g, b);
+	}
+
+	fclose(fp);
+}
+
+
+void GraphCut::WriteStiffness()
+{
+	vector<FILE*> fp(2);
+	fp[0] = fopen("C:\\Users\\DELL\\Desktop\\point_offset.txt", "w+");
+	fp[1] = fopen("C:\\Users\\DELL\\Desktop\\point_distortion.txt", "w+");
+
+	int N = ptr_frame_->SizeOfVertList();
+	vector<vector<double>> ss(N);
+	for (int i = 0; i < N; i++)
+	{
+		ss[i].resize(2);
+		if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
+		{
+			int j = ptr_dualgraph_->v_dual_id(i);
+
+			VX offset(3);
+			VX distortion(3);
+			for (int k = 0; k < 3; k++)
+			{
+				offset[k] = D_[j * 6 + k];
+				distortion[k] = D_[j * 6 + k + 3];
+			}
+
+			ss[i][0] = offset.norm() / Dt_tol_;
+			ss[i][1] = distortion.norm() / Dr_tol_;
+		}
+		else
+		{
+			ss[i][0] = 0.0;
+			ss[i][1] = 0.0;
+		}
+
+		point p = ptr_frame_->GetVert(i)->RenderPos();
+		for (int j = 0; j < 2; j++)
+		{
+			fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
+
+			double r;
+			double g;
+			double b;
+
+			if (ss[i][j] < 0.25)
+			{
+				r = 0.0;
+				g = ss[i][j] * 4.0;
+				b = 1.0;
+			}
+			else
+			if (ss[i][j] < 0.5)
+			{
+				r = 0.0;
+				g = 1.0;
+				b = (0.5 - ss[i][j]) * 4.0;
+			}
+			else
+			if (ss[i][j] < 0.75)
+			{
+				r = (ss[i][j] - 0.5) * 4.0;
+				g = 1.0;
+				b = 0.0;
+			}
+			else
+			{
+				r = 1.0;
+				g = (1.0 - ss[i][j]) * 4.0;
+				b = 0.0;
+			}
+
+			fprintf(fp[j], "%lf %lf %lf\n", r, g, b);
+		}
+	}
+
+	fclose(fp[0]);
+	fclose(fp[1]);
+
+
+	FILE *fp_l = fopen("C:\\Users\\DELL\\Desktop\\line.txt", "w+");
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	for (int i = 0; i < Nd; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
+		point u = e->pvert_->RenderPos();
+		point v = e->ppair_->pvert_->RenderPos();
+		fprintf(fp_l, "%lf %lf %lf %lf %lf %lf\n", u.x(), u.y(), u.z(),
+			v.x(), v.y(), v.z());
+	}
+	fclose(fp_l);
+}
+
 
 void GraphCut::Debug()
 {

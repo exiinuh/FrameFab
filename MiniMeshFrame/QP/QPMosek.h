@@ -17,7 +17,7 @@ public:
 	virtual bool solve(const S& H, const V& f,
 		const S& A, const V& b,
 		const S& C, const V& d,
-		const V& lb, const V& ub, 
+		const V& lb, const V& ub,
 		V& _x, const V* _x0 = NULL,
 		const Cones* cones = NULL,
 		bool _debug = false);

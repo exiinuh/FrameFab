@@ -27,17 +27,8 @@
 enum OperationMode
 {
 	NORMAL,
-	CHOOSEBOUND,
-	ADDEDGE,
-	ADDFACE,
-};
-
-
-struct AddingFace
-{
-	vector<bool>		is_captured_vert_;
-	vector<bool>		is_captured_edge_;
-	vector<WF_vert*>	corner_points_;
+	CHOOSEBASE,
+	CHOOSECEILING,
 };
 
 
@@ -76,9 +67,8 @@ public:
 	void	keyReleaseEvent(QKeyEvent *e);
 
 signals:
-	void	ChooseBoundPressed(bool);
-	void	AddEdgePressed(bool);
-	void	AddFacePressed(bool);
+	void	ChooseBasePressed(bool);
+	void	ChooseCeilingPressed(bool);
 
 	void	SetOrderSlider(int);
 	void	SetMaxOrderSlider(int);
@@ -95,7 +85,6 @@ private:
 	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
 	bool	CaptureVertex(QPoint mouse);
 	bool	CaptureEdge(QPoint mouse);
-	bool	CaptureRing(QPoint mouse);
 
 	void	Render();
 	void	SetLight();
@@ -115,9 +104,8 @@ public slots:
 	void	CheckDrawAxes(bool bv);
 
 	void	SwitchToNormal();
-	void	SwitchToChooseBound();
-	void	SwitchToAddEdge();
-	void	SwitchToAddFace();
+	void	SwitchToChooseBase();
+	void	SwitchToChooseCeiling();
 
 private:
 	void	DrawAxes(bool bv);
@@ -128,10 +116,11 @@ private:
 	void	DrawOrder(bool bv);
 
 public slots:
-	void	FiberPrintAnalysis(double radius, double density, double g, 
-								double youngs_modulus, double shear_modulus, 
-								double D_tol, double penalty, double pri_tol,
-								double dual_tol, double gamma, double Wl, double Wp);
+	void	FiberPrintAnalysis(double radius, double density, double g,
+								double youngs_modulus, double shear_modulus,
+								double Dt_tol, double Dr_tol,
+								double penalty, double pri_tol, double dual_tol,
+								double gamma, double Wl, double Wp);
 	void	PrintLayer(int layer);
 	void	PrintOrder(int order);
 	void	SimplifyFrame();
@@ -171,9 +160,12 @@ public:
 	int					print_order_;
 
 	vector<WF_vert*>	captured_verts_;
-	WF_edge				*captured_edge_;
-	AddingFace			capturing_face_;
-	vector<int>			bound_;
+	vector<bool>		is_captured_vert_;
+	vector<WF_edge*>	captured_edges_;
+	vector<bool>		is_captured_edge_;
+
+	vector<WF_vert*>	base_;
+	vector<WF_edge*>	ceiling_;
 
 	float				scale_;
 };

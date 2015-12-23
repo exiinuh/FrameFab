@@ -22,16 +22,6 @@
 *			You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
 *
 *			You can download Gnuplot at	http://sourceforge.net/projects/gnuplot/
-*			
-*			About the theory of matrix analysis of structure, please refer to 
-*			Kassimali A. Matrix Analysis of Structures SI Version[M]. Cengage Learning, 2011.
-*			
-*			The structures discussed in this software are space frames, where axial forces,
-*			bending moments and torsional forces(torque) are all taken into consideration.
-*			The elements have common CIRCULAR cross-sections.
-*		
-*			If you don't know whether shear deformation should be taken into consideration,
-*			check Section 9.7 [SHEAR DEFORMATION] of Kassimali's book.
 * ==========================================================================
 */
 
@@ -125,7 +115,5 @@ private:
 	double			G_;						// shear modulus
 	double			E_;						// young's modulus;
 	double			v_;						// possion ratio
-
-	bool			shear_;					// 1 : shear deformation taken into consideration; 0 : not
 };
 #endif

@@ -18,9 +18,6 @@ typedef  struct Process
 	point	vector;
 
 	double	wave_;
-
-
-	bool pillar;
 };
 
 

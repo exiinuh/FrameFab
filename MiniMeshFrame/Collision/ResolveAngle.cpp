@@ -74,10 +74,10 @@ ResolveAngle::~ResolveAngle()
 void ResolveAngle::Dec()
 {
 	vector<Geometry::Vector3d> max;
-	if (a_.size() > b_.size())
-		max = a_;
-	else
+	max = a_;
+	if (max.size() < b_.size())
 		max = b_;
+	
 	if (max.size() < c_.size())
 		max = c_;
 

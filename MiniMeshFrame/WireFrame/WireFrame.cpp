@@ -143,7 +143,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 			}
 		}
 
-		// read bounds
+		// read base
 		fseek(fp, 0, SEEK_SET);
 		while (c = fgetc(fp), c != EOF)
 		{
@@ -157,19 +157,19 @@ void WireFrame::LoadFromOBJ(const char *path)
 				continue;
 			}
 
-			int bound_id;
+			int base_id;
 			while (c != '\n' && c != EOF)
 			{
 				while (c = fgetc(fp), c != '\n' && c != EOF && !isdigit(c))
 					;
 
-				for (bound_id = 0; isdigit(c); c = fgetc(fp))
+				for (base_id = 0; isdigit(c); c = fgetc(fp))
 				{
-					bound_id = bound_id * 10 + c - '0';
+					base_id = base_id * 10 + c - '0';
 				}
 
-				(*pvert_list_)[bound_id - 1]->SetFixed(true);
-				WF_edge *e = (*pvert_list_)[bound_id - 1]->pedge_;
+				(*pvert_list_)[base_id - 1]->SetFixed(true);
+				WF_edge *e = (*pvert_list_)[base_id - 1]->pedge_;
 				while (e != NULL)
 				{
 					e->SetPillar(true);
@@ -353,24 +353,26 @@ void WireFrame::InsertFace(vector<WF_vert*>	&bound_points)
 
 void WireFrame::Unify()
 {
-	maxx_ = -1e10;
-	maxy_ = -1e10;
-	maxz_ = -1e10;
-	minx_ = 1e10;
-	miny_ = 1e10;
-	minz_ = 1e10;
+	maxx_ = -1e20;
+	maxy_ = -1e20;
+	maxz_ = -1e20;
+	minx_ = 1e20;
+	miny_ = 1e20;
+	minz_ = 1e20;
+	base_ = 1e20;
 
 	fixed_vert_ = 0;
 	pillar_size_ = 0;
+	ceiling_size_ = 0;
 
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
 	{
 		(*pvert_list_)[i]->SetID(i);
+		point p = (*pvert_list_)[i]->Position();
 
 		if (!(*pvert_list_)[i]->isFixed())
 		{
-			point p = (*pvert_list_)[i]->Position();
 			if (p.x() > maxx_)
 			{
 				maxx_ = p.x();
@@ -396,6 +398,18 @@ void WireFrame::Unify()
 				minz_ = p.z();
 			}
 		}
+		else
+		{
+			if (p.z() < base_)
+			{
+				base_ = p.z();
+			}
+		}
+	}
+
+	if (base_ > minz_)
+	{
+		base_ = minz_;
 	}
 
 	int M = SizeOfEdgeList();
@@ -405,6 +419,10 @@ void WireFrame::Unify()
 		if ((*pedge_list_)[i]->isPillar())
 		{
 			pillar_size_++;
+		}
+		if ((*pedge_list_)[i]->isCeiling())
+		{
+			ceiling_size_++;
 		}
 	}
 
@@ -700,24 +718,22 @@ void WireFrame::RefineFrame()
 }
 
 
-void WireFrame::ProjectBound(vector<int> *bound, double len)
+void WireFrame::ProjectBound(vector<WF_vert*> &bound, double len)
 {
-	int N = SizeOfVertList();
-	for (int i = 0; i < N; i++)
+	int Nb = bound.size();
+	for (int i = 0; i < Nb; i++)
 	{
-		WF_vert *u = (*pvert_list_)[i]; 
-		if ((*bound)[i])
-		{
-			point v_pos = u->Position();
-			v_pos.z() = minz_ - len;
+		WF_vert *u = bound[i]; 
 
-			WF_vert *v = InsertVertex(v_pos);
-			v->SetFixed(true);
-			
-			WF_edge *e = InsertEdge(u, v);
-			e->SetPillar(true);
-			e->ppair_->SetPillar(true);
-		}
+		point v_pos = u->Position();
+		v_pos.z() = minz_ - len;
+
+		WF_vert *v = InsertVertex(v_pos);
+		v->SetFixed(true);
+
+		WF_edge *e = InsertEdge(u, v);
+		e->SetPillar(true);
+		e->ppair_->SetPillar(true);
 	}
 	
 	Unify();
@@ -747,5 +763,19 @@ void WireFrame::ModifyProjection(double len)
 			u->SetPosition(x, y, z);
 		}
 	}
+	Unify();
+}
+
+
+void WireFrame::MakeCeiling(vector<WF_edge*> &bound)
+{
+	int Mb = bound.size();
+	for (int i = 0; i < Mb; i++)
+	{
+		WF_edge *e = bound[i];
+		e->SetCeiling(true);
+		e->ppair_->SetCeiling(true);
+	}
+
 	Unify();
 }

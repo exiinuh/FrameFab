@@ -112,8 +112,11 @@ public:
 	int		e_dual_id(int u)	{ return (*vert_list_)[u]->dual_id(); }
 	int		v_orig_id(int i)	{ return (*face_list_)[i]->orig_id(); }
 	int		v_dual_id(int i)	{ return (*face_list_)[i]->dual_id(); }
+
 	double	Weight(int ei)		{ return (*edge_list_)[ei]->w(); }
 	double	Height(int ei)		{ return (*vert_list_)[ei]->Height(); }
+	double	maxZ()				{ return maxz_; }
+	double	minZ()				{ return minz_; }
 
 	bool isExistingVert(int u)	{ return (exist_vert_[u] > 0); }
 	bool isExistingEdge(int ei)	{ return exist_edge_[ei]; }
@@ -136,7 +139,8 @@ public:
 			return false;
 		}
 	}
-	void					Debug();
+
+	void	Debug();
 
 public:
 	WireFrame				*ptr_frame_;

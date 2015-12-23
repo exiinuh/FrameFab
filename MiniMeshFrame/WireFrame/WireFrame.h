@@ -62,18 +62,18 @@ class WF_edge
 {
 public:
 	WF_edge()
-		:pvert_(NULL), pnext_(NULL), ppair_(NULL), id_(0), pillar_(false), support_(false)
+		:pvert_(NULL), pnext_(NULL), ppair_(NULL), id_(0), pillar_(false), ceiling_(false)
 	{}
 	~WF_edge(){}
 
 public:
 	int			ID()			{ return id_; }
 	bool		isPillar()		{ return pillar_; }
-	bool		isSupport()		{ return support_; }
+	bool		isCeiling()		{ return ceiling_; }
 
 	void		SetID(int id)				{ id_ = id; }
 	void		SetPillar(bool pillar)		{ pillar_ = pillar; }
-	void		SetSupport(bool support)	{ support_ = support; }
+	void		SetCeiling(bool ceiling)	{ ceiling_ = ceiling; }
 
 	point CenterPos()
 	{
@@ -100,15 +100,15 @@ public:
 private:
 	int			id_;
 	bool		pillar_;
-	bool		support_;
+	bool		ceiling_;
 };
 
 
 class WF_face
 {
 public:
-	WF_face(){ bound_points_ = new vector<WF_vert*>; }
-	~WF_face(){ delete bound_points_; }
+	WF_face()	{ bound_points_ = new vector<WF_vert*>; }
+	~WF_face()	{ delete bound_points_; }
 
 public:
 	vector<WF_vert*>	*bound_points_;
@@ -142,14 +142,16 @@ public:
 
 	void		SimplifyFrame();
 	void		RefineFrame();
-	void		ProjectBound(vector<int> *bound, double len);
+	void		ProjectBound(vector<WF_vert*> &bound, double len);
 	void		ModifyProjection(double len);
+	void		MakeCeiling(vector<WF_edge*> &bound);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
 	inline int					SizeOfFaceList()		{ return pface_list_->size(); }
 	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
 	inline int					SizeOfPillar()			{ return pillar_size_; }
+	inline int					SizeOfCeiling()			{ return ceiling_size_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
@@ -162,6 +164,7 @@ public:
 
 	inline int					GetEndu(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->ppair_->pvert_->ID(); }
 	inline int					GetEndv(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->pvert_->ID(); }
+	inline point				GetCenterPos(int i) { return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->CenterPos(); }
 
 	inline bool					isFixed(int u)		{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->isFixed(); }
 	inline bool					isPillar(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->isPillar(); }
@@ -172,6 +175,7 @@ public:
 	inline double				minY()	{ return miny_; }
 	inline double				maxZ()	{ return maxz_; }
 	inline double				minZ()	{ return minz_; }
+	inline double				Base()	{ return base_; }
 
 	inline double Norm(point u)
 	{
@@ -207,6 +211,7 @@ private:
 
 	int					fixed_vert_;
 	int					pillar_size_;
+	int					ceiling_size_;
 
 	double				maxx_;
 	double				maxy_;
@@ -214,6 +219,7 @@ private:
 	double				minx_;
 	double				miny_;
 	double				minz_;
+	double				base_;
 
 	Vec3f				center_pos_;
 	float				scaleV_;
