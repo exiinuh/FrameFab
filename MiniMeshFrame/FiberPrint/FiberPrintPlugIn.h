@@ -22,7 +22,6 @@ public:
 	void			Print();
 
 	vector<DualVertex*>	*GetDualVertList()	{ return ptr_graphcut_->GetDualVertList(); }
-	vector<int>			*GetLabel()			{ return ptr_graphcut_->GetLabel(); }
 	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
 
 	vector<QueueInfo>	*GetQueue()			{ return ptr_seqanalyzer_->GetQueue(); }

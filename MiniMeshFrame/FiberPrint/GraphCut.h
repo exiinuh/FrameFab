@@ -83,8 +83,6 @@ public:
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
 	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
 	vector<DualFace*>		*GetDualFaceList()		{ return ptr_dualgraph_->GetFaceList(); }
-
-	vector<int>				*GetLabel()				{ return &layer_label_; }
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
 	void		WriteWeight();
@@ -104,7 +102,6 @@ public:
 	VX				D_;
 	VX				lambda_;
 	VX				a_;				// linear coefficient used in x_Qp
-	vector<int>		layer_label_;	// passed to render
 	vector<int>		cutting_edge_;
 
 	VX				d_;				// for setting boundary & QP x

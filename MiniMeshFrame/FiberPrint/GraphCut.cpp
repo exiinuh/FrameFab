@@ -62,8 +62,11 @@ void GraphCut::InitState()
 
 	qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
 
-	layer_label_.resize(M_);
-	fill(layer_label_.begin(), layer_label_.end(), 0);
+	// clear layer label
+	for (int i = 0; i < M_; i++)
+	{
+		ptr_frame_->GetEdge(i)->SetLayer(0);
+	}
 
 	// upper dual id 
 	for (int i = 0; i < M_; i++)
@@ -72,8 +75,8 @@ void GraphCut::InitState()
 		if (e->isCeiling())
 		{
 			cutting_edge_.push_back(i);
-			layer_label_[i]++;
-			layer_label_[e->ppair_->ID()]++;
+			e->SetLayer(1);
+			e->ppair_->SetLayer(1);
 		}
 	}
 
@@ -452,8 +455,6 @@ void GraphCut::MakeLayers()
 		cut_count++;
 
 	} while (!CheckLabel(cut_count));
-
-	ptr_dualgraph_->Dualization();										// for sequence analyzer
 	
 	fprintf(stdout, "All done!\n");
 }
@@ -593,9 +594,11 @@ void GraphCut::UpdateCut()
 	for (int i = 0; i < M_; i++)
 	{
 		int e_id = ptr_dualgraph_->e_dual_id(i);
+		WF_edge *e = ptr_frame_->GetEdge(i);
+		int layer = e->Layer();
 		if (e_id == -1)
 		{
-			layer_label_[i] ++;
+			e->SetLayer(layer + 1);
 		}
 		else
 		{
@@ -606,7 +609,7 @@ void GraphCut::UpdateCut()
 			else
 			{
 				x_[e_id] = 0;
-				layer_label_[i] ++;
+				e->SetLayer(layer + 1);
 			}
 		}
 	}

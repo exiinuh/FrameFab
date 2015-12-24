@@ -24,10 +24,12 @@ public:
 		: pedge_(NULL), id_(0), degree_(0), fixed_(0)
 	{}
 	WF_vert(Vec3f p)
-		: pedge_(NULL), position_(p), render_pos_(p), id_(0), degree_(0), fixed_(0)
+		: pedge_(NULL), position_(p), render_pos_(p), 
+		id_(0), degree_(0), fixed_(0)
 	{}
 	WF_vert(double x, double y, double z)
-		: pedge_(NULL), position_(point(x, y, z)), render_pos_(point(x, y, z)), id_(0), degree_(0), fixed_(0)
+		: pedge_(NULL), position_(point(x, y, z)), render_pos_(point(x, y, z)), 
+		id_(0), degree_(0), fixed_(0)
 	{}
 	~WF_vert(){}
 
@@ -62,16 +64,19 @@ class WF_edge
 {
 public:
 	WF_edge()
-		:pvert_(NULL), pnext_(NULL), ppair_(NULL), id_(0), pillar_(false), ceiling_(false)
+		:pvert_(NULL), pnext_(NULL), ppair_(NULL), 
+		id_(0), layer_(0), pillar_(false), ceiling_(false)
 	{}
 	~WF_edge(){}
 
 public:
 	int			ID()			{ return id_; }
+	int			Layer()			{ return layer_; }
 	bool		isPillar()		{ return pillar_; }
 	bool		isCeiling()		{ return ceiling_; }
 
 	void		SetID(int id)				{ id_ = id; }
+	void		SetLayer(int layer)			{ layer_ = layer; }
 	void		SetPillar(bool pillar)		{ pillar_ = pillar; }
 	void		SetCeiling(bool ceiling)	{ ceiling_ = ceiling; }
 
@@ -99,6 +104,7 @@ public:
 
 private:
 	int			id_;
+	int			layer_;
 	bool		pillar_;
 	bool		ceiling_;
 };
@@ -125,6 +131,8 @@ public:
 public:
 	void		LoadFromOBJ(const char *path);
 	void		WriteToOBJ(const char *path);
+	void		LoadFromPWF(const char *path);
+	void		WriteToPWF(const char *path);
 	void		ExportPoints(const char *path);
 	void		ExportLines(const char *path);
 

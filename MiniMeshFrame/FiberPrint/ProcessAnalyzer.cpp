@@ -382,8 +382,7 @@ void ProcessAnalyzer::Write()
 	string iwave_path	= path + "/IWave.txt";
 	string isupport_path= path + "/ISupport.txt";
 	string ibreak_path	= path + "/IBreak.txt";
-
-	string icut_path = path + "/ICut.txt ";
+	string icut_path	= path + "/ICut.txt ";
 
 	FILE *fp		= fopen(point_path.c_str(), "w+");
 	FILE *fs		= fopen(fan_path.c_str(), "w+");
@@ -395,9 +394,7 @@ void ProcessAnalyzer::Write()
 	FILE *IWave		= fopen(iwave_path.c_str(), "w+");
 	FILE *ISupport	= fopen(isupport_path.c_str(), "w+");
 	FILE *IBreak	= fopen(ibreak_path.c_str(), "w+");
-
-	FILE *ICut = fopen(ibreak_path.c_str(), "w+");
-
+	FILE *ICut		= fopen(icut_path.c_str(), "w+");
 
 	//ISupport, "%d", ptr_seqanalyzer_->GetSupport());
 
@@ -410,9 +407,6 @@ void ProcessAnalyzer::Write()
 
 	for (int i = 0; i <print_->size(); i++)
 	{
-
-
-
 		point p = (*print_)[i]->start_;
 		fprintf(fp, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
 		fprintf(fp, "\n");

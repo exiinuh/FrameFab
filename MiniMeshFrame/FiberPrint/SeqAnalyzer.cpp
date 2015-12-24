@@ -40,6 +40,7 @@ SeqAnalyzer::~SeqAnalyzer()
 bool SeqAnalyzer::LayerPrint()
 {
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
+	ptr_dualgraph->Dualization();
 	int Nd = ptr_dualgraph->SizeOfVertList();
 
 	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
@@ -66,14 +67,14 @@ bool SeqAnalyzer::LayerPrint()
 
 	/* split layers */
 	/* label stores layer index of each dual node */
-	vector<int>	label = *(ptr_graphcut_->GetLabel());
 	int max_layer = 0;
 	for (int i = 0; i < Nd; i++)
 	{
 		int orig_i = ptr_dualgraph->e_orig_id(i);
-		if (label[orig_i] > max_layer)
+		int label = ptr_frame->GetEdge(orig_i)->Layer();
+		if (label > max_layer)
 		{
-			max_layer = label[orig_i];
+			max_layer = label;
 		}
 	}
 
@@ -82,7 +83,8 @@ bool SeqAnalyzer::LayerPrint()
 	for (int i = 0; i < Nd; i++)
 	{
 		int orig_i = ptr_dualgraph->e_orig_id(i);
-		layers_[label[orig_i]].push_back(i);
+		int label = ptr_frame->GetEdge(orig_i)->Layer();
+		layers_[label].push_back(i);
 	}
 
 	/* printing */
@@ -90,11 +92,11 @@ bool SeqAnalyzer::LayerPrint()
 
 	/* set pillars as starting edges */
 	/* ranked by x */
-	int base_size = layers_[0].size();
+	int base_size = layers_[1].size();
 	map<double, int>base_queue;
 	for (int i = 0; i < base_size; i++)
 	{
-		int dual_e = layers_[0][i];
+		int dual_e = layers_[1][i];
 		WF_edge *e = ptr_frame->GetEdge(ptr_dualgraph->e_orig_id(dual_e));
 		if (e->isPillar())
 		{
@@ -112,7 +114,7 @@ bool SeqAnalyzer::LayerPrint()
 	}
 
 	/* print starting from the first layer */
-	for (int l = 0; l < max_layer; l++)
+	for (int l = 1; l < max_layer; l++)
 	{
 		/* 
 		* Nl: number of dual verts in current layer

@@ -59,7 +59,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 				Vec3f p;
 				char tmp[128];
 				tok = strtok(pLine, " ");
-				for (int i = 0; i<3; i++)
+				for (int i = 0; i < 3; i++)
 				{
 					tok = strtok(NULL, " ");
 					strcpy(tmp, tok);
@@ -74,10 +74,10 @@ void WireFrame::LoadFromOBJ(const char *path)
 		}
 
 		// read lines
-		fseek(fp, 0, SEEK_SET);
 		char c;
 		int prev;
 		int curv;
+		fseek(fp, 0, SEEK_SET);
 		while (c = fgetc(fp), c != EOF)
 		{
 			while (c != 'l' && c != EOF)
@@ -143,6 +143,209 @@ void WireFrame::LoadFromOBJ(const char *path)
 			}
 		}
 
+		Unify();
+	}
+	catch (...)
+	{
+		return;
+	}
+
+	fclose(fp);
+}
+
+
+void WireFrame::WriteToOBJ(const char *path)
+{
+	FILE *fp = fopen(path, "wb+");
+	int N = SizeOfVertList();
+	int M = SizeOfEdgeList();
+	int F = SizeOfFaceList();
+
+	for (int i = 0; i < N; i++)
+	{
+		point p = (*pvert_list_)[i]->Position();
+		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	for (int i = 0; i < F; i++)
+	{
+		fprintf(fp, "f");
+		vector<WF_vert*> bound_points = *((*pface_list_)[i]->bound_points_);
+		int n = bound_points.size();
+		for (int j = 0; j < n; j++)
+		{
+			fprintf(fp, " %d", bound_points[j]->ID() + 1);
+		}
+		fprintf(fp, "\n");
+	}
+
+	fclose(fp);
+}
+
+
+void WireFrame::LoadFromPWF(const char *path)
+{
+	FILE *fp = fopen(path, "r");
+
+	try
+	{
+		// read vertexes
+		fseek(fp, 0, SEEK_SET);
+		char pLine[512];
+		char *tok;
+		vector<WF_vert*> tmp_points;
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'v' && pLine[1] == ' ')
+			{
+				Vec3f p;
+				char tmp[128];
+				tok = strtok(pLine, " ");
+				for (int i = 0; i < 3; i++)
+				{
+					tok = strtok(NULL, " ");
+					strcpy(tmp, tok);
+					tmp[strcspn(tmp, " ")] = 0;
+					p[i] = (float)atof(tmp);
+				}
+
+				p = point(p.x(), p.y(), p.z());
+				WF_vert *u = InsertVertex(p);
+				tmp_points.push_back(u);
+			}
+		}
+
+		// read layer
+		fseek(fp, 0, SEEK_SET);
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'g' && pLine[1] == ' ')
+			{
+				tok = strtok(pLine, " ");
+
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
+
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
+
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int layer = (int)atof(tmp);
+
+				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
+				if (e != NULL)
+				{
+					e->SetLayer(layer);
+					e->ppair_->SetLayer(layer);
+				}
+			}
+		}
+
+		// read ceiling
+		fseek(fp, 0, SEEK_SET);
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'c' && pLine[1] == ' ')
+			{
+				tok = strtok(pLine, " ");
+
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
+
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
+
+				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
+				if (e != NULL)
+				{
+					e->SetCeiling(true);
+					e->ppair_->SetCeiling(true);
+				}
+			}
+		}
+
+		// read faces
+		fseek(fp, 0, SEEK_SET);
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'f' && pLine[1] == ' ')
+			{
+				vector<WF_vert*> bound_points;
+				tok = strtok(pLine, " ");
+				char tmp[128];
+				while (tok = strtok(NULL, " "))
+				{
+					strcpy(tmp, tok);
+					tmp[strcspn(tmp, " ")] = 0;
+					int u = (int)atof(tmp) - 1;
+					bound_points.push_back(tmp_points[u]);
+				}
+
+				int Bn = bound_points.size();
+				for (int i = 0; i < Bn - 1; i++)
+				{
+					InsertEdge(bound_points[i], bound_points[i + 1]);
+				}
+				InsertEdge(bound_points[Bn - 1], bound_points[0]);
+				InsertFace(bound_points);
+			}
+		}
+
+		// read lines
+		char c;
+		int prev;
+		int curv;
+		fseek(fp, 0, SEEK_SET);
+		while (c = fgetc(fp), c != EOF)
+		{
+			while (c != 'l' && c != EOF)
+			{
+				c = fgetc(fp);
+			}
+
+			if (c == '\n' || c == EOF || (c = fgetc(fp)) != ' ')
+			{
+				continue;
+			}
+
+			prev = -1;
+			while (c != '\n' && c != EOF)
+			{
+				while (c = fgetc(fp), c != '\n' && c != EOF && !isdigit(c))
+					;
+
+				if (c == '\n' || c == EOF)
+				{
+					break;
+				}
+
+				for (curv = 0; isdigit(c); c = fgetc(fp))
+				{
+					curv = curv * 10 + c - '0';
+				}
+				curv--;
+
+				if (prev != -1)
+				{
+					InsertEdge(tmp_points[prev], tmp_points[curv]);
+				}
+
+				prev = curv;
+			}
+		}
+
 		// read base
 		fseek(fp, 0, SEEK_SET);
 		while (c = fgetc(fp), c != EOF)
@@ -190,7 +393,7 @@ void WireFrame::LoadFromOBJ(const char *path)
 }
 
 
-void WireFrame::WriteToOBJ(const char *path)
+void WireFrame::WriteToPWF(const char *path)
 {
 	FILE *fp = fopen(path, "wb+");
 	int N = SizeOfVertList();
@@ -201,19 +404,6 @@ void WireFrame::WriteToOBJ(const char *path)
 	{
 		point p = (*pvert_list_)[i]->Position();
 		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
-	}
-
-	for (int i = 0; i < N; i++)
-	{
-		WF_edge *edge = (*pvert_list_)[i]->pedge_;
-		while (edge != NULL)
-		{
-			if (edge->ID() < edge->ppair_->ID())
-			{
-				fprintf(fp, "l %d %d\n", i + 1, edge->pvert_->ID() + 1);
-			}
-			edge = edge->pnext_;
-		}
 	}
 
 	for (int i = 0; i < F; i++)
@@ -228,6 +418,16 @@ void WireFrame::WriteToOBJ(const char *path)
 		fprintf(fp, "\n");
 	}
 
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID())
+		{
+			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
+		}
+	}
+
 	for (int i = 0; i < N; i++)
 	{
 		if ((*pvert_list_)[i]->isFixed())
@@ -236,9 +436,29 @@ void WireFrame::WriteToOBJ(const char *path)
 		}
 	}
 
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->isCeiling())
+		{
+			fprintf(fp, "c %d %d\n", e2->pvert_->ID() + 1, e1->pvert_->ID() + 1);
+		}
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->Layer() != 0)
+		{
+			fprintf(fp, "g %d %d %d\n", e2->pvert_->ID() + 1, 
+				e1->pvert_->ID() + 1, e1->Layer());
+		}
+	}
+
 	fclose(fp);
 }
-
 
 void WireFrame::ExportPoints(const char *path)
 {
@@ -303,7 +523,7 @@ WF_edge* WireFrame::InsertEdge(WF_vert *u, WF_vert *v)
 	{
 		if (e->pvert_ == v)
 		{
-			return NULL;
+			return e;
 		}
 		e = e->pnext_;
 	}

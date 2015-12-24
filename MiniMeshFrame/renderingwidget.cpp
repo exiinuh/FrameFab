@@ -465,7 +465,7 @@ void RenderingWidget::ReadFrame()
 {
 	QString filename = QFileDialog::
 		getOpenFileName(this, tr("Read Mesh"),
-		"..", tr("Meshes (*.obj)"));
+		"..", tr("Mesh files(*.obj *.pwf)"));
 
 	if (filename.isEmpty())
 	{
@@ -480,7 +480,15 @@ void RenderingWidget::ReadFrame()
 
 	delete ptr_frame_; 
 	ptr_frame_ = new WireFrame();
-	ptr_frame_->LoadFromOBJ(byfilename.data());
+
+	if (filename.contains(".obj"))
+	{
+		ptr_frame_->LoadFromOBJ(byfilename.data());
+	}
+	else
+	{
+		ptr_frame_->LoadFromPWF(byfilename.data());
+	}
 
 	emit(ChooseBasePressed(false));
 	emit(ChooseCeilingPressed(false));
@@ -507,12 +515,19 @@ void RenderingWidget::WriteFrame()
 	}
 	QString filename = QFileDialog::
 		getSaveFileName(this, tr("Write Mesh"),
-		"..", tr("Meshes (*.obj)"));
+		"..", tr("OBJ files(*.obj);;PWF files(*.pwf)"));
 
 	if (filename.isEmpty())
 		return;
 
-	ptr_frame_->WriteToOBJ(filename.toLatin1().data());
+	if (filename.contains(".obj"))
+	{
+		ptr_frame_->WriteToOBJ(filename.toLatin1().data());
+	}
+	else
+	{
+		ptr_frame_->WriteToPWF(filename.toLatin1().data());
+	}
 
 	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
 }
@@ -864,12 +879,11 @@ void RenderingWidget::DrawEdge(bool bv)
 
 void RenderingWidget::DrawHeat(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == 0)
+	if (!bv || ptr_frame_ == NULL)
 	{
 		return;
 	}
 
-	const vector<int> Label = *(ptr_fiberprint_->GetLabel());
 	const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -883,7 +897,7 @@ void RenderingWidget::DrawHeat(bool bv)
 
 			glBegin(GL_LINE_LOOP);
 
-			int tag = (Label[i] % 6);
+			int tag = (e->Layer() % 6);
 			switch (tag)
 			{
 			case 0:
@@ -1129,7 +1143,7 @@ void RenderingWidget::SimplifyFrame()
 	}
 	ptr_frame_->SimplifyFrame();
 
-	emit(modeInfo(QString("Choose boundary (C)")));
+	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
@@ -1154,16 +1168,17 @@ void RenderingWidget::RefineFrame()
 
 void RenderingWidget::ProjectBound(double len)
 {
-	if (captured_verts_.size() <= 0)
+	if (base_.size() <= 0)
 	{
 		return;
 	}
 	ptr_frame_->ProjectBound(base_, len);
-	op_mode_ = NORMAL;
-	emit(modeInfo(QString("Choose boundary (C)")));
+
+	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	emit(operatorInfo(QString("")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
+	InitCapturedData();
 	updateGL();
 }
 
