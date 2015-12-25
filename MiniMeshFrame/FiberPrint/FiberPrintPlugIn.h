@@ -23,8 +23,7 @@ public:
 
 	vector<DualVertex*>	*GetDualVertList()	{ return ptr_graphcut_->GetDualVertList(); }
 	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
-
-	vector<QueueInfo>	*GetQueue()			{ return ptr_seqanalyzer_->GetQueue(); }
+	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
 	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
 	void				Debug();		// return value: edge index in mesh, for cut rendering

@@ -4,7 +4,7 @@
 *       class: SequenceAnalyzer
 *
 *    Description:  perform tool path searching algorithm to generate
-*				   a collision-free, structurally stable 
+*				   a collision-free, structurally stable, core part of WirePrint
 *
 *	 Version:  1.0
 *	 Created:  Oct/20/2015
@@ -33,6 +33,7 @@
 #include "GraphCut.h"
 #include "Collision\Collision.h"
 #include "Collision\ResolveAngle.h"
+#include "StiffnessIO.h"
 
 typedef struct Set
 {
@@ -64,15 +65,18 @@ public:
 public:
 	SeqAnalyzer();
 	SeqAnalyzer(GraphCut *ptr_graphcut);
-	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm);
+	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path);
 	~SeqAnalyzer();
 
 public:
 	bool			LayerPrint();
-	
 	bool			GenerateSeq(int l, int h, int t);
 
-	vector<QueueInfo>		*GetQueue()			{ return layer_queue_; }
+	void			GetQueue(vector<int> &layer_queue);
+
+	void			WriteLayerQueue();
+
+
 	//vector<vector<int>>		*GetRangeState()	{ return ptr_collision_->GetRangeState(); }
 	//vector<BaseBulk*>		*GetBulk()			{ return ptr_collision_->GetBulk(); }
 	//Vec3f					GetNormal(int i)	{ return extruder_list_[i].Normal(); }
@@ -99,6 +103,8 @@ public:
 public:
 	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
+	FiberPrintPARM	*ptr_parm_;
+	char			*path_;
 
 private:
 	double		gamma_;							// gamma_	 : amplifier factor for adjacency cost
@@ -106,10 +112,9 @@ private:
 	double		Dr_tol_;						// Dr_tol   : tolerance of rotation in stiffness
 	double		Wl_;							// Wl_		 : tradeoff weight for printing cost
 	double		Wp_;							// Wp_		 : tradeoff weight for printing cost
-	double		height_differ_;					// height_differ : maximal height difference for the whole wireframe
 
 	vector<vector<int>>		layers_;			// store dual_node's id for each layers
-	vector<QueueInfo>		*layer_queue_;
+	vector<QueueInfo>		layer_queue_;
 
 	/* Printing Orientation Related Data */
 	int			support_;
@@ -124,6 +129,8 @@ private:
 	vector<GeoV3>			angle_list_;
 	gte::Plane3<float>		table_;
 
+	/* debug related */
+	StiffnessIO				stiff_io_;
 	bool					debug_;
 };
 

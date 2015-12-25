@@ -7,7 +7,6 @@ Collision::Collision()
 Collision::Collision(WireFrame *ptr_frame, WF_edge *target_e)
 {
 	ptr_frame_ = ptr_frame;
-	ptr_extruder_ = new ExtruderCone();
 	target_e_ = target_e;
 
 	divide_ = 72;
@@ -17,8 +16,6 @@ Collision::Collision(WireFrame *ptr_frame, WF_edge *target_e)
 
 Collision::~Collision()
 {
-	delete ptr_extruder_;
-	ptr_extruder_ = NULL;
 }
 
 
@@ -56,7 +53,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 	if (target_end == order_start)
 	{
 		if (Geometry::angle(target_start - target_end, order_end - order_start) 
-			>(3.1415 - ptr_extruder_->Angle()))
+			>(3.1415 - extruder_.Angle()))
 		{
 
 			return;
@@ -66,7 +63,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 	if (target_end == order_end)
 	{
 		if (Geometry::angle(target_start - target_end, order_start - order_end) 
-			> (3.1415 - ptr_extruder_->Angle()))
+			> (3.1415 - extruder_.Angle()))
 		{
 			return;
 		}
@@ -75,7 +72,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 	if (target_start == order_start)
 	{
 		if (Geometry::angle(target_end - target_start, order_end - order_start) 
-			>(3.1415 - ptr_extruder_->Angle()))
+			>(3.1415 - extruder_.Angle()))
 		{
 			return;
 		}
@@ -84,7 +81,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 	if (target_start == order_end)
 	{
 		if (Geometry::angle(target_end - target_start, order_start - order_end) 
-			> (3.1415 - ptr_extruder_->Angle()))
+			> (3.1415 - extruder_.Angle()))
 		{
 			return;
 		}
@@ -254,7 +251,7 @@ bool Collision::IsColTable(GeoV3 target_angle)
 	v.normalize();
 
 	GeoV3 test;
-	test = low + target_angle * ptr_extruder_->ToolLenth(); // In face, we use tool has 120 long cylinder
+	test = low + target_angle * extruder_.ToolLenth(); // In face, we use tool has 120 long cylinder
 	
 	std::array<float, 3> s; 
 	s[0] = test.getX(); 
@@ -269,7 +266,7 @@ bool Collision::IsColTable(GeoV3 target_angle)
 	gte::Circle3<float>circle;
 	circle.center = s;
 	circle.normal = n;
-	circle.radius = ptr_extruder_->ToolLenth() * tan(ptr_extruder_->Angle());
+	circle.radius = extruder_.ToolLenth() * tan(extruder_.Angle());
 
 	gte::FIQuery<float, gte::Plane3<float>, gte::Circle3<float>> intersection;
 

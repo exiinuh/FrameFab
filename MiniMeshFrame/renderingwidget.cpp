@@ -1057,10 +1057,11 @@ void RenderingWidget::DrawOrder(bool bv)
 
 	if (op_mode_ == NORMAL)
 	{
-		const std::vector<QueueInfo> print_queue = *(ptr_fiberprint_->GetQueue());
+		vector<int> print_queue; 
+		ptr_fiberprint_->GetQueue(print_queue);
 		for (int i = 0; i < print_order_; i++)
 		{
-			int dual_id = print_queue[i].dual_id_;
+			int dual_id = print_queue[i];
 			WF_edge *e = ptr_frame_->GetEdge(dual_vert[dual_id]->orig_id());
 			glBegin(GL_LINE_LOOP);
 			glColor3f(1.0, 1.0, 1.0);

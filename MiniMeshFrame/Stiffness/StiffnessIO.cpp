@@ -668,7 +668,8 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	//string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	string str = to_string(cut_count) + ".3dd";
 	sprintf_s(OUT_file, "%s", str.c_str());
 
 	OutputPath(OUT_file, OUT_path, FRAME3DD_PATHMAX, NULL);

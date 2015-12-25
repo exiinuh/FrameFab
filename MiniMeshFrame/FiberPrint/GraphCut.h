@@ -55,7 +55,7 @@ class GraphCut
 public:
 	GraphCut();
 	GraphCut(WireFrame *ptr_frame);
-	GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm);
+	GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
 	~GraphCut();
 
 public:
@@ -94,6 +94,7 @@ public:
 	WireFrame		*ptr_frame_;
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
+	char			*path_;
 
 	SpMat			A_;
 	SpMat			C_;
@@ -130,5 +131,7 @@ public:
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	bool			debug_;
+	bool			matlab_;
+	bool			maya_;
 };
 

@@ -28,7 +28,7 @@ public:
 	ProcessAnalyzer(WireFrame * frame);
 
 public:
-	vector<Process*> *ProcPrint();
+	void		ProcPrint();
 
 	/*generate process start point and end point, based on the prior process;
 	  follow the rule:
@@ -42,7 +42,7 @@ public:
 	  1. if e has a point same to  the prior process's end_ point, so start point = prior end point.
 	  2.if e has a point same to one of  the later order edge point, so the end point = the point.
 	*/
-	Process* SetPoint(WF_edge *e, int id);
+	Process*	SetPoint(WF_edge *e, int id);
 
 
 	/* Fan depend on the relationship bewteen prior and current process:
@@ -50,30 +50,35 @@ public:
 	  1. fusion don;t need fan
 	  2. branch need fan.
 	*/
-	Process* SetFan( Process* temp);
+	Process*	SetFan( Process* temp);
 
 
 	//Different move for different speed, angle
-	Process* SetExtruderSpeed(Process* temp,int id);
+	Process*	SetExtruderSpeed(Process* temp,int id);
 
 	// If print is  not continuous, consider break; quick up the break string 
-	void SetBreak(Process* temp);
+	void		SetBreak(Process* temp);
 
 	//Consider string thick
-	void SetThick();
+	void		SetThick();
 
-	bool IfPointInVector(point p);
+	bool		IfPointInVector(point p);
 
-	void Write();
+	void		Write();
 
-	Process* SetVector(Process* temp, int id); //And Wave
+	Process*	SetVector(Process* temp, int id); //And Wave
+
+	void		ReadLayerQueue();
 
 public:
 	SeqAnalyzer			*ptr_seqanalyzer_;
 	char				*path_;
 
-	vector<Process*>	*print_;
+	vector<int>			layer_queue_;
+	vector<Process*>	print_queue_;
 	vector<point>		exist_point_;
 	ExtruderCone		extruder_;
 	double				break_height_;
+
+	bool				debug_;
 };

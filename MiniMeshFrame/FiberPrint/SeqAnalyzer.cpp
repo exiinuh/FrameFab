@@ -4,7 +4,6 @@
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(1.0)
 {
-	layer_queue_ = new vector<QueueInfo>;
 }
 
 
@@ -12,30 +11,30 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(1.0)
 {
 	ptr_graphcut_ = ptr_graphcut;
-	layer_queue_ = new vector<QueueInfo>;
 }
 
 
-SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm)
+SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path)
 {
 	ptr_graphcut_ = ptr_graphcut;
-
-	layer_queue_ = new vector<QueueInfo>;
+	ptr_parm_ = ptr_parm;
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
-	Wl_		= ptr_parm->Wl_;
+	//Wl_		= ptr_parm->Wl_;
 	//Wp_		= ptr_parm->Wp_;
-	Wp_ = 10;
+	Wl_ = 10;
+	Wp_ = 100;
+	
 	debug_  = 1;
+
+	path_ = path;
 }
 
 
 SeqAnalyzer::~SeqAnalyzer()
 {
-	delete ptr_subgraph_; 
-	ptr_subgraph_ = NULL;
 }
 
 
@@ -47,25 +46,6 @@ bool SeqAnalyzer::LayerPrint()
 
 	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
 	int N = ptr_frame->SizeOfVertList();
-
-	/* the highest vertex and the lowest vertex */
-	double maxz = -1e20;
-	double minz = 1e20;
-	for (int i = 0; i < Nd; i++)
-	{
-		double h = ptr_dualgraph->Height(i);
-		if (h > maxz)
-		{
-			maxz = h;
-		}
-		if (h < minz)
-		{
-			minz = h;
-		}
-	}
-
-	/* maxz - minz */
-	height_differ_ = maxz - minz;
 
 	/* split layers */
 	/* label stores layer index of each dual node */
@@ -112,7 +92,7 @@ bool SeqAnalyzer::LayerPrint()
 	for (it = base_queue.begin(); it != base_queue.end(); it++)
 	{
 		QueueInfo base_edge = QueueInfo{ 0, it->second, layers_[0][it->second] };
-		layer_queue_->push_back(base_edge);
+		layer_queue_.push_back(base_edge);
 	}
 
 	printf("Size of base queue: %d\n", base_queue.size());
@@ -132,7 +112,7 @@ bool SeqAnalyzer::LayerPrint()
 		* t : tail for printing queue of the layer
 		*/
 		int Nl = layers_[l].size();
-		int h = layer_queue_->size();
+		int h = layer_queue_.size();
 		int t;
 		if (l == 0)
 		{
@@ -161,7 +141,7 @@ bool SeqAnalyzer::LayerPrint()
 				*  already printed structure or pillar edges
 				*/
 				QueueInfo start_edge = QueueInfo{ l, st_e, layers_[l][st_e] };
-				layer_queue_->push_back(start_edge);
+				layer_queue_.push_back(start_edge);
 
 				if (GenerateSeq(l, h, t))
 				{
@@ -182,6 +162,10 @@ bool SeqAnalyzer::LayerPrint()
 		}
 	}
 
+	if (debug_)
+	{
+		WriteLayerQueue();
+	}
 	
 	///* Feasible printing orientation */
 	//wave_.clear();
@@ -211,15 +195,15 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	if (debug_)
 	{
 		printf("searching edge #%d in layer %d, head %d, (tail %d)\n", 
-			(*layer_queue_)[h].layer_id_, l, h, t);
+			layer_queue_[h].layer_id_, l, h, t);
 	}
 
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
 	WireFrame *ptr_frame = ptr_subgraph_->ptr_frame_;
 	int Nl = layers_[l].size();
 
-	int i = (*layer_queue_)[h].layer_id_;
-	int dual_i = (*layer_queue_)[h].dual_id_;
+	int i = layer_queue_[h].layer_id_;
+	int dual_i = layer_queue_[h].dual_id_;
 	int orig_i = ptr_dualgraph->e_orig_id(dual_i);
 	double height_i = ptr_dualgraph->Height(dual_i);
 
@@ -277,7 +261,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 				{
 					printf("it shares only one ends with printed structure\n");
 				}
-				P = 1;
+				P = 100;
 			}
 			else
 			{
@@ -297,55 +281,58 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			delete ptr_collision;
 			ptr_collision = NULL;
 
-			///* stiffness */
-			///* insert a trail edge */
-			//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
+			/*-----------------------------------------------*/
+			/* stiffness */
+			/* insert a trail edge */
+			ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
 
-			///* examinate stiffness on printing subgraph */
-			//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
-			//int Ns = ptr_subgraph_->SizeOfFreeFace();
-			//VX D(Ns);
-			//D.setZero();
-			//
-			//printf("------------\n");
-			//printf("Layers %d, head index %d\n", l, h);
-			//printf("Trial Deformation calculation edge %d\n", dual_j);
-			//bool stiff_success = true;
-			//if (ptr_stiffness->CalculateD(D))
-			//{
-			//	for (int k = 0; k < Ns; k++)
-			//	{
-			//		VX offset(3);
-			//		VX distortion(3);
-			//		for (int h = 0; h < 3; h++)
-			//		{
-			//			offset[h] = D[j * 6 + h];
-			//			distortion[h] = D[j * 6 + h + 3];
-			//		}
+			/* examinate stiffness on printing subgraph */
+			Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
+			int Ns = ptr_subgraph_->SizeOfFreeFace();
+			VX D(Ns);
+			D.setZero();
+			
+			bool stiff_success = true;
+			if (ptr_stiffness->CalculateD(D))
+			{
+				for (int k = 0; k < Ns; k++)
+				{
+					VX offset(3);
+					VX distortion(3);
+					for (int h = 0; h < 3; h++)
+					{
+						offset[h] = D[j * 6 + h];
+						distortion[h] = D[j * 6 + h + 3];
+					}
 
-			//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
-			//		{
-			//			stiff_success = false;
-			//			break;
-			//		}
-			//	}
-			//}
-			//else
-			//{
-			//	stiff_success = false;
-			//}
+					if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+					{
+						stiff_success = false;
+						printf("Large transformation and rotation detected. Structrue not stable. Skip.\n");
+						break;
+					}
+				}
+			}
+			else
+			{
+				printf("stiffness matrix not SPD, mechanics existed in structure.\n");
+				stiff_success = false;
+			}
 
-			///* remove the trail edge */
-			//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+			/* remove the trail edge */
+			ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
 
-			//delete ptr_stiffness;
-			//ptr_stiffness = NULL;
+			delete ptr_stiffness;
+			ptr_stiffness = NULL;
 
-			///* examination failed */
-			//if (!stiff_success)
-			//{
-			//	continue;
-			//}
+			/* examination failed */
+			if (!stiff_success)
+			{
+				continue;
+			}
+
+			printf("the structure is stable.\n");
+			/*-----------------------------------------------*/
 
 			/* cost weight */
 			double cost = Wl_ * L + Wp_ * P;
@@ -364,7 +351,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
 		QueueInfo next_edge = QueueInfo{ l, it->second, layers_[l][it->second] };
-		layer_queue_->push_back(next_edge);
+		layer_queue_.push_back(next_edge);
 
 		if (debug_)
 		{
@@ -379,7 +366,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	}
 
 	ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_i));
-	layer_queue_->pop_back();
+	layer_queue_.pop_back();
 
 	if (debug_)
 	{
@@ -387,6 +374,34 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	}
 
 	return false;
+}
+
+
+void SeqAnalyzer::GetQueue(vector<int> &layer_queue)
+{
+	int Nq = layer_queue_.size();
+	for (int i = 0; i < Nq; i++)
+	{
+		layer_queue.push_back(layer_queue_[i].dual_id_);
+	}
+}
+
+
+void SeqAnalyzer::WriteLayerQueue()
+{
+	string path = path_;
+	string queue_path = path + "/Queue.txt";
+
+	FILE *fp = fopen(queue_path.c_str(), "w");
+
+	vector<int> layer_queue;
+	GetQueue(layer_queue);
+	int Nq = layer_queue.size(); 
+	for (int i = 0; i < Nq; i++)
+	{
+		fprintf(fp, "%d\n", layer_queue[i]);
+	}
+	fclose(fp);
 }
 
 //vector<GeoV3> SeqAnalyzer::AngleList(vector<QueueInfo> *layer_queue)

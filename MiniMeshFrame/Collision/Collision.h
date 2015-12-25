@@ -57,8 +57,6 @@ public:
 	 void		CreatePrintTable();
 	 void		GenerateSampleNormal();
 
-	 double  Cost(vector<GeoV3> reduce);
-
 	 double		DisSegSeg(point start, point end, point target_start, point target_end);
 	 double		DisSegPoint(point start, point end, point target);
 
@@ -74,10 +72,10 @@ public:
 private:
 	/* Interface Data Structure*/
 	WireFrame		*ptr_frame_;
-	ExtruderCone	*ptr_extruder_;
 
 	int					divide_;
 	gte::Plane3<float>	table_;
+	ExtruderCone		extruder_;
 
 	WF_edge				*target_e_;
 	vector<GeoV3>		normal_;							// normal list

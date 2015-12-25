@@ -24,7 +24,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame)
 }
 
 
-GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
+GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
 		 :debug_(false)
 {
 	ptr_frame_ = ptr_frame;
@@ -36,6 +36,10 @@ GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
 	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
+
+	path_   = path;
+	matlab_ = 0;
+	maya_   = 0;
 }
 
 
@@ -214,9 +218,12 @@ void GraphCut::CreateC(int cut, int rew)
     }
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 
-	string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
-	Statistics s_c(str_c, v_c);
-	s_c.GenerateStdVecFile();
+	if (matlab_)
+	{
+		string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
+		Statistics s_c(str_c, v_c);
+		s_c.GenerateStdVecFile();
+	}
 
     //string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
     //Statistics s_r(str_r, v_r);
@@ -309,10 +316,14 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
-		//if (cut_count == 2)
-		//{
-		//	WriteStiffness();
-		//}
+		
+		if (maya_)
+		{
+			if (cut_count == 2)
+			{
+				WriteStiffness();
+			}
+		}
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -428,27 +439,36 @@ void GraphCut::MakeLayers()
             res_energy.push_back(res_tmp);
 
             /* write x distribution to a file */
-            string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-            Statistics tmp_x(str_x, x_);
-            tmp_x.GenerateVectorFile();
-
+			if (matlab_)
+			{
+				string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+				Statistics tmp_x(str_x, x_);
+				tmp_x.GenerateVectorFile();
+			}
             rew_count++;
         } while (!UpdateR(x_prev, rew_count));
 
         /* Output reweighting energy history for last cut process */
-        string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-        Statistics s_eC(str_eC, cut_energy);
-        s_eC.GenerateStdVecFile();
+		if (matlab_)
+		{
+			string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
+			Statistics s_eC(str_eC, cut_energy);
+			s_eC.GenerateStdVecFile();
 
-        string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
-        Statistics s_eR(str_eR, res_energy);
-        s_eR.GenerateStdVecFile();
+			string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+			Statistics s_eR(str_eR, res_energy);
+			s_eR.GenerateStdVecFile();
+		}
 
         /* Update New Cut information to Rendering (layer_label_) */
-		//if (cut_count == 1)
-		//{
-		//	WriteWeight();
-		//}
+		if (maya_)
+		{
+			if (cut_count == 1)
+			{
+				WriteWeight();
+			}
+		}
+
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
@@ -686,7 +706,12 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
 
 void GraphCut::WriteWeight()
 {
-	FILE *fp = fopen("C:\\Users\\DELL\\Desktop\\point_weight.txt", "w+");
+	string path = path_;
+
+	string weight_path = path + "/point_weight.txt";
+	string line_path = path + "/line.txt";
+
+	FILE *fp = fopen(weight_path.c_str(), "w+");
 
 	int N = ptr_frame_->SizeOfVertList();
 	double minz = ptr_dualgraph_->minZ();
@@ -748,15 +773,21 @@ void GraphCut::WriteWeight()
 		fprintf(fp, "%lf %lf %lf\n", r, g, b);
 	}
 
-	fclose(fp);
+	ptr_frame_->ExportLines(line_path.c_str());
 }
 
 
 void GraphCut::WriteStiffness()
 {
+	string path = path_;
+
+	string offset_path = path + "/point_offset.txt";
+	string distor_path = path + "/point_distortion.txt";
+	string line_path = path + "/line.txt";
+
 	vector<FILE*> fp(2);
-	fp[0] = fopen("C:\\Users\\DELL\\Desktop\\point_offset.txt", "w+");
-	fp[1] = fopen("C:\\Users\\DELL\\Desktop\\point_distortion.txt", "w+");
+	fp[0] = fopen(offset_path.c_str(), "w+");
+	fp[1] = fopen(distor_path.c_str(), "w+");
 
 	int N = ptr_frame_->SizeOfVertList();
 	vector<vector<double>> ss(N);
@@ -828,7 +859,7 @@ void GraphCut::WriteStiffness()
 	fclose(fp[1]);
 
 
-	FILE *fp_l = fopen("C:\\Users\\DELL\\Desktop\\line.txt", "w+");
+	FILE *fp_l = fopen(line_path.c_str(), "w+");
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	for (int i = 0; i < Nd; i++)
 	{
