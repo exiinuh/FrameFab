@@ -704,8 +704,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	fprintf(fp, "#        mm      mm      mm      m\n\n");
 	for (int i = 0; i < nN; i++)
 	{
-		// using face dual id here
-		int o_id = ptr_dualgraph->v_dual_id(i);
+		int o_id = ptr_dualgraph->v_orig_id(i);
 
 		fprintf(fp, "%d	 %f  %f  %f  %f\n", i + 1,
 			ptr_wf->GetPosition(o_id).x(), ptr_wf->GetPosition(o_id).y(), ptr_wf->GetPosition(o_id).z(),0.0);
@@ -747,23 +746,19 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	for (int i = 0; i < nE; i++)
 	{
 		int e_id = ptr_dualgraph->e_orig_id(i);
-		int orig_id   = wf_edge_list[e_id]->pvert_->ID();
-		int orig_id_2 = wf_edge_list[e_id]->ppair_->pvert_->ID();
-		
-		WF_edge *ei = wf_edge_list[ptr_dualgraph->e_orig_id(i)];
-
-		int u = ei->pvert_->ID();
-		int v = ei->ppair_->pvert_->ID();
+		WF_edge *ei = wf_edge_list[e_id];
+		int u = ei->ppair_->pvert_->ID();
+		int v = ei->pvert_->ID();
 		double L = ei->Length();
 
-		int id   = ptr_dualgraph->v_dual_id(orig_id);
-		int id_1 = ptr_dualgraph->v_dual_id(orig_id_2);
+		int dual_u = ptr_dualgraph->v_dual_id(u);
+		int dual_v = ptr_dualgraph->v_dual_id(v);
 
 		double Iyy = F_PI * r * r * r * r / 4;
 		double Izz = Iyy;
 
 		fprintf(fp, "%d %d %d	%f	%f	%f	%f	%f	%f	%f	%f	%f	%.14f\n",
-			i + 1, id + 1, id_1 + 1,
+			i + 1, dual_u + 1, dual_v + 1,
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
 
