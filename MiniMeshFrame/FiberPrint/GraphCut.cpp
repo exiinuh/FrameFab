@@ -2,7 +2,7 @@
 
 
 GraphCut::GraphCut()
-		:debug_(false), matlab_(false),
+		 :debug_(false), 
 		 penalty_(0), 
 		 Dt_tol_(0), Dr_tol_(0), 
 		 pri_tol_(0), dual_tol_(0)
@@ -13,7 +13,7 @@ GraphCut::GraphCut()
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame)
-		:debug_(false), matlab_(false),
+		 :debug_(false), 
 		 penalty_(10e2), 
 		 Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
 		 pri_tol_(10e-3), dual_tol_(10e-3)
@@ -25,7 +25,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame)
 
 
 GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm)
-		:debug_(false), matlab_(false)
+		 :debug_(false)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
@@ -75,8 +75,8 @@ void GraphCut::InitState()
 		if (e->isCeiling())
 		{
 			cutting_edge_.push_back(i);
-			e->SetLayer(1);
-			e->ppair_->SetLayer(1);
+			//e->SetLayer(1);
+			//e->ppair_->SetLayer(1);
 		}
 	}
 
@@ -214,12 +214,9 @@ void GraphCut::CreateC(int cut, int rew)
     }
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 
-	if (matlab_)
-	{
-		string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
-		Statistics s_c(str_c, v_c);
-		s_c.GenerateStdVecFile();
-	}
+	string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
+	Statistics s_c(str_c, v_c);
+	s_c.GenerateStdVecFile();
 
     //string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
     //Statistics s_r(str_r, v_r);
@@ -312,11 +309,10 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
-		
-		if (cut_count == 2)
-		{
-			//WriteStiffness();
-		}
+		//if (cut_count == 2)
+		//{
+		//	WriteStiffness();
+		//}
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -431,34 +427,28 @@ void GraphCut::MakeLayers()
             cut_energy.push_back(energy);
             res_energy.push_back(res_tmp);
 
-			if (matlab_)
-			{
-				/* write x distribution to a file */
-				string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-				Statistics tmp_x(str_x, x_);
-				tmp_x.GenerateVectorFile();
-			}
+            /* write x distribution to a file */
+            string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+            Statistics tmp_x(str_x, x_);
+            tmp_x.GenerateVectorFile();
 
             rew_count++;
         } while (!UpdateR(x_prev, rew_count));
 
-		if (matlab_)
-		{
-			/* Output reweighting energy history for last cut process */
-			string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-			Statistics s_eC(str_eC, cut_energy);
-			s_eC.GenerateStdVecFile();
+        /* Output reweighting energy history for last cut process */
+        string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
+        Statistics s_eC(str_eC, cut_energy);
+        s_eC.GenerateStdVecFile();
 
-			string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
-			Statistics s_eR(str_eR, res_energy);
-			s_eR.GenerateStdVecFile();
-		}
+        string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+        Statistics s_eR(str_eR, res_energy);
+        s_eR.GenerateStdVecFile();
 
-		/* Update New Cut information to Rendering (layer_label_) */
-		if (cut_count == 1)
-		{
-			//WriteWeight();
-		}
+        /* Update New Cut information to Rendering (layer_label_) */
+		//if (cut_count == 1)
+		//{
+		//	WriteWeight();
+		//}
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
@@ -696,7 +686,7 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
 
 void GraphCut::WriteWeight()
 {
-	FILE *fp = fopen("C:\\Users\\harry\\Desktop\\FiberRenderData\\point_weight.txt", "w+");
+	FILE *fp = fopen("C:\\Users\\DELL\\Desktop\\point_weight.txt", "w+");
 
 	int N = ptr_frame_->SizeOfVertList();
 	double minz = ptr_dualgraph_->minZ();
@@ -765,8 +755,8 @@ void GraphCut::WriteWeight()
 void GraphCut::WriteStiffness()
 {
 	vector<FILE*> fp(2);
-	fp[0] = fopen("C:\\Users\\harry\\Desktop\\FiberRenderData\\point_offset.txt", "w + ");
-	fp[1] = fopen("C:\\Users\\harry\\Desktop\\FiberRenderData\\point_distortion.txt", "w + ");
+	fp[0] = fopen("C:\\Users\\DELL\\Desktop\\point_offset.txt", "w+");
+	fp[1] = fopen("C:\\Users\\DELL\\Desktop\\point_distortion.txt", "w+");
 
 	int N = ptr_frame_->SizeOfVertList();
 	vector<vector<double>> ss(N);
@@ -838,7 +828,7 @@ void GraphCut::WriteStiffness()
 	fclose(fp[1]);
 
 
-	FILE *fp_l = fopen("C:\\Users\\harry\\Desktop\\FiberRenderData\\Desktop\\line.txt", "w+");
+	FILE *fp_l = fopen("C:\\Users\\DELL\\Desktop\\line.txt", "w+");
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	for (int i = 0; i < Nd; i++)
 	{
