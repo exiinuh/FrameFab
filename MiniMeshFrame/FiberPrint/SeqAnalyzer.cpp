@@ -27,6 +27,7 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm)
 	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wl_		= ptr_parm->Wl_;
 	Wp_		= ptr_parm->Wp_;
+	debug_  = 1;
 }
 
 
@@ -113,6 +114,15 @@ bool SeqAnalyzer::LayerPrint()
 		layer_queue_->push_back(base_edge);
 	}
 
+	
+	if (debug_)
+	{
+		for (int l = 1; l < max_layer; l++)
+		{
+			printf("Size of layer %d is %d\n", l, layers_[l].size());
+		}
+	}
+
 	/* print starting from the first layer */
 	for (int l = 1; l < max_layer; l++)
 	{
@@ -133,7 +143,12 @@ bool SeqAnalyzer::LayerPrint()
 			t = h + Nl;
 		}
 
-		/* set start edge */
+		if (debug_)
+		{
+			printf("layer %d is in processing, intial head index %d, tail index %d\n", l, h, t);
+		}
+
+		/* set start edge for searching of current layer */
 		bool success = false;
 		for (int st_e = 0; st_e < Nl; st_e++)
 		{
@@ -148,8 +163,19 @@ bool SeqAnalyzer::LayerPrint()
 				QueueInfo start_edge = QueueInfo{ l, st_e, layers_[l][st_e] };
 				layer_queue_->push_back(start_edge);
 
+				if (debug_)
+				{
+					printf("start searching at layer %d, start edge dual id %d\n", l, layers_[l][st_e]);
+				}
+
 				if (GenerateSeq(l, h, t))
 				{
+					if (debug_)
+					{
+						printf("successful searching completed at layer %d, start edge with dual id %d\n",
+							l, layers_[l][st_e]);
+					}
+
 					success = true;
 					break;
 				}
@@ -158,9 +184,15 @@ bool SeqAnalyzer::LayerPrint()
 
 		if (!success)
 		{
+			if (debug_)
+			{
+				printf("all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", l);
+			}
+			getchar();
 			return false;
 		}
 	}
+
 	
 	///* Feasible printing orientation */
 	//wave_.clear();
@@ -199,7 +231,13 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	double	P;							// adjacency weight
 	double	L;							// collision weight
 
-	map<double, int> choice;
+	multimap<double, int> choice;
+
+	if (debug_)
+	{
+		printf("searching at layer %d, head %d, (tail %d)\n", l, h, t);
+		printf("edge with dual id %d added in the structure as already printed, searching for next...\n", dual_i);
+	}
 
 	/* update printed subgraph */
 	ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_i));
@@ -207,7 +245,18 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	/* exit */
 	if (h == t - 1)
 	{
+		if (debug_)
+		{
+			printf("searching at layer %d finishes.\n", l);
+			printf("-------------------------------\n");
+		}
+
 		return true;
+	}
+
+	if (debug_)
+	{
+		printf("--->edge dual id %d searching loop<---\n", dual_i);
 	}
 
 	/* next edge in current layer */
@@ -216,28 +265,51 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		int dual_j = layers_[l][j];
 		int orig_j = ptr_dualgraph->e_orig_id(dual_j);
 		double height_j = ptr_dualgraph->Height(dual_j);
+		
+		if (debug_)
+		{
+			printf("--> Attempting for edge with dual id %d, at layer %d, head%d, tail%d\n", dual_j, l, h, t);
+		}
 
 		if (!ptr_subgraph_->isExistingEdge(orig_j))
 		{		
+			if (debug_)
+			{
+				printf("edge with dual id %d hasn't been printed(not existed) at head %d, layer %d\n", dual_j, h, l);
+			}
+
 			/* adjacency weight */
 			int u = ptr_frame->GetEndu(orig_j);
 			int v = ptr_frame->GetEndv(orig_j);
 			if (ptr_dualgraph->isExistingVert(u) && ptr_dualgraph->isExistingVert(v))
 			{
 				/* edge j share two ends with printed structure */
+				if (debug_)
+				{
+					printf("edge with dual id %d shares two ends with printed structure\n", dual_j);
+				}
 				P = 0;
 			}
 			else
 			if (ptr_dualgraph->isExistingVert(u) || ptr_dualgraph->isExistingVert(v))
 			{
 				/* edge j share one end with printed structure */
+				if (debug_)
+				{
+					printf("edge with dual id %d shares only one ends with printed structure\n", dual_j);
+					printf("continue calculating cost...\n");
+				}
 				P = 1;
 			}
 			else
 			{
+				if (debug_)
+				{
+					printf("edge with dual id %d has been printed (existed) with printed structure\n", dual_j);
+					printf("skip!\n");
+				}
 				continue;
 			}
-
 
 			/* collision weight */
 			Collision *ptr_collision = new Collision(ptr_frame, ptr_frame->GetEdge(orig_j));
@@ -247,7 +319,6 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 
 			delete ptr_collision;
 			ptr_collision = NULL;
-
 
 			/* stiffness */
 			/* insert a trail edge */
@@ -259,59 +330,86 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			VX D(Ns);
 			D.setZero();
 			
-			printf("------------\n");
-			printf("Layers %d, head index %d\n", l, h);
-			printf("Trial Deformation calculation edge %d\n", dual_j);
-			bool stiff_success = true;
-			if (ptr_stiffness->CalculateD(D))
-			{
-				for (int k = 0; k < Ns; k++)
-				{
-					VX offset(3);
-					VX distortion(3);
-					for (int h = 0; h < 3; h++)
-					{
-						offset[h] = D[j * 6 + h];
-						distortion[h] = D[j * 6 + h + 3];
-					}
+			//printf("------------\n");
+			//printf("Layers %d, head index %d\n", l, h);
+			//printf("Trial Deformation calculation edge %d\n", dual_j);
+			//bool stiff_success = true;
+			//if (ptr_stiffness->CalculateD(D))
+			//{
+			//	for (int k = 0; k < Ns; k++)
+			//	{
+			//		VX offset(3);
+			//		VX distortion(3);
+			//		for (int h = 0; h < 3; h++)
+			//		{
+			//			offset[h] = D[j * 6 + h];
+			//			distortion[h] = D[j * 6 + h + 3];
+			//		}
 
-					if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
-					{
-						stiff_success = false;
-						break;
-					}
-				}
-			}
-			else
-			{
-				stiff_success = false;
-			}
+			//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+			//		{
+			//			stiff_success = false;
+			//			break;
+			//		}
+			//	}
+			//}
+			//else
+			//{
+			//	stiff_success = false;
+			//}
 
-			/* remove the trail edge */
-			ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+			///* remove the trail edge */
+			//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
 
-			delete ptr_stiffness;
-			ptr_stiffness = NULL;
+			//delete ptr_stiffness;
+			//ptr_stiffness = NULL;
 
-			/* examination failed */
+			///* examination failed */
 			//if (!stiff_success)
 			//{
 			//	continue;
 			//}
 
-
 			/* cost weight */
 			double cost = Wl_ * L + Wp_ * P;
 			choice.insert(make_pair(cost, j));
+
+			if (debug_)
+			{
+				printf("cost : %f\n", cost);
+			}
+		}
+		else
+		{
+			if (debug_)
+			{
+				printf("edge with dual id %d has been printed at layer %d, head %d\n", dual_j, l, h);
+			}
 		}
 	}
 
+	if (debug_)
+	{
+		printf("--->edge dual id %d searching loop end<---\n", dual_i);
+	}
+
 	/* ranked by weight */
+	if (debug_)
+	{
+		printf("cost choosing process for layer %d, head %d, tail %d\n", l, h, t);
+	}
+
 	map<double, int>::iterator it;
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
 		QueueInfo next_edge = QueueInfo{ l, it->second, layers_[l][it->second] };
 		layer_queue_->push_back(next_edge);
+
+		if (debug_)
+		{
+			printf("choose edge #%d in layer %d with cost %f\n", it->second, it->first);
+			printf("entering next searching state.\n");
+		}
 
 		if (GenerateSeq(l, h + 1, t))
 		{
@@ -321,6 +419,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 
 	ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_i));
 	layer_queue_->pop_back();
+
 	return false;
 }
 

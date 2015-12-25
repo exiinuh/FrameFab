@@ -123,5 +123,7 @@ private:
 	vector<ExtruderCone>	extruder_list_;
 	vector<GeoV3>			angle_list_;
 	gte::Plane3<float>		table_;
+
+	bool					debug_;
 };
 
