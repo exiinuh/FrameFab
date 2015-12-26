@@ -33,7 +33,7 @@
 #include "GraphCut.h"
 #include "Collision\Collision.h"
 #include "Collision\ResolveAngle.h"
-#include "StiffnessIO.h"
+#include "Stiffness\StiffnessIO.h"
 
 typedef struct Set
 {

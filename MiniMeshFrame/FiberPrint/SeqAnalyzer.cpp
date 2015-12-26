@@ -281,58 +281,58 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			delete ptr_collision;
 			ptr_collision = NULL;
 
-			/*-----------------------------------------------*/
-			/* stiffness */
-			/* insert a trail edge */
-			ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
+			///*-----------------------------------------------*/
+			///* stiffness */
+			///* insert a trail edge */
+			//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
 
-			/* examinate stiffness on printing subgraph */
-			Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
-			int Ns = ptr_subgraph_->SizeOfFreeFace();
-			VX D(Ns);
-			D.setZero();
-			
-			bool stiff_success = true;
-			if (ptr_stiffness->CalculateD(D))
-			{
-				for (int k = 0; k < Ns; k++)
-				{
-					VX offset(3);
-					VX distortion(3);
-					for (int h = 0; h < 3; h++)
-					{
-						offset[h] = D[j * 6 + h];
-						distortion[h] = D[j * 6 + h + 3];
-					}
+			///* examinate stiffness on printing subgraph */
+			//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
+			//int Ns = ptr_subgraph_->SizeOfFreeFace();
+			//VX D(Ns);
+			//D.setZero();
+			//
+			//bool stiff_success = true;
+			//if (ptr_stiffness->CalculateD(D))
+			//{
+			//	for (int k = 0; k < Ns; k++)
+			//	{
+			//		VX offset(3);
+			//		VX distortion(3);
+			//		for (int h = 0; h < 3; h++)
+			//		{
+			//			offset[h] = D[j * 6 + h];
+			//			distortion[h] = D[j * 6 + h + 3];
+			//		}
 
-					if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
-					{
-						stiff_success = false;
-						printf("Large transformation and rotation detected. Structrue not stable. Skip.\n");
-						break;
-					}
-				}
-			}
-			else
-			{
-				printf("stiffness matrix not SPD, mechanics existed in structure.\n");
-				stiff_success = false;
-			}
+			//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+			//		{
+			//			stiff_success = false;
+			//			printf("Large transformation and rotation detected. Structrue not stable. Skip.\n");
+			//			break;
+			//		}
+			//	}
+			//}
+			//else
+			//{
+			//	printf("stiffness matrix not SPD, mechanics existed in structure.\n");
+			//	stiff_success = false;
+			//}
 
-			/* remove the trail edge */
-			ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+			///* remove the trail edge */
+			//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
 
-			delete ptr_stiffness;
-			ptr_stiffness = NULL;
+			//delete ptr_stiffness;
+			//ptr_stiffness = NULL;
 
-			/* examination failed */
-			if (!stiff_success)
-			{
-				continue;
-			}
+			///* examination failed */
+			//if (!stiff_success)
+			//{
+			//	continue;
+			//}
 
-			printf("the structure is stable.\n");
-			/*-----------------------------------------------*/
+			//printf("the structure is stable.\n");
+			///*-----------------------------------------------*/
 
 			/* cost weight */
 			double cost = Wl_ * L + Wp_ * P;
