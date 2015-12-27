@@ -133,10 +133,13 @@ public:
 	void		WriteToOBJ(const char *path);
 	void		LoadFromPWF(const char *path);
 	void		WriteToPWF(const char *path);
+	void		WriteLayerToOBJ(const char *path, int layer);
 	void		WriteLayersToPWF(const char *path, int max_layer);
 
 	void		ExportPoints(const char *path);
 	void		ExportLines(const char *path);
+	void		ExportLayer(const char *path, int layer);
+	void		ExportLayers(const char *path, int max_layer);
 
 	WF_vert*	InsertVertex(const Vec3f p);
 	WF_edge*	InsertEdge(WF_vert *u, WF_vert *v);

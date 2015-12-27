@@ -95,10 +95,13 @@ private:
 
 	void	ReadFrame();
 	void	WriteFrame();
+	void	WriteLayer();
 	void	WriteLayers();
 
 	void	ExportPoints();
 	void	ExportLines();
+	void	ExportLayer();
+	void	ExportLayers();
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);

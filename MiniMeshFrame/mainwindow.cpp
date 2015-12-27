@@ -77,6 +77,9 @@ void MainWindow::CreateActions()
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteFrame()));
 
+	action_savelayer_ = new QAction(tr("Save a layer"), this);
+	connect(action_savelayer_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteLayer()));
+
 	action_savelayers_ = new QAction(tr("Save layers"), this);
 	connect(action_savelayers_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteLayers()));
 
@@ -85,6 +88,12 @@ void MainWindow::CreateActions()
 
 	action_exportlines_ = new QAction(tr("Export lines"), this);
 	connect(action_exportlines_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLines()));
+
+	action_exportlayer_ = new QAction(tr("Export a layer"), this);
+	connect(action_exportlayer_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLayer()));
+
+	action_exportlayers_ = new QAction(tr("Export layers"), this);
+	connect(action_exportlayers_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLayers()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -101,13 +110,14 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_new_);
 	menu_file_->addAction(action_open_);
 	menu_file_->addAction(action_save_);
-
-	menu_file_->addSeparator();
+	menu_file_->addAction(action_savelayer_);
 	menu_file_->addAction(action_savelayers_);
 
 	menu_file_->addSeparator();
 	menu_file_->addAction(action_exportpoints_);
 	menu_file_->addAction(action_exportlines_);
+	menu_file_->addAction(action_exportlayer_);
+	menu_file_->addAction(action_exportlayers_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));

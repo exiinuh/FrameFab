@@ -99,9 +99,12 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
+	QAction				*action_savelayer_;
 	QAction				*action_savelayers_;
 	QAction				*action_exportpoints_;
 	QAction				*action_exportlines_;
+	QAction				*action_exportlayer_;
+	QAction				*action_exportlayers_;
 
 	QAction				*action_background_;
 

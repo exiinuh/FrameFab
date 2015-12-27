@@ -330,6 +330,7 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		//D.setZero();
 
 		//printf("------------\n");
+		//printf("Layers %d, head index %d\n", l, h);
 		//printf("Trial Deformation calculation edge %d\n", dual_j);
 		//bool stiff_success = true;
 		//if (ptr_stiffness->CalculateD(D))
@@ -365,7 +366,6 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		///* examination failed */
 		//if (!stiff_success)
 		//{
-		//	cout << "Large deformation detected." << endl;
 		//	return -1;
 		//}
 

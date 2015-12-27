@@ -561,6 +561,39 @@ void RenderingWidget::WriteFrame()
 }
 
 
+void RenderingWidget::WriteLayer()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	bool ok;
+	int layer = QInputDialog::getInt(
+		this,
+		tr("Save a layer"),
+		tr("Please input a layer"),
+		0, 0, ptr_frame_->GetMaxLayer() - 1, 1, &ok);
+	if (!ok)
+	{
+		return;
+	}
+
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Save a layer"),
+		"..", tr("Layer(*.OBJ)"));
+
+	if (filename.isEmpty())
+		return;
+
+	ptr_frame_->WriteLayerToOBJ(filename.toLatin1().data(), layer - 1);
+
+	emit(operatorInfo(QString("Save layer %1 to ").arg(layer) + filename
+		+ QString(" Done")));
+}
+
+
 void RenderingWidget::WriteLayers()
 {
 	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
@@ -582,7 +615,7 @@ void RenderingWidget::WriteLayers()
 
 	QString filename = QFileDialog::
 		getSaveFileName(this, tr("Save layers"),
-		"..", tr("Layers (*.PWF)"));
+		"..", tr("Layers(*.PWF)"));
 
 	if (filename.isEmpty())
 		return;
@@ -603,7 +636,7 @@ void RenderingWidget::ExportPoints()
 	}
 	QString filename = QFileDialog::
 		getSaveFileName(this, tr("Export points"),
-		"..", tr("Points (*.txt)"));
+		"..", tr("Points(*.txt)"));
 
 	if (filename.isEmpty())
 		return;
@@ -623,7 +656,7 @@ void RenderingWidget::ExportLines()
 	}
 	QString filename = QFileDialog::
 		getSaveFileName(this, tr("Export lines"),
-		"..", tr("Lines (*.txt)"));
+		"..", tr("Lines(*.txt)"));
 
 	if (filename.isEmpty())
 		return;
@@ -631,6 +664,101 @@ void RenderingWidget::ExportLines()
 	ptr_frame_->ExportLines(filename.toLatin1().data());
 
 	emit(operatorInfo(QString("Export lines to ") + filename + QString(" Done")));
+}
+
+
+void RenderingWidget::ExportLayer()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+
+	bool ok;
+	int layer = QInputDialog::getInt(
+		this,
+		tr("Export a layer"),
+		tr("Please input a layer"),
+		0, 0, ptr_frame_->GetMaxLayer() - 1, 1, &ok);
+	if (!ok)
+	{
+		return;
+	}
+
+	QString dirname = QFileDialog::
+		getExistingDirectory(this,
+		tr("Export Directory"),
+		"/home",
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks);
+
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+	if (bydirname.isEmpty())
+		return;
+
+	ptr_frame_->ExportLayer(bydirname.data(), layer - 1);
+
+	emit(operatorInfo(QString("Export layer %1 to ").arg(layer) + bydirname
+		+ QString(" Done")));
+}
+
+
+void RenderingWidget::ExportLayers()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	bool ok;
+	int max_layer = QInputDialog::getInt(
+		this,
+		tr("Export layers"),
+		tr("Please input the maximum layer"),
+		0, 0, ptr_frame_->GetMaxLayer() - 1, 1, &ok);
+	if (!ok)
+	{
+		return;
+	}
+
+	QString dirname = QFileDialog::
+		getExistingDirectory(this,
+		tr("Export Directory"),
+		"/home",
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks);
+
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+	if (bydirname.isEmpty())
+		return;
+
+	ptr_frame_->ExportLayers(bydirname.data(), max_layer + 1);
+
+	emit(operatorInfo(QString("Export %1 layer(s) to ").arg(max_layer) + bydirname
+		+ QString(" Done")));
 }
 
 
