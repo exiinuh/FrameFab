@@ -502,6 +502,12 @@ void RenderingWidget::ReadFrame()
 	InitFiberData();
 
 	updateGL();
+
+
+
+
+
+
 }
 
 
@@ -1071,7 +1077,9 @@ void RenderingWidget::DrawOrder(bool bv)
 
 		if (print_order_ > 0)
 		{
-			//ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
+
+			if (ptr_fiberprint_->ptr_seqanalyzer_->extru_)
+			ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
 		}
 	}
 

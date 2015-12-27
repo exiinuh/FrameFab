@@ -4,6 +4,7 @@
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(100.0)
 {
+	extru_ = false;
 }
 
 
@@ -11,6 +12,7 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(100.0)
 {
 	ptr_graphcut_ = ptr_graphcut;
+	extru_ = false;
 }
 
 
@@ -26,6 +28,7 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	debug_  = 1;
 
 	path_ = path;
+	extru_ = false;
 }
 
 
@@ -39,6 +42,37 @@ bool SeqAnalyzer::LayerPrint()
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
 	ptr_dualgraph->Dualization();
 	int Nd = ptr_dualgraph->SizeOfVertList();
+
+	/* ---- */
+	WireFrame *ptr_wf = ptr_dualgraph->ptr_frame_;
+	std::vector<WF_edge*> wf_edge_list = *ptr_wf->GetEdgeList();
+	vector<double> ss;
+
+	for (int i = 1; i < Nd; i++)
+	{
+		int e_id = ptr_dualgraph->e_orig_id(i);
+
+		WF_edge *ei = ptr_wf->GetEdge(e_id);
+		WF_vert *ui = ei->pvert_;
+		WF_vert *vi = ei->ppair_->pvert_;
+
+		printf("edge dual id : %d, end node coord:\n", i);
+		printf("%f, %f, %f\n", ui->Position().x(), ui->Position().y(), ui->Position().z());
+		ss.push_back(ui->Position().x());
+		ss.push_back(ui->Position().y());
+		ss.push_back(ui->Position().z());
+		printf("%f, %f, %f\n", vi->Position().x(), vi->Position().y(), vi->Position().z());
+		ss.push_back(vi->Position().x());
+		ss.push_back(vi->Position().y());
+		ss.push_back(vi->Position().z());
+	}
+
+	Statistics tmp_s("restrict", ss);
+	tmp_s.GenerateStdVecFile();
+
+	getchar();
+	/* --- */
+
 
 	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
 	int N = ptr_frame->SizeOfVertList();
@@ -102,7 +136,7 @@ bool SeqAnalyzer::LayerPrint()
 	/* print starting from the first layer */
 	for (int l = 0; l < max_layer; l++)
 	{
-		/* 
+		/*
 		* Nl: number of dual verts in current layer
 		* h : head for printing queue of the layer
 		* t : tail for printing queue of the layer
@@ -169,7 +203,7 @@ bool SeqAnalyzer::LayerPrint()
 	{
 		WriteLayerQueue();
 	}
-	
+
 	///* Feasible printing orientation */
 	//wave_.clear();
 	//for (int i = 0; i < Nd; i++)
@@ -178,18 +212,7 @@ bool SeqAnalyzer::LayerPrint()
 	//}
 
 	//angle_list_ = AngleList(layer_queue_);
-
-	//for (int i = 0; i < layer_queue_->size();i++)
-	//{
-	//	ExtruderCone temp_extruder;
-
-	//	/* original edge id */
-	//	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_dualgraph->e_orig_id( (*layer_queue_)[i].dual_id_));
-	//	
-	//	temp_extruder.Rotation(angle_list_[i], temp_edge->pvert_->Position(), temp_edge->ppair_->pvert_->Position());
-
-	//	extruder_list_.push_back(temp_extruder);
-	//}
+	AngleDec();
 }
 
 
@@ -614,3 +637,86 @@ void SeqAnalyzer::WriteLayerQueue()
 //void SeqAnalyzer::Debug()
 //{
 //}
+
+
+void SeqAnalyzer::AngleDec()
+{
+
+	/*vector<int> quene{ 123, 127, 122, 124, 128, 125, 121, 120, 126, 129, 131, 130, 116, 119, 118, 117, 9, 77, 12, 15, 78, 80, 10, 11, 13, 6, 82, 7, 8, 14, 79, 81, 16, 30, 103, 34, 97, 96, 31, 75, 27, 29, 28, 99, 26, 72, 32, 33, 73, 104, 35, 110, 107, 25, 100, 108, 105, 71, 63, 109, 93, 94, 102, 101, 98, 70, 76, 74, 24, 23, 95, 20, 67, 22, 21, 62, 106, 54, 64, 55, 84, 18, 68, 61, 17, 19, 83, 65, 49, 69, 66, 50, 60, 53, 39, 40, 56, 87, 57, 51, 52, 38, 41, 88, 89, 58, 47, 59, 86, 46, 91, 113, 42, 111, 85, 48, 37, 45, 36, 43, 90, 44, 92, 114, 115, 112, 4, 5, 3, 1, 2, 0,
+};
+	layer_queue_.clear();
+	for (int i = 0; i < quene.size(); i++)
+
+	{
+
+		QueueInfo test;
+		test.dual_id_ = quene[i];
+		layer_queue_.push_back(test);
+	}
+	
+*/
+
+	cout << "---------Angle Detection--------" << endl;
+	DualGraph *ptr_dual = new DualGraph(ptr_graphcut_->ptr_frame_);
+
+	ptr_dual->Dualization();
+
+	vector<GeoV3 > Normal;
+	vector<double> Wave;
+
+	support_ = 0;
+	for (int i = 0; i < layer_queue_.size(); i++)
+	{
+		WF_edge * target = ptr_graphcut_->ptr_frame_->GetEdge(ptr_dual->e_orig_id(layer_queue_[i].dual_id_));
+
+		if (target->isPillar())
+		{
+			Normal.push_back(GeoV3(0, 0, 1));
+			Wave.push_back(2 * F_PI);
+
+			ExtruderCone extruder_;
+			
+			support_ += 1;
+			continue;
+		}
+Collision col(ptr_graphcut_->ptr_frame_, target);
+		for (int j = 0; j < i; j++)
+		{
+			
+			col.DetectCollision(ptr_graphcut_->ptr_frame_->GetEdge(ptr_dual->e_dual_id(layer_queue_[j].dual_id_)));
+
+			if (col.normal_.size() == 0)
+			{
+				cout << "Oops~~, What is wrong?!" << endl;
+			}
+			
+			
+		}
+		ResolveAngle resolve(col.normal_);
+Normal.push_back(resolve.dec);
+			Wave.push_back(resolve.wave);
+
+	}
+
+	wave_ = Wave;
+
+
+
+	//Extruder
+	for (int i = 0; i < layer_queue_.size(); i++)
+	{
+		extru_ = true;
+		ExtruderCone temp_extruder;
+
+		/* original edge id */
+		WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(  ptr_dual->e_orig_id((layer_queue_)[i].dual_id_));
+
+		temp_extruder.Rotation(Normal[i], temp_edge->pvert_->Position(), temp_edge->ppair_->pvert_->Position());
+		extruder_list_.push_back(temp_extruder);
+	}
+
+
+
+
+	cout << "---------Angle Detection done--------" << endl;
+}

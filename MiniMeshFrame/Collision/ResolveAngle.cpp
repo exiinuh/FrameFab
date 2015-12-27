@@ -87,6 +87,29 @@ void ResolveAngle::Dec()
 		wave = 0;
 		return;
 	}
+
+
+	if (max.size() ==72)
+	{
+		int id = 0;
+		double z_max = -1;
+		for (int i = 0; i < max.size(); i++)
+		{
+			if (z_max < max[i].getZ())
+			{
+				z_max = max[i].getZ();
+				id = i;
+			}
+		}
+
+
+		dec = max[id];
+		wave = 2 * F_PI;
+		return;
+
+	}
+
+
 	Geometry::Vector3d temp_max(0,0,0);
 
 	for (int i = 0; i < max.size(); i++)

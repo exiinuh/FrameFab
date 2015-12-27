@@ -8,8 +8,8 @@ ProcessAnalyzer::ProcessAnalyzer(SeqAnalyzer *ptr_seqanalyzer, char *path)
 
     break_height_ = 2; //2cm
 	//SetThick();
-
-	debug_ = true;
+	
+	debug_ = false;
 }
 
 
@@ -19,15 +19,15 @@ void ProcessAnalyzer::ProcPrint()
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
 
-	if (debug_)
-	{
+
 		ptr_dualgraph->Dualization();
-		ReadLayerQueue();
-	}
-	else
-	{
+		
+
+		layer_queue_.clear();
 		ptr_seqanalyzer_->GetQueue(layer_queue_);
-	}
+
+
+	
 
 
 	exist_point_.clear();
@@ -388,7 +388,7 @@ void ProcessAnalyzer::Write()
 	FILE *IBreak	= fopen(ibreak_path.c_str(), "w+");
 	FILE *ICut		= fopen(icut_path.c_str(), "w+");
 
-	//ISupport, "%d", ptr_seqanalyzer_->GetSupport());
+	 fprintf(  ISupport, "%d", ptr_seqanalyzer_->GetSupport());
 
 	if (rr == NULL)
 	{
@@ -451,8 +451,8 @@ void ProcessAnalyzer::Write()
 		fprintf(rr, "\n");
 
 
-	//	fprintf(IWave, "%lf", ptr_seqanalyzer_->GetWave(i));
-	//	fprintf(IWave, "\n");
+		fprintf(IWave, "%lf", ptr_seqanalyzer_->GetWave(i));
+		fprintf(IWave, "\n");
 	}
 
 	fclose(fp);
@@ -516,8 +516,8 @@ void ProcessAnalyzer::SetThick()
 
 Process* ProcessAnalyzer::SetVector(Process* temp, int id)
 {
-	//temp->vector = temp->wave_ = ptr_seqanalyzer_->GetWave(id);
-	//temp->vector = ptr_seqanalyzer_->GetNormal(id);
+   temp->wave_ = ptr_seqanalyzer_->GetWave(id);
+	temp->vector = ptr_seqanalyzer_->GetNormal(id);
 	return temp;
 }
 

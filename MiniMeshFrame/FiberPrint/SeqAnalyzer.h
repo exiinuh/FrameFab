@@ -78,10 +78,14 @@ public:
 
 	//vector<vector<int>>		*GetRangeState()	{ return ptr_collision_->GetRangeState(); }
 	//vector<BaseBulk*>		*GetBulk()			{ return ptr_collision_->GetBulk(); }
-	//Vec3f					GetNormal(int i)	{ return extruder_list_[i].Normal(); }
-	//ExtruderCone			GetExtru(int i)		{ return (extruder_list_)[i]; }
-	//int						GetSupport()		{ return support_; }
-	//double					GetWave(int id)		{ return wave_[id]; }
+	Vec3f					GetNormal(int i)	{ return extruder_list_[i].Normal(); }
+	ExtruderCone			GetExtru(int i)		{ return (extruder_list_)[i]; }
+	int						GetSupport()		{ return support_; }
+
+	bool     extru_;
+	double					GetWave(int id)		{ return wave_[id]; }
+
+	
 
 	///* Feasible Orientation Generation 		Nov/09/2015*/	
 	///* Collision Ver2.0, angle list data interface */
@@ -104,6 +108,7 @@ public:
 	DualGraph		*ptr_subgraph_;
 	char			*path_;
 
+	void AngleDec();
 private:
 	double		gamma_;							// gamma_	 : amplifier factor for adjacency cost
 	double		Dt_tol_;						// Dt_tol   : tolerance of offset in stiffness
@@ -128,5 +133,10 @@ private:
 	gte::Plane3<float>		table_;
 
 	bool					debug_;
+
+
+
+
+
 };
 
