@@ -265,7 +265,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wp_->setFixedWidth(140);
 	spinbox_wp_->setDecimals(2);
 	spinbox_wp_->setRange(0, 10000);
-	spinbox_wp_->setValue(1.0);
+	spinbox_wp_->setValue(100.0);
 	spinbox_wp_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
@@ -353,9 +353,9 @@ void MainWindow::CreatePushButtons()
 	pushbutton_nextedge_->setFixedSize(80, 25);
 	connect(pushbutton_nextedge_, SIGNAL(clicked()), this, SLOT(OrderStep()));
 
-	//pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
-	//pushbutton_simplify_->setFixedSize(80, 25);
-	//connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
+	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
+	pushbutton_simplify_->setFixedSize(80, 25);
+	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
 
 	pushbutton_refine_ = new QPushButton(tr("Refine"), this);
 	pushbutton_refine_->setFixedSize(80, 25);
@@ -461,7 +461,7 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotateyz_);
 	//edit_layout->addWidget(toolbutton_addedge_);
 	//edit_layout->addWidget(toolbutton_addface_);
-	//edit_layout->addWidget(pushbutton_simplify_);
+	edit_layout->addWidget(pushbutton_simplify_);
 	edit_layout->addWidget(pushbutton_refine_);
 
 	// separator group

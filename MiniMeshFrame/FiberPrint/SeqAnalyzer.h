@@ -4,7 +4,7 @@
 *       class: SequenceAnalyzer
 *
 *    Description:  perform tool path searching algorithm to generate
-*				   a collision-free, structurally stable, core part of WirePrint
+*				   a collision-free, structurally stable 
 *
 *	 Version:  1.0
 *	 Created:  Oct/20/2015
@@ -33,7 +33,6 @@
 #include "GraphCut.h"
 #include "Collision\Collision.h"
 #include "Collision\ResolveAngle.h"
-#include "Stiffness\StiffnessIO.h"
 
 typedef struct Set
 {
@@ -71,9 +70,9 @@ public:
 public:
 	bool			LayerPrint();
 	bool			GenerateSeq(int l, int h, int t);
+	int				GenerateCost(int l, int j);
 
 	void			GetQueue(vector<int> &layer_queue);
-
 	void			WriteLayerQueue();
 
 
@@ -103,7 +102,6 @@ public:
 public:
 	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
-	FiberPrintPARM	*ptr_parm_;
 	char			*path_;
 
 private:
@@ -129,8 +127,6 @@ private:
 	vector<GeoV3>			angle_list_;
 	gte::Plane3<float>		table_;
 
-	/* debug related */
-	StiffnessIO				stiff_io_;
 	bool					debug_;
 };
 

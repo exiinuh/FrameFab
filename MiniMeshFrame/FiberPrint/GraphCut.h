@@ -131,7 +131,5 @@ public:
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	bool			debug_;
-	bool			matlab_;
-	bool			maya_;
 };
 

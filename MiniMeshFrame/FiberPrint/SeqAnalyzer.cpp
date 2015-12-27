@@ -2,13 +2,13 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(1.0)
+	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(100.0)
 {
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
-	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(1.0)
+	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), Wl_(10.0), Wp_(100.0)
 {
 	ptr_graphcut_ = ptr_graphcut;
 }
@@ -17,16 +17,12 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path)
 {
 	ptr_graphcut_ = ptr_graphcut;
-	ptr_parm_ = ptr_parm;
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
-	//Wl_		= ptr_parm->Wl_;
-	//Wp_		= ptr_parm->Wp_;
-	Wl_ = 10;
-	Wp_ = 100;
-	
+	Wl_		= ptr_parm->Wl_;
+	Wp_		= ptr_parm->Wp_;
 	debug_  = 1;
 
 	path_ = path;
@@ -114,6 +110,7 @@ bool SeqAnalyzer::LayerPrint()
 		int Nl = layers_[l].size();
 		int h = layer_queue_.size();
 		int t;
+
 		if (l == 0)
 		{
 			t = Nl;
@@ -128,26 +125,39 @@ bool SeqAnalyzer::LayerPrint()
 			printf("layer %d is in processing, intial head index %d, tail index %d\n", l, h, t);
 		}
 
+		if (h == t)
+		{
+			continue;
+		}
+
 		/* set start edge for searching of current layer */
+		multimap<double, int> choice;
+		multimap<double, int>::iterator it;
+
 		bool success = false;
 		for (int st_e = 0; st_e < Nl; st_e++)
 		{
 			int dual_e = layers_[l][st_e];
 			int orig_e = ptr_dualgraph->e_orig_id(dual_e);
-			
-			if (!ptr_subgraph_->isExistingEdge(orig_e))
-			{
-				/* Trial Strategy, only compute for edges connected to
-				*  already printed structure or pillar edges
-				*/
-				QueueInfo start_edge = QueueInfo{ l, st_e, layers_[l][st_e] };
-				layer_queue_.push_back(start_edge);
+			int u = ptr_frame->GetEndu(orig_e);
+			int v = ptr_frame->GetEndv(orig_e);
 
-				if (GenerateSeq(l, h, t))
-				{
-					success = true;
-					break;
-				}
+			double cost = GenerateCost(l, st_e);
+			if (cost != -1)
+			{
+				choice.insert(pair<double, int>(cost, st_e));
+			}
+		}
+
+		for (it = choice.begin(); it != choice.end(); it++)
+		{
+			QueueInfo start_edge = QueueInfo{ l, it->second, layers_[l][it->second] };
+			layer_queue_.push_back(start_edge);
+
+			if (GenerateSeq(l, h, t))
+			{
+				success = true;
+				break;
 			}
 		}
 
@@ -205,12 +215,6 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	int i = layer_queue_[h].layer_id_;
 	int dual_i = layer_queue_[h].dual_id_;
 	int orig_i = ptr_dualgraph->e_orig_id(dual_i);
-	double height_i = ptr_dualgraph->Height(dual_i);
-
-	double	P;							// adjacency weight
-	double	L;							// collision weight
-
-	multimap<double, int> choice;
 
 	/* update printed subgraph */
 	ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_i));
@@ -227,127 +231,27 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		return true;
 	}
 
+	/* next choice */
+	multimap<double, int> choice;
+	multimap<double, int>::iterator it;
+
 	/* next edge in current layer */
 	for (int j = 0; j < Nl; j++)
 	{
-		int dual_j = layers_[l][j];
-		int orig_j = ptr_dualgraph->e_orig_id(dual_j);
-		double height_j = ptr_dualgraph->Height(dual_j);
-
-		if (!ptr_subgraph_->isExistingEdge(orig_j))
-		{		
-			if (debug_)
-			{
-				printf("Attempting edge #%d, layer %d\n", j, l);
-			}
-
-			/* adjacency weight */
-			int u = ptr_frame->GetEndu(orig_j);
-			int v = ptr_frame->GetEndv(orig_j);
-			if (ptr_subgraph_->isExistingVert(u) && ptr_subgraph_->isExistingVert(v))
-			{
-				/* edge j share two ends with printed structure */
-				if (debug_)
-				{
-					printf("it shares two ends with printed structure\n");
-				}
-				P = 0;
-			}
-			else
-			if (ptr_subgraph_->isExistingVert(u) || ptr_subgraph_->isExistingVert(v))
-			{
-				/* edge j share one end with printed structure */
-				if (debug_)
-				{
-					printf("it shares only one ends with printed structure\n");
-				}
-				P = 100;
-			}
-			else
-			{
-				if (debug_)
-				{
-					printf("it floats, skip\n");
-				}
-				continue;
-			}
-
-			/* collision weight */
-			Collision *ptr_collision = new Collision(ptr_frame, ptr_frame->GetEdge(orig_j));
-			ptr_collision->DetectCollision(ptr_subgraph_);
-
-			L = 1 - (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
-
-			delete ptr_collision;
-			ptr_collision = NULL;
-
-			///*-----------------------------------------------*/
-			///* stiffness */
-			///* insert a trail edge */
-			//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
-
-			///* examinate stiffness on printing subgraph */
-			//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
-			//int Ns = ptr_subgraph_->SizeOfFreeFace();
-			//VX D(Ns);
-			//D.setZero();
-			//
-			//bool stiff_success = true;
-			//if (ptr_stiffness->CalculateD(D))
-			//{
-			//	for (int k = 0; k < Ns; k++)
-			//	{
-			//		VX offset(3);
-			//		VX distortion(3);
-			//		for (int h = 0; h < 3; h++)
-			//		{
-			//			offset[h] = D[j * 6 + h];
-			//			distortion[h] = D[j * 6 + h + 3];
-			//		}
-
-			//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
-			//		{
-			//			stiff_success = false;
-			//			printf("Large transformation and rotation detected. Structrue not stable. Skip.\n");
-			//			break;
-			//		}
-			//	}
-			//}
-			//else
-			//{
-			//	printf("stiffness matrix not SPD, mechanics existed in structure.\n");
-			//	stiff_success = false;
-			//}
-
-			///* remove the trail edge */
-			//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
-
-			//delete ptr_stiffness;
-			//ptr_stiffness = NULL;
-
-			///* examination failed */
-			//if (!stiff_success)
-			//{
-			//	continue;
-			//}
-
-			//printf("the structure is stable.\n");
-			///*-----------------------------------------------*/
-
-			/* cost weight */
-			double cost = Wl_ * L + Wp_ * P;
+		/* cost weight */
+		double cost = GenerateCost(l, j);
+		if (cost != -1)
+		{
 			choice.insert(pair<double, int>(cost, j));
+		}
 
-			if (debug_)
-			{
-				printf("cost : %f\n", cost);
-			}
+		if (debug_)
+		{
+			printf("cost : %f\n", cost);
 		}
 	}
 
 	/* ranked by weight */
-
-	multimap<double, int>::iterator it;
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
 		QueueInfo next_edge = QueueInfo{ l, it->second, layers_[l][it->second] };
@@ -374,6 +278,123 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 	}
 
 	return false;
+}
+
+
+int SeqAnalyzer::GenerateCost(int l, int j)
+{		
+	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
+	WireFrame *ptr_frame = ptr_subgraph_->ptr_frame_;
+
+	int dual_j = layers_[l][j];
+	int orig_j = ptr_dualgraph->e_orig_id(dual_j);
+
+	if (!ptr_subgraph_->isExistingEdge(orig_j))
+	{
+		double	P;							// adjacency weight
+		double	L;							// collision weight
+
+		if (debug_)
+		{
+			printf("Attempting edge #%d, layer %d\n", j, l);
+		}
+
+		/* adjacency weight */
+		int u = ptr_frame->GetEndu(orig_j);
+		int v = ptr_frame->GetEndv(orig_j);
+		if (ptr_subgraph_->isExistingVert(u) && ptr_subgraph_->isExistingVert(v))
+		{
+			/* edge j share two ends with printed structure */
+			if (debug_)
+			{
+				printf("it shares two ends with printed structure\n");
+			}
+			P = 0;
+		}
+		else
+		if (ptr_subgraph_->isExistingVert(u) || ptr_subgraph_->isExistingVert(v))
+		{
+			/* edge j share one end with printed structure */
+			if (debug_)
+			{
+				printf("it shares only one ends with printed structure\n");
+			}
+			P = 1;
+		}
+		else
+		{
+			if (debug_)
+			{
+				printf("it floats, skip\n");
+			}
+			return -1;
+		}
+
+		/* collision weight */
+		Collision *ptr_collision = new Collision(ptr_frame, ptr_frame->GetEdge(orig_j));
+		ptr_collision->DetectCollision(ptr_subgraph_);
+
+		//L = 1 - (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
+		L = (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
+		
+		delete ptr_collision;
+		ptr_collision = NULL;
+
+		///* stiffness */
+		///* insert a trail edge */
+		//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
+
+		///* examinate stiffness on printing subgraph */
+		//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
+		//int Ns = ptr_subgraph_->SizeOfFreeFace();
+		//VX D(Ns);
+		//D.setZero();
+
+		//printf("------------\n");
+		////printf("Layers %d, head index %d\n", l, h);
+		//printf("Trial Deformation calculation edge %d\n", dual_j);
+		//bool stiff_success = true;
+		//if (ptr_stiffness->CalculateD(D))
+		//{
+		//	for (int k = 0; k < Ns; k++)
+		//	{
+		//		VX offset(3);
+		//		VX distortion(3);
+		//		for (int h = 0; h < 3; h++)
+		//		{
+		//			offset[h] = D[j * 6 + h];
+		//			distortion[h] = D[j * 6 + h + 3];
+		//		}
+
+		//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+		//		{
+		//			stiff_success = false;
+		//			break;
+		//		}
+		//	}
+		//}
+		//else
+		//{
+		//	stiff_success = false;
+		//}
+
+		///* remove the trail edge */
+		//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+
+		//delete ptr_stiffness;
+		//ptr_stiffness = NULL;
+
+		///* examination failed */
+		//if (!stiff_success)
+		//{
+		//	return -1;
+		//}
+
+		double cost = Wl_ * L + Wp_ * P;
+		return cost;
+	}
+
+	return -1;
 }
 
 

@@ -370,7 +370,8 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	}
 
 	// Solving Process
-	fprintf(stdout, "Stiffness : Linear Elastic Analysis - Element Gravity Loads\n");
+	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
+	fprintf(stdout, "Linear Elastic Analysis ... Mechanical Loads\n");
 	
 	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
 	{

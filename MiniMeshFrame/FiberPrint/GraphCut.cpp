@@ -37,9 +37,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	path_   = path;
-	matlab_ = 0;
-	maya_   = 0;
+	path_ = path;
 }
 
 
@@ -218,12 +216,9 @@ void GraphCut::CreateC(int cut, int rew)
     }
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 
-	if (matlab_)
-	{
-		string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
-		Statistics s_c(str_c, v_c);
-		s_c.GenerateStdVecFile();
-	}
+	string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
+	Statistics s_c(str_c, v_c);
+	s_c.GenerateStdVecFile();
 
     //string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
     //Statistics s_r(str_r, v_r);
@@ -316,13 +311,9 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
-		
-		if (maya_)
+		if (cut_count == 2)
 		{
-			if (cut_count == 2)
-			{
-				WriteStiffness();
-			}
+			WriteStiffness();
 		}
 
         /* set x for intial cut setting */
@@ -439,36 +430,27 @@ void GraphCut::MakeLayers()
             res_energy.push_back(res_tmp);
 
             /* write x distribution to a file */
-			if (matlab_)
-			{
-				string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-				Statistics tmp_x(str_x, x_);
-				tmp_x.GenerateVectorFile();
-			}
+            string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+            Statistics tmp_x(str_x, x_);
+            tmp_x.GenerateVectorFile();
+
             rew_count++;
         } while (!UpdateR(x_prev, rew_count));
 
         /* Output reweighting energy history for last cut process */
-		if (matlab_)
-		{
-			string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-			Statistics s_eC(str_eC, cut_energy);
-			s_eC.GenerateStdVecFile();
+        string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
+        Statistics s_eC(str_eC, cut_energy);
+        s_eC.GenerateStdVecFile();
 
-			string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
-			Statistics s_eR(str_eR, res_energy);
-			s_eR.GenerateStdVecFile();
-		}
+        string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+        Statistics s_eR(str_eR, res_energy);
+        s_eR.GenerateStdVecFile();
 
         /* Update New Cut information to Rendering (layer_label_) */
-		if (maya_)
+		if (cut_count == 1)
 		{
-			if (cut_count == 1)
-			{
-				WriteWeight();
-			}
+			WriteWeight();
 		}
-
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);

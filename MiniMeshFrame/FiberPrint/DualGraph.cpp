@@ -206,20 +206,19 @@ void DualGraph::UpdateDualization(WF_edge *e)
 	int j = e->ppair_->ID();
 	int	u = e->pvert_->ID();
 	int	v = e->ppair_->pvert_->ID();
-
-	if (exist_vert_[u] == 0)
-	{
-		InsertFace(ptr_frame_->GetVert(u));
-	}
-	if (exist_vert_[v] == 0)
-	{
-		InsertFace(ptr_frame_->GetVert(v));
-	}
-	exist_vert_[u]++;
-	exist_vert_[v]++;
-
 	if (!exist_edge_[i])
 	{
+		if (exist_vert_[u] == 0)
+		{
+			InsertFace(ptr_frame_->GetVert(u));
+		}
+		if (exist_vert_[v] == 0)
+		{
+			InsertFace(ptr_frame_->GetVert(v));
+		}
+		exist_vert_[u]++;
+		exist_vert_[v]++;
+
 		InsertVertex(e);
 		exist_edge_[i] = exist_edge_[j] = true;
 	}
@@ -233,19 +232,22 @@ void DualGraph::RemoveUpdation(WF_edge *e)
 	int	u = e->pvert_->ID();
 	int	v = e->ppair_->pvert_->ID();
 
-	exist_vert_[u]--;
-	exist_vert_[v]--;
-	if (exist_vert_[u] == 0)
+	if (exist_edge_[i])
 	{
-		DeleteFace(ptr_frame_->GetVert(u));
-	}
-	if (exist_vert_[v] == 0)
-	{
-		DeleteFace(ptr_frame_->GetVert(v));
-	}
+		exist_vert_[u]--;
+		exist_vert_[v]--;
+		if (exist_vert_[u] == 0)
+		{
+			DeleteFace(ptr_frame_->GetVert(u));
+		}
+		if (exist_vert_[v] == 0)
+		{
+			DeleteFace(ptr_frame_->GetVert(v));
+		}
 
-	DeleteVertex(e);
-	exist_edge_[i] = exist_edge_[j] = false;
+		DeleteVertex(e);
+		exist_edge_[i] = exist_edge_[j] = false;
+	}
 }
 
 

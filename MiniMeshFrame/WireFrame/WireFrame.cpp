@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-		  :fixed_vert_(0), delta_tol_(2e-3), unify_size_(2.0)
+		  :fixed_vert_(0), delta_tol_(5e-4), unify_size_(2.0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -165,6 +165,16 @@ void WireFrame::WriteToOBJ(const char *path)
 	{
 		point p = (*pvert_list_)[i]->Position();
 		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID())
+		{
+			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
+		}
 	}
 
 	for (int i = 0; i < F; i++)
