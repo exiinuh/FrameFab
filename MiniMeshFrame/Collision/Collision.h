@@ -76,7 +76,7 @@ public:
 
 //private:
 	/* Interface Data Structure*/
-	WireFrame		*ptr_frame_;
+	WireFrame			*ptr_frame_;
 
 	int					divide_;
 	gte::Plane3<float>	table_;

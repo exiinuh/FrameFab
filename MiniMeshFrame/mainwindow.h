@@ -4,10 +4,21 @@
 #define MAINWINDOW_H
 
 #include <QtWidgets/QMainWindow>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QCheckBox>
+#include <QRadioButton>
 #include <QToolButton>
+#include <QGroupBox>
 #include <QSpinBox>
-#include "ui_mainwindow.h"
-#include "qinputdialog.h"
+#include <QMessageBox>
+#include <QKeyEvent>
+#include <QSlider>
+#include <QInputDialog>
+
+#include "GeneratedFiles\ui_mainwindow.h"
+#include "renderingwidget.h"
 
 
 enum EdgeRenderMode
@@ -19,11 +30,6 @@ enum EdgeRenderMode
 	ORDER,
 };
 
-class QLabel;
-class QPushButton;
-class QCheckBox;
-class QRadioButton;
-class QGroupBox;
 class RenderingWidget;
 
 class MainWindow : public QMainWindow
@@ -93,6 +99,7 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
+	QAction				*action_savelayers_;
 	QAction				*action_exportpoints_;
 	QAction				*action_exportlines_;
 

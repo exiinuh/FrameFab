@@ -43,37 +43,6 @@ bool SeqAnalyzer::LayerPrint()
 	ptr_dualgraph->Dualization();
 	int Nd = ptr_dualgraph->SizeOfVertList();
 
-	/* ---- */
-	WireFrame *ptr_wf = ptr_dualgraph->ptr_frame_;
-	std::vector<WF_edge*> wf_edge_list = *ptr_wf->GetEdgeList();
-	vector<double> ss;
-
-	for (int i = 1; i < Nd; i++)
-	{
-		int e_id = ptr_dualgraph->e_orig_id(i);
-
-		WF_edge *ei = ptr_wf->GetEdge(e_id);
-		WF_vert *ui = ei->pvert_;
-		WF_vert *vi = ei->ppair_->pvert_;
-
-		printf("edge dual id : %d, end node coord:\n", i);
-		printf("%f, %f, %f\n", ui->Position().x(), ui->Position().y(), ui->Position().z());
-		ss.push_back(ui->Position().x());
-		ss.push_back(ui->Position().y());
-		ss.push_back(ui->Position().z());
-		printf("%f, %f, %f\n", vi->Position().x(), vi->Position().y(), vi->Position().z());
-		ss.push_back(vi->Position().x());
-		ss.push_back(vi->Position().y());
-		ss.push_back(vi->Position().z());
-	}
-
-	Statistics tmp_s("restrict", ss);
-	tmp_s.GenerateStdVecFile();
-
-	getchar();
-	/* --- */
-
-
 	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
 	int N = ptr_frame->SizeOfVertList();
 
@@ -91,6 +60,7 @@ bool SeqAnalyzer::LayerPrint()
 	}
 
 	max_layer++;
+	ptr_frame->SetMaxLayer(max_layer); 
 	layers_.resize(max_layer);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -136,7 +106,7 @@ bool SeqAnalyzer::LayerPrint()
 	/* print starting from the first layer */
 	for (int l = 0; l < max_layer; l++)
 	{
-		/*
+		/* 
 		* Nl: number of dual verts in current layer
 		* h : head for printing queue of the layer
 		* t : tail for printing queue of the layer
@@ -203,16 +173,9 @@ bool SeqAnalyzer::LayerPrint()
 	{
 		WriteLayerQueue();
 	}
-
-	///* Feasible printing orientation */
-	//wave_.clear();
-	//for (int i = 0; i < Nd; i++)
-	//{
-	//	wave_.push_back(0);
-	//}
-
-	//angle_list_ = AngleList(layer_queue_);
-	AngleDec();
+	
+	/* detect extruder angles */
+	//DetectAngle();
 }
 
 
@@ -367,7 +330,6 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		//D.setZero();
 
 		//printf("------------\n");
-		//printf("Layers %d, head index %d\n", l, h);
 		//printf("Trial Deformation calculation edge %d\n", dual_j);
 		//bool stiff_success = true;
 		//if (ptr_stiffness->CalculateD(D))
@@ -403,6 +365,7 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		///* examination failed */
 		//if (!stiff_success)
 		//{
+		//	cout << "Large deformation detected." << endl;
 		//	return -1;
 		//}
 
@@ -420,10 +383,14 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 
 void SeqAnalyzer::GetQueue(vector<int> &layer_queue)
 {
+	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
+	layer_queue.clear();
+
 	int Nq = layer_queue_.size();
 	for (int i = 0; i < Nq; i++)
 	{
-		layer_queue.push_back(layer_queue_[i].dual_id_);
+		int dual_e = layer_queue_[i].dual_id_;
+		layer_queue.push_back(ptr_dualgraph->e_orig_id(dual_e));
 	}
 }
 
@@ -445,221 +412,12 @@ void SeqAnalyzer::WriteLayerQueue()
 	fclose(fp);
 }
 
-//vector<GeoV3> SeqAnalyzer::AngleList(vector<QueueInfo> *layer_queue)
-//{
-//	support_ = 0;
-//	vector<GeoV3> temp;
-//
-//	cout << "------------------------ " << endl;
-//	cout << "Feasible Angle Computing:" << endl;
-//
-//	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_graphcut_->ptr_dualgraph_->e_orig_id((*layer_queue_)[0].dual_id_));
-//	double base_value;
-//	
-//	base_value = temp_edge->pvert_->Position().z();
-//	if (base_value > temp_edge->ppair_->pvert_->Position().z())
-//		base_value = temp_edge->ppair_->pvert_->Position().z();
-//
-//	std::array<float, 3>s;
-//	s[0] = 0; s[1] = 0; s[2] = 1;
-//	table_.normal = s;
-//	table_.constant = base_value;
-//
-//	for (int i = 0; i < layer_queue->size(); i++)
-//	{
-//		cout << "edge " << i << " angle in processing" << endl;
-//		temp.push_back(AngleDec(i));
-//	}
-//	return temp;
-//}
-//
-//GeoV3 SeqAnalyzer::AngleDec(int id)
-//{
-//	/* sampling number of orientation vector in 2*pi angle range */
-//	int divide = 72;
-//	vector<GeoV3> normal;
-//	
-//	WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(ptr_graphcut_->ptr_dualgraph_->e_orig_id((*layer_queue_)[id].dual_id_));
-//	if (temp_edge->isPillar())
-//	{
-//		support_ += 1;
-//		return GeoV3(0, 0, 1);
-//	}
-//
-//	point start, end;
-//	start = temp_edge->pvert_->Position();
-//	end   = temp_edge->ppair_->pvert_->Position();
-//	start_ = temp_edge->pvert_->Position();
-//	end_   = temp_edge->ppair_->pvert_->Position();
-//
-//
-//	GeoV3 u, v;
-//
-//	GeoV3 t = end_ - start_;
-//	t.normalize();
-//	GeoV3 z(0, 0, 1);
-//
-//	if (Geometry::cross(t, z).norm() < eps)
-//	{
-//		/* vertical case */
-//		u = Geometry::Vector3d(1, 0, 0);
-//		v = Geometry::Vector3d(0, 1, 0);
-//	}
-//	else
-//	{
-//		/* perpendicular to printing edge */
-//		u = Geometry::cross(t, z);
-//		u.normalize();
-//		v = Geometry::cross(u, t);
-//		v.normalize();
-//	}
-//
-//	/* normal contains all sampling vectors */
-//	for (int i = 0; i < divide; i++)
-//	{
-//		normal.push_back(u*cos(2 * F_PI / divide*i) + v*sin(2 * F_PI / divide*i));
-//	}
-//
-//	/* i traverse all the printed edges until current state id */
-//	for (int i = 0; i < id; i++)
-//	{
-//		vector<GeoV3>::iterator it;
-//		/* influence from id to i 
-//		* i.e. the collision cost of existence of edge i
-//		* when printing edge id
-//		*/
-//		RAngle TestR = ptr_collision_->R2_Angle[(*layer_queue_)[id].dual_id_][(*layer_queue_)[i].dual_id_];
-//
-//		if (ptr_collision_->R2_state_[(*layer_queue_)[id].dual_id_][(*layer_queue_)[i].dual_id_] == 0)
-//			continue;
-//
-//		for (it = normal.begin(); it != normal.end();)
-//		{
-//			if (IsColVec(TestR.u, TestR.v, *it ))
-//			{
-//				it = normal.erase(it);
-//			}
-//			else
-//			{
-//				++it;
-//			}
-//		}
-//	}
-//
-//	if (normal.size() == 0)
-//	{
-//		cout << " Infeasible orientation!" << endl;
-//		wave_[id] = 0;
-//		return GeoV3(0, 0, 1);
-//		return GeoV3(0, 0, 1);
-//	}
-//
-//	if (normal.size() == 72)
-//	{
-//		wave_[id] = 2 * F_PI;
-//		return normal[0];
-//	}
-//
-//	ResolveAngle resolve;
-//	resolve = ResolveAngle(normal);
-//
-//	wave_[id] = resolve.wave;
-//	return resolve.dec;
-//}
-//
-//bool  SeqAnalyzer::IsColVec(GeoV3 start, GeoV3 end, GeoV3 target)
-//{
-//	if (Geometry::angle(target, start) <= extruder_.Angle())
-//		return true;
-//
-//	if (Geometry::angle(target, end) <= extruder_.Angle())
-//		return true;
-//
-//	if (abs(Geometry::angle(target, start) + Geometry::angle(target, end) - Geometry::angle(target, end)) < eps)
-//		return true;
-//
-//	//if (Geometry::angle(target, Geometry::Vector3d(0, 0, -1)) < 2*extruder_.Angle())
-//	//	return true;
-//
-//	gte::Circle3<float>circle;
-//	std::array<float,3> s,n;
-//	
-//	// Collision with Table
-//	GeoV3 low = start_;
-//	if (low.getZ()>end_.z());
-//	   low = end_;
-//	
-//	   GeoV3 t = end_ - start_;
-//	   t.normalize();
-//	   GeoV3 u = target;
-//	   u.normalize();
-//	   GeoV3 v = Geometry::cross(u, t);
-//	   v.normalize();
-//
-//	  GeoV3 test;
-//	   test = low + target*extruder_.Height();
-//	   s[0] = test.getX(); s[1] = test.getY(); s[2] = test.getZ();
-//	   circle.center = s;
-//	   n[0] = target.getX(); n[1] = target.getY(); n[2] = target.getZ();
-//	   circle.normal = n;
-//	   circle.radius = extruder_.Height()*tan(extruder_.Angle());
-//
-//	   gte::FIQuery<float, gte::Plane3<float>, gte::Circle3<float>> intersection;
-//
-//	   auto result = intersection(table_, circle);
-//	   if (result.intersect)
-//	   {		  
-//		   return true;
-//	   }
-//	   if (s[2] < table_.constant)
-//	   {
-//		  
-//		   return true;
-//	   }
-//	
-//	return false;
-//}
-//
-//void SeqAnalyzer::Print(Set *a)
-//{
-//	cout << a->min << " " << a->max << " " << endl;
-//}
-//
-//void SeqAnalyzer::Print(vector<Set*> *a)
-//{
-//	for (int i = 0; i < a->size(); i++)
-//	{
-//
-//		Print((*a)[i]);
-//	}
-//}
-//
-//void SeqAnalyzer::Debug()
-//{
-//}
 
-
-void SeqAnalyzer::AngleDec()
+void SeqAnalyzer::DetectAngle()
 {
-
-	/*vector<int> quene{ 123, 127, 122, 124, 128, 125, 121, 120, 126, 129, 131, 130, 116, 119, 118, 117, 9, 77, 12, 15, 78, 80, 10, 11, 13, 6, 82, 7, 8, 14, 79, 81, 16, 30, 103, 34, 97, 96, 31, 75, 27, 29, 28, 99, 26, 72, 32, 33, 73, 104, 35, 110, 107, 25, 100, 108, 105, 71, 63, 109, 93, 94, 102, 101, 98, 70, 76, 74, 24, 23, 95, 20, 67, 22, 21, 62, 106, 54, 64, 55, 84, 18, 68, 61, 17, 19, 83, 65, 49, 69, 66, 50, 60, 53, 39, 40, 56, 87, 57, 51, 52, 38, 41, 88, 89, 58, 47, 59, 86, 46, 91, 113, 42, 111, 85, 48, 37, 45, 36, 43, 90, 44, 92, 114, 115, 112, 4, 5, 3, 1, 2, 0,
-};
-	layer_queue_.clear();
-	for (int i = 0; i < quene.size(); i++)
-
-	{
-
-		QueueInfo test;
-		test.dual_id_ = quene[i];
-		layer_queue_.push_back(test);
-	}
-	
-*/
-
 	cout << "---------Angle Detection--------" << endl;
-	DualGraph *ptr_dual = new DualGraph(ptr_graphcut_->ptr_frame_);
-
-	ptr_dual->Dualization();
+	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
+	WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
 
 	vector<GeoV3 > Normal;
 	vector<double> Wave;
@@ -667,40 +425,36 @@ void SeqAnalyzer::AngleDec()
 	support_ = 0;
 	for (int i = 0; i < layer_queue_.size(); i++)
 	{
-		WF_edge * target = ptr_graphcut_->ptr_frame_->GetEdge(ptr_dual->e_orig_id(layer_queue_[i].dual_id_));
+		int orig_e = ptr_dualgraph->e_orig_id(layer_queue_[i].dual_id_);
+		WF_edge *target = ptr_frame->GetEdge(orig_e);
 
 		if (target->isPillar())
 		{
 			Normal.push_back(GeoV3(0, 0, 1));
 			Wave.push_back(2 * F_PI);
 
-			ExtruderCone extruder_;
-			
 			support_ += 1;
 			continue;
 		}
-Collision col(ptr_graphcut_->ptr_frame_, target);
+
+		Collision col(ptr_graphcut_->ptr_frame_, target);
 		for (int j = 0; j < i; j++)
 		{
-			
-			col.DetectCollision(ptr_graphcut_->ptr_frame_->GetEdge(ptr_dual->e_dual_id(layer_queue_[j].dual_id_)));
+			orig_e = ptr_dualgraph->e_orig_id(layer_queue_[j].dual_id_);
+			col.DetectCollision(ptr_frame->GetEdge(orig_e));
 
 			if (col.normal_.size() == 0)
 			{
 				cout << "Oops~~, What is wrong?!" << endl;
 			}
-			
-			
 		}
 		ResolveAngle resolve(col.normal_);
-Normal.push_back(resolve.dec);
-			Wave.push_back(resolve.wave);
+		Normal.push_back(resolve.dec);
+		Wave.push_back(resolve.wave);
 
 	}
 
 	wave_ = Wave;
-
-
 
 	//Extruder
 	for (int i = 0; i < layer_queue_.size(); i++)
@@ -709,14 +463,13 @@ Normal.push_back(resolve.dec);
 		ExtruderCone temp_extruder;
 
 		/* original edge id */
-		WF_edge*  temp_edge = ptr_graphcut_->ptr_frame_->GetEdge(  ptr_dual->e_orig_id((layer_queue_)[i].dual_id_));
+		int orig_e = ptr_dualgraph->e_orig_id(layer_queue_[i].dual_id_);
+		WF_edge *temp_edge = ptr_frame->GetEdge(orig_e);
 
-		temp_extruder.Rotation(Normal[i], temp_edge->pvert_->Position(), temp_edge->ppair_->pvert_->Position());
+		temp_extruder.Rotation(Normal[i], temp_edge->pvert_->Position(), 
+			temp_edge->ppair_->pvert_->Position());
 		extruder_list_.push_back(temp_extruder);
 	}
-
-
-
 
 	cout << "---------Angle Detection done--------" << endl;
 }

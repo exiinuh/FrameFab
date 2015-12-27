@@ -41,7 +41,7 @@ class RenderingWidget : public QGLWidget
 	Q_OBJECT
 
 public:
-	RenderingWidget(QWidget *parent, MainWindow* mainwindow=0);
+	RenderingWidget(QWidget *parent, MainWindow* mainwindow = 0);
 	~RenderingWidget();
 
 public:
@@ -89,11 +89,13 @@ private:
 	void	Render();
 	void	SetLight();
 
-public slots:
+	public slots:
 	void	SetBackground();
+	void	ScaleFrame(double scale);
+
 	void	ReadFrame();
 	void	WriteFrame();
-	void	ScaleFrame(double scale);
+	void	WriteLayers();
 
 	void	ExportPoints();
 	void	ExportLines();
@@ -115,7 +117,7 @@ private:
 	void	DrawBulk(bool bv);
 	void	DrawOrder(bool bv);
 
-public slots:
+	public slots:
 	void	FiberPrintAnalysis(double radius, double density, double g,
 								double youngs_modulus, double shear_modulus,
 								double Dt_tol, double Dr_tol,

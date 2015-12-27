@@ -1,15 +1,5 @@
 #include "mainwindow.h"
 
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QLayout>
-#include <QtWidgets/QGroupBox>
-#include <QtWidgets/QRadioButton>
-#include <QtWidgets/QMessageBox>
-#include <QKeyEvent>
-#include "renderingwidget.h"
-
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -87,6 +77,9 @@ void MainWindow::CreateActions()
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteFrame()));
 
+	action_savelayers_ = new QAction(tr("Save layers"), this);
+	connect(action_savelayers_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteLayers()));
+
 	action_exportpoints_ = new QAction(tr("Export points"), this);
 	connect(action_exportpoints_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportPoints()));
 
@@ -108,6 +101,9 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_new_);
 	menu_file_->addAction(action_open_);
 	menu_file_->addAction(action_save_);
+
+	menu_file_->addSeparator();
+	menu_file_->addAction(action_savelayers_);
 
 	menu_file_->addSeparator();
 	menu_file_->addAction(action_exportpoints_);

@@ -8,8 +8,8 @@ ProcessAnalyzer::ProcessAnalyzer(SeqAnalyzer *ptr_seqanalyzer, char *path)
 
     break_height_ = 2; //2cm
 	//SetThick();
-	
-	debug_ = false;
+
+	debug_ = true;
 }
 
 
@@ -19,15 +19,15 @@ void ProcessAnalyzer::ProcPrint()
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
 
-
+	if (debug_)
+	{
 		ptr_dualgraph->Dualization();
-		
-
-		layer_queue_.clear();
+		ReadLayerQueue();
+	}
+	else
+	{
 		ptr_seqanalyzer_->GetQueue(layer_queue_);
-
-
-	
+	}
 
 
 	exist_point_.clear();
@@ -35,8 +35,8 @@ void ProcessAnalyzer::ProcPrint()
 	
 	for (int i = 0; i <layer_queue_.size(); i++)
 	{
-		int dual_id = layer_queue_[i];
-     	WF_edge *e = ptr_frame->GetEdge(ptr_dualgraph->e_orig_id(dual_id));
+		int orig_e = layer_queue_[i];
+		WF_edge *e = ptr_frame->GetEdge(orig_e);
 		
 		if (i == 0)
 		{
@@ -201,8 +201,8 @@ Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 	}
 	
 	
-	int dual_id = layer_queue_[id + 1];
-	WF_edge *later_e = ptr_frame->GetEdge(ptr_dualgraph->e_orig_id(dual_id));
+	int orig_e = layer_queue_[id + 1];
+	WF_edge *later_e = ptr_frame->GetEdge(orig_e);
 
 	if (later_e->pvert_->Position() == e->pvert_->Position())
 	{

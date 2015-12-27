@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-		  :fixed_vert_(0), delta_tol_(5e-4), unify_size_(2.0)
+	:fixed_vert_(0), delta_tol_(5e-4), unify_size_(2.0), max_layer_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -460,7 +460,7 @@ void WireFrame::WriteToPWF(const char *path)
 	{
 		WF_edge *e1 = (*pedge_list_)[i];
 		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() != 0)
+		if (i < e2->ID() && e1->Layer() != -1)
 		{
 			fprintf(fp, "g %d %d %d\n", e2->pvert_->ID() + 1, 
 				e1->pvert_->ID() + 1, e1->Layer());
@@ -469,6 +469,107 @@ void WireFrame::WriteToPWF(const char *path)
 
 	fclose(fp);
 }
+
+
+void WireFrame::WriteLayersToPWF(const char *path, int max_layer)
+{
+	FILE *fp = fopen(path, "wb+");
+	int N = SizeOfVertList();
+	int M = SizeOfEdgeList();
+	int F = SizeOfFaceList();
+	
+	vector<int> export_vert;
+	vector<int> hash(N);
+	fill(hash.begin(), hash.end(), -1);
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->Layer() < max_layer)
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			if (hash[u] == -1)
+			{
+				export_vert.push_back(u);
+				hash[u] = export_vert.size();
+			}
+			if (hash[v] == -1)
+			{
+				export_vert.push_back(v);
+				hash[v] = export_vert.size();
+			}
+		}
+	}
+
+	int Ne = export_vert.size();
+	for (int i = 0; i < Ne; i++)
+	{
+		point p = (*pvert_list_)[export_vert[i]]->Position();
+		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	//for (int i = 0; i < F; i++)
+	//{
+	//	fprintf(fp, "f");
+	//	vector<WF_vert*> bound_points = *((*pface_list_)[i]->bound_points_);
+	//	int n = bound_points.size();
+	//	for (int j = 0; j < n; j++)
+	//	{
+	//		fprintf(fp, " %d", bound_points[j]->ID() + 1);
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->Layer() < max_layer)
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
+		}
+	}
+
+	for (int i = 0; i < Ne; i++)
+	{
+		int u = export_vert[i];
+		if ((*pvert_list_)[u]->isFixed())
+		{
+			fprintf(fp, "b %d\n", hash[u]);
+		}
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->Layer() < max_layer && e1->isCeiling())
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "c %d %d\n", hash[u], hash[v]);
+		}
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->Layer() < max_layer && e1->Layer() != -1)
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "g %d %d %d\n", hash[u], hash[v], e1->Layer());
+		}
+	}
+
+	fclose(fp);
+}
+
 
 void WireFrame::ExportPoints(const char *path)
 {
@@ -594,6 +695,7 @@ void WireFrame::Unify()
 	fixed_vert_ = 0;
 	pillar_size_ = 0;
 	ceiling_size_ = 0;
+	max_layer_ = -1;
 
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
@@ -654,7 +756,12 @@ void WireFrame::Unify()
 		{
 			ceiling_size_++;
 		}
+		if ((*pedge_list_)[i]->Layer() > max_layer_)
+		{
+			max_layer_ = (*pedge_list_)[i]->Layer();
+		}
 	}
+	max_layer_++;
 
 	float scaleX = maxx_ - minx_;
 	float scaleY = maxy_ - miny_;

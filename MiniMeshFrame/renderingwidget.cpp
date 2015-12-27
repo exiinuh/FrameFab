@@ -460,6 +460,35 @@ void RenderingWidget::SetBackground()
 }
 
 
+void RenderingWidget::ScaleFrame(double scale)
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+
+	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
+	int N = ptr_frame_->SizeOfVertList();
+	float size = scale / scale_;
+	for (int i = 0; i < N; i++)
+	{
+		Vec3f p = verts[i]->Position();
+		verts[i]->SetPosition(p * size);
+	}
+	scale_ = scale;
+	ptr_frame_->Unify();
+
+	int cape_size = captured_edges_.size();
+	if (cape_size != 0)
+	{
+		emit(CapturedEdge(captured_edges_[cape_size - 1]->ID() + 1,
+			captured_edges_[cape_size - 1]->Length()));
+	}
+
+	updateGL();
+}
+
+
 void RenderingWidget::ReadFrame()
 {
 	QString filename = QFileDialog::
@@ -502,12 +531,6 @@ void RenderingWidget::ReadFrame()
 	InitFiberData();
 
 	updateGL();
-
-
-
-
-
-
 }
 
 
@@ -538,32 +561,36 @@ void RenderingWidget::WriteFrame()
 }
 
 
-void RenderingWidget::ScaleFrame(double scale)
+void RenderingWidget::WriteLayers()
 {
-	if (ptr_frame_ == NULL)
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfEdgeList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	bool ok;
+	int max_layer = QInputDialog::getInt(
+		this,
+		tr("Save layers"),
+		tr("Please input the maximum layer"),
+		0, 0, ptr_frame_->GetMaxLayer() - 1, 1, &ok);
+	if (!ok)
 	{
 		return;
 	}
 
-	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
-	int N = ptr_frame_->SizeOfVertList();
-	float size = scale / scale_;
-	for (int i = 0; i < N; i++)
-	{
-		Vec3f p = verts[i]->Position();
-		verts[i]->SetPosition(p * size);
-	}
-	scale_ = scale;
-	ptr_frame_->Unify();
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Save layers"),
+		"..", tr("Layers (*.PWF)"));
 
-	int cape_size = captured_edges_.size();
-	if (cape_size != 0)
-	{
-		emit(CapturedEdge(captured_edges_[cape_size - 1]->ID() + 1, 
-			captured_edges_[cape_size - 1]->Length()));
-	}
+	if (filename.isEmpty())
+		return;
 
-	updateGL();
+	ptr_frame_->WriteLayersToPWF(filename.toLatin1().data(), max_layer + 1);
+
+	emit(operatorInfo(QString("Save %1 layer(s) to ").arg(max_layer) + filename
+		+ QString(" Done")));
 }
 
 
@@ -1058,16 +1085,13 @@ void RenderingWidget::DrawOrder(bool bv)
 		return;
 	}
 
-	const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
-
 	if (op_mode_ == NORMAL)
 	{
 		vector<int> print_queue; 
 		ptr_fiberprint_->GetQueue(print_queue);
 		for (int i = 0; i < print_order_; i++)
 		{
-			int dual_id = print_queue[i];
-			WF_edge *e = ptr_frame_->GetEdge(dual_vert[dual_id]->orig_id());
+			WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
 			glBegin(GL_LINE_LOOP);
 			glColor3f(1.0, 1.0, 1.0);
 			glVertex3fv(e->pvert_->RenderPos().data());
@@ -1077,9 +1101,7 @@ void RenderingWidget::DrawOrder(bool bv)
 
 		if (print_order_ > 0)
 		{
-
-			if (ptr_fiberprint_->ptr_seqanalyzer_->extru_)
-			ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
+			//ptr_fiberprint_->ptr_seqanalyzer_->GetExtru(print_order_ - 1).Render(ptr_frame_, 0.5);
 		}
 	}
 
@@ -1264,14 +1286,28 @@ void RenderingWidget::PrintNextLayer()
 	vector<int> print_queue;
 	ptr_fiberprint_->GetQueue(print_queue);
 
-	int orig_e = print_queue[print_order_ - 1];
-	int cur_layer = ptr_frame_->GetEdge(orig_e)->Layer();
-	int M = ptr_frame_->SizeOfEdgeList() / 2;
-
-	while (print_order_ < M - 1)
+	int next_layer;
+	if (print_order_ == 0)
 	{
-		orig_e = print_queue[print_order_];
-		if (ptr_frame_->GetEdge(orig_e)->Layer() == cur_layer + 2)
+		next_layer = 1;
+	}
+	else
+	{
+		int orig_e = print_queue[print_order_ - 1];
+		next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 2; 
+	}
+
+
+	int M = ptr_frame_->SizeOfEdgeList() / 2;
+	while (1)
+	{
+		if (print_order_ == M)
+		{
+			break;
+		}
+
+		int orig_e = print_queue[print_order_];
+		if (ptr_frame_->GetEdge(orig_e)->Layer() == next_layer)
 		{
 			break;
 		}

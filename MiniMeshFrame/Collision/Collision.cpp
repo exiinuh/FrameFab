@@ -44,7 +44,6 @@ void Collision::DetectCollision(WF_edge *order_e)
 
 	}
 
-
 	considerable_ = true;
 	point order_start	= order_e->ppair_->pvert_->Position();
 	point order_end		= order_e->pvert_->Position();

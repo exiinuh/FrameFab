@@ -65,7 +65,7 @@ class WF_edge
 public:
 	WF_edge()
 		:pvert_(NULL), pnext_(NULL), ppair_(NULL), 
-		id_(0), layer_(0), pillar_(false), ceiling_(false)
+		id_(0), layer_(-1), pillar_(false), ceiling_(false)
 	{}
 	~WF_edge(){}
 
@@ -133,6 +133,8 @@ public:
 	void		WriteToOBJ(const char *path);
 	void		LoadFromPWF(const char *path);
 	void		WriteToPWF(const char *path);
+	void		WriteLayersToPWF(const char *path, int max_layer);
+
 	void		ExportPoints(const char *path);
 	void		ExportLines(const char *path);
 
@@ -141,9 +143,6 @@ public:
 	WF_edge*	InsertOneWayEdge(WF_vert *u, WF_vert *v);
 	void		InsertFace(vector<WF_vert*>	&bound_points);
 	void		InsertModifiedFace(vector<WF_vert*>	&bound_points);
-
-	void		InsertSupport(int u);
-	void		InsertSupport(int u, int v);
 
 	void		Unify();
 	point		Unify(Vec3f p);
@@ -167,23 +166,26 @@ public:
 	inline WF_edge				*GetEdge(int i)			{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]; }
 	inline WF_edge				*GetNeighborEdge(int u)	{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->pedge_; }
 
-	inline point				GetPosition(int u)	{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->Position(); }
-	inline int					GetDegree(int u)	{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->Degree(); }
+	inline point		GetPosition(int u)			{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->Position(); }
+	inline int			GetDegree(int u)			{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->Degree(); }
 
-	inline int					GetEndu(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->ppair_->pvert_->ID(); }
-	inline int					GetEndv(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->pvert_->ID(); }
-	inline point				GetCenterPos(int i) { return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->CenterPos(); }
+	inline int			GetEndu(int i)				{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->ppair_->pvert_->ID(); }
+	inline int			GetEndv(int i)				{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->pvert_->ID(); }
+	inline point		GetCenterPos(int i)			{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->CenterPos(); }
 
-	inline bool					isFixed(int u)		{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->isFixed(); }
-	inline bool					isPillar(int i)		{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->isPillar(); }
+	inline bool			isFixed(int u)				{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->isFixed(); }
+	inline bool			isPillar(int i)				{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->isPillar(); }
 
-	inline double				maxX()	{ return maxx_; }
-	inline double				minX()	{ return minx_; }
-	inline double				maxY()	{ return maxy_; }
-	inline double				minY()	{ return miny_; }
-	inline double				maxZ()	{ return maxz_; }
-	inline double				minZ()	{ return minz_; }
-	inline double				Base()	{ return base_; }
+	inline void 		SetMaxLayer(int max_layer)	{ max_layer_ = max_layer; }
+	inline int			GetMaxLayer()				{ return max_layer_; }
+
+	inline double		maxX()		{ return maxx_; }
+	inline double		minX()		{ return minx_; }
+	inline double		maxY()		{ return maxy_; }
+	inline double		minY()		{ return miny_; }
+	inline double		maxZ()		{ return maxz_; }
+	inline double		minZ()		{ return minz_; }
+	inline double		Base()		{ return base_; }
 
 	inline double Norm(point u)
 	{
@@ -220,6 +222,7 @@ private:
 	int					fixed_vert_;
 	int					pillar_size_;
 	int					ceiling_size_;
+	int					max_layer_;
 
 	double				maxx_;
 	double				maxy_;

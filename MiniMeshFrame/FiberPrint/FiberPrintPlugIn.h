@@ -21,8 +21,8 @@ public:
 public:
 	void			Print();
 
-	vector<DualVertex*>	*GetDualVertList()	{ return ptr_graphcut_->GetDualVertList(); }
-	vector<int>			*GetCut()			{ return ptr_graphcut_->GetCut(); }
+	vector<DualVertex*>	*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
+	vector<int>			*GetCut()						{ return ptr_graphcut_->GetCut(); }
 	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
 	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 

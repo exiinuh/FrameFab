@@ -44,11 +44,11 @@ Note:
 #include "DualGraph.h"
 #include "FiberPrintPARM.h"
 
-#include "Statistics.h"
-#include "CoordTrans.h"
+#include "I_O\Statistics.h"
+#include "Stiffness\CoordTrans.h"
 
-#include "GCommon.h"
-#include "GUtil.h"
+#include "Stiffness\GCommon.h"
+#include "Stiffness\GUtil.h"
 
 using namespace std;
 using namespace Eigen;

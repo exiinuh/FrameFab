@@ -36,8 +36,8 @@
 #include "Stiffness\Stiffness.h"
 #include "FiberPrintPARM.h"
 
-#include "QP/QPMosek.h"
-#include "QP/QPFactory.h"
+#include "QP\QPMosek.h"
+#include "QP\QPFactory.h"
 #include "I_O\Statistics.h"
 
 using namespace std;

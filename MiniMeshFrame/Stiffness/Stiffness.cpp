@@ -336,7 +336,7 @@ bool Stiffness::CalculateD(VectorXd &D)
 	VX x(Nd); 
 	x.setOnes();
 
-	return CalculateD(D, x, 0, 0, 0);
+	return CalculateD(D, x, 1, 1, 0);
 }
 
 
