@@ -71,7 +71,6 @@ public slots:
 	void	CheckEdgeMode();
 	void	SwitchParaBox();
 
-	void	OrderStep();
 	void	SetOrderSlider(int value);
 	void	SetMaxOrderSlider(int max_value);
 
@@ -160,6 +159,7 @@ private:
 	QPushButton			*pushbutton_rotatexz_;
 	QPushButton			*pushbutton_rotateyz_;
 	QPushButton			*pushbutton_nextedge_;
+	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_simplify_;
 	QPushButton			*pushbutton_refine_;
 	QPushButton			*pushbutton_fiberprint_;

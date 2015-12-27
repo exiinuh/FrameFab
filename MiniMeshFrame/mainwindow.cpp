@@ -351,7 +351,11 @@ void MainWindow::CreatePushButtons()
 
 	pushbutton_nextedge_ = new QPushButton(tr("Next edge"), this);
 	pushbutton_nextedge_->setFixedSize(80, 25);
-	connect(pushbutton_nextedge_, SIGNAL(clicked()), this, SLOT(OrderStep()));
+	connect(pushbutton_nextedge_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextStep()));
+
+	pushbutton_nextlayer_ = new QPushButton(tr("Next layer"), this);
+	pushbutton_nextlayer_->setFixedSize(80, 25);
+	connect(pushbutton_nextlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextLayer()));
 
 	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
 	pushbutton_simplify_->setFixedSize(80, 25);
@@ -450,6 +454,7 @@ void MainWindow::CreateGroups()
 	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
 	orderdisplay_layout->addWidget(slider_order_);
 	orderdisplay_layout->addWidget(pushbutton_nextedge_);
+	orderdisplay_layout->addWidget(pushbutton_nextlayer_);
 
 	// edit group
 	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
@@ -671,12 +676,6 @@ void MainWindow::SwitchParaBox()
 		groupbox_fiberpara_->setVisible(true);
 		groupbox_meshpara_->setVisible(true);
 	}
-}
-
-
-void MainWindow::OrderStep()
-{
-	slider_order_->setValue(slider_order_->value() + 1);
 }
 
 

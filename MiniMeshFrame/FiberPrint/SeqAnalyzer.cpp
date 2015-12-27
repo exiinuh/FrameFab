@@ -71,7 +71,8 @@ bool SeqAnalyzer::LayerPrint()
 	/* set pillars as starting edges */
 	/* ranked by x */
 	int base_size = layers_[0].size();
-	map<double, int>base_queue;
+	multimap<double, int>base_queue;
+	multimap<double, int>::iterator it;
 	for (int i = 0; i < base_size; i++)
 	{
 		int dual_e = layers_[0][i];
@@ -84,7 +85,6 @@ bool SeqAnalyzer::LayerPrint()
 		}
 	}
 
-	map<double, int>::iterator it;
 	for (it = base_queue.begin(); it != base_queue.end(); it++)
 	{
 		QueueInfo base_edge = QueueInfo{ 0, it->second, layers_[0][it->second] };
@@ -110,7 +110,6 @@ bool SeqAnalyzer::LayerPrint()
 		int Nl = layers_[l].size();
 		int h = layer_queue_.size();
 		int t;
-
 		if (l == 0)
 		{
 			t = Nl;
@@ -132,20 +131,14 @@ bool SeqAnalyzer::LayerPrint()
 
 		/* set start edge for searching of current layer */
 		multimap<double, int> choice;
-		multimap<double, int>::iterator it;
 
 		bool success = false;
 		for (int st_e = 0; st_e < Nl; st_e++)
 		{
-			int dual_e = layers_[l][st_e];
-			int orig_e = ptr_dualgraph->e_orig_id(dual_e);
-			int u = ptr_frame->GetEndu(orig_e);
-			int v = ptr_frame->GetEndv(orig_e);
-
 			double cost = GenerateCost(l, st_e);
-			if (cost != -1)
+			if (cost != -1.0)
 			{
-				choice.insert(pair<double, int>(cost, st_e));
+				choice.insert(make_pair(cost, st_e));
 			}
 		}
 
@@ -244,11 +237,6 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		{
 			choice.insert(pair<double, int>(cost, j));
 		}
-
-		if (debug_)
-		{
-			printf("cost : %f\n", cost);
-		}
 	}
 
 	/* ranked by weight */
@@ -281,7 +269,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 }
 
 
-int SeqAnalyzer::GenerateCost(int l, int j)
+double SeqAnalyzer::GenerateCost(int l, int j)
 {		
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
 	WireFrame *ptr_frame = ptr_subgraph_->ptr_frame_;
@@ -335,7 +323,12 @@ int SeqAnalyzer::GenerateCost(int l, int j)
 		ptr_collision->DetectCollision(ptr_subgraph_);
 
 		//L = 1 - (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
-		L = (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
+		L =  (double)ptr_collision->AvailableAngle() / ptr_collision->Divide();
+		
+		if (0 == L)
+		{
+			return -1;
+		}
 		
 		delete ptr_collision;
 		ptr_collision = NULL;
@@ -351,7 +344,7 @@ int SeqAnalyzer::GenerateCost(int l, int j)
 		//D.setZero();
 
 		//printf("------------\n");
-		////printf("Layers %d, head index %d\n", l, h);
+		//printf("Layers %d, head index %d\n", l, h);
 		//printf("Trial Deformation calculation edge %d\n", dual_j);
 		//bool stiff_success = true;
 		//if (ptr_stiffness->CalculateD(D))
@@ -391,6 +384,10 @@ int SeqAnalyzer::GenerateCost(int l, int j)
 		//}
 
 		double cost = Wl_ * L + Wp_ * P;
+		if (debug_)
+		{
+			printf("cost : %f\n", cost);
+		}
 		return cost;
 	}
 

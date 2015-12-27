@@ -36,6 +36,16 @@ void Collision::DetectCollision(DualGraph *ptr_subgraph)
 
 void Collision::DetectCollision(WF_edge *order_e)
 {
+
+	if (target_e_->isPillar())
+	{
+		considerable_ = false;
+		return;
+
+	}
+
+
+	considerable_ = true;
 	point order_start	= order_e->ppair_->pvert_->Position();
 	point order_end		= order_e->pvert_->Position();
 	point target_start	= target_e_->ppair_->pvert_->Position();
@@ -46,6 +56,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 		|| ((target_start == order_start) && (target_end == order_end))
 		|| ((target_end == order_start) && (target_start == order_end)))
 	{
+		considerable_ = false;
 		return;
 	}
 
@@ -55,7 +66,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 		if (Geometry::angle(target_start - target_end, order_end - order_start) 
 			>(3.1415 - extruder_.Angle()))
 		{
-
+			considerable_ = false;
 			return;
 		}
 	}
@@ -65,6 +76,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 		if (Geometry::angle(target_start - target_end, order_start - order_end) 
 			> (3.1415 - extruder_.Angle()))
 		{
+			considerable_ = false;
 			return;
 		}
 	}
@@ -74,6 +86,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 		if (Geometry::angle(target_end - target_start, order_end - order_start) 
 			>(3.1415 - extruder_.Angle()))
 		{
+			considerable_ = false;
 			return;
 		}
 	}
@@ -83,33 +96,44 @@ void Collision::DetectCollision(WF_edge *order_e)
 		if (Geometry::angle(target_end - target_start, order_start - order_end) 
 			> (3.1415 - extruder_.Angle()))
 		{
+			considerable_ = false;
 			return;
 		}
 	}
 
 	vector <point> consider;
-	if (order_start != target_start && order_start != target_end)
-	{
-		consider.push_back(order_start);
-	}
-	if (order_end != target_start && order_end != target_end)
-	{
-		consider.push_back(order_end);
-	}
+
+
+	consider = Consider(order_start, order_end, target_start, target_end);
+
 
 	GeoV3 u, v;
 	if (consider.size() == 1)
 	{
+		point a = consider[0];
+	//cout << a.x() << "," << a.y() << "," << a.z() << endl;
+
 		u = ColAngle(consider[0], target_start, target_end);
 		v = u;
 	}
 	
 	if (consider.size() == 2)
 	{
+		point a = consider[0];
+//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
+
+	    a = consider[1];
+	//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
+
 		u = ColAngle(consider[0], target_start, target_end);
 		v = ColAngle(consider[1], target_start, target_end);
 	}
 	
+	if (consider.size() == 0)
+	{
+		considerable_ = false;
+		return;
+	}
 	//-----reduce--------------------------------------
 	/* influence from id to i
 	* i.e. the collision cost of existence of edge i
@@ -199,7 +223,6 @@ double Collision::DisSegPoint(point start, point end, point target)
 	auto result = distance(vec, Segement_(start, end));
 
 	return result.distance;
-
 }
 
 
@@ -298,6 +321,32 @@ GeoV3 Collision::ColAngle(point target, point start, point end)
 }
 
 
+bool::Collision::IsInside(point a)
+{
+	GeoV3 p = Geometry::Vector3d(a);
+	GeoV3 start, end;
+	start = target_e_->pvert_->Position();
+	end = target_e_->ppair_->pvert_->Position();
+
+
+	GeoV3 t = Geometry::Vector3d(end - start);
+	t.normalize();
+	end = end + t* tan(extruder_.Angle())* extruder_.Height();
+
+	start = start - t* tan(extruder_.Angle())* extruder_.Height();
+	double r, s, u;
+	r = abs(Geometry::dot(t, p - start));
+	s = abs(Geometry::dot(t, p - end));
+
+	u = abs(Geometry::dot(t, end - start));
+
+	if (abs(r + s - u) < eps)
+		return true;
+	else
+		return false;
+}
+
+
 gte::Segment<3, float> Collision::Segement_(point target_start, point target_end)
 {
 	gte::Segment<3, float> segment;
@@ -308,4 +357,33 @@ gte::Segment<3, float> Collision::Segement_(point target_start, point target_end
 	segment.p[1][1] = target_end.y();
 	segment.p[1][2] = target_end.z();
 	return segment;
+}
+
+
+vector<point> Collision::Consider(point order_start, point order_end, point target_start, point target_end)
+{
+	vector <point> consider;
+
+	if (order_start == target_start || order_start == target_end)
+	{
+		consider.push_back(order_end);
+		return consider;
+	}
+
+
+	if (order_end == target_start || order_end == target_end)
+	{
+		consider.push_back(order_start);
+		return consider;
+	}
+
+
+	if (IsInside(order_start))
+		consider.push_back(order_start);
+
+
+	if (IsInside(order_end))
+		consider.push_back(order_end);
+
+	return consider;
 }

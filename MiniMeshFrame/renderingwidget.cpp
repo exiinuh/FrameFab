@@ -54,7 +54,6 @@ void RenderingWidget::InitCapturedData()
 
 void RenderingWidget::InitFiberData()
 {
-	print_layer_ = 0;
 	print_order_ = 0;
 }
 
@@ -1122,20 +1121,6 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 }
 
 
-void RenderingWidget::PrintLayer(int layer)
-{
-	print_layer_ = layer;
-	updateGL();
-}
-
-
-void RenderingWidget::PrintOrder(int order)
-{
-	print_order_ = order;
-	updateGL();
-}
-
-
 void RenderingWidget::SimplifyFrame()
 {
 	if (ptr_frame_ == NULL)
@@ -1244,3 +1229,48 @@ void RenderingWidget::RotateYZ()
 	updateGL();
 }
 
+
+void RenderingWidget::PrintOrder(int order)
+{
+	print_order_ = order;
+	updateGL();
+}
+
+
+void RenderingWidget::PrintNextStep()
+{
+	int M = ptr_frame_->SizeOfEdgeList() / 2;
+	if (print_order_ < M - 1)
+	{
+		print_order_++;
+	}
+
+	updateGL();
+
+	emit(SetOrderSlider(print_order_));
+}
+
+
+void RenderingWidget::PrintNextLayer()
+{
+	vector<int> print_queue;
+	ptr_fiberprint_->GetQueue(print_queue);
+
+	int orig_e = print_queue[print_order_ - 1];
+	int cur_layer = ptr_frame_->GetEdge(orig_e)->Layer();
+	int M = ptr_frame_->SizeOfEdgeList() / 2;
+
+	while (print_order_ < M - 1)
+	{
+		orig_e = print_queue[print_order_];
+		if (ptr_frame_->GetEdge(orig_e)->Layer() == cur_layer + 2)
+		{
+			break;
+		}
+		print_order_++;
+	}
+
+	updateGL();
+
+	emit(SetOrderSlider(print_order_));
+}

@@ -52,24 +52,29 @@ public:
 	// notice: can't compute cost for pillar
 public:
 	void		DetectCollision(DualGraph *ptr_subgraph);
-	 void		DetectCollision(WF_edge *order_e);
-	 
-	 void		CreatePrintTable();
-	 void		GenerateSampleNormal();
+	void		DetectCollision(WF_edge *order_e);
 
-	 double		DisSegSeg(point start, point end, point target_start, point target_end);
-	 double		DisSegPoint(point start, point end, point target);
+	void		CreatePrintTable();
+	void		GenerateSampleNormal();
 
-	 bool		IsColVec(GeoV3 start, GeoV3 end, GeoV3 target);
-	 bool		IsColTable(GeoV3 target);
+	double		DisSegSeg(point start, point end, point target_start, point target_end);
+	double		DisSegPoint(point start, point end, point target);
 
-	 GeoV3		ColAngle(point target, point start, point end);
-	 gte::Segment<3, float>		Segement_(point target_start, point target_end);
+	bool		IsColVec(GeoV3 start, GeoV3 end, GeoV3 target);
+	bool		IsColTable(GeoV3 target);
 
-	 int		Divide()			{ return divide_; }
-	 int		AvailableAngle()	{ return normal_.size(); }
+	GeoV3		ColAngle(point target, point start, point end);
+	bool		IsInside(point a);
 
-private:
+	gte::Segment<3, float>		Segement_(point target_start, point target_end);
+	vector<point>				Consider(point order_start, point order_end, 
+										point target_start, point target_end);
+
+	int		Divide()			{ return divide_; }
+	int		AvailableAngle()	{ return normal_.size(); }
+
+
+//private:
 	/* Interface Data Structure*/
 	WireFrame		*ptr_frame_;
 
@@ -79,4 +84,6 @@ private:
 
 	WF_edge				*target_e_;
 	vector<GeoV3>		normal_;							// normal list
+
+	bool				considerable_;
 };

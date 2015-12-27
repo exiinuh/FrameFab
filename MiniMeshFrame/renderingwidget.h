@@ -121,8 +121,7 @@ public slots:
 								double Dt_tol, double Dr_tol,
 								double penalty, double pri_tol, double dual_tol,
 								double gamma, double Wl, double Wp);
-	void	PrintLayer(int layer);
-	void	PrintOrder(int order);
+
 	void	SimplifyFrame();
 	void	RefineFrame();
 	void	ProjectBound(double len);
@@ -131,6 +130,10 @@ public slots:
 	void	RotateXY();
 	void	RotateXZ();
 	void	RotateYZ();
+
+	void	PrintOrder(int order);
+	void	PrintNextStep();
+	void	PrintNextLayer();
 
 public:
 	MainWindow		*ptr_mainwindow_;
@@ -156,9 +159,6 @@ public:
 	// Fiber
 	FiberPrintPlugIn	*ptr_fiberprint_;
 
-	int					print_layer_;
-	int					print_order_;
-
 	vector<WF_vert*>	captured_verts_;
 	vector<bool>		is_captured_vert_;
 	vector<WF_edge*>	captured_edges_;
@@ -168,6 +168,7 @@ public:
 	vector<WF_edge*>	ceiling_;
 
 	float				scale_;
+	int					print_order_;
 };
 
 #endif // RENDERINGWIDGET_H

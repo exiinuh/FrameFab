@@ -70,7 +70,7 @@ public:
 public:
 	bool			LayerPrint();
 	bool			GenerateSeq(int l, int h, int t);
-	int				GenerateCost(int l, int j);
+	double			GenerateCost(int l, int j);
 
 	void			GetQueue(vector<int> &layer_queue);
 	void			WriteLayerQueue();
