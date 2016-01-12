@@ -319,6 +319,8 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		delete ptr_collision;
 		ptr_collision = NULL;
 
+		///* -------- */
+
 		///* stiffness */
 		///* insert a trail edge */
 		//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
@@ -330,7 +332,6 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		//D.setZero();
 
 		//printf("------------\n");
-		//printf("Layers %d, head index %d\n", l, h);
 		//printf("Trial Deformation calculation edge %d\n", dual_j);
 		//bool stiff_success = true;
 		//if (ptr_stiffness->CalculateD(D))
@@ -368,6 +369,8 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		//{
 		//	return -1;
 		//}
+
+		///* -------- */
 
 		double cost = Wl_ * L + Wp_ * P;
 		if (debug_)

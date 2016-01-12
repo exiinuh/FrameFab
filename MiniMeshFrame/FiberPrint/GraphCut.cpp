@@ -253,6 +253,11 @@ bool GraphCut::CheckLabel(int count)
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
+	//if (1 == count)
+	//{
+	//	return true;
+	//}
+	
 	if (l < 20 || l < ptr_frame_->SizeOfPillar())
 	{
 		return true;
@@ -311,10 +316,10 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
-		if (cut_count == 2)
-		{
-			WriteStiffness();
-		}
+		//if (cut_count == 2)
+		//{
+		//	WriteStiffness();
+		//}
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -447,14 +452,19 @@ void GraphCut::MakeLayers()
         s_eR.GenerateStdVecFile();
 
         /* Update New Cut information to Rendering (layer_label_) */
-		if (cut_count == 1)
-		{
-			WriteWeight();
-		}
+		//if (cut_count == 1)
+		//{
+		//	WriteWeight();
+		//}
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
+
+		//if (cut_count == 0)
+		//{
+		//	break;
+		//}
 
 	} while (!CheckLabel(cut_count));
 	

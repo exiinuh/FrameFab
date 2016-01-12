@@ -766,7 +766,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	// parse option for stiffness matrix
 	fprintf(fp, "%d				# 1: include shear deformation\n", 0);
 	fprintf(fp, "%d				# 1: include geometric stiffness\n", 0);
-	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 10.0);
+	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 1.0);
 	fprintf(fp, "%.1f				# zoom scale for 3D plotting\n", 2.5);
 	fprintf(fp, "%d				# x-axis increment for internal forces, mm\n", -1);
 	fprintf(fp, "				# if dx is -1 then internal force calculation are skipped\n");
