@@ -84,6 +84,7 @@ public:
 public:
 	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
+	FiberPrintPARM	*ptr_parm_;
 	char			*path_;
 
 private:

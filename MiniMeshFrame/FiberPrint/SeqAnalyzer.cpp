@@ -19,6 +19,7 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path)
 {
 	ptr_graphcut_ = ptr_graphcut;
+	ptr_parm_ = ptr_parm;
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
@@ -319,58 +320,62 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		delete ptr_collision;
 		ptr_collision = NULL;
 
-		///* -------- */
+		/* -------- */
 
-		///* stiffness */
-		///* insert a trail edge */
-		//ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
+		/* stiffness */
+		/* insert a trail edge */
+		ptr_subgraph_->UpdateDualization(ptr_frame->GetEdge(orig_j));
 
-		///* examinate stiffness on printing subgraph */
-		//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
-		//int Ns = ptr_subgraph_->SizeOfFreeFace();
-		//VX D(Ns);
-		//D.setZero();
+		/* examinate stiffness on printing subgraph */
+		Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
+		int Ns = ptr_subgraph_->SizeOfFreeFace();
+		VX D(Ns);
+		D.setZero();
 
-		//printf("------------\n");
-		//printf("Trial Deformation calculation edge %d\n", dual_j);
-		//bool stiff_success = true;
-		//if (ptr_stiffness->CalculateD(D))
-		//{
-		//	for (int k = 0; k < Ns; k++)
-		//	{
-		//		VX offset(3);
-		//		VX distortion(3);
-		//		for (int h = 0; h < 3; h++)
-		//		{
-		//			offset[h] = D[j * 6 + h];
-		//			distortion[h] = D[j * 6 + h + 3];
-		//		}
+		printf("------------\n");
+		printf("Trial Deformation calculation edge %d\n", dual_j);
+		bool stiff_success = true;
+		if (ptr_stiffness->CalculateD(D))
+		{
+			for (int k = 0; k < Ns; k++)
+			{
+				VX offset(3);
+				VX distortion(3);
+				for (int h = 0; h < 3; h++)
+				{
+					offset[h] = D[k * 6 + h];
+					distortion[h] = D[k * 6 + h + 3];
+				}
 
-		//		if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
-		//		{
-		//			stiff_success = false;
-		//			break;
-		//		}
-		//	}
-		//}
-		//else
-		//{
-		//	stiff_success = false;
-		//}
+				if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+				{
+					stiff_success = false;
+					cout << "Large deformation detected at trail edge testifying!" << endl;
+					break;
+				}
+			}
+		}
+		else
+		{
+			cout << "Stiffness solver failed at trail edge testifying!" << endl;
+			stiff_success = false;
+		}
 
-		///* remove the trail edge */
-		//ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
+		/* remove the trail edge */
+		ptr_subgraph_->RemoveUpdation(ptr_frame->GetEdge(orig_j));
 
-		//delete ptr_stiffness;
-		//ptr_stiffness = NULL;
+		delete ptr_stiffness;
+		ptr_stiffness = NULL;
 
-		///* examination failed */
-		//if (!stiff_success)
-		//{
-		//	return -1;
-		//}
+		/* examination failed */
+		if (!stiff_success)
+		{
+			getchar();
+			return -1;
+		}
 
-		///* -------- */
+		cout << "Candidate stiffness verification passed." << endl;
+		/* -------- */
 
 		double cost = Wl_ * L + Wp_ * P;
 		if (debug_)

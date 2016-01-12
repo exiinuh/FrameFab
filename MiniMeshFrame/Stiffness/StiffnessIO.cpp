@@ -665,10 +665,12 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	FILE	*fp;
 	char OUT_file[FILENMAX];
 	char OUT_path[FILENMAX];
-	string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
+	//string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
+	string title_s = "FiberPrint Test File -- Searching State Checking -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	//string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	string str = "s.3dd";
 	sprintf_s(OUT_file, "%s", str.c_str());
 
 	OutputPath(OUT_file, OUT_path, FRAME3DD_PATHMAX, NULL);
@@ -714,7 +716,8 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	std::vector<int>	res_index;
 	for (int i = 0; i < nN; i++)
 	{
-		int id = dual_face_list[i]->orig_id();
+		//int id = dual_face_list[i]->orig_id();
+		int id = ptr_dualgraph->v_orig_id(i);
 
 		if (ptr_wf->isFixed(id))
 		{
@@ -732,7 +735,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 
 	// Write Frame Element data
 	double	Ax =  F_PI * r * r;
-	double	Asy = Ax * (6 + 12 * v + 6 * v*v) / (7 + 12 * v + 4 * v*v);
+	double	Asy = Ax * (6 + 12 * v + 6 * v * v) / (7 + 12 * v + 4 * v * v);
 	double	Asz = Asy;
 	double	Jxx = 0.5 * M_PI * r * r * r * r;
 	double  Ksy = 0;		// shear deformation constant
@@ -760,8 +763,6 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 			i + 1, dual_u + 1, dual_v + 1,
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
-
-	printf("\n\n");
 
 	// parse option for stiffness matrix
 	fprintf(fp, "%d				# 1: include shear deformation\n", 0);

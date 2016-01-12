@@ -222,14 +222,14 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_Dttol_->setFixedWidth(140);
 	spinbox_Dttol_->setDecimals(4);
 	spinbox_Dttol_->setRange(0, 10);
-	spinbox_Dttol_->setValue(0.1);
+	spinbox_Dttol_->setValue(5);
 	spinbox_Dttol_->setSingleStep(0.01);
 
 	spinbox_Drtol_ = new QDoubleSpinBox(this);
 	spinbox_Drtol_->setFixedWidth(140);
 	spinbox_Drtol_->setDecimals(4);
 	spinbox_Drtol_->setRange(0, 10);
-	spinbox_Drtol_->setValue(10 * F_PI / 180);
+	spinbox_Drtol_->setValue(30 * F_PI / 180);
 	spinbox_Drtol_->setSingleStep(0.01);
 
 	spinbox_penalty_ = new QDoubleSpinBox(this);
