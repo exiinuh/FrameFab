@@ -7,7 +7,7 @@ Stiffness::Stiffness()
 
 
 Stiffness::Stiffness(DualGraph *ptr_dualgraph)
-:r_(0.0015), nr_(0), density_(0.001), g_(9.80), G_(1586), E_(1387), v_(0.16), shear_(0)
+	:r_(0.6), nr_(0), density_(1210 * 1e-12), g_(-9806.33), G_(1032), E_(1100), v_(0.39), shear_(0)
 {
 	ptr_dualgraph_ = ptr_dualgraph;
 

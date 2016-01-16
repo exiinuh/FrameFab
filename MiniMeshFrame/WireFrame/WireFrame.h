@@ -130,16 +130,16 @@ public:
 
 public:
 	void		LoadFromOBJ(const char *path);
-	void		WriteToOBJ(const char *path);
 	void		LoadFromPWF(const char *path);
-	void		WriteToPWF(const char *path);
-	void		WriteLayerToOBJ(const char *path, int layer);
-	void		WriteLayersToPWF(const char *path, int max_layer);
+	void		WriteToOBJ(const char *path);
+	void		WriteToPWF(bool bVert, bool bLine, 
+							bool bBase, bool bCeiling, bool bCut,
+							int min_layer, int max_layer, const char *path);
 
-	void		ExportPoints(const char *path);
-	void		ExportLines(const char *path);
-	void		ExportLayer(const char *path, int layer);
-	void		ExportLayers(const char *path, int max_layer);
+	void		ImportFrom3DD(const char *path);
+
+	void		ExportPoints(int min_layer, int max_layer, const char *path);
+	void		ExportLines(int min_layer, int max_layer, const char *path);
 
 	WF_vert*	InsertVertex(const Vec3f p);
 	WF_edge*	InsertEdge(WF_vert *u, WF_vert *v);

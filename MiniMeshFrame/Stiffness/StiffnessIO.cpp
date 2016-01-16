@@ -88,76 +88,6 @@ void StiffnessIO::ParseInput(FILE *fp, const char *tpath)
 	fclose(fpc);
 }
 
-///*
-//* PARSE_OPTIONS -  parse command line options
-//* command line options over-ride values in the input data file
-//* 04 Mar 2009, 22 Sep 2009
-//*/
-//void StiffnessIO::ParseOptions(
-//	char IN_file[], char OUT_file[],
-//	int *shear_flag,
-//	int *geom_flag,
-//	int *anlyz_flag,
-//	double *exagg_flag,
-//	int *D3_flag,
-//	int *lump_flag,
-//	int *modal_flag,
-//	double *tol_flag,
-//	double *shift_flag,
-//	float *pan_flag,
-//	int *write_matrix,
-//	int *axial_sign,
-//	int *condense_flag,
-//	int *verbose,
-//	int *debug
-//	)
-//{
-//	char	option;
-//	char	errMsg[MAXL];
-//	int		sfrv = 0;		/* *scanf return value	*/
-//
-//	/* default values */
-//
-//	*shear_flag = *geom_flag = *anlyz_flag = *lump_flag = *modal_flag = -1;
-//	*exagg_flag = *tol_flag = *shift_flag = -1.0;
-//	*D3_flag = 0;
-//	*pan_flag = -1.0;
-//	*condense_flag = -1;
-//	*write_matrix = 0;
-//	*axial_sign = 1;
-//	*debug = 0; *verbose = 1;
-//
-//	strcpy(IN_file, "\0");
-//	strcpy(OUT_file, "\0");
-//
-//	/* set up file names for the the input data and the output data */
-//
-//	printf(" Please enter the  input data file name: ");
-//	//sfrv = scanf("%s", IN_file);
-//	sprintf(IN_file, "exE.3dd");
-//	//if (sfrv != 1) sferr("IN_file");
-//
-//	printf(" Please enter the output data file name: ");
-//	//sfrv = scanf("%s", OUT_file);
-//	sprintf(IN_file, "exE.out");
-//
-//	//if (sfrv != 1) sferr("OUT_file");
-//
-//	if (strcmp(IN_file, "\0") == 0) {
-//		fprintf(stderr, " Please enter the  input data file name: ");
-//		sfrv = scanf("%s", IN_file);
-//		if (sfrv != 1) sferr("IN_file");
-//		fprintf(stderr, " Please enter the output data file name: ");
-//		sfrv = scanf("%s", OUT_file);
-//		if (sfrv != 1) sferr("OUT_file");
-//	}
-//	if (strcmp(IN_file, "\0") != 0 && strcmp(OUT_file, "\0") == 0) {
-//		strcpy(OUT_file, IN_file);
-//		strcat(OUT_file, ".out");
-//	}
-//	return;
-//}
-
 
 /*
 * OUTPUT_PATH
@@ -454,18 +384,6 @@ void StiffnessIO::GnuPltStaticMesh(
 	fprintf(fpm, "  deflection exaggeration: %.1f\n", exagg_static);
 	fprintf(fpm, "#       X-dsp        Y-dsp        Z-dsp\n");
 
-	// open the interior force data file for reading 
-	//if (anlyz) 
-	//{
-	//	// file name for internal force data for load case "lc" 
-	//	sprintf(fnif, "%s%02d", infcpath, lc);
-	//	if ((fpif = fopen(fnif, "r")) == NULL) 
-	//	{
-	//		sprintf(errMsg, "\n  error: cannot open interior force data file: %s \n", fnif);
-	//		errorMsg(errMsg);
-	//		exit(20);
-	//	}
-	//}
 
 	for (m = 0; m < nE; m++) 
 	{	
@@ -479,22 +397,6 @@ void StiffnessIO::GnuPltStaticMesh(
 			GnuPltCubicBentBeam(fpm,
 				N1[m], N2[m], xyz, L[m], p[m], D, exagg_static);
 		}
-		//if (dx > 0.0 && anlyz) {
-		//	while (ch != '@')	ch = getc(fpif);
-		//	sfrv = fscanf(fpif, "%d %d %d %f %f %f %f %f %f %d",
-		//		&frel, &n1, &n2, &x1, &y1, &z1, &x2, &y2, &z2, &nx);
-		//	if (sfrv != 10) sferr(fnif);
-		//	if (frel != m || N1[m] != n1 || N2[m] != n2) {
-		//		fprintf(stderr, " error in static_mesh parsing\n");
-		//		fprintf(stderr, "  frel = %d; m = %d; nx = %d \n", frel, m, nx);
-		//	}
-		//	/* debugging ... check mesh data
-		//	printf("  frel = %3d; m = %3d; n1 =%4d; n2 = %4d; nx = %3d L = %f \n", frel,m,n1,n2,nx,L[m] );
-		//	*/
-		//	while (ch != '~')	ch = getc(fpif);
-		//	force_bent_beam(fpm, fpif, fnif, nx,
-		//		N1[m], N2[m], xyz, L[m], p[m], D, exagg_static);
-		//}
 
 	}
 
@@ -601,76 +503,15 @@ void StiffnessIO::GnuPltCubicBentBeam(
 }
 
 
-///*
-//* FORCE_BENT_BEAM  -  reads internal frame element forces and deflections
-//* from the internal force and deflection data file.
-//* Saves deflected shapes to a file.  These bent shapes are exact.
-//* Note: It would not be difficult to adapt this function to plot
-//* internal axial force, shear force, torques, or bending moments.
-//* 9 Jan 2010
-//*/
-//void StiffnessIO::GnuPltForceBentBeam(
-//	FILE *fpm, FILE *fpif, char fnif[], int nx, int n1, int n2, vec3 *xyz,
-//	double L, float p, double *D, double exagg
-//	){
-//	double	t1, t2, t3, t4, t5, t6, t7, t8, t9; 	/* coord xfmn	*/
-//	double	xi, dX, dY, dZ;
-//	float	x, Nx, Vy, Vz, Tx, My, Mz, Dx, Dy, Dz, Rx;
-//	double	Lx, Ly, Lz;
-//	int	n;
-//	int	sfrv = 0;		/* *scanf return value	*/
-//
-//	Lx = xyz[n2].x - xyz[n1].x;
-//	Ly = xyz[n2].y - xyz[n1].y;
-//	Lz = xyz[n2].z - xyz[n1].z;
-//
-//	coord_trans(xyz, L, n1, n2,
-//		&t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8, &t9, p);
-//
-//	x = -1.0;
-//	n = 0;
-//	for (xi = 0; xi <= 1.01*L && n < nx; xi += 0.10*L) {
-//
-//		while (x < xi && n < nx) {
-//			/* read the deformed shape in local coordinates */
-//			sfrv = fscanf(fpif, "%f %f %f %f %f %f %f %f %f %f %f",
-//				&x, &Nx, &Vy, &Vz, &Tx, &My, &Mz, &Dx, &Dy, &Dz, &Rx);
-//			//		    printf("x = %12.4f\n", x );		/* debug */
-//			if (sfrv != 11) sferr(fnif);
-//			++n;
-//		}
-//
-//		/* exaggerated deformed shape in global coordinates */
-//		dX = exagg * (t1*Dx + t4*Dy + t7*Dz);
-//		dY = exagg * (t2*Dx + t5*Dy + t8*Dz);
-//		dZ = exagg * (t3*Dx + t6*Dy + t9*Dz);
-//
-//		fprintf(fpm, " %12.4e %12.4e %12.4e\n",
-//			xyz[n1].x + (x / L)*Lx + dX,
-//			xyz[n1].y + (x / L)*Ly + dY,
-//			xyz[n1].z + (x / L)*Lz + dZ);
-//
-//		//		printf("...  x = %7.3f  n = %3d  Dx = %10.3e   Dy = %10.3e   Dz = %10.3e \n", x,n,Dx,Dy,Dz ); /* debug */
-//		//		printf("                           dX = %10.3e   dY = %10.3e   dZ = %10.3e \n", dX,dY,dZ ); /* debug */
-//
-//	}
-//
-//	fprintf(fpm, "\n\n");
-//
-//	return;
-//}
-
 void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int cut_count)
 {
 	FILE	*fp;
 	char OUT_file[FILENMAX];
 	char OUT_path[FILENMAX];
-	//string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
-	string title_s = "FiberPrint Test File -- Searching State Checking -- static analysis (N,mm,Ton)\n";
+	string title_s = "FiberPrint Test File -- Cut" + to_string(cut_count) + " -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	//string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
-	string str = "s.3dd";
+	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
 	sprintf_s(OUT_file, "%s", str.c_str());
 
 	OutputPath(OUT_file, OUT_path, FRAME3DD_PATHMAX, NULL);
@@ -716,8 +557,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 	std::vector<int>	res_index;
 	for (int i = 0; i < nN; i++)
 	{
-		//int id = dual_face_list[i]->orig_id();
-		int id = ptr_dualgraph->v_orig_id(i);
+		int id = dual_face_list[i]->orig_id();
 
 		if (ptr_wf->isFixed(id))
 		{
@@ -735,7 +575,7 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 
 	// Write Frame Element data
 	double	Ax =  F_PI * r * r;
-	double	Asy = Ax * (6 + 12 * v + 6 * v * v) / (7 + 12 * v + 4 * v * v);
+	double	Asy = Ax * (6 + 12 * v + 6 * v*v) / (7 + 12 * v + 4 * v*v);
 	double	Asz = Asy;
 	double	Jxx = 0.5 * M_PI * r * r * r * r;
 	double  Ksy = 0;		// shear deformation constant
@@ -764,10 +604,12 @@ void StiffnessIO::WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_p
 			Ax, Asy, Asz, Jxx, Iyy, Izz, E, G, 0.0, density);
 	}
 
+	printf("\n\n");
+
 	// parse option for stiffness matrix
 	fprintf(fp, "%d				# 1: include shear deformation\n", 0);
 	fprintf(fp, "%d				# 1: include geometric stiffness\n", 0);
-	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 1.0);
+	fprintf(fp, "%.1f				# exaggerate static mesh deformation\n", 10.0);
 	fprintf(fp, "%.1f				# zoom scale for 3D plotting\n", 2.5);
 	fprintf(fp, "%d				# x-axis increment for internal forces, mm\n", -1);
 	fprintf(fp, "				# if dx is -1 then internal force calculation are skipped\n");

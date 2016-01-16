@@ -18,13 +18,16 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateMenus();
 	CreateLabels();
 	CreateSpinBoxes();
+	CreateLineEdits();
 	CreateCheckBoxes();
 	CreateSliders();
 	CreateRadioButtons();
 	CreatePushButtons();
 	CreateToolButtons();
 	CreateGroups();
+	CreateDialogs();
 
+	connect(renderingwidget_, SIGNAL(Error(QString)), this, SLOT(ShowError(QString)));
 	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
 	
 	QVBoxLayout *layout_left = new QVBoxLayout;
@@ -75,25 +78,15 @@ void MainWindow::CreateActions()
 	action_save_ = new QAction(QIcon(":/MainWindow/Resources/images/save.png"), tr("Save"), this);
 	action_save_->setShortcuts(QKeySequence::Save);
 	action_save_->setStatusTip(tr("Save the document to disk"));
-	connect(action_save_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteFrame()));
+	connect(action_save_, SIGNAL(triggered()), this, SLOT(OpenSaveDialog()));
 
-	action_savelayer_ = new QAction(tr("Save a layer"), this);
-	connect(action_savelayer_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteLayer()));
+	action_import_ = new QAction(tr("Import"), this);
+	action_import_->setStatusTip(tr("Import the document from disk"));
+	connect(action_import_, SIGNAL(triggered()), renderingwidget_, SLOT(ImportFrame()));
 
-	action_savelayers_ = new QAction(tr("Save layers"), this);
-	connect(action_savelayers_, SIGNAL(triggered()), renderingwidget_, SLOT(WriteLayers()));
-
-	action_exportpoints_ = new QAction(tr("Export points"), this);
-	connect(action_exportpoints_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportPoints()));
-
-	action_exportlines_ = new QAction(tr("Export lines"), this);
-	connect(action_exportlines_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLines()));
-
-	action_exportlayer_ = new QAction(tr("Export a layer"), this);
-	connect(action_exportlayer_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLayer()));
-
-	action_exportlayers_ = new QAction(tr("Export layers"), this);
-	connect(action_exportlayers_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportLayers()));
+	action_export_ = new QAction(tr("Export"), this);
+	action_export_->setStatusTip(tr("Export the document to disk"));
+	connect(action_export_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -110,14 +103,10 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_new_);
 	menu_file_->addAction(action_open_);
 	menu_file_->addAction(action_save_);
-	menu_file_->addAction(action_savelayer_);
-	menu_file_->addAction(action_savelayers_);
 
 	menu_file_->addSeparator();
-	menu_file_->addAction(action_exportpoints_);
-	menu_file_->addAction(action_exportlines_);
-	menu_file_->addAction(action_exportlayer_);
-	menu_file_->addAction(action_exportlayers_);
+	menu_file_->addAction(action_import_);
+	menu_file_->addAction(action_export_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
@@ -163,7 +152,7 @@ void MainWindow::CreateLabels()
 	label_shearmodulus_ = new QLabel(QString("Shear modulus: "), this);
 
 	label_Dttol_	= new QLabel(QString("Stiff-offset tolerance: "), this);
-	label_Drtol_	= new QLabel(QString("Stiff-offset tolerance: "), this);
+	label_Drtol_	= new QLabel(QString("Stiff-rotation tolerance: "), this);
 	label_penalty_	= new QLabel(QString("ADMM penalty: "), this);
 	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "), this);
 	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "), this);
@@ -173,6 +162,11 @@ void MainWindow::CreateLabels()
 
 	label_scale_	= new QLabel(QString("Scale: "), this);
 	label_prolen_	= new QLabel(QString("Projection length: "), this);
+
+	label_from1_	= new QLabel(QString("From"), this);
+	label_to1_		= new QLabel(QString("To"), this);
+	label_from2_	= new QLabel(QString("From"), this);
+	label_to2_		= new QLabel(QString("To"), this);
 }
 
 
@@ -221,15 +215,15 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_Dttol_ = new QDoubleSpinBox(this);
 	spinbox_Dttol_->setFixedWidth(140);
 	spinbox_Dttol_->setDecimals(4);
-	spinbox_Dttol_->setRange(0, 10);
+	spinbox_Dttol_->setRange(0, 100);
 	spinbox_Dttol_->setValue(5);
 	spinbox_Dttol_->setSingleStep(0.01);
 
 	spinbox_Drtol_ = new QDoubleSpinBox(this);
 	spinbox_Drtol_->setFixedWidth(140);
 	spinbox_Drtol_->setDecimals(4);
-	spinbox_Drtol_->setRange(0, 10);
-	spinbox_Drtol_->setValue(30 * F_PI / 180);
+	spinbox_Drtol_->setRange(0, 1);
+	spinbox_Drtol_->setValue(10 * F_PI / 180);
 	spinbox_Drtol_->setSingleStep(0.01);
 
 	spinbox_penalty_ = new QDoubleSpinBox(this);
@@ -291,10 +285,43 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_prolen_->setSingleStep(1);
 	connect(spinbox_prolen_, SIGNAL(valueChanged(double)), renderingwidget_, SLOT(ModifyProjection(double)));
 
+	spinbox_minlayer1_ = new QSpinBox(this);
+	spinbox_minlayer1_->setFixedWidth(60);
+	spinbox_minlayer1_->setRange(0, 10);
+	spinbox_minlayer1_->setValue(0);
+	spinbox_minlayer1_->setSingleStep(1);
+
+	spinbox_maxlayer1_ = new QSpinBox(this);
+	spinbox_maxlayer1_->setFixedWidth(60);
+	spinbox_maxlayer1_->setRange(0, 10);
+	spinbox_maxlayer1_->setValue(0);
+	spinbox_maxlayer1_->setSingleStep(1);
+
+	spinbox_minlayer2_ = new QSpinBox(this);
+	spinbox_minlayer2_->setFixedWidth(60);
+	spinbox_minlayer2_->setRange(0, 10);
+	spinbox_minlayer2_->setValue(0);
+	spinbox_minlayer2_->setSingleStep(1);
+
+	spinbox_maxlayer2_ = new QSpinBox(this);
+	spinbox_maxlayer2_->setFixedWidth(60);
+	spinbox_maxlayer2_->setRange(0, 10);
+	spinbox_maxlayer2_->setValue(0);
+	spinbox_maxlayer2_->setSingleStep(1);
 	//pushbutton_scale_ = new QPushButton(tr("Scale"), this);
 	//pushbutton_scale_->setFixedSize(80, 25);
 	//connect(pushbutton_scale_, SIGNAL(clicked()), this, SLOT(CheckScale()));
 	//connect(this, SIGNAL(ChangeScale(double)), renderingwidget_, SLOT(ScaleFrame(double)));
+}
+
+
+void MainWindow::CreateLineEdits()
+{
+	lineedit_vertpath_ = new QLineEdit(this);
+	lineedit_linepath_ = new QLineEdit(this);
+
+	lineedit_pwfpath_ = new QLineEdit(this);
+	lineedit_pwfpath_->setVisible(false);
 }
 
 
@@ -309,6 +336,12 @@ void MainWindow::CreateCheckBoxes()
 
 	checkbox_axes_ = new QCheckBox(tr("Axes"), this);
 	connect(checkbox_axes_, SIGNAL(clicked(bool)), renderingwidget_, SLOT(CheckDrawAxes(bool)));
+
+	checkbox_savevert_ = new QCheckBox(tr("Vert"), this);
+	checkbox_saveline_ = new QCheckBox(tr("Line"), this);
+	checkbox_savebase_ = new QCheckBox(tr("Base"), this);
+	checkbox_saveceiling_ = new QCheckBox(tr("Ceiling"), this);
+	checkbox_savecut_ = new QCheckBox(tr("Cut"), this);
 }
 
 
@@ -403,6 +436,26 @@ void MainWindow::CreatePushButtons()
 	pushbutton_leftarrow_->setFlat(true);
 	pushbutton_leftarrow_->setFixedSize(20, 20);
 	connect(pushbutton_leftarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
+
+	pushbutton_save_ = new QPushButton(tr("Save"), this);
+	connect(pushbutton_save_, SIGNAL(clicked()), this, SLOT(GetSaveParas()));
+	connect(this, SIGNAL(SendSaveOBJParas(QString)),
+		renderingwidget_, SLOT(WriteFrame(QString)));
+	connect(this, SIGNAL(SendSavePWFParas(bool, bool, bool, bool, bool, int, int, QString)),
+		renderingwidget_, SLOT(WriteFrame(bool, bool, bool, bool, bool, int, int, QString)));
+
+	pushbutton_export_ = new QPushButton(tr("Export"), this);
+	connect(pushbutton_export_, SIGNAL(clicked()), this, SLOT(GetExportParas()));
+	connect(this, SIGNAL(SendExportParas(int, int, QString, QString)),
+		renderingwidget_, SLOT(ExportFrame(int, int, QString, QString)));
+
+	pushbutton_exportvert_ = new QPushButton(tr("..."), this);
+	pushbutton_exportvert_->setFixedWidth(30);
+	connect(pushbutton_exportvert_, SIGNAL(clicked()), this, SLOT(GetPath()));
+
+	pushbutton_exportline_ = new QPushButton(tr("..."), this);
+	pushbutton_exportline_->setFixedWidth(30);
+	connect(pushbutton_exportline_, SIGNAL(clicked()), this, SLOT(GetPath()));
 }
 
 
@@ -542,6 +595,70 @@ void MainWindow::CreateGroups()
 	// separator group
 	groupbox_sep2_ = new QGroupBox(this);
 	groupbox_sep2_->setFlat(true);
+
+
+	// export group
+	groupbox_exportvert_ = new QGroupBox(tr("Export vert"), this);
+	groupbox_exportvert_->setCheckable(true);
+
+	QHBoxLayout *exportvert_layout = new QHBoxLayout(groupbox_exportvert_);
+	exportvert_layout->addWidget(lineedit_vertpath_);
+	exportvert_layout->addWidget(pushbutton_exportvert_);
+
+	groupbox_exportline_ = new QGroupBox(tr("Export line"), this);
+	groupbox_exportline_->setCheckable(true);
+
+	QHBoxLayout *exportline_layout = new QHBoxLayout(groupbox_exportline_);
+	exportline_layout->addWidget(lineedit_linepath_);
+	exportline_layout->addWidget(pushbutton_exportline_);
+
+	groupbox_exportlayer_ = new QGroupBox(tr("Export layer"), this);
+	QHBoxLayout *exportlayer_layout = new QHBoxLayout(groupbox_exportlayer_);
+	exportlayer_layout->addWidget(label_from2_);
+	exportlayer_layout->addWidget(spinbox_minlayer2_);
+	exportlayer_layout->addWidget(label_to2_);
+	exportlayer_layout->addWidget(spinbox_maxlayer2_);
+
+	// save
+	groupbox_saveinfo_ = new QGroupBox(tr("Options"), this);
+	QGridLayout *saveinfo_layout = new QGridLayout(groupbox_saveinfo_);
+	saveinfo_layout->addWidget(checkbox_savevert_, 1, 1);
+	saveinfo_layout->addWidget(checkbox_saveline_, 1, 2);
+	saveinfo_layout->addWidget(checkbox_savebase_, 2, 1);
+	saveinfo_layout->addWidget(checkbox_saveceiling_, 2, 2);
+	saveinfo_layout->addWidget(checkbox_savecut_, 3, 1);
+
+	groupbox_savelayer_ = new QGroupBox(tr("Save layer"), this);
+	QHBoxLayout *savelayer_layout = new QHBoxLayout(groupbox_savelayer_);
+	savelayer_layout->addWidget(label_from1_);
+	savelayer_layout->addWidget(spinbox_minlayer1_);
+	savelayer_layout->addWidget(label_to1_);
+	savelayer_layout->addWidget(spinbox_maxlayer1_);
+}
+
+
+void MainWindow::CreateDialogs()
+{
+	dialog_save_ = new QDialog(this);
+	dialog_save_->setWindowTitle(tr("Save"));
+	dialog_save_->setGeometry(400, 300, 200, 200);
+
+	QVBoxLayout *layout_save = new QVBoxLayout;
+	layout_save->addWidget(groupbox_saveinfo_);
+	layout_save->addWidget(groupbox_savelayer_);
+	layout_save->addWidget(pushbutton_save_);
+	dialog_save_->setLayout(layout_save);
+
+	dialog_export_ = new QDialog(this);
+	dialog_export_->setWindowTitle(tr("Export"));
+	dialog_export_->setGeometry(300, 200, 300, 300);
+
+	QVBoxLayout *layout_export = new QVBoxLayout;
+	layout_export->addWidget(groupbox_exportvert_);
+	layout_export->addWidget(groupbox_exportline_);
+	layout_export->addWidget(groupbox_exportlayer_);
+	layout_export->addWidget(pushbutton_export_);
+	dialog_export_->setLayout(layout_export);
 }
 
 
@@ -597,6 +714,62 @@ void MainWindow::GetFiberParas()
 void MainWindow::GetProjectionParas()
 {
 	emit(SendProjectionParas(spinbox_prolen_->value()));
+}
+
+
+void MainWindow::GetSaveParas()
+{
+	dialog_save_->close();
+	emit(SendSavePWFParas(
+		checkbox_savevert_->isChecked(),
+		checkbox_saveline_->isChecked(),
+		checkbox_savebase_->isChecked(),
+		checkbox_saveceiling_->isChecked(),
+		checkbox_savecut_->isChecked(),
+		spinbox_minlayer1_->value(),
+		spinbox_maxlayer1_->value(),
+		lineedit_pwfpath_->text()));
+}
+
+
+void MainWindow::GetExportParas()
+{
+	emit(SendExportParas(
+		spinbox_minlayer2_->value(),
+		spinbox_maxlayer2_->value(),
+		lineedit_vertpath_->text(),
+		lineedit_linepath_->text()));
+}
+
+
+void MainWindow::GetPath()
+{
+	if (sender() == pushbutton_exportvert_)
+	{
+		QString filename = QFileDialog::
+			getSaveFileName(this, tr("Export Vertex"),
+			"..", tr("Frame Vertex(*.txt)"));
+
+		if (filename.isEmpty())
+		{
+			return;
+		}
+
+		lineedit_vertpath_->setText(filename);
+	}
+	else
+	{
+		QString filename = QFileDialog::
+			getSaveFileName(this, tr("Export Line"),
+			"..", tr("Frame Line(*.txt)"));
+
+		if (filename.isEmpty())
+		{
+			return;
+		}
+
+		lineedit_linepath_->setText(filename);
+	}
 }
 
 
@@ -697,6 +870,35 @@ void MainWindow::SetMaxOrderSlider(int max_value)
 }
 
 
+void MainWindow::OpenSaveDialog()
+{
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Save Mesh"),
+		"..", tr("OBJ files(*.obj);;PWF files(*.pwf)"));
+
+	if (filename.isEmpty())
+	{
+		return;
+	}
+
+	if (filename.contains(".obj") || filename.contains(".OBJ"))
+	{
+		emit(SendSaveOBJParas(filename));
+	}
+	else
+	{
+		lineedit_pwfpath_->setText(filename);
+		dialog_save_->show();
+	}
+}
+
+
+void MainWindow::OpenExportDialog()
+{
+	dialog_export_->show();
+}
+
+
 void MainWindow::ShowMeshInfo(int npoint, int nedge)
 {
 	label_meshinfo_->setText(QString("MeshInfo: p: %1 e: %2").arg(npoint).arg(nedge));
@@ -747,6 +949,16 @@ void MainWindow::ShowAbout()
 		"This is a basic and raw frame for handling meshes. The mesh is of half_edge struct.\n"
 		"Please contact" "<font color=blue> duckie@mail.ustc.edu.cn<\font><font color=black>, Yijiang Huang if you has any questions.<\font><\h3>"
 		,
+		QMessageBox::Ok);
+}
+
+
+void MainWindow::ShowError(QString error_msg)
+{
+	QMessageBox::information(
+		this, 
+		"Error",
+		error_msg,
 		QMessageBox::Ok);
 }
 

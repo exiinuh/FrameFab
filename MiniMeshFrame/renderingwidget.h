@@ -79,6 +79,8 @@ signals:
 	void	CapturedVert(int, int);
 	void	CapturedEdge(int, double);
 
+	void	Error(QString);
+
 	void	Reset();
 
 private:
@@ -89,19 +91,18 @@ private:
 	void	Render();
 	void	SetLight();
 
-	public slots:
+public slots:
 	void	SetBackground();
 	void	ScaleFrame(double scale);
 
 	void	ReadFrame();
-	void	WriteFrame();
-	void	WriteLayer();
-	void	WriteLayers();
-
-	void	ExportPoints();
-	void	ExportLines();
-	void	ExportLayer();
-	void	ExportLayers();
+	void	WriteFrame(QString filename);
+	void	WriteFrame(bool bVert, bool bLine, 
+						bool bBase, bool bCeiling, bool bCut,
+						int min_layer, int max_layer, QString filename);
+	void	ImportFrame();
+	void	ExportFrame(int min_layer, int max_layer, 
+						QString vert_path, QString line_path);
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
@@ -120,7 +121,7 @@ private:
 	void	DrawBulk(bool bv);
 	void	DrawOrder(bool bv);
 
-	public slots:
+public slots:
 	void	FiberPrintAnalysis(double radius, double density, double g,
 								double youngs_modulus, double shear_modulus,
 								double Dt_tol, double Dr_tol,

@@ -16,6 +16,7 @@
 #include <QKeyEvent>
 #include <QSlider>
 #include <QInputDialog>
+#include <QLineEdit>
 
 #include "GeneratedFiles\ui_mainwindow.h"
 #include "renderingwidget.h"
@@ -45,12 +46,14 @@ private:
 	void	CreateMenus();
 	void	CreateLabels();
 	void	CreateSpinBoxes();
+	void	CreateLineEdits();
 	void	CreateCheckBoxes();
 	void	CreateRadioButtons();
 	void	CreatePushButtons();
 	void	CreateToolButtons();
 	void	CreateSliders();
 	void	CreateGroups();
+	void	CreateDialogs();
 
 protected:
 	void	keyPressEvent(QKeyEvent *e);
@@ -64,6 +67,11 @@ signals:
 							double, double, double, 
 							double, double, double);
 	void	SendProjectionParas(double);
+	void	SendSaveOBJParas(QString);
+	void	SendSavePWFParas(bool, bool, 
+							bool, bool, bool,
+							int, int, QString);
+	void	SendExportParas(int, int, QString, QString);
 
 public slots:
 	void	OpenFile();
@@ -73,6 +81,9 @@ public slots:
 
 	void	GetFiberParas();
 	void	GetProjectionParas();
+	void	GetSaveParas();
+	void	GetExportParas();
+	void	GetPath();
 
 	void	CheckEdgeMode();
 	void	SwitchParaBox();
@@ -80,11 +91,15 @@ public slots:
 	void	SetOrderSlider(int value);
 	void	SetMaxOrderSlider(int max_value);
 
+	void	OpenSaveDialog();
+	void	OpenExportDialog();
+
 	void	ShowMeshInfo(int npoint, int nedge);
 	void	ShowCapturedVert(int id, int degree);
 	void	ShowCapturedEdge(int id, double len);
 	void	ShowScale(double scale);
 	void	ShowAbout();
+	void	ShowError(QString error_msg);
 
 	void	Reset();
 
@@ -99,12 +114,8 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
-	QAction				*action_savelayer_;
-	QAction				*action_savelayers_;
-	QAction				*action_exportpoints_;
-	QAction				*action_exportlines_;
-	QAction				*action_exportlayer_;
-	QAction				*action_exportlayers_;
+	QAction				*action_import_;
+	QAction				*action_export_;
 
 	QAction				*action_background_;
 
@@ -134,6 +145,11 @@ private:
 	QLabel				*label_scale_;
 	QLabel				*label_prolen_;
 
+	QLabel				*label_from1_;
+	QLabel				*label_to1_;
+	QLabel				*label_from2_;
+	QLabel				*label_to2_;
+
 	// Spinboxes
 	QDoubleSpinBox		*spinbox_radius_;
 	QDoubleSpinBox		*spinbox_density_;
@@ -153,10 +169,25 @@ private:
 	QDoubleSpinBox		*spinbox_scale_;
 	QDoubleSpinBox		*spinbox_prolen_;
 
+	QSpinBox			*spinbox_minlayer1_;
+	QSpinBox			*spinbox_maxlayer1_;
+	QSpinBox			*spinbox_minlayer2_;
+	QSpinBox			*spinbox_maxlayer2_;
+
+	// Lineedits
+	QLineEdit			*lineedit_vertpath_;
+	QLineEdit			*lineedit_linepath_;
+	QLineEdit			*lineedit_pwfpath_;
+
 	// Checkboxes
 	QCheckBox			*checkbox_point_;
 	QCheckBox			*checkbox_light_;
 	QCheckBox			*checkbox_axes_;
+	QCheckBox			*checkbox_savevert_;
+	QCheckBox			*checkbox_saveline_;
+	QCheckBox			*checkbox_savebase_;
+	QCheckBox			*checkbox_saveceiling_;
+	QCheckBox			*checkbox_savecut_;
 
 	// Radiobuttons
 	QRadioButton		*radiobutton_heat_;
@@ -176,6 +207,10 @@ private:
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;
 	QPushButton			*pushbutton_leftarrow_;
+	QPushButton			*pushbutton_save_;
+	QPushButton			*pushbutton_export_;
+	QPushButton			*pushbutton_exportvert_;
+	QPushButton			*pushbutton_exportline_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;
@@ -195,6 +230,15 @@ private:
 	QGroupBox			*groupbox_debug_;
 	QGroupBox			*groupbox_sep1_;
 	QGroupBox			*groupbox_sep2_;
+	QGroupBox			*groupbox_exportvert_;
+	QGroupBox			*groupbox_exportline_;
+	QGroupBox			*groupbox_exportlayer_;
+	QGroupBox			*groupbox_saveinfo_;
+	QGroupBox			*groupbox_savelayer_;
+
+	// Dialogs
+	QDialog				*dialog_save_;
+	QDialog				*dialog_export_;
 
 	EdgeRenderMode		edge_render_;
 

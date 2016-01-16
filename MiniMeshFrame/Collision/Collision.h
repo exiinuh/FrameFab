@@ -36,13 +36,14 @@
 
 
 typedef Geometry::Vector3d GeoV3;
+typedef unsigned long long lld;
 
 
 class Collision
 {
 public:
 	Collision();
-	Collision(WireFrame *ptr_frame, WF_edge *target_e);
+	Collision(WireFrame *ptr_frame);
 	~Collision();
 
 	//---------------------------add Guoxian 1220----------------------------------
@@ -51,9 +52,11 @@ public:
 	// vector<GeoV3>normal: a discreted range 
 	// notice: can't compute cost for pillar
 public:
-	void		DetectCollision(DualGraph *ptr_subgraph);
-	void		DetectCollision(WF_edge *order_e);
+	void		DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph);
+	void		DetectCollision(WF_edge *target_e, WF_edge *order_e);
 
+private:
+	void		DetectEdge(WF_edge *order_e);
 	void		CreatePrintTable();
 	void		GenerateSampleNormal();
 
@@ -70,20 +73,48 @@ public:
 	vector<point>				Consider(point order_start, point order_end, 
 										point target_start, point target_end);
 
+public:
+	lld		Angle()				{ return angle_; }
 	int		Divide()			{ return divide_; }
-	int		AvailableAngle()	{ return normal_.size(); }
+	int		ColFreeAngle()
+	{
+		int colfree_angle = 0;
+		for (int i = 0; i < divide_; i++)
+		{
+			lld mask = (1 << i);
+			if (!(mask&angle_))
+			{
+				colfree_angle++;
+			}
+		}
+		return colfree_angle;
+	}
 
+	int		ColFreeAngle(lld angle)
+	{
+		int colfree_angle = 0;
+		for (int i = 0; i < divide_; i++)
+		{
+			lld mask = (1 << i);
+			if (!(mask&angle))
+			{
+				colfree_angle++;
+			}
+		}
+		return colfree_angle;
+	}
 
-//private:
+public:
 	/* Interface Data Structure*/
 	WireFrame			*ptr_frame_;
-
-	int					divide_;
-	gte::Plane3<float>	table_;
-	ExtruderCone		extruder_;
-
 	WF_edge				*target_e_;
+
+private:
+	lld					angle_;
+	int					divide_;
+	ExtruderCone		extruder_;
 	vector<GeoV3>		normal_;							// normal list
+	gte::Plane3<float>	table_;
 
 	bool				considerable_;
 };

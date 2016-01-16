@@ -15,7 +15,7 @@ GraphCut::GraphCut()
 GraphCut::GraphCut(WireFrame *ptr_frame)
 		 :debug_(false), 
 		 penalty_(10e2), 
-		 Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
+		 Dt_tol_(5), Dr_tol_(10 * F_PI / 180), 
 		 pri_tol_(10e-3), dual_tol_(10e-3)
 {
 	ptr_frame_ = ptr_frame;
@@ -253,11 +253,6 @@ bool GraphCut::CheckLabel(int count)
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
-	//if (1 == count)
-	//{
-	//	return true;
-	//}
-	
 	if (l < 20 || l < ptr_frame_->SizeOfPillar())
 	{
 		return true;
@@ -316,10 +311,24 @@ void GraphCut::MakeLayers()
 		CreateA();
 
 		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
-		//if (cut_count == 2)
-		//{
-		//	WriteStiffness();
-		//}
+
+		/* for rendering */
+		if (cut_count == 0)
+		{
+			WriteWeight();
+			WriteStiffness("offset1.txt", "rotation1.txt");
+			getchar();
+		}
+		if (cut_count == 4)
+		{
+			WriteStiffness("offset2.txt", "rotation2.txt");
+			getchar();
+		}
+		if (cut_count == 6)
+		{
+			WriteStiffness("offset3.txt", "rotation3.txt");
+			getchar();
+		}
 
         /* set x for intial cut setting */
 		SetBoundary();
@@ -452,19 +461,11 @@ void GraphCut::MakeLayers()
         s_eR.GenerateStdVecFile();
 
         /* Update New Cut information to Rendering (layer_label_) */
-		//if (cut_count == 1)
-		//{
-		//	WriteWeight();
-		//}
+
 		UpdateCut();
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
-
-		//if (cut_count == 0)
-		//{
-		//	break;
-		//}
 
 	} while (!CheckLabel(cut_count));
 	
@@ -682,6 +683,7 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
         r_(u, v) = 1.0 / (1e-5 + w * abs(x_[u] - x_[v]));
 	}
 
+
     if (max_improv < 1e-2 || count > 20)
     {
         /* Exit Reweighting */
@@ -741,44 +743,48 @@ void GraphCut::WriteWeight()
 			b = 1.0;
 		}
 		else
-			if (ww[i] < 0.5)
-			{
-				r = 0.0;
-				g = 1.0;
-				b = (0.5 - ww[i]) * 4.0;
-			}
-			else
-				if (ww[i] < 0.75)
-				{
-					r = (ww[i] - 0.5) * 4.0;
-					g = 1.0;
-					b = 0.0;
-				}
-				else
-				{
-					r = 1.0;
-					g = (1.0 - ww[i]) * 4.0;
-					b = 0.0;
-				}
+		if (ww[i] < 0.5)
+		{
+			r = 0.0;
+			g = 1.0;
+			b = (0.5 - ww[i]) * 4.0;
+		}
+		else
+		if (ww[i] < 0.75)
+		{
+			r = (ww[i] - 0.5) * 4.0;
+			g = 1.0;
+			b = 0.0;
+		}
+		else
+		{
+			r = 1.0;
+			g = (1.0 - ww[i]) * 4.0;
+			b = 0.0;
+		}
 
 		fprintf(fp, "%lf %lf %lf\n", r, g, b);
 	}
 
-	ptr_frame_->ExportLines(line_path.c_str());
+	fclose(fp);
+	//ptr_frame_->ExportLines(line_path.c_str());
 }
 
 
-void GraphCut::WriteStiffness()
+void GraphCut::WriteStiffness(string offset, string rotation)
 {
 	string path = path_;
 
-	string offset_path = path + "/point_offset.txt";
-	string distor_path = path + "/point_distortion.txt";
-	string line_path = path + "/line.txt";
+	string offset_path = path + "/" + offset;
+	string rotation_path = path + "/" + rotation;
 
 	vector<FILE*> fp(2);
 	fp[0] = fopen(offset_path.c_str(), "w+");
-	fp[1] = fopen(distor_path.c_str(), "w+");
+	fp[1] = fopen(rotation_path.c_str(), "w+");
+
+	fprintf(fp[0], "#offset colormap#\r\n");
+	fprintf(fp[1], "#rotation colormap#\r\n",
+		0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
 	int N = ptr_frame_->SizeOfVertList();
 	vector<vector<double>> ss(N);
@@ -790,15 +796,20 @@ void GraphCut::WriteStiffness()
 			int j = ptr_dualgraph_->v_dual_id(i);
 
 			VX offset(3);
-			VX distortion(3);
+			VX rotation(3);
 			for (int k = 0; k < 3; k++)
 			{
 				offset[k] = D_[j * 6 + k];
-				distortion[k] = D_[j * 6 + k + 3];
+				rotation[k] = D_[j * 6 + k + 3];
 			}
 
+			if (offset.norm() >= Dt_tol_ || rotation.norm() >= Dr_tol_)
+			{
+				printf(".............. %lf %lf\n", offset.norm(), rotation.norm());
+				getchar();
+			}
 			ss[i][0] = offset.norm() / Dt_tol_;
-			ss[i][1] = distortion.norm() / Dr_tol_;
+			ss[i][1] = rotation.norm() / Dr_tol_;
 		}
 		else
 		{
@@ -806,61 +817,51 @@ void GraphCut::WriteStiffness()
 			ss[i][1] = 0.0;
 		}
 
-		point p = ptr_frame_->GetVert(i)->RenderPos();
-		for (int j = 0; j < 2; j++)
+		//if (ptr_dualgraph_->isExistingVert(i))
 		{
-			fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
+			point p = ptr_frame_->GetVert(i)->RenderPos();
+			for (int j = 0; j < 2; j++)
+			{
+				fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
 
-			double r;
-			double g;
-			double b;
+				double r;
+				double g;
+				double b;
 
-			if (ss[i][j] < 0.25)
-			{
-				r = 0.0;
-				g = ss[i][j] * 4.0;
-				b = 1.0;
-			}
-			else
-			if (ss[i][j] < 0.5)
-			{
-				r = 0.0;
-				g = 1.0;
-				b = (0.5 - ss[i][j]) * 4.0;
-			}
-			else
-			if (ss[i][j] < 0.75)
-			{
-				r = (ss[i][j] - 0.5) * 4.0;
-				g = 1.0;
-				b = 0.0;
-			}
-			else
-			{
-				r = 1.0;
-				g = (1.0 - ss[i][j]) * 4.0;
-				b = 0.0;
-			}
+				if (ss[i][j] < 0.25)
+				{
+					r = 0.0;
+					g = ss[i][j] * 4.0;
+					b = 1.0;
+				}
+				else
+				if (ss[i][j] < 0.5)
+				{
+					r = 0.0;
+					g = 1.0;
+					b = (0.5 - ss[i][j]) * 4.0;
+				}
+				else
+				if (ss[i][j] < 0.75)
+				{
+					r = (ss[i][j] - 0.5) * 4.0;
+					g = 1.0;
+					b = 0.0;
+				}
+				else
+				{
+					r = 1.0;
+					g = (1.0 - ss[i][j]) * 4.0;
+					b = 0.0;
+				}
 
-			fprintf(fp[j], "%lf %lf %lf\n", r, g, b);
+				fprintf(fp[j], "%lf %lf %lf\r\n", r, g, b);
+			}
 		}
 	}
 
 	fclose(fp[0]);
 	fclose(fp[1]);
-
-
-	FILE *fp_l = fopen(line_path.c_str(), "w+");
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	for (int i = 0; i < Nd; i++)
-	{
-		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
-		point u = e->pvert_->RenderPos();
-		point v = e->ppair_->pvert_->RenderPos();
-		fprintf(fp_l, "%lf %lf %lf %lf %lf %lf\n", u.x(), u.y(), u.z(),
-			v.x(), v.y(), v.z());
-	}
-	fclose(fp_l);
 }
 
 

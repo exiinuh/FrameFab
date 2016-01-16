@@ -2,7 +2,7 @@
 
 
 FiberPrintPARM::FiberPrintPARM()
-	:Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), penalty_(1e3), pri_tol_(1e-3),
+	:Dt_tol_(5), Dr_tol_(10 * F_PI / 180), penalty_(1e3), pri_tol_(1e-3),
 	dual_tol_(1e-3), gamma_(100.0), Wl_(10.0), Wp_(100.0)
 {
 	/*

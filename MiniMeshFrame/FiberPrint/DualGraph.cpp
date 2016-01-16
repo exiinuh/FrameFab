@@ -92,7 +92,7 @@ void DualGraph::UpdateDualization(VectorXd *ptr_x)
 	int Nd = Nd_;
 
 	fill(exist_vert_.begin(), exist_vert_.end(), 0);
-	fill(exist_edge_.begin(), exist_edge_.end(), 0);
+	fill(exist_edge_.begin(), exist_edge_.end(), false);
 	for (int e_id = 0; e_id < Nd; e_id++)
 	{
 		if ((*ptr_x)[e_id])
@@ -176,8 +176,8 @@ void DualGraph::Establish()
 		{
 			if (ptr_frame_->GetDegree(i) > 1)
 			{
-				//double w =  - (ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_);
-				double w = exp(- 0.8 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
+				//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+				double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
 				WF_edge *edge = ptr_frame_->GetNeighborEdge(i);
 				while (edge->pnext_ != NULL)
 				{

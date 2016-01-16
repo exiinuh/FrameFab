@@ -4,14 +4,12 @@ Collision::Collision()
 {
 }
 
-Collision::Collision(WireFrame *ptr_frame, WF_edge *target_e)
+Collision::Collision(WireFrame *ptr_frame)
 {
-	ptr_frame_ = ptr_frame;
-	target_e_ = target_e;
+	ptr_frame_	= ptr_frame;
+	divide_		= 60;
 
-	divide_ = 72;
 	CreatePrintTable();
-	GenerateSampleNormal();
 }
 
 Collision::~Collision()
@@ -19,8 +17,11 @@ Collision::~Collision()
 }
 
 
-void Collision::DetectCollision(DualGraph *ptr_subgraph)
+void Collision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph)
 {
+	target_e_ = target_e;
+	GenerateSampleNormal();
+
 	/* collision with edge */
 	int Nd = ptr_subgraph->SizeOfVertList();
 	for (int i = 0; i < Nd; i++)
@@ -28,27 +29,34 @@ void Collision::DetectCollision(DualGraph *ptr_subgraph)
 		WF_edge *e = ptr_frame_->GetEdge(ptr_subgraph->e_orig_id(i));
 		if (e != target_e_ && e != target_e_->ppair_)
 		{
-			DetectCollision(e);
+			DetectEdge(e);
 		}
 	}
 }
 
 
-void Collision::DetectCollision(WF_edge *order_e)
+void Collision::DetectCollision(WF_edge *target_e, WF_edge *order_e)
 {
+	target_e_ = target_e;
+	GenerateSampleNormal();
 
+	DetectEdge(order_e);
+}
+
+
+void Collision::DetectEdge(WF_edge *order_e)
+{
 	if (target_e_->isPillar())
 	{
 		considerable_ = false;
 		return;
-
 	}
 
 	considerable_ = true;
-	point order_start	= order_e->ppair_->pvert_->Position();
-	point order_end		= order_e->pvert_->Position();
-	point target_start	= target_e_->ppair_->pvert_->Position();
-	point target_end	= target_e_->pvert_->Position();
+	point order_start = order_e->ppair_->pvert_->Position();
+	point order_end = order_e->pvert_->Position();
+	point target_start = target_e_->ppair_->pvert_->Position();
+	point target_end = target_e_->pvert_->Position();
 
 
 	if (DisSegSeg(order_start, order_end, target_start, target_end) > threhold
@@ -62,7 +70,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 	// angle too big, it will not consider
 	if (target_end == order_start)
 	{
-		if (Geometry::angle(target_start - target_end, order_end - order_start) 
+		if (Geometry::angle(target_start - target_end, order_end - order_start)
 			>(3.1415 - extruder_.Angle()))
 		{
 			considerable_ = false;
@@ -72,7 +80,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 
 	if (target_end == order_end)
 	{
-		if (Geometry::angle(target_start - target_end, order_start - order_end) 
+		if (Geometry::angle(target_start - target_end, order_start - order_end)
 			> (3.1415 - extruder_.Angle()))
 		{
 			considerable_ = false;
@@ -82,7 +90,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 
 	if (target_start == order_start)
 	{
-		if (Geometry::angle(target_end - target_start, order_end - order_start) 
+		if (Geometry::angle(target_end - target_start, order_end - order_start)
 			>(3.1415 - extruder_.Angle()))
 		{
 			considerable_ = false;
@@ -92,7 +100,7 @@ void Collision::DetectCollision(WF_edge *order_e)
 
 	if (target_start == order_end)
 	{
-		if (Geometry::angle(target_end - target_start, order_start - order_end) 
+		if (Geometry::angle(target_end - target_start, order_start - order_end)
 			> (3.1415 - extruder_.Angle()))
 		{
 			considerable_ = false;
@@ -101,8 +109,6 @@ void Collision::DetectCollision(WF_edge *order_e)
 	}
 
 	vector <point> consider;
-
-
 	consider = Consider(order_start, order_end, target_start, target_end);
 
 
@@ -110,24 +116,24 @@ void Collision::DetectCollision(WF_edge *order_e)
 	if (consider.size() == 1)
 	{
 		point a = consider[0];
-	//cout << a.x() << "," << a.y() << "," << a.z() << endl;
+		//cout << a.x() << "," << a.y() << "," << a.z() << endl;
 
 		u = ColAngle(consider[0], target_start, target_end);
 		v = u;
 	}
-	
+
 	if (consider.size() == 2)
 	{
 		point a = consider[0];
-//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
+		//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
 
-	    a = consider[1];
-	//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
+		a = consider[1];
+		//	cout << a.x() << "," << a.y() << "," << a.z() << endl;
 
 		u = ColAngle(consider[0], target_start, target_end);
 		v = ColAngle(consider[1], target_start, target_end);
 	}
-	
+
 	if (consider.size() == 0)
 	{
 		considerable_ = false;
@@ -138,16 +144,12 @@ void Collision::DetectCollision(WF_edge *order_e)
 	* i.e. the collision cost of existence of edge i
 	* when printing edge id
 	*/
-	vector<GeoV3>::iterator it;
-	for (it = normal_.begin(); it != normal_.end(); )
+	for (int i = 0; i < divide_; i++)
 	{
-		if (IsColVec(u, v, *it))
+		lld mask = (1 << i);
+		if (!(angle_&mask) && IsColVec(u, v, normal_[i]))
 		{
-			it = normal_.erase(it);
-		}
-		else
-		{
-			++it;
+			angle_ |= mask;
 		}
 	}
 }
@@ -164,6 +166,9 @@ void Collision::CreatePrintTable()
 
 void Collision::GenerateSampleNormal()
 {
+	/* init collision state */
+	angle_ = 0;
+
 	/* sampling number of orientation vector in 2*pi angle range */
 	point target_start = target_e_->ppair_->pvert_->Position();
 	point target_end = target_e_->pvert_->Position();
@@ -197,16 +202,12 @@ void Collision::GenerateSampleNormal()
 
 
 	/* collision with table */
-	vector<GeoV3>::iterator it;
-	for (it = normal_.begin(); it != normal_.end();)
+	for (int i = 0; i < divide_; i++)
 	{
-		if (IsColTable(*it))
+		lld mask = (1 << i);
+		if (IsColTable(normal_[i]))
 		{
-			it = normal_.erase(it);
-		}
-		else
-		{
-			++it;
+			angle_ |= mask;
 		}
 	}
 }

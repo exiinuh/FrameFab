@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-	:fixed_vert_(0), delta_tol_(5e-4), unify_size_(2.0), max_layer_(0)
+	:fixed_vert_(0), delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -148,45 +148,6 @@ void WireFrame::LoadFromOBJ(const char *path)
 	catch (...)
 	{
 		return;
-	}
-
-	fclose(fp);
-}
-
-
-void WireFrame::WriteToOBJ(const char *path)
-{
-	FILE *fp = fopen(path, "wb+");
-	int N = SizeOfVertList();
-	int M = SizeOfEdgeList();
-	int F = SizeOfFaceList();
-
-	for (int i = 0; i < N; i++)
-	{
-		point p = (*pvert_list_)[i]->Position();
-		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
-	}
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID())
-		{
-			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
-		}
-	}
-
-	for (int i = 0; i < F; i++)
-	{
-		fprintf(fp, "f");
-		vector<WF_vert*> bound_points = *((*pface_list_)[i]->bound_points_);
-		int n = bound_points.size();
-		for (int j = 0; j < n; j++)
-		{
-			fprintf(fp, " %d", bound_points[j]->ID() + 1);
-		}
-		fprintf(fp, "\n");
 	}
 
 	fclose(fp);
@@ -403,7 +364,7 @@ void WireFrame::LoadFromPWF(const char *path)
 }
 
 
-void WireFrame::WriteToPWF(const char *path)
+void WireFrame::WriteToOBJ(const char *path)
 {
 	FILE *fp = fopen(path, "wb+");
 	int N = SizeOfVertList();
@@ -414,6 +375,16 @@ void WireFrame::WriteToPWF(const char *path)
 	{
 		point p = (*pvert_list_)[i]->Position();
 		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID())
+		{
+			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
+		}
 	}
 
 	for (int i = 0; i < F; i++)
@@ -428,51 +399,20 @@ void WireFrame::WriteToPWF(const char *path)
 		fprintf(fp, "\n");
 	}
 
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID())
-		{
-			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
-		}
-	}
-
-	for (int i = 0; i < N; i++)
-	{
-		if ((*pvert_list_)[i]->isFixed())
-		{
-			fprintf(fp, "b %d\n", i + 1);
-		}
-	}
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->isCeiling())
-		{
-			fprintf(fp, "c %d %d\n", e2->pvert_->ID() + 1, e1->pvert_->ID() + 1);
-		}
-	}
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() != -1)
-		{
-			fprintf(fp, "g %d %d %d\n", e2->pvert_->ID() + 1, 
-				e1->pvert_->ID() + 1, e1->Layer());
-		}
-	}
-
 	fclose(fp);
 }
 
 
-void WireFrame::WriteLayerToOBJ(const char *path, int layer)
+void WireFrame::WriteToPWF(bool bVert, bool bLine,
+	bool bBase, bool bCeiling, bool bCut,
+	int min_layer, int max_layer, const char *path)
 {
+	if ((*pedge_list_)[0]->Layer() == -1)
+	{
+		min_layer = -(1 << 20);
+		max_layer = (1 << 20);
+	}
+
 	FILE *fp = fopen(path, "wb+");
 	int N = SizeOfVertList();
 	int M = SizeOfEdgeList();
@@ -486,7 +426,7 @@ void WireFrame::WriteLayerToOBJ(const char *path, int layer)
 	{
 		WF_edge *e1 = (*pedge_list_)[i];
 		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() == layer)
+		if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 		{
 			int u = e2->pvert_->ID();
 			int v = e1->pvert_->ID();
@@ -504,12 +444,14 @@ void WireFrame::WriteLayerToOBJ(const char *path, int layer)
 	}
 
 	int Ne = export_vert.size();
-	for (int i = 0; i < Ne; i++)
+	if (bVert)
 	{
-		point p = (*pvert_list_)[export_vert[i]]->Position();
-		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+		for (int i = 0; i < Ne; i++)
+		{
+			point p = (*pvert_list_)[export_vert[i]]->Position();
+			fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+		}
 	}
-
 	//for (int i = 0; i < F; i++)
 	//{
 	//	fprintf(fp, "f");
@@ -522,115 +464,62 @@ void WireFrame::WriteLayerToOBJ(const char *path, int layer)
 	//	fprintf(fp, "\n");
 	//}
 
-	for (int i = 0; i < M; i++)
+	if (bLine)
 	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() == layer)
+		for (int i = 0; i < M; i++)
 		{
-			int u = e2->pvert_->ID();
-			int v = e1->pvert_->ID();
-			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
-		}
-	}
-
-	fclose(fp);
-}
-
-
-void WireFrame::WriteLayersToPWF(const char *path, int max_layer)
-{
-	FILE *fp = fopen(path, "wb+");
-	int N = SizeOfVertList();
-	int M = SizeOfEdgeList();
-	int F = SizeOfFaceList();
-	
-	vector<int> export_vert;
-	vector<int> hash(N);
-	fill(hash.begin(), hash.end(), -1);
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() < max_layer)
-		{
-			int u = e2->pvert_->ID();
-			int v = e1->pvert_->ID();
-			if (hash[u] == -1)
+			WF_edge *e1 = (*pedge_list_)[i];
+			WF_edge *e2 = e1->ppair_;
+			if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 			{
-				export_vert.push_back(u);
-				hash[u] = export_vert.size();
-			}
-			if (hash[v] == -1)
-			{
-				export_vert.push_back(v);
-				hash[v] = export_vert.size();
+				int u = e2->pvert_->ID();
+				int v = e1->pvert_->ID();
+				fprintf(fp, "l %d %d\n", hash[u], hash[v]);
 			}
 		}
 	}
 
-	int Ne = export_vert.size();
-	for (int i = 0; i < Ne; i++)
+	if (bBase)
 	{
-		point p = (*pvert_list_)[export_vert[i]]->Position();
-		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
-	}
-
-	//for (int i = 0; i < F; i++)
-	//{
-	//	fprintf(fp, "f");
-	//	vector<WF_vert*> bound_points = *((*pface_list_)[i]->bound_points_);
-	//	int n = bound_points.size();
-	//	for (int j = 0; j < n; j++)
-	//	{
-	//		fprintf(fp, " %d", bound_points[j]->ID() + 1);
-	//	}
-	//	fprintf(fp, "\n");
-	//}
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() < max_layer)
+		for (int i = 0; i < Ne; i++)
 		{
-			int u = e2->pvert_->ID();
-			int v = e1->pvert_->ID();
-			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
+			int u = export_vert[i];
+			if ((*pvert_list_)[u]->isFixed() && hash[u] != -1)
+			{
+				fprintf(fp, "b %d\n", hash[u]);
+			}
 		}
 	}
 
-	for (int i = 0; i < Ne; i++)
+	if (bCeiling)
 	{
-		int u = export_vert[i];
-		if ((*pvert_list_)[u]->isFixed())
+		for (int i = 0; i < M; i++)
 		{
-			fprintf(fp, "b %d\n", hash[u]);
+			WF_edge *e1 = (*pedge_list_)[i];
+			WF_edge *e2 = e1->ppair_;
+			if (i < e2->ID() && e1->isCeiling()
+				&& e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
+			{
+				int u = e2->pvert_->ID();
+				int v = e1->pvert_->ID();
+				fprintf(fp, "c %d %d\n", hash[u], hash[v]);
+			}
 		}
 	}
 
-	for (int i = 0; i < M; i++)
+	if (bCut)
 	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() < max_layer && e1->isCeiling())
+		for (int i = 0; i < M; i++)
 		{
-			int u = e2->pvert_->ID();
-			int v = e1->pvert_->ID();
-			fprintf(fp, "c %d %d\n", hash[u], hash[v]);
-		}
-	}
-
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() < max_layer && e1->Layer() != -1)
-		{
-			int u = e2->pvert_->ID();
-			int v = e1->pvert_->ID();
-			fprintf(fp, "g %d %d %d\n", hash[u], hash[v], e1->Layer());
+			WF_edge *e1 = (*pedge_list_)[i];
+			WF_edge *e2 = e1->ppair_;
+			if (i < e2->ID() && e1->Layer() != -1
+				&& e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
+			{
+				int u = e2->pvert_->ID();
+				int v = e1->pvert_->ID();
+				fprintf(fp, "g %d %d %d\n", hash[u], hash[v], e1->Layer());
+			}
 		}
 	}
 
@@ -638,71 +527,89 @@ void WireFrame::WriteLayersToPWF(const char *path, int max_layer)
 }
 
 
-void WireFrame::ExportPoints(const char *path)
+void WireFrame::ImportFrom3DD(const char *path)
 {
-	FILE *fp = fopen(path, "wb+");
+	FILE *fp = fopen(path, "r");
+
+	try
+	{
+		// read vertexes
+		fseek(fp, 0, SEEK_SET);
+		char pLine[512];
+		char *tok;
+		while (fgets(pLine, 512, fp))
+		{
+			string flag = "";
+			for (int i = 2; i < 9; i++)
+			{
+				flag = flag + pLine[i];
+			}
+			if (pLine[0] == '#' && flag == "element")
+			{
+				WF_vert *prev = NULL;
+				while (fgets(pLine, 512, fp) && pLine[0] == ' ')
+				{
+					Vec3f p;
+					char tmp[128];
+
+					tok = strtok(pLine, " ");
+					strcpy(tmp, tok);
+					tmp[strcspn(tmp, " ")] = 0;
+					p[0] = (float)atof(tmp);
+
+					for (int i = 1; i < 3; i++)
+					{
+						tok = strtok(NULL, " ");
+						strcpy(tmp, tok);
+						tmp[strcspn(tmp, " ")] = 0;
+						p[i] = (float)atof(tmp);
+					}
+
+					p = point(p.x(), p.y(), p.z());
+					WF_vert *u = InsertVertex(p);
+					if (prev != NULL)
+					{
+						InsertEdge(prev, u);
+					}
+					prev = u;
+				}
+			}
+		}
+
+		Unify();
+	}
+	catch (...)
+	{
+		return;
+	}
+
+	fclose(fp);
+}
+
+
+void WireFrame::ExportPoints(int min_layer, int max_layer, const char *path)
+{
+	if ((*pedge_list_)[0]->Layer() == -1)
+	{
+		min_layer = -(1 << 20);
+		max_layer = (1 << 20);
+	}
 
 	int N = SizeOfVertList();
-	for (int i = 0; i < N; i++)
-	{
-		point p = (*pvert_list_)[i]->RenderPos();
-		fprintf(fp, "%lf %lf %lf\n", p.x(), p.y(), p.z());
-	}
-
-	fclose(fp);
-}
-
-
-void WireFrame::ExportLines(const char *path)
-{
-	FILE *fp = fopen(path, "wb+");
-
 	int M = SizeOfEdgeList();
-	for (int i = 0; i < M; i++)
-	{
-		WF_edge *e1 = (*pedge_list_)[i];
-		WF_edge *e2 = e1->ppair_;
-		if (e1->ID() < e2->ID())
-		{
-			point p1 = e2->pvert_->RenderPos();
-			point p2 = e1->pvert_->RenderPos();
-			fprintf(fp, "%lf %lf %lf ", p1.x(), p1.y(), p1.z());
-			fprintf(fp, "%lf %lf %lf\n", p2.x(), p2.y(), p2.z());
-		}
-	}
-
-	fclose(fp);
-}
-
-
-void WireFrame::ExportLayer(const char *path, int layer)
-{
-	string vert_path = (string)path + "/verts_layer.txt";
-	string edge_path = (string)path + "/edges_layer.txt";
-	FILE *fp_v = fopen(vert_path.c_str(), "wb+");
-	FILE *fp_e = fopen(edge_path.c_str(), "wb+");
-
-	int N = SizeOfVertList();
-	int M = SizeOfEdgeList();
-	int F = SizeOfFaceList();
 
 	vector<bool> is_export_vert(N);
 	fill(is_export_vert.begin(), is_export_vert.end(), false);
 
+	FILE *fp = fopen(path, "wb+");
 	for (int i = 0; i < M; i++)
 	{
 		WF_edge *e1 = (*pedge_list_)[i];
 		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() == layer)
+		if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 		{
 			is_export_vert[e2->pvert_->ID()] = true;
 			is_export_vert[e1->pvert_->ID()] = true;
-
-			point u = e2->pvert_->RenderPos();
-			point v = e1->pvert_->RenderPos();
-
-			fprintf(fp_e, "%lf %lf %lf %lf %lf %lf\n",
-				u.x(), u.y(), u.z(), v.x(), v.y(), v.z());
 		}
 	}
 
@@ -710,58 +617,50 @@ void WireFrame::ExportLayer(const char *path, int layer)
 	{
 		if (is_export_vert[i])
 		{
+			//point u = (*pvert_list_)[i]->Position();
+			//fprintf(fp, "%lf %lf %lf\n", u.x() / 125.0, u.y() / 125.0, u.z() / 125.0);
+
 			point u = (*pvert_list_)[i]->RenderPos();
-			fprintf(fp_v, "%lf %lf %lf\n", u.x(), u.y(), u.z());
+			fprintf(fp, "%lf %lf %lf\n", u.x(), u.y(), u.z());
 		}
 	}
 
-	fclose(fp_v);
-	fclose(fp_e);
+	fclose(fp);
 }
 
 
-void WireFrame::ExportLayers(const char *path, int max_layer)
+void WireFrame::ExportLines(int min_layer, int max_layer, const char *path)
 {
-	string vert_path = (string)path + "/verts_layers.txt";
-	string edge_path = (string)path + "/edges_layers.txt";
-	FILE *fp_v = fopen(vert_path.c_str(), "wb+");
-	FILE *fp_e = fopen(edge_path.c_str(), "wb+");
+	if ((*pedge_list_)[0]->Layer() == -1)
+	{
+		min_layer = -(1 << 20);
+		max_layer = (1 << 20);
+	}
 
 	int N = SizeOfVertList();
 	int M = SizeOfEdgeList();
-	int F = SizeOfFaceList();
 
-	vector<bool> is_export_vert(N);
-	fill(is_export_vert.begin(), is_export_vert.end(), false);
-
+	FILE *fp = fopen(path, "wb+");
 	for (int i = 0; i < M; i++)
 	{
 		WF_edge *e1 = (*pedge_list_)[i];
 		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID() && e1->Layer() < max_layer)
+		if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 		{
-			is_export_vert[e2->pvert_->ID()] = true;
-			is_export_vert[e1->pvert_->ID()] = true;
+			//point u = e2->pvert_->Position();
+			//point v = e1->pvert_->Position();
+			//fprintf(fp, "%lf %lf %lf %lf %lf %lf\n",
+			//	u.x() / 125.0, u.y() / 125.0, u.z() / 125.0,
+			//	v.x() / 125.0, v.y() / 125.0, v.z() / 125.0);
 
 			point u = e2->pvert_->RenderPos();
 			point v = e1->pvert_->RenderPos();
-
-			fprintf(fp_e, "%lf %lf %lf %lf %lf %lf\n",
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf\n",
 				u.x(), u.y(), u.z(), v.x(), v.y(), v.z());
 		}
 	}
 
-	for (int i = 0; i < N; i++)
-	{
-		if (is_export_vert[i])
-		{
-			point u = (*pvert_list_)[i]->RenderPos();
-			fprintf(fp_v, "%lf %lf %lf\n", u.x(), u.y(), u.z());
-		}
-	}
-
-	fclose(fp_v);
-	fclose(fp_e);
+	fclose(fp);
 }
 
 

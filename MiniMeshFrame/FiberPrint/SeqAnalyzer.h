@@ -84,19 +84,24 @@ public:
 public:
 	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
-	FiberPrintPARM	*ptr_parm_;
 	char			*path_;
 
 private:
-	double			gamma_;						// gamma_	 : amplifier factor for adjacency cost
-	double			Dt_tol_;					// Dt_tol   : tolerance of offset in stiffness
+	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
+	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
 	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
-	double			Wl_;						// Wl_		 : tradeoff weight for printing cost
-	double			Wp_;						// Wp_		 : tradeoff weight for printing cost
+	double			Wl_;						// Wl_		: tradeoff weight for printing cost
+	double			Wp_;						// Wp_		: tradeoff weight for printing cost
+	double			Wi_;						// Wi_		: tradeoff weight for printing cost
 
 	vector<vector<int>>		layers_;			// store dual_node's id for each layers
 	vector<QueueInfo>		layer_queue_;
 
+	Collision		*ptr_collision_;
+	vector<lld>		angle_state_;
+
+	double			min_z_;
+	double			max_z_;
 	/* Printing Orientation Related Data */
 	int				support_;
 	bool			extru_;

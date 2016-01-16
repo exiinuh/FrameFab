@@ -86,7 +86,7 @@ public:
 	vector<int>				*GetCut()				{ return &cutting_edge_; }
 
 	void		WriteWeight();
-	void		WriteStiffness();
+	void		WriteStiffness(string offset, string rotation);
 	void		Debug();
 
 public:
