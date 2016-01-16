@@ -682,7 +682,6 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
         r_(u, v) = 1.0 / (1e-5 + w * abs(x_[u] - x_[v]));
 	}
 
-
     if (max_improv < 1e-2 || count > 20)
     {
         /* Exit Reweighting */
