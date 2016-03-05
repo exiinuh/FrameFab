@@ -544,10 +544,17 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		/* examination failed */
 		if (!stiff_success)
 		{
-			getchar();
+			if (debug_)
+			{
+				cout << "Stiffness Verification Fail." << endl;
+			}
 			return -1;
 		}
 
+		if (debug_)
+		{
+			cout << "Stiffness Verification Pass" << endl;
+		}
 
 		/* influence weight */
 		int sum_angle = 0; 
