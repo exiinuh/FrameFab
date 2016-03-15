@@ -375,8 +375,13 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	
 	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
 	{
+		cout << "Stiffness Solver fail!\n" << endl;
 		return false;
 	}
+
+	/* check stiffness matrix condition number */
+	IllCondDetector		stiff_doctor(K_);
+	stiff_doctor.ComputeCondNum();
 
 	if (write_matrix)
 	{

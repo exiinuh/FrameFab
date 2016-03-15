@@ -1156,7 +1156,9 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
-	ptr_fiberprint_->Print();
+
+	//ptr_fiberprint_->Print();
+	ptr_fiberprint_->GetDeformation();
 
 	emit(SetOrderSlider(0));
 	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
@@ -1164,6 +1166,48 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	delete ptr_parm;
 }
 
+void RenderingWidget::DeformationAnalysis(double radius, double density, double g,
+	double youngs_modulus, double shear_modulus,
+	double Dt_tol, double Dr_tol,
+	double penalty, double pri_tol, double dual_tol,
+	double gamma, double Wl, double Wp)
+{
+	QString dirname = QFileDialog::
+		getExistingDirectory(this,
+		tr("Result Directory"),
+		"/home",
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks);
+
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(
+		radius, density, g,
+		youngs_modulus, shear_modulus,
+		Dt_tol, Dr_tol,
+		penalty, pri_tol, dual_tol,
+		gamma, Wl, Wp);
+
+	delete ptr_fiberprint_;
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+
+	ptr_fiberprint_->GetDeformation();
+
+	emit(SetOrderSlider(0));
+	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
+
+	delete ptr_parm;
+}
 
 void RenderingWidget::SimplifyFrame()
 {

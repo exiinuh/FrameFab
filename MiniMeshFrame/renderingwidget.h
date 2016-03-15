@@ -122,11 +122,24 @@ private:
 	void	DrawOrder(bool bv);
 
 public slots:
+	/* extended by Y.J. Huang @ March/13/2016 */
+	/*
+	* add an option button mode
+	* mode 1 : common analysis routine: decomposition -> sequence analysis
+	* mode 0 : calculate deformation directly to the input shape
+	*/
 	void	FiberPrintAnalysis(double radius, double density, double g,
-								double youngs_modulus, double shear_modulus,
-								double Dt_tol, double Dr_tol,
-								double penalty, double pri_tol, double dual_tol,
-								double gamma, double Wl, double Wp);
+		double youngs_modulus, double shear_modulus,
+		double Dt_tol, double Dr_tol,
+		double penalty, double pri_tol, double dual_tol,
+		double gamma, double Wl, double Wp);
+
+	void	DeformationAnalysis(double radius, double density, double g,
+		double youngs_modulus, double shear_modulus,
+		double Dt_tol, double Dr_tol,
+		double penalty, double pri_tol, double dual_tol,
+		double gamma, double Wl, double Wp);
+
 
 	void	SimplifyFrame();
 	void	RefineFrame();

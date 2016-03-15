@@ -60,6 +60,7 @@
 #include "GCommon.h"
 #include "StiffnessIO.h"
 #include "StiffnessSolver.h"
+#include "IllCondDetector.h"
 
 using namespace std;
 using namespace Eigen;

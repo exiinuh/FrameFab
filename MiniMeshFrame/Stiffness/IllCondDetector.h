@@ -36,6 +36,15 @@ extern "C" void dpotrf_(const char *UPLO, const int *N, double *A, const int *LD
 // the Cholesky factorization A = U**T*U or A = L*L**T computed by
 // DPPTRF.
 // refer : http://www.netlib.org/lapack/explore-html/d0/d9b/dppcon_8f.html#a8107a68e3c7d948fe246bf0feae0470b
+/*
+* Note by Y.J. Huang @Mar/15/2016
+* I don't know why this routine fails for stiffness funtion (bunny head 60 unrestrained nodes)
+* but works fine for simple example in debug.
+*
+* [BugFix @Mar/15/2016] Please specify WORK and LWORK as:
+* 	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
+*   int    *lworkcon = (int*)malloc(N_ * sizeof(int));
+*/
 extern "C" void dpocon_(const char *UPLO, const int *N, const double *AP, const int *lda, const double *ANORM,
 	double *RCOND, double *WORK, int *LWORK, int *INFO);
 
@@ -60,7 +69,7 @@ public:
 	double GetCondNum() const { return cond_num_; }
 	
 	// Library Compatibility
-	void EIGEN_LAP(EigenSp const &K);
+	void EigenLap(EigenSp const &K);
 
 	void ComputeCondNum();
 	bool StabAnalysis();

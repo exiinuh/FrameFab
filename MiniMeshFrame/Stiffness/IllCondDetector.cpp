@@ -5,7 +5,7 @@
 
 IllCondDetector::IllCondDetector(EigenSp const &K)
 {
-	EIGEN_LAP(K);
+	EigenLap(K);
 }
 
 IllCondDetector::~IllCondDetector()
@@ -16,12 +16,12 @@ IllCondDetector::~IllCondDetector()
 	}
 }
 
-void IllCondDetector::EIGEN_LAP(EigenSp const &K)
+void IllCondDetector::EigenLap(EigenSp const &K)
 {
 	// Convert Eigen library storage into LAPACK storage
 
 	N_ = K.cols();
-	A_ = (double*)calloc(N_*N_, sizeof(double));
+	A_ = (double*)calloc(N_ * N_, sizeof(double));
 
 	for (int i = 0; i < N_; i++)
 	{
@@ -63,19 +63,30 @@ void IllCondDetector::ComputeCondNum()
 	int	  lda = N_;			// Leading dimension
 
 	double *A_copy = (double*)malloc(N_ * N_ * sizeof(double));
-	for (int i = 0; i < N_*N_; i++)
+	for (int i = 0; i < N_ * N_; i++)
 	{
 		A_copy[i] = A_[i];
 	}
 
 	double *S = (double*)malloc(N_ * sizeof(double));	// The singular values of A
-	double *U = (double*)malloc(N_*N_*sizeof(double));
-	double *Vt = (double*)malloc(N_*N_*sizeof(double));
+	double *U = (double*)malloc(N_ * N_*sizeof(double));
+	double *Vt = (double*)malloc(N_ * N_*sizeof(double));
 	int	   lwork = 5 * N_;
 	double *work = (double*)malloc(lwork*sizeof(double));
 	int	   info = 1;
 
 	dgesvd_(jobu, jobvt, &N_, &N_, A_copy, &lda, S, U, &N_, Vt, &N_, work, &lwork, &info);
+	
+	if (0 == info)
+	{
+		/* succeed */
+		printf("svd decomposition succeed in IllConditionDetecter.\n");
+	}
+	else
+	{
+		printf("svd decomposition fails in IllConditionDetecter.");
+	}
+
 	assert(0 == info);
 
 	int rank = 0;
@@ -96,7 +107,7 @@ void IllCondDetector::ComputeCondNum()
 	cout << "Ill Condition Detector Rank Stat" << endl;
 	for (int i = 0; i < compare.size(); i++)
 	{
-		if (10-15 * max < compare[i])
+		if (10e-15 * max < compare[i])
 		{
 			rank++;
 		}
@@ -153,11 +164,22 @@ void IllCondDetector::ComputeCondNum()
 	cout << "info : " << info << endl;
 	assert(info == 0);
 
-	//double workcon;
-	//int    lworkcon;
-	//dpocon_(uplo, &N_, A_, &lda, &Anorm_, &cond_num_, &workcon, &lworkcon, &info);
+	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
+	int    *lworkcon = (int*)malloc(N_ * sizeof(int));
+	dpocon_(uplo, &N_, A_, &lda, &Anorm_, &cond_num_, workcon, lworkcon, &info);
 
-	//assert(info == 0);
+	if (0 == info)
+	{
+		/* succeed */
+		printf("condition number calculation succeed in IllConditionDetecter.\n");
+		cout << "Condition Number: " << cond_num_ << endl;
+	}
+	else
+	{
+		printf("condition number calculation in IllConditionDetecter.");
+	}
+
+	assert(info == 0);
 
 	//std::cout << "condition number of K_ : " << 1/cond_num_ << std::endl;
 	free(A_copy);
@@ -165,6 +187,8 @@ void IllCondDetector::ComputeCondNum()
 	free(U);
 	free(Vt);
 	free(work);
+	free(workcon);
+	free(lworkcon);
 }
 
 bool IllCondDetector::StabAnalysis()
@@ -198,11 +222,40 @@ void IllCondDetector::Debug()
 	int ldb = 3;
 	int info;
 
-	dgesv_(&N, &nrhs, A, &lda, ipiv, b, &ldb, &info);
+	//dgesv_(&N, &nrhs, A, &lda, ipiv, b, &ldb, &info);
 
-	if (info == 0) /* succeed */
-		printf("The solution is %lf %lf %lf\n", b[0], b[1], b[2]);
+	//if (info == 0) /* succeed */
+	//	printf("The solution is %lf %lf %lf\n", b[0], b[1], b[2]);
+	//else
+	//	fprintf(stderr, "dgesv_ fails %d\n", info);
+	char uplo[] = "U";
+
+	dpotrf_(uplo, &N, A, &lda, &info);
+
+	if (0 == info)
+	{
+		cout << "cholesky succeed." << endl;
+	}
 	else
-		fprintf(stderr, "dgesv_ fails %d\n", info);
+	{
+		cout << "cholesky dead." << endl;
+	}
+
+	double workcon;
+	int    lworkcon;
+	dpocon_(uplo, &N, A, &lda, &Anorm_, &cond_num_, &workcon, &lworkcon, &info);
+
+	if (0 == info)
+	{
+		/* succeed */
+		printf("condition number calculation succeed in IllConditionDetecter.\n");
+		cout << "Condition number: " << cond_num_ << endl;
+	}
+	else
+	{
+		printf("condition number calculation in IllConditionDetecter.");
+	}
+
+	assert(info == 0);
 
 }
