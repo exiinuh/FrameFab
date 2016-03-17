@@ -166,13 +166,13 @@ void IllCondDetector::ComputeCondNum()
 
 	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
 	int    *lworkcon = (int*)malloc(N_ * sizeof(int));
-	dpocon_(uplo, &N_, A_, &lda, &Anorm_, &cond_num_, workcon, lworkcon, &info);
+	dpocon_(uplo, &N_, A_, &lda, &Anorm_, &rcond_num_, workcon, lworkcon, &info);
 
 	if (0 == info)
 	{
 		/* succeed */
 		printf("condition number calculation succeed in IllConditionDetecter.\n");
-		cout << "Condition Number: " << cond_num_ << endl;
+		cout << "Condition Number: " << 1 / rcond_num_ << endl;
 	}
 	else
 	{
@@ -241,15 +241,16 @@ void IllCondDetector::Debug()
 		cout << "cholesky dead." << endl;
 	}
 
-	double workcon;
-	int    lworkcon;
-	dpocon_(uplo, &N, A, &lda, &Anorm_, &cond_num_, &workcon, &lworkcon, &info);
+	double *workcon = (double*)malloc(3 * N * sizeof(double));
+	int    *lworkcon = (int*)malloc(N * sizeof(int));
+
+	dpocon_(uplo, &N, A, &lda, &Anorm_, &rcond_num_, workcon, lworkcon, &info);
 
 	if (0 == info)
 	{
 		/* succeed */
 		printf("condition number calculation succeed in IllConditionDetecter.\n");
-		cout << "Condition number: " << cond_num_ << endl;
+		cout << "Condition number: " << 1 / rcond_num_ << endl;
 	}
 	else
 	{

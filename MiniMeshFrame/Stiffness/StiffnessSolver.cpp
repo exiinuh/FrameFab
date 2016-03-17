@@ -9,7 +9,7 @@ bool StiffnessSolver::SolveSystem(
 
 	diag.resize(DoF);
 
-	//MX K_comp = K;
+	//MX K_comp = K;i
 	int row = K.rows(), col = K.cols();
 	MX K_comp(row, col);
 	K_comp.setZero();

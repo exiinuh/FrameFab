@@ -66,7 +66,7 @@ public:
 public:
 	// I\O
 	void inline SetParm(int _ns, int _nl, int _condthres, int _gap);
-	double GetCondNum() const { return cond_num_; }
+	double GetCondNum() const { return rcond_num_; }
 	
 	// Library Compatibility
 	void EigenLap(EigenSp const &K);
@@ -82,8 +82,16 @@ private:
 	int			gap_;			// gap_ : The order of the gap between a cluster of smallest eigenvalues
 								// and the next largest eigen values
 
+	/*
+	* Matrices are well-conditioned if the 
+	* reciprocal condition number is near 1 and ill-conditioned if it is near zero.
+	*
+	* About numerical value of condition number, please refer to:
+	* http://math.stackexchange.com/questions/675474/what-is-the-practical-impact-of-a-matrixs-condition-number
+	* "Condition number exceeds 10e10 could be problematic. condition number from 10e^3~6 could be acceptable."
+	*/
 	int			N_;				// N_       : the matrix's row number
-	double		cond_num_;		// cond_num : The condition number
+	double		rcond_num_;		// rcond_num :the reciprocal of the condition number
 	double		*A_;			// A[]		: LAPACK storage of the matrix
 	double		Anorm_;			// Anorm_	: 1 norm = max_j{ sum_{i}abs(a_ij)}
 };

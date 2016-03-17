@@ -382,6 +382,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	/* check stiffness matrix condition number */
 	IllCondDetector		stiff_doctor(K_);
 	stiff_doctor.ComputeCondNum();
+	//stiff_doctor.Debug();
 
 	if (write_matrix)
 	{
