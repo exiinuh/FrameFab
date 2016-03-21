@@ -375,6 +375,9 @@ void GraphCut::MakeLayers()
         cut_energy.push_back(icut_energy);
         res_energy.push_back(ideform_energy);
 
+		/* ADMM primal residual recording in each reweighting */
+		vector<double> ADMM_res;
+
 		do
 		{
             /* Reweighting loop for cut */
@@ -383,6 +386,8 @@ void GraphCut::MakeLayers()
 			x_prev = x_;
 			CreateC(cut_count, rew_count);
 
+			ADMM_res.clear();
+			
 			do
 			{
 				cout << "GraphCut Round: " << cut_count << ", reweight iteration:" << rew_count
@@ -420,6 +425,9 @@ void GraphCut::MakeLayers()
                 cout << "primal_residual(KD-F) : "         << primal_res_.norm() << endl;
 
                 cout << "---------------------" << endl;
+
+				ADMM_res.push_back(primal_res_.norm());
+
 				ADMM_count++;
 			} while (!TerminationCriteria(ADMM_count));
 
@@ -444,9 +452,14 @@ void GraphCut::MakeLayers()
             res_energy.push_back(res_tmp);
 
             /* write x distribution to a file */
-            string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-            Statistics tmp_x(str_x, x_);
-            tmp_x.GenerateVectorFile();
+            //string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+            //Statistics tmp_x(str_x, x_);
+            //tmp_x.GenerateVectorFile();
+
+			/* write ADMM primal residual norm to a file*/
+			string str_pri_res = "Rew_" + to_string(rew_count) + "_ADMM_PrimalRes_Norm";
+			Statistics s_pres(str_pri_res, ADMM_res);
+			s_pres.GenerateStdVecFile();
 
             rew_count++;
         } while (!UpdateR(x_prev, rew_count));
@@ -466,6 +479,7 @@ void GraphCut::MakeLayers()
 
         fprintf(stdout, "GraphCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
+		getchar();
 
 	} while (!CheckLabel(cut_count));
 	

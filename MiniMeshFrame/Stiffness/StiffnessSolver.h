@@ -27,6 +27,7 @@
 #include <Eigen/dense>
 #include <Eigen/sparse>
 #include <Eigen/SparseCholesky>
+#include <Eigen/LU>
 
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))
@@ -152,6 +153,15 @@ public:
 		int reduce, /**< 1: do a forward reduction; 0: don't				 */
 		int solve,  /**< 1: do a back substitution for {x};  0: don't		 */
 		int &info   /**< 1: positive diagonal  and  successful LU decomp'n   */
+		);
+
+	/*
+	* This LUDecomp module use Eigen library to solve the linear system
+	*/
+	bool LUDecomp(
+		MX &A,
+		VX &x,
+		VX &b
 		);
 };
 
