@@ -6,7 +6,7 @@
 *    Description:  create mesh data of deformed and undeformed mesh for GnuPlot.
 *
 *	 Version:  1.0
-*	 Created:  Nov/25/2015
+*	 Created:  Mar/20/2016
 *
 *	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
 *	 Company:  GCL@USTC
@@ -34,6 +34,7 @@
 
 #include "FiberPrint\FiberPrintPARM.h"
 #include "FiberPrint\DualGraph.h"
+#include "CoordTrans.h"
 
 /* maximum number of load cases */
 #define _NL_ 32
@@ -56,11 +57,10 @@ public:
 
 public:
 
-	int			StiffnessGetline(FILE *fp, char *s, int lim);
 	void		GetlineNoComment(FILE *fp, char *s, int lim);
-	void		ParseInput(FILE *fp, const char *tpath);
 	void		OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir);
 
+	/*--- GnuPlot output path generation ---*/
 	void ReadRunData(
 		char OUT_file[],	 /**< output data file name							*/
 		char meshpath[],	 /**< file name for mesh data output				*/
@@ -68,40 +68,36 @@ public:
 		int  debug
 		);
 
-	/* GnuPlot file output */
+	/*--- GnuPlot file output ---*/
 	/*
-	* GnuPltStaticMesh - create mesh data of deformed and undeformed mesh, use gnuplot	 Nov/25/2015
+	* GnuPltStaticMesh - create mesh data of deformed and undeformed mesh, use gnuplot	 Mar/20/2016
 	*/
 	void GnuPltStaticMesh(
-		char OUT_file[],
+		char IN_file[],
 		char meshpath[], char plotpath[],
-		char *title, int nN, int nE, int nL, int lc, int DoF,
-		vec3 &xyz, VX &L,
-		VXi &N1, VXi &N2, VX &p, VX &D,
-		double exagg_static, int D3_flag, int anlyz, float scale
+		VX &D,
+		double exagg_static, float scale,
+		DualGraph *ptr_dualgraph, WireFrame *ptr_frame
 		);
 
 	/*
-	* GnuPltCubicBentBeam -											Nov/25/2015
+	* GnuPltCubicBentBeam -											Mar/20/2016
 	*	computes cubic deflection functions from end deflections
 	*	and end rotations.  Saves deflected shapes to a file.
 	*	These bent shapes are exact for mode-shapes, and for frames
 	*	loaded at their nodes.
 	*/
 	void GnuPltCubicBentBeam(
-		FILE *fpm,		/**< deformed mesh data file pointer		*/
-		int n1, int n2,	/**< node 1 and node 2 of the frame element */
-		vec3   &xyz,	/**< node coordinates						*/
-		double L,		/**< frame element lengths					*/
-		float  p,		/**< frame element local rotations			*/
-		VX	   &D,		/**< node displacements						*/
-		double exagg	/**< mesh exaggeration factor				*/
+		FILE *fpm,
+		VX &D,			/* calculated deformation */
+		int dual_i, DualGraph *ptr_dualgraph, WireFrame *ptr_frame, 
+		double exagg
 		);
 
 	/*
-	* WriteInputData - write input data to a .3dd file			Nov/29/2015
+	* WriteInputData - write input data to a .3dd file			Mar/20/2016
 	*/
-	void WriteInputData(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int cut_count);
+	void WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
 
 	/*
 	* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015
@@ -137,8 +133,9 @@ public:
 		}
 		return tmp;
 	}
+
 private:
 	CoordTrans		trsf_;
-	StiffnessSolver	solver_;
+	StiffnessSolver	solver_;	// solver_: LU decomposition for cubic bent beam computaion
 };
 #endif

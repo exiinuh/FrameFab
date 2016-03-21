@@ -294,8 +294,10 @@ void DualGraph::InsertFace(WF_vert *p)
 		{
 			int dual_v = Fd_free_;								// first fixed point
 			int orig_v = (*face_list_)[dual_v]->orig_id();
+
 			(*face_list_)[u]->SetDualId(dual_v);
 			(*face_list_)[dual_v]->SetOrigId(u);
+
 			(*face_list_)[orig_v]->SetDualId(Fd_);
 			(*face_list_)[Fd_]->SetOrigId(orig_v);
 		}

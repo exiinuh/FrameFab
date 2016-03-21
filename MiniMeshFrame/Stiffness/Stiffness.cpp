@@ -348,30 +348,34 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	int		verbose = 0,	// 1 : copious screenplay
 			info;
 
+	char IN_file[FILENMAX];
+	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
+	sprintf_s(IN_file, "%s", str.c_str());
+
+
 	if (write_3dd)
 	{
-		stiff_io_.WriteInputData(ptr_dualgraph_, ptr_parm_, cut_count);
+		stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_);
 	}
 	
 	//Init();
 	CreateGlobalK(x);
 	CreateF(x);
 
-	if (write_matrix)
-	{
-		FILE	*fp;
-		char matrix_file[FILENMAX];
-		char matrix_path[FILENMAX];
+	//if (write_matrix)
+	//{
+	//	FILE	*fp;
+	//	char matrix_file[FILENMAX];
+	//	char matrix_path[FILENMAX];
 
-		sprintf_s(matrix_file, "%s", "Ks_fiber");
+	//	sprintf_s(matrix_file, "%s", "Ks_fiber");
 
-		stiff_io_.OutputPath(matrix_file, matrix_path, FRAME3DD_PATHMAX, NULL);
-		stiff_io_.SaveUpperMatrix(matrix_path, K_, K_.cols());
-	}
+	//	stiff_io_.OutputPath(matrix_file, matrix_path, FRAME3DD_PATHMAX, NULL);
+	//	stiff_io_.SaveUpperMatrix(matrix_path, K_, K_.cols());
+	//}
 
 	// Solving Process
 	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
-	fprintf(stdout, "Linear Elastic Analysis ... Mechanical Loads\n");
 	
 	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
 	{
@@ -382,20 +386,43 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	/* check stiffness matrix condition number */
 	IllCondDetector		stiff_doctor(K_);
 	stiff_doctor.ComputeCondNum();
-	//stiff_doctor.Debug();
 
-	if (write_matrix)
+	/* Equilibrium Error Check */
+
+	/* gnuplot file generation */
+	char meshpath[FILENMAX],
+		 plotpath[FILENMAX];
+
+	int		debug = 1;
+	double  exagg_static = 1;
+	float	scale = 1;
+
+	/* append restrained node's 0 deformation at the end of D */
+	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
+	D_joined.setZero();
+
+	for (int i = 0; i < Ns_ * 6; i++)
 	{
-		FILE	*fp;
-		char deform_file[FILENMAX];
-		char deform_path[FILENMAX];
-
-		sprintf_s(deform_file, "%s", "D_fiber");
-
-		stiff_io_.OutputPath(deform_file, deform_path, FRAME3DD_PATHMAX, NULL);
-		
-		stiff_io_.SaveDisplaceVector(deform_path, D, D.size(), ptr_dualgraph_);
+		D_joined[i] = D[i];
 	}
+
+
+	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, debug);
+	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
+		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
+
+	//if (write_matrix)
+	//{
+	//	FILE	*fp;
+	//	char deform_file[FILENMAX];
+	//	char deform_path[FILENMAX];
+
+	//	sprintf_s(deform_file, "%s", "D_fiber");
+
+	//	stiff_io_.OutputPath(deform_file, deform_path, FRAME3DD_PATHMAX, NULL);
+	//	
+	//	stiff_io_.SaveDisplaceVector(deform_path, D, D.size(), ptr_dualgraph_);
+	//}
 
 	return true;
 }
