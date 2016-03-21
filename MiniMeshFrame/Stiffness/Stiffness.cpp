@@ -345,8 +345,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 	D.resize(6 * Ns_);
 
 	// Parameter for StiffnessSolver
-	int		verbose = 0,	// 1 : copious screenplay
-			info;
+	int	info;
 
 	char IN_file[FILENMAX];
 	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
@@ -355,7 +354,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 
 	if (write_data)
 	{
-		stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_);
+		stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
 	}
 	
 	CreateGlobalK(x);
