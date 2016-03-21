@@ -55,7 +55,7 @@ void IllCondDetector::SetParm(int _ns, int _nl, int _condthres, int _gap)
 	gap_ = _gap;
 }
 
-void IllCondDetector::ComputeCondNum()
+double IllCondDetector::ComputeCondNum()
 {
 	// rank checking
 	char *jobu  = "N";		// No colums of U    are computed
@@ -121,47 +121,10 @@ void IllCondDetector::ComputeCondNum()
 	
 	char  uplo[] = "U";
 
-	//Eigen::MatrixXd l_p;
-	//l_p.resize(N_, N_);
-	//for (int i = 0; i < N_; i++)
-	//{
-	//	for (int j = 0; j < N_; j++)
-	//	{
-	//		l_p(i, j) = A_[MAP(i, j, N_)];
-	//		if (0 == l_p(i, j) && i == j)
-	//		{
-	//			cout << "leading minor of 1 at index " << i << " = 0" << endl;
-	//		}
-	//	}
-	//}
-	//Statistics s_pA("A", l_p);
-	//s_pA.GenerateMatrixFile();
-
 	// Since a mechanism results in a singular stiffness matrix, an attempt to find its Cholesky factor
 	// is likely to break down and hence signal the problem.
 	dpotrf_(uplo, &N_, A_, &lda, &info);
 
-	//Eigen::MatrixXd l;
-	//l.resize(N_, N_);
-	//for (int i = 0; i < N_; i++)
-	//{
-	//	for (int j = 0; j < N_; j++)
-	//	{
-	//		if (i <= j)
-	//		{
-	//			l(i, j) = A_[MAP(i, j, N_)];
-	//		}
-	//		else
-	//		{
-	//			l(i, j) = 0; 
-	//			A_[MAP(i, j, N_)] = 0;
-	//		}
-	//	}
-	//}
-	//Statistics s_l("l_new", l);
-	//s_l.GenerateMatrixFile();
-
-	cout << "info : " << info << endl;
 	assert(info == 0);
 
 	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
@@ -176,12 +139,13 @@ void IllCondDetector::ComputeCondNum()
 	}
 	else
 	{
-		printf("condition number calculation in IllConditionDetecter.");
+		printf("condition number calculation failed in IllConditionDetecter.");
+		getchar();
+		exit;
 	}
 
 	assert(info == 0);
 
-	//std::cout << "condition number of K_ : " << 1/cond_num_ << std::endl;
 	free(A_copy);
 	free(S);
 	free(U);
@@ -189,21 +153,16 @@ void IllCondDetector::ComputeCondNum()
 	free(work);
 	free(workcon);
 	free(lworkcon);
+
+	return (1 / rcond_num_);
 }
 
-bool IllCondDetector::StabAnalysis()
+double IllCondDetector::EquilibriumError(EigenSp const &K, VX const &D, VX const &F)
 {
-	// Condition number computing
-
-	// compute ns_ number of smallest eigenvalues, lambda_1, ..., lambda_ns,
-	// and nl_ number of largest eigenvalues of stiffness matrix K
-	// normalise associated eigenvectors
-
-	// With the smallest eigenpairs: determine if a gap exists, i.e., if there is a k < ns_,
-	// s.t. lambda_{k-1}/lambda_{k} > gap_ * lambda_k/lambda_{k+1}
-	return true;
+	VX dF = K*D;
+	dF -= F;
+	return (dF.norm() / F.norm());
 }
-
 
 void IllCondDetector::Debug()
 {

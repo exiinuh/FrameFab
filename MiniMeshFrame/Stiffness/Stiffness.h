@@ -13,7 +13,7 @@
 *
 *	 Version:  1.0
 *	 Created:  Oct/15/2015 by Xin Hu
-*	 Updated:  Nov/26/2015 by Yijiang H.
+*	 Updated:  Mar/21/2016 by Yijiang H.
 *
 *	 Author:   Xin Hu,  Yijiang Huang, Guoxian Song
 *	 Company:  GCL@USTC

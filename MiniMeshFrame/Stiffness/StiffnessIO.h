@@ -58,14 +58,14 @@ public:
 public:
 
 	void		GetlineNoComment(FILE *fp, char *s, int lim);
-	void		OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir);
+	void		OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose);
 
 	/*--- GnuPlot output path generation ---*/
 	void ReadRunData(
 		char OUT_file[],	 /**< output data file name							*/
 		char meshpath[],	 /**< file name for mesh data output				*/
 		char plotpath[],	 /**< file name for Gnuplot script					*/
-		int  debug
+		int  verbose
 		);
 
 	/*--- GnuPlot file output ---*/
@@ -97,7 +97,7 @@ public:
 	/*
 	* WriteInputData - write input data to a .3dd file			Mar/20/2016
 	*/
-	void WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
+	void WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int verbose);
 
 	/*
 	* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015

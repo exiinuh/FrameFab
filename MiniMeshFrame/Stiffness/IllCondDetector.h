@@ -57,7 +57,7 @@ extern "C" void dgesvd_(const char *JOBU,  const char *JOBVT, const int *M, cons
 class IllCondDetector{
 public:
 	typedef Eigen::SparseMatrix<double> EigenSp;
-
+	typedef Eigen::VectorXd				VX;
 public:
 	IllCondDetector(){};
 	IllCondDetector(EigenSp const &K);
@@ -71,8 +71,11 @@ public:
 	// Library Compatibility
 	void EigenLap(EigenSp const &K);
 
-	void ComputeCondNum();
-	bool StabAnalysis();
+	/* Condition number of the stiffness matrix */
+	double	ComputeCondNum();
+
+	/* Root Mean Square Equilibrium Error Check */
+	double  EquilibriumError(EigenSp const &K, VX const &D, VX const &F);
 	
 	void Debug();
 private:

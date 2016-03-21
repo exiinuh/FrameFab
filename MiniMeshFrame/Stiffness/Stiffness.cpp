@@ -340,7 +340,7 @@ bool Stiffness::CalculateD(VectorXd &D)
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count)
+bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int write_data, int cut_count)
 {
 	D.resize(6 * Ns_);
 
@@ -353,29 +353,19 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	sprintf_s(IN_file, "%s", str.c_str());
 
 
-	if (write_3dd)
+	if (write_data)
 	{
 		stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_);
 	}
 	
-	//Init();
 	CreateGlobalK(x);
 	CreateF(x);
 
-	//if (write_matrix)
-	//{
-	//	FILE	*fp;
-	//	char matrix_file[FILENMAX];
-	//	char matrix_path[FILENMAX];
-
-	//	sprintf_s(matrix_file, "%s", "Ks_fiber");
-
-	//	stiff_io_.OutputPath(matrix_file, matrix_path, FRAME3DD_PATHMAX, NULL);
-	//	stiff_io_.SaveUpperMatrix(matrix_path, K_, K_.cols());
-	//}
-
-	// Solving Process
-	fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
+	/* --- Solving Process --- */
+	if (verbose)
+	{
+		fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
+	}
 	
 	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
 	{
@@ -383,17 +373,52 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 		return false;
 	}
 
-	/* check stiffness matrix condition number */
-	IllCondDetector		stiff_doctor(K_);
-	stiff_doctor.ComputeCondNum();
+	/* --- Check Stiffness Matrix Condition Number --- */
+	IllCondDetector		stiff_inspector(K_);
+	double cond_num;
+	cond_num = stiff_inspector.ComputeCondNum();
+	printf("Condition Number = %9.3e", cond_num);
+	if (cond_num < MCOND_TOL)
+	{
+		if (verbose)
+		{
+			printf(" < tol = %7.1e\n", MCOND_TOL);
+			printf(" * Acceptable Matrix! *\n");
+		}
+	}
+	else
+	{
+		printf(" > tol = %7.1e\n", MCOND_TOL);
+		printf(" * Ill Conditioned Stiffness Matrix! *\n");
+		printf("Press any key to exit...\n");
+		getchar();
+		exit;
+	}
 
-	/* Equilibrium Error Check */
+	/* --- Equilibrium Error Check --- */
+	double error = stiff_inspector.EquilibriumError(K_, D, F_);
+	printf("Root Mean Square (RMS) equilibrium error = %9.3e", error);
+	if (error < STIFF_TOL)
+	{
+		if (verbose)
+		{
+			printf(" < tol = %7.1e\n", STIFF_TOL);
+			printf(" * Converged *\n");
+		}
+	}
+	else
+	{
+		printf(" > tol = %7.1e\n", STIFF_TOL);
+		printf(" !! Not Converged !!\n");
+		printf("Press any key to exit...\n");
+		getchar();
+		exit;
+	}
 
-	/* gnuplot file generation */
+	/* --- Gnuplot File Generation --- */
 	char meshpath[FILENMAX],
 		 plotpath[FILENMAX];
 
-	int		debug = 1;
 	double  exagg_static = 1;
 	float	scale = 1;
 
@@ -407,22 +432,9 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int
 	}
 
 
-	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, debug);
+	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
 	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
-
-	//if (write_matrix)
-	//{
-	//	FILE	*fp;
-	//	char deform_file[FILENMAX];
-	//	char deform_path[FILENMAX];
-
-	//	sprintf_s(deform_file, "%s", "D_fiber");
-
-	//	stiff_io_.OutputPath(deform_file, deform_path, FRAME3DD_PATHMAX, NULL);
-	//	
-	//	stiff_io_.SaveDisplaceVector(deform_path, D, D.size(), ptr_dualgraph_);
-	//}
 
 	return true;
 }

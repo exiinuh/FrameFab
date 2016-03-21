@@ -43,7 +43,7 @@ void StiffnessIO::GetlineNoComment(
 * OUTPUT_PATH
 * return path for output files using specific output directory
 */
-void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir) 
+void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose) 
 {
 	int res;
 	assert(fname != NULL);
@@ -66,9 +66,10 @@ void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, 
 		exit(16);
 	}
 
-	//res = sprintf(fullpath, "%s%s", "F:\\FiberPrintProject\\ResultData\\Frame3dd_data\\", fname);
-
-	printf("Output file path generated: %s\n",fullpath); /* debug */
+	if (verbose)
+	{
+		printf("StiffnessIO->OuputPath: Output file path generated: %s\n", fullpath); /* debug */
+	}
 }
 
 
@@ -80,7 +81,7 @@ void StiffnessIO::ReadRunData(
 	char OUT_file[],	 /**< output data file name							*/
 	char meshpath[],	 /**< file name for mesh data output				*/
 	char plotpath[],	 /**< file name for Gnuplot script					*/
-	int  debug
+	int  verbose
 	)
 {
 	int	full_len = 0, len = 0, i;
@@ -109,7 +110,7 @@ void StiffnessIO::ReadRunData(
 	// GnuPlot file
 	strcpy(plot_file, base_file);
 	strcat(plot_file, ".plt");
-	OutputPath(plot_file, plotpath, FRAME3DD_PATHMAX, NULL);
+	OutputPath(plot_file, plotpath, FRAME3DD_PATHMAX, NULL, verbose);
 
 	//// Internal force file
 	//strcpy(infcpath, base_file);
@@ -129,9 +130,9 @@ void StiffnessIO::ReadRunData(
 	
 	mesh_file[i] = '\0';
 	strcat(mesh_file, "-msh");
-	OutputPath(mesh_file, meshpath, FRAME3DD_PATHMAX, NULL);
+	OutputPath(mesh_file, meshpath, FRAME3DD_PATHMAX, NULL, verbose);
 
-	if (debug) 
+	if (verbose) 
 	{
 		fprintf(stderr, "OUT_FILE  = %s \n", OUT_file);
 		fprintf(stderr, "BASE_FILE = %s \n", base_file);
@@ -509,14 +510,14 @@ void StiffnessIO::GnuPltCubicBentBeam(
 }
 
 
-void StiffnessIO::WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
+void StiffnessIO::WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int verbose)
 {
 	FILE	*fp;
 	char OUT_path[FILENMAX];
 	string title_s = "FiberPrint Test File -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	OutputPath(IN_file, OUT_path, FRAME3DD_PATHMAX, NULL);
+	OutputPath(IN_file, OUT_path, FRAME3DD_PATHMAX, NULL, verbose);
 
 	if ((fp = fopen(OUT_path, "w")) == NULL)
 	{
@@ -753,15 +754,4 @@ void StiffnessIO::SaveDisplaceVector(char filename[], const VX &D, int n, DualGr
 
 void StiffnessIO::Debug(int verbose)
 {
-	char OUT_file[FILENMAX],
-		meshpath[FILENMAX],
-		plotpath[FILENMAX];
-	char *title = "FibTest";
-	int debug = 1;
-
-	sprintf_s(OUT_file, "%s", "FibTest.plt");
-
-	ReadRunData(OUT_file, meshpath, plotpath, debug);
-
-	getchar();
 }
