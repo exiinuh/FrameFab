@@ -73,12 +73,7 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     }
 
     VX Diag = solver.vectorD();
-    
-    if (verbose)
-    {
-        fprintf(stdout, "---LDLt Decomposition Diagnoal vector D---\n");
-    }
-    
+        
     for (int i = 0; i < Diag.size(); i++)
     {
         if (Diag[i] == 0.0)
@@ -94,11 +89,6 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
             info--;
 			return false;
-        }
-        
-        if (verbose)
-        {
-            fprintf(stdout, "d[%d] = %.5f\n", i, Diag[i]);
         }
     }
 

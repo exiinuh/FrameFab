@@ -391,7 +391,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		printf(" * Ill Conditioned Stiffness Matrix! *\n");
 		printf("Press any key to exit...\n");
 		getchar();
-		exit;
+		exit(0);
 	}
 
 	/* --- Equilibrium Error Check --- */
@@ -411,7 +411,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		printf(" !! Not Converged !!\n");
 		printf("Press any key to exit...\n");
 		getchar();
-		exit;
+		exit(0);
 	}
 
 	/* --- Gnuplot File Generation --- */
