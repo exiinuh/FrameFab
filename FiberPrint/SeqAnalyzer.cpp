@@ -24,7 +24,9 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
-	ptr_collision_ = new QuadricCollision(ptr_frame_);
+
+	ptr_collision_ = new Collision(ptr_frame_);
+//	ptr_quadriccollision_ = new QuadricCollision(ptr_frame_);
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
@@ -46,6 +48,9 @@ SeqAnalyzer::~SeqAnalyzer()
 
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
+
+//	delete ptr_quadriccollision_;
+	//ptr_quadriccollision_ = NULL;
 }
 
 
@@ -111,22 +116,20 @@ bool SeqAnalyzer::LayerPrint()
 
 	getchar();
 
-	angle_len_ = 3;
 	angle_state_.resize(Nd);
-	for (int i = 0; i < Nd; i++)
-	{
-		angle_state_[i].resize(angle_len_);
-		fill(angle_state_[i].begin(), angle_state_[i].end(), 0);
-	}
-
+	fill(angle_state_.begin(), angle_state_.end(), 0);
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
 		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
 		if (!ptr_subgraph_->isExistingEdge(orig_i))
 		{
 			WF_edge *e = ptr_frame_->GetEdge(orig_i);
+
+
+			ptr_quadriccollision_->DetectCollision(e, ptr_subgraph_);
 			ptr_collision_->DetectCollision(e, ptr_subgraph_);
-			ptr_collision_->Angle(angle_state_[dual_i]);
+			angle_state_[dual_i] = ptr_collision_->Angle();
+			//angle_state_[dual_i] = ptr_collision_->Angle()
 		}
 	}
 
@@ -194,7 +197,7 @@ bool SeqAnalyzer::LayerPrint()
 			QueueInfo start_edge = QueueInfo{ l, it->second, dual_i };
 			layer_queue_.push_back(start_edge);
 
-			vector<vector<lld>> tmp_angle(angle_len_);
+			vector<lld> tmp_angle;
 			for (int dual_j = 0; dual_j < Nd; dual_j++)
 			{
 				int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
@@ -202,11 +205,8 @@ bool SeqAnalyzer::LayerPrint()
 				{
 					WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 					ptr_collision_->DetectCollision(ej, ei);
-					for (int b = 0; b < angle_len_; b++)
-					{
-						tmp_angle[b].push_back(angle_state_[dual_j][b]);
-					}
-					ptr_collision_->ModifyAngle(angle_state_[dual_j]);
+					tmp_angle.push_back(angle_state_[dual_j]);
+					angle_state_[dual_j] |= ptr_collision_->Angle();
 				}
 			}
 
@@ -222,10 +222,7 @@ bool SeqAnalyzer::LayerPrint()
 				int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
 				if (dual_i != dual_j && !ptr_subgraph_->isExistingEdge(orig_j))
 				{
-					for (int b = 0; b < angle_len_; b++)
-					{
-						angle_state_[dual_j][b] = tmp_angle[b][j];
-					}
+					angle_state_[dual_j] = tmp_angle[j];
 					j++;
 				}
 			}
@@ -307,8 +304,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 		QueueInfo next_edge = QueueInfo{ l, it->second, dual_j };
 		layer_queue_.push_back(next_edge);
 
-
-		vector<vector<lld>> tmp_angle(angle_len_);
+		vector<lld> tmp_angle;
 		for (int dual_k = 0; dual_k < Nd; dual_k++)
 		{
 			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
@@ -316,12 +312,8 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			{
 				WF_edge *ek = ptr_frame_->GetEdge(orig_k);
 				ptr_collision_->DetectCollision(ek, ej);
-
-				for (int b = 0; b < angle_len_; b++)
-				{
-					tmp_angle[b].push_back(angle_state_[dual_k][b]);
-				}
-				ptr_collision_->ModifyAngle(angle_state_[dual_k]);
+				tmp_angle.push_back(angle_state_[dual_k]);
+				angle_state_[dual_k] |= ptr_collision_->Angle();
 			}
 		}
 
@@ -342,10 +334,7 @@ bool SeqAnalyzer::GenerateSeq(int l, int h, int t)
 			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
 			if (dual_j != dual_k && !ptr_subgraph_->isExistingEdge(orig_k))
 			{
-				for (int b = 0; b < angle_len_; b++)
-				{
-					angle_state_[dual_k][b] = tmp_angle[b][k];
-				}
+				angle_state_[dual_k] = tmp_angle[k];
 				k++;
 			}
 		}

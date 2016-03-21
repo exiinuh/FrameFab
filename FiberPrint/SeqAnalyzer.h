@@ -31,7 +31,8 @@
 
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
-#include "Collision\QuadricCollision.h"
+#include "Collision\Collision.h"
+#include"Collision\NewCollision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
 typedef struct Set
@@ -102,15 +103,17 @@ private:
 	vector<vector<int>>		layers_;			// store dual_node's id for each layers
 	vector<QueueInfo>		layer_queue_;
 
+	Collision		*ptr_collision_;
+	QuadricCollision *ptr_quadriccollision_;
+
+
+	vector<lld>		angle_state_;
+
 	double			min_z_;
 	double			max_z_;
 	/* Printing Orientation Related Data */
 	int				support_;
 	bool			extru_;
-
-	QuadricCollision		*ptr_collision_;
-	vector<vector<lld>>		angle_state_;
-	int						angle_len_;
 
 	vector<ExtruderCone>	extruder_list_;
 	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 

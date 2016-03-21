@@ -1195,6 +1195,12 @@ void RenderingWidget::RefineFrame()
 	updateGL();
 }
 
+void RenderingWidget::DebugFrame()
+{
+	QuadricCollision* test = new QuadricCollision();
+	test->Debug();
+}
+
 
 void RenderingWidget::ProjectBound(double len)
 {
