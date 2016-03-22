@@ -19,6 +19,10 @@
 *			  
 * ==========================================================================
 */
+
+
+
+
 #pragma once
 #include <iostream>
 #include <vector>
@@ -33,6 +37,8 @@
 #include "SpecialBulk.h"
 #include "BaseBulk.h"
 #include "CylinderBulk.h"
+
+
 
 
 typedef Geometry::Vector3d GeoV3;

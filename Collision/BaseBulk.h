@@ -10,7 +10,7 @@
 #include "ExtruderCone.h"
 
 const double MAX = 1000000;
-const double eps = 0.0001;
+
 
 class BaseBulk
 {

@@ -217,6 +217,8 @@ void Collision::GenerateSampleNormal()
 			angle_ |= mask;
 		}
 	}
+
+
 }
 
 

@@ -26,15 +26,16 @@
 *
 * ==========================================================================
 */
-
-
 #pragma once
 #include <cmath>
 
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
 #include "Collision\Collision.h"
+<<<<<<< HEAD
 #include"Collision\NewCollision\QuadricCollision.h"
+=======
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 #include "Collision\ResolveAngle.h"
 
 typedef struct Set
@@ -106,9 +107,12 @@ private:
 	vector<QueueInfo>		layer_queue_;
 
 	Collision		*ptr_collision_;
+<<<<<<< HEAD
 	QuadricCollision *ptr_quadriccollision_;
 
 
+=======
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 	vector<lld>		angle_state_;
 
 	double			min_z_;

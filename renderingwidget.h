@@ -130,6 +130,7 @@ public slots:
 
 	void	SimplifyFrame();
 	void	RefineFrame();
+	void DebugFrame();
 	void	ProjectBound(double len);
 	void	ModifyProjection(double len);
 
