@@ -33,7 +33,7 @@
 
 #include "SeqAnalyzer.h"
 #include "GraphCut.h"
-#include "Collision\Collision.h"
+
 #include"Collision\NewCollision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
