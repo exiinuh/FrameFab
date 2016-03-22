@@ -26,24 +26,12 @@
 *
 * ==========================================================================
 */
-<<<<<<< HEAD
 #pragma once
 #include <cmath>
 
 #include "ADMMCut.h"
 #include "NormalCut.h"
 #include "Collision\Collision.h"
-=======
-
-
-#pragma once
-#include <cmath>
-
-#include "SeqAnalyzer.h"
-#include "GraphCut.h"
-
-#include"Collision\NewCollision\QuadricCollision.h"
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 #include "Collision\ResolveAngle.h"
 
 typedef struct Set
@@ -52,15 +40,6 @@ typedef struct Set
 	double max;
 };
 
-<<<<<<< HEAD
-=======
-enum Orientation
-{
-	SEQUENCE,
-	REVERSE,
-};
-
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 typedef struct QueueInfo
 {
 	int		layer_;
@@ -83,23 +62,9 @@ public:
 	~SeqAnalyzer();
 
 public:
-<<<<<<< HEAD
 	virtual bool	LayerPrint();
 
 	void			GetQueue(vector<int> &layer_queue);
-=======
-	bool			LayerPrint();
-	bool			GenerateSeq(int l, int h, int t);
-	double			GenerateCost(int l, int j);
-	void			DetectAngle();
-
-	void			BruteForcePrint();
-	bool			GenerateSeq(int h, int t);
-
-	void			GetQueue(vector<int> &layer_queue);
-	void			WriteLayerQueue();
-	void			WritePathRender();
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
@@ -110,7 +75,6 @@ public:
 	DualGraph		*ptr_dualgraph_;
 	DualGraph		*ptr_subgraph_;
 	WireFrame		*ptr_frame_;
-<<<<<<< HEAD
 	Collision		*ptr_collision_;
 	char			*path_;
 
@@ -118,42 +82,14 @@ public:
 	vector<QueueInfo>		layer_queue_;
 	vector<lld>				angle_state_;
 
-=======
-	char			*path_;
-
-private:
-	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
-	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
-	double			Wl_;						// Wl_		: tradeoff weight for printing cost
-	double			Wp_;						// Wp_		: tradeoff weight for printing cost
-	double			Wi_;						// Wi_		: tradeoff weight for printing cost
-
-	vector<vector<int>>		layers_;			// store dual_node's id for each layers
-	vector<QueueInfo>		layer_queue_;
-
-	Collision		*ptr_collision_;
-	QuadricCollision *ptr_quadriccollision_;
-
-
-	vector<lld>		angle_state_;
-
-	double			min_z_;
-	double			max_z_;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 	/* Printing Orientation Related Data */
 	int				support_;
 	bool			extru_;
 
 	vector<ExtruderCone>	extruder_list_;
 	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
-<<<<<<< HEAD
-
-	bool			debug_;
-	bool			fileout_;
-=======
 												// index computed by seq analyzer, output data
 	bool			debug_;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
+	bool			fileout_;
 };
 
