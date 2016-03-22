@@ -4,7 +4,8 @@
 #define FIBERPRINTPLUGIN_H
 
 #include <vector>
-#include "GraphCut.h"
+#include "ADMMCut.h"
+#include "NormalCut.h"
 #include "SeqAnalyzer.h"
 #include "ProcessAnalyzer.h"
 
@@ -22,7 +23,6 @@ public:
 	void			Print();
 
 	vector<DualVertex*>	*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
-	vector<int>			*GetCut()						{ return ptr_graphcut_->GetCut(); }
 	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
 	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
