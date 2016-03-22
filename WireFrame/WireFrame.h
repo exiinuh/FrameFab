@@ -144,17 +144,30 @@ public:
 	WF_vert*	InsertVertex(const Vec3f p);
 	WF_edge*	InsertEdge(WF_vert *u, WF_vert *v);
 	WF_edge*	InsertOneWayEdge(WF_vert *u, WF_vert *v);
+<<<<<<< HEAD
+=======
+	void		InsertFace(vector<WF_vert*>	&bound_points);
+	void		InsertModifiedFace(vector<WF_vert*>	&bound_points);
+>>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 
 	void		Unify();
 	point		Unify(Vec3f p);
 
 	void		SimplifyFrame();
+<<<<<<< HEAD
+=======
+	void		RefineFrame();
+>>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 	void		ProjectBound(vector<WF_vert*> &bound, double len);
 	void		ModifyProjection(double len);
 	void		MakeCeiling(vector<WF_edge*> &bound);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
+<<<<<<< HEAD
+=======
+	inline int					SizeOfFaceList()		{ return pface_list_->size(); }
+>>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
 	inline int					SizeOfPillar()			{ return pillar_size_ / 2; }
 	inline int					SizeOfCeiling()			{ return ceiling_size_; }
@@ -216,6 +229,10 @@ public:
 private:
 	vector<WF_vert*>	*pvert_list_;
 	vector<WF_edge*>	*pedge_list_;
+<<<<<<< HEAD
+=======
+	vector<WF_face*>	*pface_list_;
+>>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 
 	int					fixed_vert_;
 	int					pillar_size_;

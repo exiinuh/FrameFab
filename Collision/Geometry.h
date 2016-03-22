@@ -2,7 +2,7 @@
 /*INCLUDE FILE*/
 #include <cmath>
 #include <iostream>
-
+#include"Stiffness\GCommon.h"
 #include "WireFrame\WireFrame.h"
 
 using std::cout;
@@ -15,7 +15,8 @@ namespace Geometry
 {
 	//basic geomertical settings
 	// the toleration of error
-	static double eps = 1e-5;
+
+
 
 	//a very large number
 	static double inf = 10000000;
@@ -28,6 +29,7 @@ namespace Geometry
 	{
 
 	public:
+
 		Vector3d(double x = 0, double y = 0, double z = 0)
 		{
 			data_[0] = x;
@@ -87,7 +89,7 @@ namespace Geometry
 		void normalize()
 		{
 			double length = norm();
-			if (length > Geometry::eps)
+			if (length > eps)
 			{
 				for (int i = 0; i < 3; i++)
 					data_[i] /= length;

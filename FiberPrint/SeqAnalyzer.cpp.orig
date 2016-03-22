@@ -2,9 +2,6 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-<<<<<<< HEAD
-{
-=======
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
 	Wl_(1.0), Wp_(1.0), Wi_(1.0)
 {
@@ -27,9 +24,13 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
+<<<<<<< HEAD
 
 	ptr_collision_ = new Collision(ptr_frame_);
 //	ptr_quadriccollision_ = new QuadricCollision(ptr_frame_);
+=======
+	ptr_collision_ = new Collision(ptr_frame_);
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
@@ -41,7 +42,6 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 
 	path_ = path;
 	extru_ = false;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 }
 
 
@@ -52,20 +52,14 @@ SeqAnalyzer::~SeqAnalyzer()
 
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
-<<<<<<< HEAD
-=======
 
 //	delete ptr_quadriccollision_;
 	//ptr_quadriccollision_ = NULL;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 }
 
 
 bool SeqAnalyzer::LayerPrint()
 {
-<<<<<<< HEAD
-	return true;
-=======
 	ptr_dualgraph_->Dualization();
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int N = ptr_frame_->SizeOfVertList();
@@ -139,7 +133,10 @@ bool SeqAnalyzer::LayerPrint()
 			ptr_quadriccollision_->DetectCollision(e, ptr_subgraph_);
 			ptr_collision_->DetectCollision(e, ptr_subgraph_);
 			angle_state_[dual_i] = ptr_collision_->Angle();
+<<<<<<< HEAD
 			//angle_state_[dual_i] = ptr_collision_->Angle()
+=======
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 		}
 	}
 
@@ -514,7 +511,6 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 	}
 
 	return -1;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 }
 
 
@@ -528,8 +524,6 @@ void SeqAnalyzer::GetQueue(vector<int> &layer_queue)
 		int dual_e = layer_queue_[i].dual_id_;
 		layer_queue.push_back(ptr_dualgraph_->e_orig_id(dual_e));
 	}
-<<<<<<< HEAD
-=======
 }
 
 
@@ -921,5 +915,4 @@ bool SeqAnalyzer::GenerateSeq(int h, int t)
 	}
 
 	return false;
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 }
