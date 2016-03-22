@@ -1181,6 +1181,30 @@ void RenderingWidget::SimplifyFrame()
 }
 
 
+<<<<<<< HEAD
+=======
+void RenderingWidget::RefineFrame()
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+	ptr_frame_->RefineFrame();
+
+	emit(operatorInfo(QString("")));
+	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+
+	updateGL();
+}
+
+void RenderingWidget::DebugFrame()
+{
+	QuadricCollision* test = new QuadricCollision();
+	test->Debug();
+}
+
+
+>>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 void RenderingWidget::ProjectBound(double len)
 {
 	if (base_.size() <= 0)

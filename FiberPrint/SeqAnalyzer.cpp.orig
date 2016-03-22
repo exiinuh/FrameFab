@@ -24,9 +24,13 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
+<<<<<<< HEAD
 
 	ptr_collision_ = new Collision(ptr_frame_);
 //	ptr_quadriccollision_ = new QuadricCollision(ptr_frame_);
+=======
+	ptr_collision_ = new Collision(ptr_frame_);
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 
 	gamma_	= ptr_parm->gamma_;
 	Dt_tol_	= ptr_parm->Dt_tol_;
@@ -48,6 +52,9 @@ SeqAnalyzer::~SeqAnalyzer()
 
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
+
+//	delete ptr_quadriccollision_;
+	//ptr_quadriccollision_ = NULL;
 }
 
 
@@ -121,8 +128,15 @@ bool SeqAnalyzer::LayerPrint()
 		if (!ptr_subgraph_->isExistingEdge(orig_i))
 		{
 			WF_edge *e = ptr_frame_->GetEdge(orig_i);
+
+
+			ptr_quadriccollision_->DetectCollision(e, ptr_subgraph_);
 			ptr_collision_->DetectCollision(e, ptr_subgraph_);
 			angle_state_[dual_i] = ptr_collision_->Angle();
+<<<<<<< HEAD
+			//angle_state_[dual_i] = ptr_collision_->Angle()
+=======
+>>>>>>> 103382a6807b91515e95865a297075e679aa049a
 		}
 	}
 
