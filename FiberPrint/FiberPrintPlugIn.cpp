@@ -10,7 +10,7 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_graphcut_ = new ADMMCut(ptr_frame);
-	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_);
 }
 
 
@@ -19,7 +19,7 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame,
 {
 	ptr_frame_ = ptr_frame;
 	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, path);
-	ptr_seqanalyzer_ = new SeqAnalyzer(ptr_graphcut_, ptr_parm, path);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, path);
 	ptr_procanalyzer_ = new ProcessAnalyzer(ptr_seqanalyzer_, path);
 }
 
@@ -40,15 +40,15 @@ void FiberPrintPlugIn::Print()
 	cout << "Graph Cut completed." << endl;
 	getchar();
 
-	//if (!ptr_seqanalyzer_->LayerPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	cout << "Press Enter to refine the mesh and continue..." << endl;
-	//	getchar();
+	if (!ptr_seqanalyzer_->LayerPrint())
+	{
+		cout << "Model not printable!" << endl;
+		cout << "Press Enter to refine the mesh and continue..." << endl;
+		getchar();
 
-	//	return;
-	//}
-
+		return;
+	}
+	printf("FiberPrint done.\n");
 	//ptr_procanalyzer_->ProcPrint();
 	//ptr_seqanalyzer_->WritePathRender();
 

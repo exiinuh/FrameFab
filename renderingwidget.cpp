@@ -1181,21 +1181,6 @@ void RenderingWidget::SimplifyFrame()
 }
 
 
-void RenderingWidget::RefineFrame()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-	ptr_frame_->RefineFrame();
-
-	emit(operatorInfo(QString("")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-
-	updateGL();
-}
-
-
 void RenderingWidget::ProjectBound(double len)
 {
 	if (base_.size() <= 0)
