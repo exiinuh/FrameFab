@@ -29,8 +29,8 @@
 #pragma once
 #include <cmath>
 
-#include "SeqAnalyzer.h"
-#include "GraphCut.h"
+#include "ADMMCut.h"
+#include "NormalCut.h"
 #include "Collision\Collision.h"
 #include "Collision\ResolveAngle.h"
 
@@ -38,12 +38,6 @@ typedef struct Set
 {
 	double min;
 	double max;
-};
-
-enum Orientation
-{
-	SEQUENCE,
-	REVERSE,
 };
 
 typedef struct QueueInfo
@@ -68,17 +62,9 @@ public:
 	~SeqAnalyzer();
 
 public:
-	bool			LayerPrint();
-	bool			GenerateSeq(int l, int h, int t);
-	double			GenerateCost(int l, int j);
-	void			DetectAngle();
-
-	void			BruteForcePrint();
-	bool			GenerateSeq(int h, int t);
+	virtual bool	LayerPrint();
 
 	void			GetQueue(vector<int> &layer_queue);
-	void			WriteLayerQueue();
-	void			WritePathRender();
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
@@ -89,31 +75,21 @@ public:
 	DualGraph		*ptr_dualgraph_;
 	DualGraph		*ptr_subgraph_;
 	WireFrame		*ptr_frame_;
+	Collision		*ptr_collision_;
 	char			*path_;
-
-private:
-	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
-	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
-	double			Wl_;						// Wl_		: tradeoff weight for printing cost
-	double			Wp_;						// Wp_		: tradeoff weight for printing cost
-	double			Wi_;						// Wi_		: tradeoff weight for printing cost
 
 	vector<vector<int>>		layers_;			// store dual_node's id for each layers
 	vector<QueueInfo>		layer_queue_;
+	vector<lld>				angle_state_;
 
-	Collision		*ptr_collision_;
-	vector<lld>		angle_state_;
-
-	double			min_z_;
-	double			max_z_;
 	/* Printing Orientation Related Data */
 	int				support_;
 	bool			extru_;
 
 	vector<ExtruderCone>	extruder_list_;
 	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
-												// index computed by seq analyzer, output data
+
 	bool			debug_;
+	bool			fileout_;
 };
 

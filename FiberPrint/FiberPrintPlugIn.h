@@ -6,7 +6,8 @@
 #include <vector>
 #include "ADMMCut.h"
 #include "NormalCut.h"
-#include "SeqAnalyzer.h"
+#include "FFAnalyzer.h"
+#include "BFAnalyzer.h"
 #include "ProcessAnalyzer.h"
 
 
