@@ -400,9 +400,9 @@ void MainWindow::CreatePushButtons()
 	pushbutton_simplify_->setFixedSize(80, 25);
 	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
 
-	pushbutton_refine_ = new QPushButton(tr("Refine"), this);
-	pushbutton_refine_->setFixedSize(80, 25);
-	connect(pushbutton_refine_, SIGNAL(clicked()), renderingwidget_, SLOT(RefineFrame()));
+	//pushbutton_refine_ = new QPushButton(tr("Refine"), this);
+	//pushbutton_refine_->setFixedSize(80, 25);
+	//connect(pushbutton_refine_, SIGNAL(clicked()), renderingwidget_, SLOT(RefineFrame()));
 
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
 	pushbutton_fiberprint_->setFixedSize(140, 35);

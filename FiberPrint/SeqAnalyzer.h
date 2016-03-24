@@ -31,7 +31,7 @@
 
 #include "ADMMCut.h"
 #include "NormalCut.h"
-#include "Collision\Collision.h"
+#include "Collision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
 typedef struct Set
@@ -72,24 +72,24 @@ public:
 	double			GetWave(int id)		{ return wave_[id]; }
 
 public:
-	DualGraph		*ptr_dualgraph_;
-	DualGraph		*ptr_subgraph_;
-	WireFrame		*ptr_frame_;
-	Collision		*ptr_collision_;
-	char			*path_;
+	DualGraph			*ptr_dualgraph_;
+	DualGraph			*ptr_subgraph_;
+	WireFrame			*ptr_frame_;
+	QuadricCollision	*ptr_collision_;
+	char				*path_;
 
-	vector<vector<int>>		layers_;			// store dual_node's id for each layers
-	vector<QueueInfo>		layer_queue_;
-	vector<lld>				angle_state_;
+	vector<vector<int>>	layers_;			// store dual_node's id for each layers
+	vector<QueueInfo>	layer_queue_;
+	vector<vector<lld>> angle_state_;
 
 	/* Printing Orientation Related Data */
-	int				support_;
-	bool			extru_;
+	int					support_;
+	bool				extru_;
 
 	vector<ExtruderCone>	extruder_list_;
 	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
 												// index computed by seq analyzer, output data
-	bool			debug_;
-	bool			fileout_;
+	bool				debug_;
+	bool				fileout_;
 };
 

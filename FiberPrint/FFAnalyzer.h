@@ -50,7 +50,7 @@ public:
 	bool			LayerPrint();
 	bool			GenerateSeq(int l, int h, int t);
 	double			GenerateCost(int l, int j);
-	void			DetectAngle();
+	void			DetectBulk();
 	bool			GenerateSeq(int h, int t);
 
 	void			WriteLayerQueue();

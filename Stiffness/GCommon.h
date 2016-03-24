@@ -39,13 +39,9 @@
 #define threhold  30
 #endif
 
-<<<<<<< HEAD
-=======
 #ifndef  eps
 #define eps  0.0001
 #endif
-
->>>>>>> e85f90ee9193a844dce42dbaa785fce7b760e6d7
 
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis
 // Zvert=0: Y axis is vertical... rotate about Z-axis, then rotate about Y-axis
