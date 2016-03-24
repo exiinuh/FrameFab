@@ -105,9 +105,6 @@ void QuadricCollision::DetectEdge(WF_edge *order_e)
 	}
 }
 
-bool QuadricCollision::IfColTri(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end)
-{
-	gte::Triangle<3, float> triangle_ = Triangle_(triangle.v0(), triangle.v1(), triangle.v2());
 
 bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
 {
