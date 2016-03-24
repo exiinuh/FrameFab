@@ -1,88 +1,140 @@
 #pragma once
-#include"Collision\Geometry.h"
+#include "Collision\Geometry.h"
+#include "Collision\ExtruderCone.h"
+#include "Collision\Triangle.h"
 #include "WireFrame\WireFrame.h"
-#include"Collision\ExtruderCone.h"
-#include <GTEnginePCH.h>
-#include<Mathematics/GteIntrSegment3Cone3.h>
-#include"Collision\Triangle.h"
 #include "FiberPrint\DualGraph.h"
+
+#include <vector>
+#include <GTEnginePCH.h>
+#include <Mathematics/GteIntrSegment3Cone3.h>
+
 typedef unsigned long long lld;
+
 using namespace Geometry;
+using namespace std;
 
 // ¦È=(0,180), ¦Õ=(0,360)
 
 
-
 class QuadricCollision
 {
-
-
 public:
 	QuadricCollision();
 	QuadricCollision(WireFrame *ptr_frame);
 	~QuadricCollision();
 
 public:
-	void		DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph);
-	void     DetectCollision(WF_edge *target_e, WF_edge *order_e);
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph); // 
+	void	DetectCollision(WF_edge *target_e, WF_edge *order_e);
+
+	void Init();
+	void	Init(WF_edge *target_e);
+	void Init(vector<lld> &angle_state);
+
 private:
+	void	DetectEdge(WF_edge *order_e);
+	bool	DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ);
+	bool	DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
+
+	bool	Case(GeoV3 target_start, GeoV3 target_end,
+				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
+	
+	bool SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+
+	bool	ParallelCase(GeoV3 target_start, GeoV3 target_end,
+				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
 
 
-	//input
-	GeoV3 start_, end_;                       //Printing edge
-	GeoV3 target_start_, target_end_; // Considering collision edge in the structure
-	double ¦È_, ¦Õ_;                                   //¦È_ means angle with Z axis, ¦Õ_ means angle with X axis; Rad
+
+	bool	DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
+	bool	DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
+	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
+
+	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
+	void	GenerateVolume(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
+
+	bool	Parallel(GeoV3 a, GeoV3 b);
+
+	gte::Segment<3, float>		Seg(point target_start, point target_end);
+	gte::Segment<3, float>		Seg(GeoV3 target_start, GeoV3 target_end);
+	gte::Triangle<3, float>		Tri(GeoV3 a, GeoV3 b, GeoV3 c);
+
+	GeoV3 Orientation(double ¦È, double ¦Õ)
+	{ 
+		return GeoV3(sin(¦È)*cos(¦Õ), sin(¦È)*sin(¦Õ), cos(¦È)); 
+	}
 
 public:
 	//output
-	vector<lld>		Angle()			{ return StateMap_; }
-	int		ColFreeAngle();
-	int		ColFreeAngle(vector<lld> StateMap);
-private:
-	ExtruderCone extruder_;
-	std::vector<Triangle > bulk_;
-	GeoV3 normal_;
-	bool ifcollision_;
+	void AngleState(vector<lld> &angle_state)	
+	{
+		angle_state.resize(3);
+		angle_state[0] = state_map_[0];
+		angle_state[1] = state_map_[1];
+		angle_state[2] = state_map_[2];
+	}
+
+	void ModifyAngle(vector<lld> &angle_state)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			angle_state[i] |= state_map_[i];
+		}
+	}
+
+	int ColFreeAngle()
+	{
+		int sum_angle = 0;
+		for (int j = 0; j < 62; j++)
+		{
+			lld mask = (1 << j);
+			for (int i = 0; i < 3; i++)
+			{
+				if ((state_map_[i] & mask) == 0)
+				{
+					sum_angle++;
+				}
+			}
+		}
+
+		return sum_angle;
+	}
+
+	int ColFreeAngle(vector<lld> &angle_state)
+	{
+		int sum_angle = 0;
+		for (int j = 0; j < 62; j++)
+		{
+			lld mask = (1 << j);
+			for (int i = 0; i < 3; i++)
+			{
+				if ((angle_state[i] & mask) == 0)
+				{
+					sum_angle++;
+				}
+			}
+		}
+
+		return sum_angle;
+	}
+
+	int Divide()
+	{
+		return 18 * 18 + 2;
+	}
+
+	void			Debug();
+
 public:
-
-	bool Run(GeoV3 start, GeoV3  end, GeoV3 target_start, GeoV3  target_end, double ¦È, double ¦Õ);//true menas collision
-	bool Run(GeoV3 connect, GeoV3 end, GeoV3 target_end, double ¦È, double ¦Õ);
-	bool Run(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
-
-	bool Run();
-	void Debug();
-private:
-	int ClassfyModel(GeoV3 start, GeoV3  end, GeoV3 target_start, GeoV3  target_end, double ¦È, double ¦Õ);
-	
-
-	GeoV3 Orientation(double ¦È, double ¦Õ){ return GeoV3(sin(¦È)*cos(¦Õ), sin(¦È)*sin(¦Õ), cos(¦È)); };
-	void GenerateVolume(GeoV3 start, GeoV3  end, GeoV3 target_start, GeoV3  target_end, double ¦È, double ¦Õ);
-	void GenerateVolume(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
-	
-
-	bool IfColCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
-	bool IfColCylin(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
-	bool IfColTri(Triangle	 triangle, GeoV3 target_start,GeoV3 target_end );
-	bool IfParallet(GeoV3 a, GeoV3 b);
-
-	bool IfColAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
-
-	gte::Segment<3, float>		Segement_(point target_start, point target_end);
-	gte::Segment<3, float>		Segement_(GeoV3 target_start, GeoV3 target_end);
-	gte::Triangle<3, float>       Triangle_(GeoV3 a, GeoV3 b, GeoV3 c);
-	
-	
-//similar to Collision.h
-private:
-	
-	WireFrame			*ptr_frame_;
-	WF_edge				*target_e_;
-	vector<lld> StateMap_;
-	int    divide_;
-
+	WireFrame		*ptr_frame_;
+	WF_edge			*target_e_;
 
 private:
-	void		Init(WF_edge *target_e);
-	void		DetectEdge(WF_edge *order_e);
+	ExtruderCone		extruder_;
+	vector<Triangle>	bulk_;
+	vector<lld>			state_map_;
+	int					divide_;
+
 };
 

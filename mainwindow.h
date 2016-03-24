@@ -202,8 +202,6 @@ private:
 	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_simplify_;
-	QPushButton			*pushbutton_refine_;
-	QPushButton            *pushbutton_debug_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;

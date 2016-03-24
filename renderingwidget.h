@@ -129,8 +129,6 @@ public slots:
 								double gamma, double Wl, double Wp);
 
 	void	SimplifyFrame();
-	void	RefineFrame();
-	void DebugFrame();
 	void	ProjectBound(double len);
 	void	ModifyProjection(double len);
 

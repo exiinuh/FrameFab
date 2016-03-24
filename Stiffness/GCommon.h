@@ -43,7 +43,6 @@
 #define eps  0.0001
 #endif
 
-
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis
 // Zvert=0: Y axis is vertical... rotate about Z-axis, then rotate about Y-axis
 #define Zvert 1	

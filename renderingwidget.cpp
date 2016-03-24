@@ -491,6 +491,7 @@ void RenderingWidget::ScaleFrame(double scale)
 
 void RenderingWidget::ReadFrame()
 {
+
 	QString filename = QFileDialog::
 		getOpenFileName(this, tr("Read Mesh"),
 		"..", tr("Mesh files(*.obj *.pwf)"));
@@ -531,6 +532,10 @@ void RenderingWidget::ReadFrame()
 	InitFiberData();
 
 	updateGL();
+
+	QuadricCollision test(ptr_frame_);
+	test.Debug();
+
 }
 
 
@@ -1178,27 +1183,6 @@ void RenderingWidget::SimplifyFrame()
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
 
 	updateGL();
-}
-
-
-void RenderingWidget::RefineFrame()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-	ptr_frame_->RefineFrame();
-
-	emit(operatorInfo(QString("")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-
-	updateGL();
-}
-
-void RenderingWidget::DebugFrame()
-{
-	QuadricCollision* test = new QuadricCollision();
-	test->Debug();
 }
 
 
