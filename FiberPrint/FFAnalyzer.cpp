@@ -111,7 +111,7 @@ bool FFAnalyzer::LayerPrint()
 		printf("Size of layer %d is %d\n", l, layers_[l].size());
 	}
 
-	getchar();
+	
 
 	angle_state_.resize(Nd);
 	for (int dual_i = 0; dual_i < Nd; dual_i++)

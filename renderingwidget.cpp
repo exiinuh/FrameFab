@@ -491,6 +491,7 @@ void RenderingWidget::ScaleFrame(double scale)
 
 void RenderingWidget::ReadFrame()
 {
+
 	QString filename = QFileDialog::
 		getOpenFileName(this, tr("Read Mesh"),
 		"..", tr("Mesh files(*.obj *.pwf)"));
@@ -531,6 +532,10 @@ void RenderingWidget::ReadFrame()
 	InitFiberData();
 
 	updateGL();
+
+	QuadricCollision test(ptr_frame_);
+	test.Debug();
+
 }
 
 

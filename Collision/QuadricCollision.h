@@ -25,22 +25,27 @@ public:
 	~QuadricCollision();
 
 public:
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph);
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph); // 
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e);
 
-private:
+	void Init();
 	void	Init(WF_edge *target_e);
+	void Init(vector<lld> &angle_state);
 
+private:
 	void	DetectEdge(WF_edge *order_e);
 	bool	DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ);
 	bool	DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
 
+	bool	Case(GeoV3 target_start, GeoV3 target_end,
+				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
+	
+	bool SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+
 	bool	ParallelCase(GeoV3 target_start, GeoV3 target_end,
 				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
-	bool	NormalCase(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 order_start,
-				GeoV3 order_end, GeoV3 normal);
-	bool	SpecialCase(GeoV3 target_start, GeoV3 target_end,
-				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
+
+
 
 	bool	DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 	bool	DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
@@ -130,5 +135,6 @@ private:
 	vector<Triangle>	bulk_;
 	vector<lld>			state_map_;
 	int					divide_;
+
 };
 

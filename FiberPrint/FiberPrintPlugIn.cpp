@@ -38,7 +38,7 @@ void FiberPrintPlugIn::Print()
 {
 	//ptr_graphcut_->MakeLayers();
 	//cout << "Graph Cut completed." << endl;
-	//getchar();
+
 
 	if (!ptr_seqanalyzer_->LayerPrint())
 	{
