@@ -216,7 +216,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_Dttol_->setFixedWidth(140);
 	spinbox_Dttol_->setDecimals(4);
 	spinbox_Dttol_->setRange(0, 100);
-	spinbox_Dttol_->setValue(3);
+	spinbox_Dttol_->setValue(5);
 	spinbox_Dttol_->setSingleStep(0.01);
 
 	spinbox_Drtol_ = new QDoubleSpinBox(this);
@@ -258,14 +258,14 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wl_->setFixedWidth(140);
 	spinbox_wl_->setDecimals(2);
 	spinbox_wl_->setRange(0, 10000);
-	spinbox_wl_->setValue(1.0);
+	spinbox_wl_->setValue(10.0);
 	spinbox_wl_->setSingleStep(1);
 
 	spinbox_wp_ = new QDoubleSpinBox(this);
 	spinbox_wp_->setFixedWidth(140);
 	spinbox_wp_->setDecimals(2);
 	spinbox_wp_->setRange(0, 10000);
-	spinbox_wp_->setValue(1.0);
+	spinbox_wp_->setValue(100.0);
 	spinbox_wp_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
@@ -427,6 +427,28 @@ void MainWindow::CreatePushButtons()
 	connect(pushbutton_project_, SIGNAL(clicked()), this, SLOT(GetProjectionParas()));
 	connect(this, SIGNAL(SendProjectionParas(double)), renderingwidget_, SLOT(ProjectBound(double)));
 
+	/* ********************************************** */
+
+	pushbutton_getdeformation_ = new QPushButton(tr("CalculateDeformation"), this);
+	pushbutton_getdeformation_->setFixedSize(140, 35);
+	connect(pushbutton_getdeformation_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
+	connect(this,
+		SIGNAL(SendFiberParas(
+		double, double, double,
+		double, double,
+		double, double,
+		double, double, double,
+		double, double, double)),
+		renderingwidget_,
+		SLOT(DeformationAnalysis(
+		double, double, double,
+		double, double,
+		double, double,
+		double, double, double,
+		double, double, double)));
+
+	/* -------------------------------------- */
+	
 	pushbutton_rightarrow_ = new QPushButton(tr(">>"), this);
 	pushbutton_rightarrow_->setFlat(true);
 	pushbutton_rightarrow_->setFixedSize(20, 20);
@@ -439,7 +461,7 @@ void MainWindow::CreatePushButtons()
 
 	pushbutton_save_ = new QPushButton(tr("Save"), this);
 	connect(pushbutton_save_, SIGNAL(clicked()), this, SLOT(GetSaveParas()));
-	connect(this, SIGNAL(SendSaveOBJParas(QString)),
+	connect(this, SIGNAL(SendSaveOBJParas(QString)), 
 		renderingwidget_, SLOT(WriteFrame(QString)));
 	connect(this, SIGNAL(SendSavePWFParas(bool, bool, bool, bool, bool, int, int, QString)),
 		renderingwidget_, SLOT(WriteFrame(bool, bool, bool, bool, bool, int, int, QString)));
@@ -541,6 +563,7 @@ void MainWindow::CreateGroups()
 	fiber_layout->addWidget(toolbutton_choosebase_);
 	fiber_layout->addWidget(toolbutton_chooseceiling_);
 	fiber_layout->addWidget(pushbutton_project_);
+	fiber_layout->addWidget(pushbutton_getdeformation_);
 
 	// parameter group
 	groupbox_fiberpara_ = new QGroupBox(tr("Printing parameter"), this);

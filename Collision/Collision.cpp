@@ -8,7 +8,6 @@ Collision::Collision(WireFrame *ptr_frame)
 {
 	ptr_frame_	= ptr_frame;
 	divide_		= 60;
-	angle_		= 0;
 
 	CreatePrintTable();
 }
@@ -20,7 +19,8 @@ Collision::~Collision()
 
 void Collision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph)
 {
-	Init(target_e);
+	target_e_ = target_e;
+	GenerateSampleNormal();
 
 	/* collision with edge */
 	int Nd = ptr_subgraph->SizeOfVertList();
@@ -37,7 +37,9 @@ void Collision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph)
 
 void Collision::DetectCollision(WF_edge *target_e, WF_edge *order_e)
 {
-	Init(target_e);
+	target_e_ = target_e;
+	GenerateSampleNormal();
+
 	DetectEdge(order_e);
 }
 
@@ -150,15 +152,6 @@ void Collision::DetectEdge(WF_edge *order_e)
 			angle_ |= mask;
 		}
 	}
-}
-
-
-void Collision::Init(WF_edge *target_e)
-{
-	target_e_ = target_e;
-	normal_.clear();
-	angle_ = 0;
-	GenerateSampleNormal();
 }
 
 

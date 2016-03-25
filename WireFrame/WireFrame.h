@@ -160,7 +160,7 @@ public:
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
 	inline int					SizeOfFaceList()		{ return pface_list_->size(); }
 	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
-	inline int					SizeOfPillar()			{ return pillar_size_ / 2; }
+	inline int					SizeOfPillar()			{ return pillar_size_; }
 	inline int					SizeOfCeiling()			{ return ceiling_size_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }

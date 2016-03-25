@@ -73,12 +73,8 @@ public:
 	double			GenerateCost(int l, int j);
 	void			DetectAngle();
 
-	void			BruteForcePrint();
-	bool			GenerateSeq(int h, int t);
-
 	void			GetQueue(vector<int> &layer_queue);
 	void			WriteLayerQueue();
-	void			WritePathRender();
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
@@ -86,9 +82,8 @@ public:
 	double			GetWave(int id)		{ return wave_[id]; }
 
 public:
-	DualGraph		*ptr_dualgraph_;
+	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
-	WireFrame		*ptr_frame_;
 	char			*path_;
 
 private:

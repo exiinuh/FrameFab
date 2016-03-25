@@ -79,6 +79,7 @@ public slots:
 	void	ChooseBaseClicked(bool down);
 	void	ChooseCeilingClicked(bool down);
 
+	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
 	void	GetFiberParas();
 	void	GetProjectionParas();
 	void	GetSaveParas();
@@ -211,6 +212,8 @@ private:
 	QPushButton			*pushbutton_export_;
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
+
+	QPushButton			*pushbutton_getdeformation_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;

@@ -57,8 +57,6 @@ public:
 
 private:
 	void		DetectEdge(WF_edge *order_e);
-
-	void		Init(WF_edge *target_e);
 	void		CreatePrintTable();
 	void		GenerateSampleNormal();
 
@@ -84,7 +82,7 @@ public:
 		for (int i = 0; i < divide_; i++)
 		{
 			lld mask = (1 << i);
-			if (!((mask&angle_) >> i))
+			if (!(mask&angle_))
 			{
 				colfree_angle++;
 			}
@@ -98,7 +96,7 @@ public:
 		for (int i = 0; i < divide_; i++)
 		{
 			lld mask = (1 << i);
-			if (!((mask&angle) >> i))
+			if (!(mask&angle))
 			{
 				colfree_angle++;
 			}
