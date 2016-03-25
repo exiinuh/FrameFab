@@ -1,9 +1,9 @@
 /*
 * ==========================================================================
 *
-*		class:	NormalCut
+*		class:	GraphCut
 *
-* Description:	
+* Description:	No layer-cut.
 *
 *	  Version:  1.0
 *	  Created:  Mar/25/2016
@@ -19,10 +19,11 @@
 
 #include "GraphCut.h"
 
-class NormalCut : public GraphCut
+class NoneCut : public GraphCut
 {
 public:
-	NormalCut();
-	~NormalCut();
+	NoneCut();
+	NoneCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
+	~NoneCut();
 };
 

@@ -1,22 +1,20 @@
 /*
 * ==========================================================================
 *
-*       class: GraphCut
+*		class:	GraphCut
 *
-*    Description:  This file is a part of implementation fo paper "WirePrint : a fast&stable way to fabricate wireframe"
-*				   The GraphCut submodule takes charge of dividing the wireframe into several structually-stable sections, 
-*				   scaling the problem down, enabling further tool path searching part numerically tractable.
+* Description:	Cut input model into layers by different means.
 *
-*	 Version:  1.0
-*	 Created:  Oct/10/2015
-*    Updated:  Nov/02/2015
+*	  Version:  1.1
+*	  Created:  Oct/10/2015
+*     Updated:  Mar/25/2016
 *
-*	 Author:   Xin Hu, Yijiang Huang, Guoxian Song
-*	 Company:  GCL@USTC
+*	   Author:  Xin Hu, Yijiang Huang, Guoxian Song
+*	  Company:  GCL@USTC
 *
-*    WARNING:  DO NOT insert node and edge after you dualize the graph, 
-*    as we append all project fixed point at the end of dual face.
-*    Further inserting will cause stiffness matrix and force creation error.
+*	Successor:	ADMMCut - FrameFab ADMM cut
+*				NormalCut - cut layers by sweeping from bottom to top.
+*				NoneCut - no layers
 * ==========================================================================
 */
 
@@ -51,5 +49,7 @@ public:
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
 	char			*path_;
+
+	bool			debug_;
 };
 

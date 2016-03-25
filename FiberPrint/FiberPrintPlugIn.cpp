@@ -9,18 +9,15 @@ FiberPrintPlugIn::FiberPrintPlugIn()
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
-	ptr_graphcut_ = new ADMMCut(ptr_frame);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_);
 }
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
-	FiberPrintPARM *ptr_parm, char *path)
+	FiberPrintPARM *ptr_parm, char *ptr_path)
 {
 	ptr_frame_ = ptr_frame;
-	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, path);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, path);
-	ptr_procanalyzer_ = new ProcessAnalyzer(ptr_seqanalyzer_, path);
+	ptr_parm_ = ptr_parm;
+	ptr_path_ = ptr_path;
 }
 
 
@@ -34,24 +31,49 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 }
 
 
-void FiberPrintPlugIn::Print()
+void FiberPrintPlugIn::FrameFabPrint()
 {
+	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+	ptr_procanalyzer_ = new ProcessAnalyzer(ptr_seqanalyzer_, ptr_path_);
+
 	//ptr_graphcut_->MakeLayers();
 	//cout << "Graph Cut completed." << endl;
 
 
-	if (!ptr_seqanalyzer_->LayerPrint())
+	if (!ptr_seqanalyzer_->SeqPrint())
 	{
 		cout << "Model not printable!" << endl;
 		getchar();
 
 		return;
 	}
-	printf("FiberPrint done.\n");
+	printf("FrameFab print done.\n");
 	//ptr_procanalyzer_->ProcPrint();
 	//ptr_seqanalyzer_->WritePathRender();
 
 	//ptr_seqanalyzer_->BruteForcePrint();
+}
+
+
+void FiberPrintPlugIn::BruteForcePrint()
+{
+	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new BFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
+
+		return;
+	}
+	printf("BruteForce print done.\n");
+}
+
+
+void FiberPrintPlugIn::SweepingPrint()
+{
 }
 
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include "ADMMCut.h"
 #include "NormalCut.h"
+#include "NoneCut.h"
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
 #include "ProcessAnalyzer.h"
@@ -21,9 +22,11 @@ public:
 	~FiberPrintPlugIn();
 
 public:
-	void			Print();
+	void			FrameFabPrint();
+	void			BruteForcePrint();
+	void			SweepingPrint();
 
-	vector<DualVertex*>	*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
+	vector<DualVertex*>*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
 	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
 	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
@@ -34,6 +37,10 @@ public:
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
 	ProcessAnalyzer	*ptr_procanalyzer_;
+
+private:
+	char			*ptr_path_;
+	FiberPrintPARM	*ptr_parm_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

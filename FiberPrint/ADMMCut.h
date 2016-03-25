@@ -1,18 +1,20 @@
 /*
 * ==========================================================================
 *
-*       class: ADMMCut
+*		class:	ADMMCut
 *
-*    Description:  This file is a part of implementation fo paper "WirePrint : a fast&stable way to fabricate wireframe"
-*				   The ADMMCut submodule takes charge of dividing the wireframe into several structually-stable sections,
-*				   scaling the problem down, enabling further tool path searching part numerically tractable.
+* Description:	This file is a part of implementation fo paper "FrameFab" : 
+*				a fast&stable way to fabricate wireframe. The GraphCut submodule 
+*				takes charge of dividing the wireframe into several structually-stable 
+*				sections, scaling the problem down, enabling further tool path 
+*				searching part numerically tractable.
 *
-*	 Version:  1.0
-*	 Created:  Oct/10/2015
-*    Updated:  Nov/02/2015
+*	  Version:  1.1
+*	  Created:  Oct/10/2015
+*     Updated:  Mar/25/2016
 *
-*	 Author:   Xin Hu, Yijiang Huang, Guoxian Song
-*	 Company:  GCL@USTC
+*	   Author:  Xin Hu, Yijiang Huang, Guoxian Song
+*	  Company:  GCL@USTC
 *
 *    WARNING:  DO NOT insert node and edge after you dualize the graph,
 *    as we append all project fixed point at the end of dual face.
@@ -116,7 +118,5 @@ private:
 	double			penalty_;		// penalty  : penalty factor used in ADMM  
 	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
-
-	bool			debug_;
 };
 
