@@ -15,6 +15,11 @@
 class FiberPrintPlugIn
 {
 public:
+public:
+	typedef Eigen::MatrixXd MX;
+	typedef Eigen::VectorXd VX;
+
+public:
 	FiberPrintPlugIn();
 	FiberPrintPlugIn(WireFrame *ptr_frame);
 	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
@@ -25,6 +30,9 @@ public:
 	void			FrameFabPrint();
 	void			BruteForcePrint();
 	void			SweepingPrint();
+
+	/* apply stiffness computation directly to the input frame shape */
+	void			GetDeformation();
 
 	vector<DualVertex*>*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
 	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }

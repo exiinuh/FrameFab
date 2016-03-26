@@ -1163,7 +1163,7 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 
 	// ptr_fiberprint_->Print();
-	// ptr_fiberprint_->GetDeformation();
+	ptr_fiberprint_->GetDeformation();
 
 	emit(SetOrderSlider(0));
 	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
