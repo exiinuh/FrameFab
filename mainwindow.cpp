@@ -429,11 +429,11 @@ void MainWindow::CreatePushButtons()
 
 	/* ********************************************** */
 
-	pushbutton_deformation_ = new QPushButton(tr("Calculate\nDeformation"), this);
-	pushbutton_deformation_->setFixedSize(140, 70);
-	connect(pushbutton_deformation_, SIGNAL(clicked()), this, SLOT(GetDeformParas()));
+	pushbutton_getdeformation_ = new QPushButton(tr("CalculateDeformation"), this);
+	pushbutton_getdeformation_->setFixedSize(140, 35);
+	connect(pushbutton_getdeformation_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
 	connect(this,
-		SIGNAL(SendDeformParas(
+		SIGNAL(SendFiberParas(
 		double, double, double,
 		double, double,
 		double, double,
@@ -562,7 +562,7 @@ void MainWindow::CreateGroups()
 	fiber_layout->addWidget(toolbutton_choosebase_);
 	fiber_layout->addWidget(toolbutton_chooseceiling_);
 	fiber_layout->addWidget(pushbutton_project_);
-	fiber_layout->addWidget(pushbutton_deformation_);
+	fiber_layout->addWidget(pushbutton_getdeformation_);
 
 	// parameter group
 	groupbox_fiberpara_ = new QGroupBox(tr("Printing parameter"), this);
@@ -717,25 +717,6 @@ void MainWindow::ChooseCeilingClicked(bool down)
 void MainWindow::GetFiberParas()
 {
 	emit(SendFiberParas(
-		spinbox_radius_->value(),
-		spinbox_density_->value() * 1e-12,
-		spinbox_g_->value(),
-		spinbox_youngsmodulus_->value(),
-		spinbox_shearmodulus_->value(),
-		spinbox_Dttol_->value(),
-		spinbox_Drtol_->value(),
-		spinbox_penalty_->value(),
-		spinbox_pritol_->value(),
-		spinbox_dualtol_->value(),
-		spinbox_gamma_->value(),
-		spinbox_wl_->value(),
-		spinbox_wp_->value()));
-}
-
-
-void MainWindow::GetDeformParas()
-{
-	emit(SendDeformParas(
 		spinbox_radius_->value(),
 		spinbox_density_->value() * 1e-12,
 		spinbox_g_->value(),

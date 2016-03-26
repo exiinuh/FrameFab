@@ -128,11 +128,6 @@ bool SeqAnalyzer::TestifyStiffness()
 			}
 		}
 	}
-	else
-	{
-		delete ptr_stiffness;
-		return false;
-	}
 	
 	delete ptr_stiffness;
 	return true;
