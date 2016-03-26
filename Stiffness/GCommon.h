@@ -39,10 +39,6 @@
 #define threhold  30
 #endif
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 #ifndef  eps
 #define eps  0.0001
 #endif
@@ -52,12 +48,7 @@
 #endif
 
 #ifndef MCOND_TOL
-<<<<<<< HEAD
-#define MCOND_TOL 1.0e-12	// tolerance for stiffness matrix condition number
->>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
-=======
 #define MCOND_TOL 1.0e12	// tolerance for stiffness matrix condition number
->>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 #endif
 
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis
