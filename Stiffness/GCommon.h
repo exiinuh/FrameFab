@@ -43,6 +43,14 @@
 #define eps  0.0001
 #endif
 
+#ifndef STIFF_TOL
+#define STIFF_TOL 1.0e-9	// tolerance for stiffness RMS error
+#endif
+
+#ifndef MCOND_TOL
+#define MCOND_TOL 1.0e-12	// tolerance for stiffness matrix condition number
+#endif
+
 // Zvert=1: Z axis is vertical... rotate about Y-axis, then rotate about Z-axis
 // Zvert=0: Y axis is vertical... rotate about Z-axis, then rotate about Y-axis
 #define Zvert 1	
