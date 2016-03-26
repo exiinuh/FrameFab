@@ -54,10 +54,20 @@ public:
 	~SeqAnalyzer();
 
 public:
+<<<<<<< HEAD
 	virtual bool	SeqPrint();
 
 public:
 	void			GetQueue(vector<int> &layer_queue);
+=======
+	bool			LayerPrint();
+	bool			GenerateSeq(int l, int h, int t);
+	double			GenerateCost(int l, int j);
+	void			DetectAngle();
+
+	void			GetQueue(vector<int> &layer_queue);
+	void			WriteLayerQueue();
+>>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
@@ -71,6 +81,7 @@ protected:
 	bool			TestifyStiffness();
 
 public:
+<<<<<<< HEAD
 	DualGraph			*ptr_dualgraph_;
 	WireFrame			*ptr_frame_;
 
@@ -91,6 +102,28 @@ protected:
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
 	double				Wi_;						// Wi_		: tradeoff weight for printing cost
 
+=======
+	GraphCut		*ptr_graphcut_;
+	DualGraph		*ptr_subgraph_;
+	char			*path_;
+
+private:
+	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
+	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
+	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
+	double			Wl_;						// Wl_		: tradeoff weight for printing cost
+	double			Wp_;						// Wp_		: tradeoff weight for printing cost
+	double			Wi_;						// Wi_		: tradeoff weight for printing cost
+
+	vector<vector<int>>		layers_;			// store dual_node's id for each layers
+	vector<QueueInfo>		layer_queue_;
+
+	Collision		*ptr_collision_;
+	vector<lld>		angle_state_;
+
+	double			min_z_;
+	double			max_z_;
+>>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
 	/* Printing Orientation Related Data */
 	int					support_;
 	bool				extru_;

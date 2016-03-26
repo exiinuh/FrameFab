@@ -16,8 +16,8 @@ ProcessAnalyzer::ProcessAnalyzer(SeqAnalyzer *ptr_seqanalyzer, char *path)
 
 void ProcessAnalyzer::ProcPrint()
 {
-	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
-	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
 
 	if (debug_)
 	{
@@ -101,8 +101,8 @@ void ProcessAnalyzer::ProcPrint()
 
 Process* ProcessAnalyzer::SetPoint(WF_edge *e, int id)
 {
-	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
-	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_graphcut_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_;
 
 	Process* temp_process = new Process();
 	point up, down;
@@ -530,7 +530,7 @@ void ProcessAnalyzer::ReadLayerQueue()
 	FILE *fp = fopen(queue_path.c_str(), "r");
 
 	layer_queue_.clear();
-	int Nd = ptr_seqanalyzer_->ptr_dualgraph_->SizeOfEdgeList();
+	int Nd = ptr_seqanalyzer_->ptr_graphcut_->ptr_dualgraph_->SizeOfEdgeList();
 	for (int i = 0; i < Nd; i++)
 	{
 		int e;
