@@ -414,26 +414,29 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		exit(0);
 	}
 
-	/* --- Gnuplot File Generation --- */
-	char meshpath[FILENMAX],
-		 plotpath[FILENMAX];
-
-	double  exagg_static = 1;
-	float	scale = 1;
-
-	/* append restrained node's 0 deformation at the end of D */
-	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
-	D_joined.setZero();
-
-	for (int i = 0; i < Ns_ * 6; i++)
+	if (write_data)
 	{
-		D_joined[i] = D[i];
+		/* --- Gnuplot File Generation --- */
+		char meshpath[FILENMAX],
+			plotpath[FILENMAX];
+
+		double  exagg_static = 1;
+		float	scale = 1;
+
+		/* append restrained node's 0 deformation at the end of D */
+		VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
+		D_joined.setZero();
+
+		for (int i = 0; i < Ns_ * 6; i++)
+		{
+			D_joined[i] = D[i];
+		}
+
+
+		stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
+		stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
+			D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
 	}
-
-
-	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
-	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
-		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
 
 	return true;
 }

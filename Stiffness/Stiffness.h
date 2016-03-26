@@ -90,7 +90,12 @@ public:
 
 	// Socket to GraphCut
 	bool		CalculateD(VectorXd &D);
-	bool		CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count);
+
+	/* 
+	* verbose    = 1, copious screenplay for computation intermediate step; 0: no screenplay except computation error
+	* write_data = 1, output .plt, .3dd and other computational result for debugging; 0: no extra output
+	*/
+	bool		CalculateD(VectorXd &D, const VectorXd &x, int verbose, int write_data, int cut_count);
 
 	// Data I/O
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
