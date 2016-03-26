@@ -49,6 +49,9 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 
 bool BFAnalyzer::TestifySeq()
 {
+	printf("--------------------------------------\n");
+	printf("Test on sequence starts.\n");
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	
 	delete ptr_subgraph_;
@@ -74,12 +77,14 @@ bool BFAnalyzer::TestifySeq()
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
 			& angle_state_[dual_i][2])) == 0)
 		{
+			printf("Test on collision falied.\n");
 			return false;
 		}
 
 		/* testify stiffness */
 		if (!TestifyStiffness())
 		{
+			printf("Test on stiffness falied.\n");
 			return false;
 		}
 
