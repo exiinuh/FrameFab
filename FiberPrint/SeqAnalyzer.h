@@ -55,10 +55,14 @@ public:
 
 public:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	virtual bool	SeqPrint();
 
 public:
 	void			GetQueue(vector<int> &layer_queue);
+<<<<<<< HEAD
 =======
 	bool			LayerPrint();
 	bool			GenerateSeq(int l, int h, int t);
@@ -68,6 +72,8 @@ public:
 	void			GetQueue(vector<int> &layer_queue);
 	void			WriteLayerQueue();
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
@@ -82,6 +88,9 @@ protected:
 
 public:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	DualGraph			*ptr_dualgraph_;
 	WireFrame			*ptr_frame_;
 
@@ -102,6 +111,7 @@ protected:
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
 	double				Wi_;						// Wi_		: tradeoff weight for printing cost
 
+<<<<<<< HEAD
 =======
 	GraphCut		*ptr_graphcut_;
 	DualGraph		*ptr_subgraph_;
@@ -124,6 +134,8 @@ private:
 	double			min_z_;
 	double			max_z_;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	/* Printing Orientation Related Data */
 	int					support_;
 	bool				extru_;

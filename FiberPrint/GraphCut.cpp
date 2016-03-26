@@ -19,6 +19,7 @@ GraphCut::~GraphCut()
 void GraphCut::MakeLayers()
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	// Initial Cutting Edge Setting
 	InitState();
@@ -417,6 +418,8 @@ bool GraphCut::UpdateR(VX &x_prev, int count)
 		int    v = ptr_dualgraph_->v(i);
         double w = dual_edge[i]->w();
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 
 
 }

@@ -1166,7 +1166,7 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	ptr_fiberprint_->BruteForcePrint();
 =======
 
-	//ptr_fiberprint_->Print();
+	// ptr_fiberprint_->Print();
 	ptr_fiberprint_->GetDeformation();
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
 

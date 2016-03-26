@@ -3,8 +3,6 @@
 #ifndef FIBERPRINTPLUGIN_H
 #define FIBERPRINTPLUGIN_H
 
-#include <stdio.h>
-
 #include <vector>
 #include "ADMMCut.h"
 #include "NormalCut.h"
@@ -13,18 +11,13 @@
 #include "BFAnalyzer.h"
 #include "ProcessAnalyzer.h"
 
-#include "DualGraph.h"
-#include "Stiffness\Stiffness.h"
-#include "Stiffness\StiffnessIO.h"
-#include "Stiffness\IllCondDetector.h"
 
 class FiberPrintPlugIn
 {
 public:
+public:
 	typedef Eigen::MatrixXd MX;
-	typedef Eigen::Matrix3d M3;
 	typedef Eigen::VectorXd VX;
-	typedef Eigen::Vector3d V3;
 
 public:
 	FiberPrintPlugIn();
@@ -38,12 +31,14 @@ public:
 	void			BruteForcePrint();
 	void			SweepingPrint();
 
+	/* apply stiffness computation directly to the input frame shape */
+	void			GetDeformation();
+
 	vector<DualVertex*>*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
 	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
 	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
 
-	void				GetDeformation();  // Use stiffness matrix to solve deformation
-	void				Debug();		   // return value: edge index in mesh, for cut rendering
+	void				Debug();		// return value: edge index in mesh, for cut rendering
 
 public:
 	WireFrame		*ptr_frame_;
@@ -51,13 +46,19 @@ public:
 	SeqAnalyzer		*ptr_seqanalyzer_;
 	ProcessAnalyzer	*ptr_procanalyzer_;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 
 private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
+<<<<<<< HEAD
 =======
 	FiberPrintPARM  *ptr_parm_;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 };
 
 #endif // FIBERPRINTPLUGIN_H

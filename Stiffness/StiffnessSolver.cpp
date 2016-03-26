@@ -477,8 +477,7 @@ void StiffnessSolver::LUDecomp(
 bool StiffnessSolver::LUDecomp(
 	MX &A,
 	VX &x,
-	VX &b
-	)
+	VX &b	)
 {
 	x = A.fullPivLu().solve(b);
 

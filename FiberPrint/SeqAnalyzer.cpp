@@ -3,18 +3,26 @@
 
 SeqAnalyzer::SeqAnalyzer()
 <<<<<<< HEAD
+<<<<<<< HEAD
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
 	Wl_(1.0), Wp_(1.0), Wi_(1.0), extru_(false), debug_(false), fileout_(false)
 =======
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
 	Wl_(10.0), Wp_(100.0), Wi_(1.0)
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
+	Wl_(1.0), Wp_(1.0), Wi_(1.0), extru_(false), debug_(false), fileout_(false)
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 {
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
 	Wl_(1.0), Wp_(1.0), Wi_(1.0), extru_(false), debug_(true), fileout_(false)
 {
@@ -23,6 +31,7 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
 	ptr_collision_ = new QuadricCollision(ptr_frame_);
+<<<<<<< HEAD
 =======
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180), 
 	Wl_(10.0), Wp_(100.0), Wi_(1.0)
@@ -30,19 +39,27 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 	ptr_graphcut_ = ptr_graphcut;
 	extru_ = false;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
 	ptr_parm_ = ptr_parm;
 	ptr_path_ = ptr_path;
+<<<<<<< HEAD
 =======
 	ptr_graphcut_ = ptr_graphcut;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
 	ptr_collision_ = new QuadricCollision(ptr_frame_);
@@ -64,11 +81,17 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 
 SeqAnalyzer::~SeqAnalyzer()
 {
+	delete ptr_subgraph_;
+	ptr_subgraph_ = NULL;
+
+	delete ptr_collision_;
+	ptr_collision_ = NULL;
 }
 
 
 bool SeqAnalyzer::SeqPrint()
 {
+<<<<<<< HEAD
 <<<<<<< HEAD
 	return true;
 =======
@@ -268,12 +291,18 @@ bool SeqAnalyzer::SeqPrint()
 
 	/* for rendering */
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+	return true;
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 }
 
 
 void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	WF_edge *order_e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_i));
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	for (int dual_j = 0; dual_j< Nd; dual_j++)
@@ -286,6 +315,7 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 			for (int k = 0; k < 3; k++)
 			{
 				state_map[k].push_back(angle_state_[dual_j][k]);
+<<<<<<< HEAD
 =======
 	if (debug_)
 	{
@@ -629,6 +659,11 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 		}
 		return cost;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+			}
+			ptr_collision_->ModifyAngle(angle_state_[dual_j]);
+		}
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	}
 }
 
@@ -636,6 +671,9 @@ double SeqAnalyzer::GenerateCost(int l, int j)
 void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int p = 0;
 	for (int dual_j = 0; dual_j < Nd; dual_j++)
@@ -649,6 +687,7 @@ void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 			}
 			p++;
 		}
+<<<<<<< HEAD
 =======
 	DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
 	layer_queue.clear();
@@ -659,11 +698,16 @@ void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 		int dual_e = layer_queue_[i].dual_id_;
 		layer_queue.push_back(ptr_dualgraph->e_orig_id(dual_e));
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 	}
 }
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 bool SeqAnalyzer::TestifyStiffness()
 {		
 	/* examinate stiffness on printing subgraph */
@@ -707,6 +751,7 @@ void SeqAnalyzer::GetQueue(vector<int> &print_queue)
 		int dual_e = print_queue_[i].dual_id_;
 		print_queue.push_back(ptr_dualgraph_->e_orig_id(dual_e));
 	}
+<<<<<<< HEAD
 =======
 void SeqAnalyzer::WriteLayerQueue()
 {
@@ -786,4 +831,6 @@ void SeqAnalyzer::DetectAngle()
 
 	//cout << "---------Angle Detection done--------" << endl;
 >>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
+=======
+>>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 }
