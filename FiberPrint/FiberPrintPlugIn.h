@@ -45,20 +45,10 @@ public:
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
 	ProcessAnalyzer	*ptr_procanalyzer_;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 
 private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
-<<<<<<< HEAD
-=======
-	FiberPrintPARM  *ptr_parm_;
->>>>>>> 2c719846f6006b0658c93a4bf28bf6ac0236a416
-=======
->>>>>>> 3cef735a95cf86715af239aaec2119119cb169f4
 };
 
 #endif // FIBERPRINTPLUGIN_H

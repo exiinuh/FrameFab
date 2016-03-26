@@ -175,7 +175,7 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_radius_ = new QDoubleSpinBox(this);
 	spinbox_radius_->setFixedWidth(140);
 	spinbox_radius_->setDecimals(2);
-	spinbox_radius_->setRange(0.01, 1.00);
+	spinbox_radius_->setRange(0.01, 0.5);
 	spinbox_radius_->setValue(0.6);
 	spinbox_radius_->setSingleStep(0.01);
 	spinbox_radius_->setSuffix(" mm");
