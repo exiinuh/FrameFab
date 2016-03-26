@@ -376,7 +376,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 	IllCondDetector		stiff_inspector(K_);
 	double cond_num;
 	cond_num = stiff_inspector.ComputeCondNum();
-	printf("Condition Number = %9.3e", cond_num);
+	printf("Condition Number = %9.3e\n", cond_num);
 	if (cond_num < MCOND_TOL)
 	{
 		if (verbose)
@@ -396,7 +396,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 
 	/* --- Equilibrium Error Check --- */
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
-	printf("Root Mean Square (RMS) equilibrium error = %9.3e", error);
+	printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
 	if (error < STIFF_TOL)
 	{
 		if (verbose)
