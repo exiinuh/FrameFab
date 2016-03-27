@@ -1,31 +1,32 @@
 /*
 * ==========================================================================
 *
-*       class: SequenceAnalyzer
+*       class:	FFAnalyzer
 *
-*    Description:  perform tool path searching algorithm to generate
-*				   a collision-free, structurally stable
+* Description:  perform the algorithm in FrameFab to generate a collision-free,
+*				structurally-stable path.
 *
-*	 Version:  1.0
-*	 Created:  Oct/20/2015
-*    Update :  Dec/09/2015
+*	  Version:  1.1
+*	  Created:  Mar/23/2016
+*     Update :  Mar/25/2016
 *
-*	 Author:   Xin Hu, Guoxian Song, Yijiang Huang
-*	 Company:  GCL@USTC
-*	 Note:
-*			   Ver1.0: Backtracking Greedy Approach:
-*					   At every decision state, a trail solution is performed,
+*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
+*	  Company:  GCL@USTC
+*	     Note:	Backtracking Greedy Approach:
+*				At every decision state, a trail solution is performed,
 *				unvisited current layer edges that are connected to already printed
 *				structure and calculate their adjacency,collision and stiffness weight.
-*				The total printing cost is weighted sum of the three: wp_ * P + wl_ * L + ws_ * S
-*				P: adjacency cost
-*
-*				L: collision cost	- range(dual_i, dual_j) is the prohibited angle range for printing edge i
-*				because of the existence of edge j. Larger prohibited angle means that edge i is difficult to print
-*				due to edge j's blocking, thus we give it larger cost to discourage greedy approach from choosing it.
+*				
+*				The total printing cost is weighted sum of the three: 
+*					
+*					wp_ * P + wl_ * L + ws_ * S
+*				
+*					P: adjacency cost
+*					L: collision cost	
 *
 * ==========================================================================
 */
+
 #pragma once
 #include <cmath>
 
@@ -42,28 +43,25 @@ public:
 
 public:
 	FFAnalyzer();
-	FFAnalyzer(GraphCut *ptr_graphcut);
-	FFAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path);
+	FFAnalyzer(GraphCut *ptr_graphcut)
+		:SeqAnalyzer(ptr_graphcut){}
+	FFAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path)
+		:SeqAnalyzer(ptr_graphcut, ptr_parm, ptr_path){}
 	~FFAnalyzer();
 
 public:
-	bool			LayerPrint();
+	bool			SeqPrint();
+
+private:
 	bool			GenerateSeq(int l, int h, int t);
 	double			GenerateCost(int l, int j);
 	void			DetectBulk();
-	bool			GenerateSeq(int h, int t);
 
+	bool			GenerateSeq(int h, int t);
 	void			WriteLayerQueue();
 	void			WritePathRender();
 
 private:
-	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
-	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
-	double			Wl_;						// Wl_		: tradeoff weight for printing cost
-	double			Wp_;						// Wp_		: tradeoff weight for printing cost
-	double			Wi_;						// Wi_		: tradeoff weight for printing cost
-
 	double			min_z_;
 	double			max_z_;
 

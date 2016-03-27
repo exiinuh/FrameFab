@@ -122,11 +122,17 @@ private:
 	void	DrawOrder(bool bv);
 
 public slots:
+
 	void	FiberPrintAnalysis(double radius, double density, double g,
-								double youngs_modulus, double shear_modulus,
-								double Dt_tol, double Dr_tol,
-								double penalty, double pri_tol, double dual_tol,
-								double gamma, double Wl, double Wp);
+		double youngs_modulus, double shear_modulus,
+		double Dt_tol, double Dr_tol,
+		double penalty, double pri_tol, double dual_tol,
+		double gamma, double Wl, double Wp);
+	void	DeformationAnalysis(double radius, double density, double g,
+		double youngs_modulus, double shear_modulus,
+		double Dt_tol, double Dr_tol,
+		double penalty, double pri_tol, double dual_tol,
+		double gamma, double Wl, double Wp);
 
 	void	SimplifyFrame();
 	void	ProjectBound(double len);

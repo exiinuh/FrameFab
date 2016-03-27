@@ -1,28 +1,20 @@
 /*
 * ==========================================================================
 *
-*       class: SequenceAnalyzer
+*		class:	SequenceAnalyzer
 *
-*    Description:  perform tool path searching algorithm to generate
-*				   a collision-free, structurally stable 
+* Description:  perform tool path searching algorithm to generate
+*				a collision-free, structurally stable path.
 *
-*	 Version:  1.0
-*	 Created:  Oct/20/2015
-*    Update :  Dec/09/2015
+*	  Version:  1.2
+*	  Created:  Oct/20/2015
+*     Update :  Mar/25/2015
 *
-*	 Author:   Xin Hu, Guoxian Song, Yijiang Huang
-*	 Company:  GCL@USTC
-*	 Note:
-*			   Ver1.0: Backtracking Greedy Approach:
-*					   At every decision state, a trail solution is performed,
-*				unvisited current layer edges that are connected to already printed
-*				structure and calculate their adjacency,collision and stiffness weight.
-*				The total printing cost is weighted sum of the three: wp_ * P + wl_ * L + ws_ * S
-*				P: adjacency cost
+*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
+*	  Company:  GCL@USTC
 *
-*				L: collision cost	- range(dual_i, dual_j) is the prohibited angle range for printing edge i
-*				because of the existence of edge j. Larger prohibited angle means that edge i is difficult to print
-*				due to edge j's blocking, thus we give it larger cost to discourage greedy approach from choosing it.
+*	Successor:	FFAnalyzer - FrameFab sequence analyzer
+*				BFAnalyzer - Brute Force sequence analyzer
 *
 * ==========================================================================
 */
@@ -58,29 +50,47 @@ public:
 public:
 	SeqAnalyzer();
 	SeqAnalyzer(GraphCut *ptr_graphcut);
-	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path);
+	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~SeqAnalyzer();
 
 public:
-	virtual bool	LayerPrint();
+	virtual bool	SeqPrint();
 
+public:
 	void			GetQueue(vector<int> &layer_queue);
 
 	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
 	int				GetSupport()		{ return support_; }
 	double			GetWave(int id)		{ return wave_[id]; }
+	QuadricCollision* GetCollision(){ return ptr_collision_;}
+
+protected:
+	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
+	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
+
+	bool			TestifyStiffness();
 
 public:
 	DualGraph			*ptr_dualgraph_;
-	DualGraph			*ptr_subgraph_;
 	WireFrame			*ptr_frame_;
-	QuadricCollision	*ptr_collision_;
-	char				*path_;
 
-	vector<vector<int>>	layers_;			// store dual_node's id for each layers
-	vector<QueueInfo>	layer_queue_;
+protected:
+	DualGraph			*ptr_subgraph_;
+	QuadricCollision	*ptr_collision_;
+	char				*ptr_path_;
+
+	vector<QueueInfo>	print_queue_;
 	vector<vector<lld>> angle_state_;
+	vector<vector<int>>	layers_;				// store dual_node's id for each layers
+
+	FiberPrintPARM		*ptr_parm_;
+	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
+	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
+	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
+	double				Wl_;						// Wl_		: tradeoff weight for printing cost
+	double				Wp_;						// Wp_		: tradeoff weight for printing cost
+	double				Wi_;						// Wi_		: tradeoff weight for printing cost
 
 	/* Printing Orientation Related Data */
 	int					support_;

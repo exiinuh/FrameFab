@@ -2,8 +2,7 @@
 
 
 ADMMCut::ADMMCut()
-	:debug_(false),
-	penalty_(0),
+	:penalty_(0),
 	Dt_tol_(0), Dr_tol_(0),
 	pri_tol_(0), dual_tol_(0)
 {
@@ -13,8 +12,7 @@ ADMMCut::ADMMCut()
 
 
 ADMMCut::ADMMCut(WireFrame *ptr_frame)
-	:debug_(false),
-	penalty_(10e2),
+	:penalty_(10e2),
 	Dt_tol_(5), Dr_tol_(10 * F_PI / 180),
 	pri_tol_(10e-3), dual_tol_(10e-3)
 {
@@ -25,7 +23,6 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame)
 
 
 ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
-	:debug_(false)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
@@ -38,6 +35,7 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
 	dual_tol_ = ptr_parm->dual_tol_;
 
 	path_ = path;
+	debug_ = true;
 }
 
 

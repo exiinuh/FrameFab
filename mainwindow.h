@@ -66,6 +66,11 @@ signals:
 							double, double,
 							double, double, double, 
 							double, double, double);
+	void	SendDeformParas(double, double, double,
+							double, double,
+							double, double,
+							double, double, double,
+							double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
 	void	SendSavePWFParas(bool, bool, 
@@ -79,7 +84,9 @@ public slots:
 	void	ChooseBaseClicked(bool down);
 	void	ChooseCeilingClicked(bool down);
 
+	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
 	void	GetFiberParas();
+	void	GetDeformParas();
 	void	GetProjectionParas();
 	void	GetSaveParas();
 	void	GetExportParas();
@@ -210,6 +217,7 @@ private:
 	QPushButton			*pushbutton_export_;
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
+	QPushButton			*pushbutton_deformation_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;

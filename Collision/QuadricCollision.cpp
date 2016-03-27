@@ -551,6 +551,53 @@ void QuadricCollision::Debug()
 	//}
 }
 
+vector<GeoV3> QuadricCollision::DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_)
+{
+	vector<GeoV3>temp;
+	double ¦È, ¦Õ;
+	target_e_ = target_e;
+	//North Point
+	if (!DetectEdges(exist_edge_, 0, 0))
+		temp.push_back(Orientation(0, 0));
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < divide_; i++)
+		{
+			if (i < 20)
+			{
+				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+				¦Õ = i*18.0 / 180.0*F_PI;
+			}
 
+			if (i>19 && i < 40)
+			{
+				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+			}
 
+			if (i>39)
+			{
+				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+			 }
+			if (DetectEdges(exist_edge_, ¦È, ¦Õ))
+				continue;
+			temp.push_back(Orientation(¦È, ¦Õ));
+		}
+	}
 
+	//South Point
+	if (!DetectEdges(exist_edge_, 0, 0))
+		temp.push_back(Orientation(F_PI, 0));
+	return temp;
+}
+
+bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
+{
+	for (int i = 0; i < exist_edge.size(); i++)
+	{
+		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
+			return true;
+	}
+	return false;
+}

@@ -1,5 +1,6 @@
 #include "StiffnessSolver.h"
 
+/* Solver provided by Frame3dd */
 bool StiffnessSolver::SolveSystem(
 		SpMat &K, VX &D, VX &F, VX &R, 
 		int DoF, VXi &q, VXi &r, 
@@ -9,7 +10,7 @@ bool StiffnessSolver::SolveSystem(
 
 	diag.resize(DoF);
 
-	//MX K_comp = K;
+	//MX K_comp = K;i
 	int row = K.rows(), col = K.cols();
 	MX K_comp(row, col);
 	K_comp.setZero();
@@ -58,6 +59,7 @@ bool StiffnessSolver::SolveSystem(
 	return true;
 }
 
+/* Eigen solver */
 bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
 {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
@@ -67,31 +69,26 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     if (solver.info() != Eigen::Success)
     {
         fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Decomposition!\n");
-		assert(0);
         return false;
     }
 
     VX Diag = solver.vectorD();
-    
-    if (verbose)
-    {
-        fprintf(stdout, "---LDLt Decomposition Diagnoal vector D---\n");
-    }
-    
+        
     for (int i = 0; i < Diag.size(); i++)
     {
-		if (Diag[i] < EPS)
+        if (Diag[i] == 0.0)
+        {
+            fprintf(stderr, " SolveSystem(Ver.Eigen): zero found on diagonal ...\n");
+            fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
+			return false;
+        }
+
+        if (Diag[i] < 0.0)
         {
             fprintf(stderr, " SolveSystem(Ver.Eigen): negative number found on diagonal ...\n");
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
             info--;
-			assert(0);
 			return false;
-        }
-        
-        if (verbose)
-        {
-            fprintf(stdout, "d[%d] = %.5f\n", i, Diag[i]);
         }
     }
 
@@ -102,7 +99,7 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 		fprintf(stderr, "The stucture may have mechanism and thus not stable in general\n");
 		fprintf(stderr, "Please Make sure that all six\n");
 		fprintf(stderr, "rigid body translations are restrained!\n");
-		assert(0);
+
 		return false;
     }
 
@@ -110,7 +107,6 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     if (solver.info() != Eigen::Success)
     {
         fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Solving!\n");
-		assert(0);
 		return false;
     }
 
@@ -476,6 +472,23 @@ void StiffnessSolver::LUDecomp(
 	/* {b} is now {x} and is ready to be returned	*/
 
 	return;
+}
+
+bool StiffnessSolver::LUDecomp(
+	MX &A,
+	VX &x,
+	VX &b	)
+{
+	x = A.fullPivLu().solve(b);
+
+	if ((A*x).isApprox(b))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void StiffnessSolver::Debug()

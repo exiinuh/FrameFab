@@ -32,6 +32,7 @@ public:
 	void	Init(WF_edge *target_e);
 	void Init(vector<lld> &angle_state);
 
+	vector<GeoV3> DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_);
 private:
 	void	DetectEdge(WF_edge *order_e);
 	bool	DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ);
@@ -45,7 +46,7 @@ private:
 	bool	ParallelCase(GeoV3 target_start, GeoV3 target_end,
 				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
 
-
+	bool DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ);
 
 	bool	DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 	bool	DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);

@@ -36,6 +36,15 @@ extern "C" void dpotrf_(const char *UPLO, const int *N, double *A, const int *LD
 // the Cholesky factorization A = U**T*U or A = L*L**T computed by
 // DPPTRF.
 // refer : http://www.netlib.org/lapack/explore-html/d0/d9b/dppcon_8f.html#a8107a68e3c7d948fe246bf0feae0470b
+/*
+* Note by Y.J. Huang @Mar/15/2016
+* I don't know why this routine fails for stiffness funtion (bunny head 60 unrestrained nodes)
+* but works fine for simple example in debug.
+*
+* [BugFix @Mar/15/2016] Please specify WORK and LWORK as:
+* 	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
+*   int    *lworkcon = (int*)malloc(N_ * sizeof(int));
+*/
 extern "C" void dpocon_(const char *UPLO, const int *N, const double *AP, const int *lda, const double *ANORM,
 	double *RCOND, double *WORK, int *LWORK, int *INFO);
 
@@ -48,7 +57,7 @@ extern "C" void dgesvd_(const char *JOBU,  const char *JOBVT, const int *M, cons
 class IllCondDetector{
 public:
 	typedef Eigen::SparseMatrix<double> EigenSp;
-
+	typedef Eigen::VectorXd				VX;
 public:
 	IllCondDetector(){};
 	IllCondDetector(EigenSp const &K);
@@ -57,13 +66,16 @@ public:
 public:
 	// I\O
 	void inline SetParm(int _ns, int _nl, int _condthres, int _gap);
-	double GetCondNum() const { return cond_num_; }
+	double GetCondNum() const { return rcond_num_; }
 	
 	// Library Compatibility
-	void EIGEN_LAP(EigenSp const &K);
+	void EigenLap(EigenSp const &K);
 
-	void ComputeCondNum();
-	bool StabAnalysis();
+	/* Condition number of the stiffness matrix */
+	double	ComputeCondNum();
+
+	/* Root Mean Square Equilibrium Error Check */
+	double  EquilibriumError(EigenSp const &K, VX const &D, VX const &F);
 	
 	void Debug();
 private:
@@ -73,8 +85,16 @@ private:
 	int			gap_;			// gap_ : The order of the gap between a cluster of smallest eigenvalues
 								// and the next largest eigen values
 
+	/*
+	* Matrices are well-conditioned if the 
+	* reciprocal condition number is near 1 and ill-conditioned if it is near zero.
+	*
+	* About numerical value of condition number, please refer to:
+	* http://math.stackexchange.com/questions/675474/what-is-the-practical-impact-of-a-matrixs-condition-number
+	* "Condition number exceeds 10e10 could be problematic. condition number from 10e^3~6 could be acceptable."
+	*/
 	int			N_;				// N_       : the matrix's row number
-	double		cond_num_;		// cond_num : The condition number
+	double		rcond_num_;		// rcond_num :the reciprocal of the condition number
 	double		*A_;			// A[]		: LAPACK storage of the matrix
 	double		Anorm_;			// Anorm_	: 1 norm = max_j{ sum_{i}abs(a_ij)}
 };
