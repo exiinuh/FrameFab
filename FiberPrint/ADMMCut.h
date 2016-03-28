@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <Eigen/dense>
 #include <Eigen/Sparse>
 #include <Eigen/SparseCore>

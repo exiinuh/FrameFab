@@ -73,6 +73,20 @@ void FiberPrintPlugIn::BruteForcePrint()
 
 void FiberPrintPlugIn::SweepingPrint()
 {
+	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+
+	ptr_graphcut_->MakeLayers();
+	cout << "Graph Cut completed." << endl;
+
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
+
+		return;
+	}
+	printf("BruteForce print done.\n");
 }
 
 void FiberPrintPlugIn::GetDeformation()
