@@ -586,9 +586,9 @@ vector<GeoV3> QuadricCollision::DetectStructure(WF_edge *target_e, vector<WF_edg
 		}
 	}
 
-	//South Point
-	if (!DetectEdges(exist_edge_, 0, 0))
-		temp.push_back(Orientation(F_PI, 0));
+	//South Point not consider
+	/*if (!DetectEdges(exist_edge_, 0, 0))
+		temp.push_back(Orientation(F_PI, 0));*/
 	return temp;
 }
 

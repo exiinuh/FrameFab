@@ -20,7 +20,7 @@ ExtruderCone::ExtruderCone()
 	divide_		= 16;
 	tool_lenth_ = 15;// 120mm connect robot arm
 	radii_ = tan(angle_)*height_;
-	cyclinder_height_= 50;//50mm for connection tools on the arm
+	cyclinder_height_= 100;//50mm for connection tools on the arm
 
 	GeneCone();
 }
