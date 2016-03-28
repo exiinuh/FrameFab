@@ -1162,8 +1162,8 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 
-	// ptr_fiberprint_->FrameFabPrint();
-	 ptr_fiberprint_->BruteForcePrint();
+	ptr_fiberprint_->FrameFabPrint();
+	// ptr_fiberprint_->BruteForcePrint();
 	// ptr_fiberprint_->GetDeformation();
 
 	emit(SetOrderSlider(0));

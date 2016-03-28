@@ -573,7 +573,7 @@ bool QPMosek::test() const
 #endif
 }
 
-bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const double& rot_tol, bool _debug)
+bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _debug)
 {
 	bool success = false;
 
@@ -682,15 +682,6 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const do
 						-MYINF,			/* Numerical value of lower bound.*/
 						d_tol);			/* Numerical value of upper bound.*/
 				}
-				else
-				{
-					r = MSK_putconbound(task,
-						i,							/* Index of constraint.*/
-						MSK_BK_UP,	/* Bound key.*/
-						-MYINF,			/* Numerical value of lower bound.*/
-						rot_tol);			/* Numerical value of upper bound.*/
-				}
-
 			}
 
 			if (r == MSK_RES_OK && !linprog)

@@ -576,7 +576,7 @@ void ADMMCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 
 	/* 10 degree rotation tolerance, from degree to radians */
-	qp_->solve(Q, a, D_, Dt_tol_, Dr_tol_, debug_);
+	qp_->solve(Q, a, D_, Dt_tol_, debug_);
 }
 
 

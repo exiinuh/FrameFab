@@ -58,7 +58,7 @@
 
 		// written especially for WirePrint
 		virtual bool solve(const S& H, const V& f, V &_x,
-			const double& d_tol, const double& rot_tol,
+			const double& d_tol,
 			bool _debug) = 0;
 
 		virtual std::string report() const = 0;
