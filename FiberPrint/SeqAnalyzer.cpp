@@ -36,6 +36,13 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 
 	ptr_dualgraph_->Dualization();
 
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
 	gamma_ = ptr_parm->gamma_;
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
@@ -52,6 +59,13 @@ SeqAnalyzer::~SeqAnalyzer()
 
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
+
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		delete colli_map_[i];
+		colli_map_[i] = NULL;
+	}
 }
 
 
@@ -71,12 +85,19 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 		if (dual_i != dual_j && !ptr_subgraph_->isExistingEdge(orig_j))
 		{
 			WF_edge *target_e = ptr_frame_->GetEdge(orig_j);
-			ptr_collision_->DetectCollision(target_e, order_e);
+
+			int id = dual_i*Nd + dual_j;
+			if (colli_map_[id] == NULL)
+			{
+				colli_map_[id] = new vector < lld > ;
+				ptr_collision_->DetectCollision(target_e, order_e, *colli_map_[id]);
+			}
+
 			for (int k = 0; k < 3; k++)
 			{
 				state_map[k].push_back(angle_state_[dual_j][k]);
 			}
-			ptr_collision_->ModifyAngle(angle_state_[dual_j]);
+			ptr_collision_->ModifyAngle(angle_state_[dual_j], *colli_map_[id]);
 		}
 	}
 }

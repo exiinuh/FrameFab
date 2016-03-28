@@ -80,8 +80,9 @@ protected:
 	char				*ptr_path_;
 
 	vector<QueueInfo>	print_queue_;
+	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 	vector<vector<lld>> angle_state_;
-	vector<vector<int>>	layers_;				// store dual_node's id for each layers
+	vector<vector<lld>*>colli_map_;
 
 	FiberPrintPARM		*ptr_parm_;
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost

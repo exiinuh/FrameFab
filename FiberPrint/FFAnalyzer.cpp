@@ -79,8 +79,7 @@ bool FFAnalyzer::SeqPrint()
 		if (!ptr_subgraph_->isExistingEdge(orig_i))
 		{
 			WF_edge *e = ptr_frame_->GetEdge(orig_i);
-			ptr_collision_->DetectCollision(e, ptr_subgraph_);
-			ptr_collision_->AngleState(angle_state_[dual_i]);
+			ptr_collision_->DetectCollision(e, ptr_subgraph_, angle_state_[dual_i]);
 		}
 	}
 
@@ -289,6 +288,7 @@ double FFAnalyzer::GenerateCost(int l, int j)
 
 		if (0 == L)
 		{
+			printf("collision examination failed.\n");
 			return -1;
 		}
 
@@ -387,8 +387,6 @@ double FFAnalyzer::GenerateCost(int l, int j)
 }
 
 
-
-
 void FFAnalyzer::DetectBulk()
 {
 	//cout << "---------Angle Detection--------" << endl;
@@ -449,42 +447,6 @@ void FFAnalyzer::DetectBulk()
 
 	//cout << "---------Angle Detection done--------" << endl;
 }
-
-
-//void FFAnalyzer::BruteForcePrint()
-//{
-//	ptr_dualgraph_->Dualization();
-//
-//	int M = ptr_frame_->SizeOfEdgeList();
-//	int Nd = ptr_dualgraph_->SizeOfVertList();
-//	int h = 0;
-//
-//	for (int i = 0; i < Nd; i++)
-//	{
-//		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
-//		if (e->isPillar())
-//		{
-//			//ptr_subgraph_->UpdateDualization(e); 
-//			print_queue_.push_back(QueueInfo{ 0, 0, i });
-//			h++;
-//		}
-//	}
-//
-//	angle_state_.resize(Nd);
-//	for (int i = 0; i < Nd; i++)
-//	{
-//		int orig_i = ptr_dualgraph_->e_orig_id(i);
-//		if (!ptr_subgraph_->isExistingEdge(orig_i)
-//			&& !ptr_frame_->GetEdge(orig_i)->isPillar())
-//		{
-//			WF_edge *e = ptr_frame_->GetEdge(orig_i);
-//			ptr_collision_->DetectCollision(e, ptr_subgraph_);
-//			angle_state_[i] = ptr_collision_->Angle();
-//		}
-//	}
-//
-//	GenerateSeq(h, Nd);
-//}
 
 
 bool FFAnalyzer::GenerateSeq(int h, int t)
@@ -569,12 +531,19 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 					!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
 				{
 					WF_edge *ej = ptr_frame_->GetEdge(orig_j);
-					ptr_collision_->DetectCollision(ej, ei);
+
+					int id = i*Nd + j;
+					if (colli_map_[id] == NULL)
+					{
+						colli_map_[id] = new vector < lld >;
+						ptr_collision_->DetectCollision(ej, ei, *colli_map_[id]);
+					}
+
 					for (int k = 0; k < 3; k++)
 					{
 						tmp_angle[k].push_back(angle_state_[j][k]);
 					}
-					ptr_collision_->ModifyAngle(angle_state_[j]);
+					ptr_collision_->ModifyAngle(angle_state_[j], *colli_map_[id]);
 				}
 			}
 
