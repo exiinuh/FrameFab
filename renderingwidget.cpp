@@ -1322,7 +1322,7 @@ void RenderingWidget::PrintOrder(int order)
 void RenderingWidget::PrintNextStep()
 {
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
-	if (print_order_ < M - 1)
+	if (print_order_ < M)
 	{
 		print_order_++;
 	}

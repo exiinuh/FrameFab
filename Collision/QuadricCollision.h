@@ -78,7 +78,7 @@ public:
 		int sum_angle = 0;
 		for (int j = 0; j < 62; j++)
 		{
-			lld mask = (1 << j);
+			lld mask = ((lld)1 << j);
 			for (int i = 0; i < 3; i++)
 			{
 				if ((colli_map[i] & mask) == 0)
