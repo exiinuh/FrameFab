@@ -90,7 +90,7 @@ protected:
 	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
 	double				Wl_;						// Wl_		: tradeoff weight for printing cost
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
-	double				Wi_;						// Wi_		: tradeoff weight for printing cost
+	double				Wa_;						// Wa_		: tradeoff weight for printing cost
 
 	/* Printing Orientation Related Data */
 	int					support_;

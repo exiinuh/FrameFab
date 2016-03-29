@@ -258,14 +258,14 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wl_->setFixedWidth(140);
 	spinbox_wl_->setDecimals(2);
 	spinbox_wl_->setRange(0, 10000);
-	spinbox_wl_->setValue(10.0);
+	spinbox_wl_->setValue(1.0);
 	spinbox_wl_->setSingleStep(1);
 
 	spinbox_wp_ = new QDoubleSpinBox(this);
 	spinbox_wp_->setFixedWidth(140);
 	spinbox_wp_->setDecimals(2);
 	spinbox_wp_->setRange(0, 10000);
-	spinbox_wp_->setValue(100.0);
+	spinbox_wp_->setValue(1.0);
 	spinbox_wp_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
