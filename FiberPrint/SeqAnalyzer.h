@@ -71,12 +71,6 @@ protected:
 
 	bool			TestifyStiffness();
 
-protected:
-	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
-	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
-
-	bool			TestifyStiffness();
-
 public:
 	DualGraph			*ptr_dualgraph_;
 	WireFrame			*ptr_frame_;
