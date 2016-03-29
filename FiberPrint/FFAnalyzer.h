@@ -54,7 +54,7 @@ public:
 
 private:
 	bool			GenerateSeq(int l, int h, int t);
-	double			GenerateCost(int l, int j);
+	double			GenerateCost(int l, int j, WF_edge *ei);
 	void			DetectBulk();
 
 	bool			GenerateSeq(int h, int t);

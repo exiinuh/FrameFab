@@ -23,6 +23,8 @@ Process2Grasshopper::Process2Grasshopper(SeqAnalyzer *seqanalyzer, char *path)
 
 void Process2Grasshopper::ProcPrint()
 {
+	//
+	
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
 	ptr_collision_ = ptr_seqanalyzer_->GetCollision();

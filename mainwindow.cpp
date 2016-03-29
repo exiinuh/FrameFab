@@ -258,14 +258,14 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wl_->setFixedWidth(140);
 	spinbox_wl_->setDecimals(2);
 	spinbox_wl_->setRange(0, 10000);
-	spinbox_wl_->setValue(10.0);
+	spinbox_wl_->setValue(1.0);
 	spinbox_wl_->setSingleStep(1);
 
 	spinbox_wp_ = new QDoubleSpinBox(this);
 	spinbox_wp_->setFixedWidth(140);
 	spinbox_wp_->setDecimals(2);
 	spinbox_wp_->setRange(0, 10000);
-	spinbox_wp_->setValue(100.0);
+	spinbox_wp_->setValue(1.0);
 	spinbox_wp_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
@@ -287,25 +287,25 @@ void MainWindow::CreateSpinBoxes()
 
 	spinbox_minlayer1_ = new QSpinBox(this);
 	spinbox_minlayer1_->setFixedWidth(60);
-	spinbox_minlayer1_->setRange(0, 10);
+	spinbox_minlayer1_->setRange(0, 20);
 	spinbox_minlayer1_->setValue(0);
 	spinbox_minlayer1_->setSingleStep(1);
 
 	spinbox_maxlayer1_ = new QSpinBox(this);
 	spinbox_maxlayer1_->setFixedWidth(60);
-	spinbox_maxlayer1_->setRange(0, 10);
+	spinbox_maxlayer1_->setRange(0, 20);
 	spinbox_maxlayer1_->setValue(0);
 	spinbox_maxlayer1_->setSingleStep(1);
 
 	spinbox_minlayer2_ = new QSpinBox(this);
 	spinbox_minlayer2_->setFixedWidth(60);
-	spinbox_minlayer2_->setRange(0, 10);
+	spinbox_minlayer2_->setRange(0, 20);
 	spinbox_minlayer2_->setValue(0);
 	spinbox_minlayer2_->setSingleStep(1);
 
 	spinbox_maxlayer2_ = new QSpinBox(this);
 	spinbox_maxlayer2_->setFixedWidth(60);
-	spinbox_maxlayer2_->setRange(0, 10);
+	spinbox_maxlayer2_->setRange(0, 20);
 	spinbox_maxlayer2_->setValue(0);
 	spinbox_maxlayer2_->setSingleStep(1);
 	//pushbutton_scale_ = new QPushButton(tr("Scale"), this);
