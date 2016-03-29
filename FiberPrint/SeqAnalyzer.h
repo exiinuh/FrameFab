@@ -63,6 +63,13 @@ public:
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
 	int				GetSupport()		{ return support_; }
 	double			GetWave(int id)		{ return wave_[id]; }
+	QuadricCollision* GetCollision(){ return ptr_collision_; }
+
+protected:
+	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
+	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
+
+	bool			TestifyStiffness();
 
 protected:
 	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);

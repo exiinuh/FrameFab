@@ -128,7 +128,6 @@ bool FFAnalyzer::SeqPrint()
 
 
 		/* set start edge for searching of current layer */
-
 		multimap<double, int> choice;
 
 		bool success = false;
