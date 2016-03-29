@@ -5,7 +5,7 @@
 
 
 #include "QP.h"
-#include "Timer.h"
+#include "GlobalFunctions\Timer.h"
 
 
 class QPMosek : public QP

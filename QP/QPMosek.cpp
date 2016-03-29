@@ -51,7 +51,7 @@ bool QPMosek::solve(const S& H, const V& f,
 {
 #ifdef MOSEK_EXISTS
 	fVal_ = MYINF;
-	tSetup.start();
+	tSetup.Start();
 
 	bool success = false;
 
@@ -94,7 +94,7 @@ bool QPMosek::solve(const S& H, const V& f,
 		{
 			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
 
-			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-start
+			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-Start
 			// if ( r == MSK_RES_OK )
 			//	  r = MSK_putintparam(task,MSK_IPAR_OPTIMIZER,MSK_OPTIMIZER_FREE_SIMPLEX);
 
@@ -280,7 +280,7 @@ bool QPMosek::solve(const S& H, const V& f,
 				MSK_writedata(task, "taskdump.opf");
 			}
 
-			tSetup.stop();
+			tSetup.Stop();
 			if (storeVariables_){
 				std::string fileName;
 				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName)){
@@ -290,7 +290,7 @@ bool QPMosek::solve(const S& H, const V& f,
 					MSK_writedata(task, fileName.c_str());
 				}
 			}
-			tSolve.start();
+			tSolve.Start();
 
 			if (r == MSK_RES_OK)
 			{
@@ -364,7 +364,7 @@ bool QPMosek::solve(const S& H, const V& f,
 		MSK_deletetask(&task);
 	}
 
-	tSolve.stop();
+	tSolve.Stop();
 
 	return success;
 
@@ -613,7 +613,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const do
 		{
 			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
 
-			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-start
+			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-Start
 			// if ( r == MSK_RES_OK )
 			//	  r = MSK_putintparam(task,MSK_IPAR_OPTIMIZER,MSK_OPTIMIZER_FREE_SIMPLEX);
 
