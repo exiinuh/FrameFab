@@ -517,6 +517,8 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
 	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
+
+	return true;
 }
 
 

@@ -9,8 +9,6 @@
 #include "NoneCut.h"
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
-#include "ProcAnalyzer.h"
-
 
 class FiberPrintPlugIn
 {
@@ -44,7 +42,6 @@ public:
 	WireFrame		*ptr_frame_;
 	GraphCut		*ptr_graphcut_;
 	SeqAnalyzer		*ptr_seqanalyzer_;
-	ProcAnalyzer	*ptr_procanalyzer_;
 
 private:
 	char			*ptr_path_;
