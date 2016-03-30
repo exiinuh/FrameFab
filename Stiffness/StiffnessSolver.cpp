@@ -68,7 +68,7 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     
     if (solver.info() != Eigen::Success)
     {
-        fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Decomposition!\n");
+        fprintf(stderr, "SolverSystem(LDLT): Error in Decomposition!\n");
         return false;
     }
 
@@ -78,14 +78,14 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     {
         if (Diag[i] == 0.0)
         {
-            fprintf(stderr, " SolveSystem(Ver.Eigen): zero found on diagonal ...\n");
+            fprintf(stderr, " SolveSystem(LDLT): zero found on diagonal ...\n");
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
 			return false;
         }
 
         if (Diag[i] < 0.0)
         {
-            fprintf(stderr, " SolveSystem(Ver.Eigen): negative number found on diagonal ...\n");
+            fprintf(stderr, " SolveSystem(LDLT): negative number found on diagonal ...\n");
             fprintf(stderr, " d[%d] = %11.4e\n", i, Diag[i]);
             info--;
 			return false;
@@ -106,12 +106,38 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
     D = solver.solve(F);
     if (solver.info() != Eigen::Success)
     {
-        fprintf(stderr, "SolverSystem(Ver.Eigen): Error in Solving!\n");
+        fprintf(stderr, "SolverSystem(LDLT): Error in Solving!\n");
 		return false;
     }
 
 	return true;
 }
+
+
+bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, int &info)
+{
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+	solver.compute(K);
+	info = 0;
+	
+	if (solver.info() != Eigen::Success)
+	{
+		fprintf(stderr, "SolverSystem(ConjugateGradient): Error in Decomposition!\n");
+		return false;
+	}
+	
+	solver.setMaxIterations(3000);
+	D = solver.solve(F);
+
+	if (solver.info() != Eigen::Success)
+	{
+		fprintf(stderr, "SolverSystem(ConjugateGradient): Error in Solving!\n");
+		return false;
+	}
+
+	return true;
+}
+
 
 /*
 * LDLDecompPM - Solves partitioned matrix equations		Nov / 24 / 2015

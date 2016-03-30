@@ -6,8 +6,8 @@
 *    Description:  Matrix math function for stiffness linear system solving
 *
 *	 Version:  1.0
-*	 Created:  Nov/24/2015
-*    Update :  Dec/2 /2015
+*	 Created:  Nov/24/2015 by Yijiang Huang
+*    Update :  Mar/30/2015 by Xin Hu
 *
 *	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
 *	 Company:  GCL@USTC
@@ -87,6 +87,22 @@ public:
     bool SolveSystem(
         SpMat &K, VX &D, VX &F, int verbose, int &info  
         );
+
+
+	/*
+	* SolveSystem  -  solve {F} =   [K]{D} via conjugate gradient with guess       30/Mar/2015
+	*                 This override function is implemented for sovling Kqq * d_q = F_q,
+	*                 where no partitioned LDLt is needed.
+	* @param K   : stiffness matrix for the restrained frame
+	* @param D   : displacement vector to be solved
+	* @param F   : mechenical force(external load vector)
+	* @param verbose	:  =1 for copious screenplay
+	* @param info: <0 : not stiffness matrix positive definite
+	* Note: This function use eigen library SimplicialLDLt module to solve the linear system.
+	*/
+	bool SolveSystem(
+		SpMat &K, VX &D, VX &F, VX &D0, int verbose, int &info
+		);
 
 	void Debug();
 

@@ -13,7 +13,7 @@
 *
 *	 Version:  1.0
 *	 Created:  Oct/15/2015 by Xin Hu
-*	 Updated:  Mar/21/2016 by Yijiang H.
+*	 Updated:  Mar/30/2016 by Xin Hu
 *
 *	 Author:   Xin Hu,  Yijiang Huang, Guoxian Song
 *	 Company:  GCL@USTC
@@ -88,20 +88,31 @@ public:
 	void		CreateElasticK();
 	void		CreateGlobalK(const VectorXd &x);
 
-	// Socket to GraphCut
+	/* Socket to GraphCut */
 	bool		CalculateD(VectorXd &D);
-	bool		CalculateD(VectorXd &D, const VectorXd &x, int write_matrix, int write_3dd, int cut_count);
+	bool		CalculateD(VectorXd &D, const VectorXd &x, 
+							int write_matrix, int write_3dd, int cut_count);
 
-	// Data I/O
+	/* Socket to SeqAnalyzer */
+	bool		CalculateD(VectorXd &D, VectorXd &D0);
+	bool		CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x, 
+							int verbose, int write_data, int seq_id);
+
+	/* Check condition number */
+	bool		CheckIllCondition(IllCondDetector &stiff_inspector, int verbose);
+	bool		CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose);
+
+	/* Debug */
+	void		WriteData(VectorXd &D, int verbose, int id, char *fname);
+
+	/* Data I/O */
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
 	VX			*WeightedF(){ assert(&F_); return &F_; }
 
 	MX			eKe(int ei);			// ei: orig e id
 	MX			eKv(int ei);			// ei: orig e id
 	VX			Fe(int ei);				// ei: orig e id
-
-	void		Debug();
-
+	
 private:
 	//private:
 	DualGraph			*ptr_dualgraph_;
