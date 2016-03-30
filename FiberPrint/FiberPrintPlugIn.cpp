@@ -36,11 +36,8 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 
-<<<<<<< HEAD
-//	ptr_graphcut_->MakeLayers();
-=======
+	//	ptr_graphcut_->MakeLayers();
 	ptr_graphcut_->MakeLayers();
->>>>>>> 02ce9cc9597b9f42bd440eb2cd953e4f12f618c6
 	cout << "Graph Cut completed." << endl;
 
 
@@ -53,8 +50,6 @@ void FiberPrintPlugIn::FrameFabPrint()
 	//}
 
 	printf("FrameFab print done.\n");
-	ptr_procanalyzer_->ProcPrint();
-
 
 	//ptr_seqanalyzer_->WritePathRender();
 

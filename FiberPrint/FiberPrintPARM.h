@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Stiffness/GCommon.h"
+#include "GCommon.h"
 
 class FiberPrintPARM
 {
