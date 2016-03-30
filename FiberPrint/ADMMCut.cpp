@@ -788,20 +788,17 @@ void ADMMCut::WriteStiffness(string offset, string rotation)
 			int j = ptr_dualgraph_->v_dual_id(i);
 
 			VX offset(3);
-			VX rotation(3);
 			for (int k = 0; k < 3; k++)
 			{
 				offset[k] = D_[j * 6 + k];
-				rotation[k] = D_[j * 6 + k + 3];
 			}
 
-			if (offset.norm() >= Dt_tol_ || rotation.norm() >= Dr_tol_)
+			if (offset.norm() >= Dt_tol_)
 			{
-				printf(".............. %lf %lf\n", offset.norm(), rotation.norm());
+				printf(".............. %lf\n", offset.norm());
 				getchar();
 			}
 			ss[i][0] = offset.norm() / Dt_tol_;
-			ss[i][1] = rotation.norm() / Dr_tol_;
 		}
 		else
 		{
