@@ -1163,8 +1163,9 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 
 	ptr_fiberprint_->FrameFabPrint();
-	// ptr_fiberprint_->BruteForcePrint();
-	// ptr_fiberprint_->GetDeformation();
+	//ptr_fiberprint_->BruteForcePrint();
+	//ptr_fiberprint_->SweepingPrint();
+	//ptr_fiberprint_->GetDeformation();
 
 	emit(SetOrderSlider(0));
 	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
@@ -1321,7 +1322,7 @@ void RenderingWidget::PrintOrder(int order)
 void RenderingWidget::PrintNextStep()
 {
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
-	if (print_order_ < M - 1)
+	if (print_order_ < M)
 	{
 		print_order_++;
 	}

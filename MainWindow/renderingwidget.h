@@ -20,7 +20,7 @@
 
 #include "mainwindow.h"
 #include "ArcBall.h"
-#include "globalFunctions.h"
+#include "GlobalFunctions\globalFunctions.h"
 #include "FiberPrint\FiberPrintPlugIn.h"
 #include "WireFrame\WireFrame.h"
 

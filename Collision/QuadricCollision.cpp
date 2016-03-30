@@ -18,9 +18,11 @@ QuadricCollision::QuadricCollision(WireFrame *ptr_frame)
 }
 
 
-void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph)
+void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, 
+	vector<lld> &colli_map)
 {
-	Init(target_e);
+	Init(colli_map);
+	target_e_ = target_e;
 
 	/* collision with edge */
 	int Nd = ptr_subgraph->SizeOfVertList();
@@ -29,49 +31,34 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 		WF_edge *e = ptr_frame_->GetEdge(ptr_subgraph->e_orig_id(i));
 		if (e != target_e_ && e != target_e_->ppair_)
 		{
-			DetectEdge(e);
+			DetectEdge(e, colli_map);
 		}
 	}
 }
 
 
-void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e)
+void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e, 
+	vector<lld> &colli_map)
 {
-	Init(target_e);
+	Init(colli_map);
+	target_e_ = target_e;
 
 	/* collision with edge */
-	DetectEdge(order_e);
+	DetectEdge(order_e, colli_map);
 }
 
 
-void QuadricCollision::Init()
+void QuadricCollision::Init(vector<lld> &colli_map)
 {
 	lld temp = 0;
-	state_map_.clear();
-	state_map_.push_back(temp);
-	state_map_.push_back(temp);
-	state_map_.push_back(temp);
+	colli_map.clear();
+	colli_map.push_back(temp);
+	colli_map.push_back(temp);
+	colli_map.push_back(temp);
 }
 
 
-void QuadricCollision::Init(WF_edge *target_e)
-{
-	target_e_ = target_e;
-	Init();
-}
-
-
-void QuadricCollision::Init(vector<lld> &angle_state)
-{
-	lld temp = 0;
-	angle_state.clear();
-	angle_state.push_back(temp);
-	angle_state.push_back(temp);
-	angle_state.push_back(temp);
-}
-
-
-void QuadricCollision::DetectEdge(WF_edge *order_e)
+void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
 {
 	double ¦È;								// angle with Z axis (rad)
 	double ¦Õ;								// angle with X axis (rad)
@@ -100,7 +87,7 @@ void QuadricCollision::DetectEdge(WF_edge *order_e)
 			lld mask = ((lld)1 << i);
 			if (DetectBulk(order_e, ¦È, ¦Õ))
 			{
-				state_map_[j] |= mask;			
+				colli_map[j] |= mask;
 			}		
 		}
 	}
@@ -109,14 +96,14 @@ void QuadricCollision::DetectEdge(WF_edge *order_e)
 	lld mask = ((lld)1 << 60);
 	if (DetectBulk(order_e, 0, 0))
 	{
-		state_map_[2] |= mask;
+		colli_map[2] |= mask;
 	}
 
 	//South Point
 	mask = ((lld)1 << 61);
 	if (DetectBulk(order_e, F_PI, 0))
 	{
-		state_map_[2] |= mask;
+		colli_map[2] |= mask;
 	}
 }
 
@@ -549,4 +536,56 @@ void QuadricCollision::Debug()
 	//		}						
 	//	}
 	//}
+}
+
+
+vector<GeoV3> QuadricCollision::DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_)
+{
+	vector<GeoV3>temp;
+	double ¦È, ¦Õ;
+	target_e_ = target_e;
+	//North Point
+	if (!DetectEdges(exist_edge_, 0, 0))
+		temp.push_back(Orientation(0, 0));
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < divide_; i++)
+		{
+			if (i < 20)
+			{
+				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+				¦Õ = i*18.0 / 180.0*F_PI;
+			}
+
+			if (i>19 && i < 40)
+			{
+				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+			}
+
+			if (i>39)
+			{
+				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+			}
+			if (DetectEdges(exist_edge_, ¦È, ¦Õ))
+				continue;
+			temp.push_back(Orientation(¦È, ¦Õ));
+		}
+	}
+
+	//South Point not consider
+	/*if (!DetectEdges(exist_edge_, 0, 0))
+	temp.push_back(Orientation(F_PI, 0));*/
+	return temp;
+}
+
+bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
+{
+	for (int i = 0; i < exist_edge.size(); i++)
+	{
+		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
+			return true;
+	}
+	return false;
 }

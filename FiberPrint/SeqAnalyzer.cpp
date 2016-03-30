@@ -3,14 +3,14 @@
 
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wi_(1.0), extru_(false), debug_(false), fileout_(false)
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), extru_(false), debug_(false), fileout_(false)
 {
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wi_(1.0), extru_(false), debug_(true), fileout_(false)
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), extru_(false), debug_(true), fileout_(false)
 {
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
@@ -36,12 +36,19 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 
 	ptr_dualgraph_->Dualization();
 
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
 	gamma_ = ptr_parm->gamma_;
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wl_ = ptr_parm->Wl_;
 	Wp_ = ptr_parm->Wp_;
-	Wi_ = 1.0;
+	Wa_ = 1.0;
 }
 
 
@@ -52,6 +59,13 @@ SeqAnalyzer::~SeqAnalyzer()
 
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
+
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		delete colli_map_[i];
+		colli_map_[i] = NULL;
+	}
 }
 
 
@@ -71,12 +85,19 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 		if (dual_i != dual_j && !ptr_subgraph_->isExistingEdge(orig_j))
 		{
 			WF_edge *target_e = ptr_frame_->GetEdge(orig_j);
-			ptr_collision_->DetectCollision(target_e, order_e);
+
+			int id = dual_i*Nd + dual_j;
+			if (colli_map_[id] == NULL)
+			{
+				colli_map_[id] = new vector < lld > ;
+				ptr_collision_->DetectCollision(target_e, order_e, *colli_map_[id]);
+			}
+
 			for (int k = 0; k < 3; k++)
 			{
 				state_map[k].push_back(angle_state_[dual_j][k]);
 			}
-			ptr_collision_->ModifyAngle(angle_state_[dual_j]);
+			ptr_collision_->ModifyAngle(angle_state_[dual_j], *colli_map_[id]);
 		}
 	}
 }

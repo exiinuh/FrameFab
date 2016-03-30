@@ -63,6 +63,7 @@ public:
 	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
 	int				GetSupport()		{ return support_; }
 	double			GetWave(int id)		{ return wave_[id]; }
+	QuadricCollision* GetCollision(){ return ptr_collision_; }
 
 protected:
 	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
@@ -80,8 +81,9 @@ protected:
 	char				*ptr_path_;
 
 	vector<QueueInfo>	print_queue_;
+	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 	vector<vector<lld>> angle_state_;
-	vector<vector<int>>	layers_;				// store dual_node's id for each layers
+	vector<vector<lld>*>colli_map_;
 
 	FiberPrintPARM		*ptr_parm_;
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
@@ -89,7 +91,7 @@ protected:
 	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
 	double				Wl_;						// Wl_		: tradeoff weight for printing cost
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
-	double				Wi_;						// Wi_		: tradeoff weight for printing cost
+	double				Wa_;						// Wa_		: tradeoff weight for printing cost
 
 	/* Printing Orientation Related Data */
 	int					support_;

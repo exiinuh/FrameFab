@@ -25,27 +25,27 @@ public:
 	~QuadricCollision();
 
 public:
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph); // 
-	void	DetectCollision(WF_edge *target_e, WF_edge *order_e);
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); // 
+	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
 
-	void Init();
-	void	Init(WF_edge *target_e);
-	void Init(vector<lld> &angle_state);
+	void	Init(vector<lld> &colli_map);
 
+
+	vector<GeoV3> DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_);
 private:
-	void	DetectEdge(WF_edge *order_e);
+	void	DetectEdge(WF_edge *order_e, vector<lld> &colli_map);
 	bool	DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ);
 	bool	DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
 
 	bool	Case(GeoV3 target_start, GeoV3 target_end,
 				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
 	
-	bool SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+	bool	SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
 
 	bool	ParallelCase(GeoV3 target_start, GeoV3 target_end,
 				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
 
-
+	bool DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ);
 
 	bool	DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 	bool	DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
@@ -67,49 +67,23 @@ private:
 
 public:
 	//output
-	void AngleState(vector<lld> &angle_state)	
-	{
-		angle_state.resize(3);
-		angle_state[0] = state_map_[0];
-		angle_state[1] = state_map_[1];
-		angle_state[2] = state_map_[2];
-	}
-
-	void ModifyAngle(vector<lld> &angle_state)
+	void ModifyAngle(vector<lld> &angle_state, vector<lld> &colli_map)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			angle_state[i] |= state_map_[i];
+			angle_state[i] |= colli_map[i];
 		}
 	}
 
-	int ColFreeAngle()
+	int ColFreeAngle(vector<lld> &colli_map)
 	{
 		int sum_angle = 0;
 		for (int j = 0; j < 62; j++)
 		{
-			lld mask = (1 << j);
+			lld mask = ((lld)1 << j);
 			for (int i = 0; i < 3; i++)
 			{
-				if ((state_map_[i] & mask) == 0)
-				{
-					sum_angle++;
-				}
-			}
-		}
-
-		return sum_angle;
-	}
-
-	int ColFreeAngle(vector<lld> &angle_state)
-	{
-		int sum_angle = 0;
-		for (int j = 0; j < 62; j++)
-		{
-			lld mask = (1 << j);
-			for (int i = 0; i < 3; i++)
-			{
-				if ((angle_state[i] & mask) == 0)
+				if ((colli_map[i] & mask) == 0)
 				{
 					sum_angle++;
 				}
@@ -133,7 +107,6 @@ public:
 private:
 	ExtruderCone		extruder_;
 	vector<Triangle>	bulk_;
-	vector<lld>			state_map_;
 	int					divide_;
 
 };

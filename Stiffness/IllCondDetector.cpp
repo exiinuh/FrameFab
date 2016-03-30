@@ -3,8 +3,15 @@
 // mapping from two-dim index to packed 'Up' column major layout storage
 #define MAP(i,j,N) (i*N + j)
 
+IllCondDetector::IllCondDetector()
+{
+	debug_ = false;
+}
+
+
 IllCondDetector::IllCondDetector(EigenSp const &K)
 {
+	debug_ = false;
 	EigenLap(K);
 }
 
@@ -103,7 +110,6 @@ double IllCondDetector::ComputeCondNum()
 	}
 	double max = *std::max_element(compare.begin(), compare.end());
 
-	cout << "-----------------" << endl;
 	cout << "Ill Condition Detector Rank Stat" << endl;
 	for (int i = 0; i < compare.size(); i++)
 	{

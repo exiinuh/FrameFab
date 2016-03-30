@@ -59,7 +59,7 @@ public:
 	typedef Eigen::SparseMatrix<double> EigenSp;
 	typedef Eigen::VectorXd				VX;
 public:
-	IllCondDetector(){};
+	IllCondDetector();
 	IllCondDetector(EigenSp const &K);
 	~IllCondDetector();
 
@@ -97,6 +97,8 @@ private:
 	double		rcond_num_;		// rcond_num :the reciprocal of the condition number
 	double		*A_;			// A[]		: LAPACK storage of the matrix
 	double		Anorm_;			// Anorm_	: 1 norm = max_j{ sum_{i}abs(a_ij)}
+
+	bool		debug_;
 };
 
 #endif

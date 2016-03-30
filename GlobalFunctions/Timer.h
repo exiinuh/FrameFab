@@ -10,18 +10,22 @@
 
 class Timer
 {
-public:
 	typedef std::chrono::time_point<std::chrono::system_clock> TimePoint;
 	typedef std::chrono::duration<double> Duration;
-
+public:
 	Timer();
-	void start();
-	void stop();
-	std::string to_string() const;
+	~Timer();
+
+public:
+	void	Start();
+	void	Stop();
+	void	Reset();
+	std::string ToString() const;
 
 private:
-	TimePoint startTime;
-	TimePoint endTime;
+	TimePoint	start_time_;
+	TimePoint	end_time_;
+	double		sum_time_;
 };
 
 std::ostream& operator << (std::ostream & os, const Timer& t);

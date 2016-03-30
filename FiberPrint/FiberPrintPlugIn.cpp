@@ -34,20 +34,21 @@ void FiberPrintPlugIn::FrameFabPrint()
 {
 	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
-	ptr_procanalyzer_ = new ProcessAnalyzer(ptr_seqanalyzer_, ptr_path_);
+	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 
-	ptr_graphcut_->MakeLayers();
+	//ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 
 
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
 
-	//	return;
-	//}
-	//printf("FrameFab print done.\n");
+		return;
+	}
+
+	printf("FrameFab print done.\n");
 	//ptr_procanalyzer_->ProcPrint();
 	//ptr_seqanalyzer_->WritePathRender();
 
