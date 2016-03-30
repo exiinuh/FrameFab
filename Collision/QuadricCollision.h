@@ -17,6 +17,8 @@ using namespace std;
 // ¦È=(0,180), ¦Õ=(0,360)
 
 
+
+//target means printing edge, order menas existing edge
 class QuadricCollision
 {
 public:
@@ -52,7 +54,9 @@ private:
 	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
 
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
-	void	GenerateVolume(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
+
+
+	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
 
 	bool	Parallel(GeoV3 a, GeoV3 b);
 
@@ -80,7 +84,7 @@ public:
 		int sum_angle = 0;
 		for (int j = 0; j < 62; j++)
 		{
-			lld mask = (1 << j);
+			lld mask = ((lld)1 << j);
 			for (int i = 0; i < 3; i++)
 			{
 				if ((colli_map[i] & mask) == 0)

@@ -105,7 +105,7 @@ bool FFAnalyzer::SeqPrint()
 
 		if (debug_)
 		{
-			printf("layer %d is in processing, intial head index %d, tail index %d\n", l, h, t);
+			printf(">>>layer %d is in processing, intial head index %d, tail index %d\n", l, h, t);
 		}
 
 		if (h == t)
@@ -162,7 +162,7 @@ bool FFAnalyzer::SeqPrint()
 		{
 			if (debug_)
 			{
-				printf("all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", l);
+				printf("...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", l);
 			}
 			return false;
 		}
@@ -185,7 +185,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 {
 	if (debug_)
 	{
-		printf("searching edge #%d in layer %d, head %d, (tail %d)\n",
+		printf("---searching edge #%d in layer %d, head %d, (tail %d)\n",
 			print_queue_[h].layer_id_, l, h, t);
 	}
 
@@ -206,8 +206,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	{
 		if (debug_)
 		{
-			printf("searching at layer %d finishes.\n", l);
-			printf("-------------------------------\n");
+			printf("***searching at layer %d finishes.\n", l);
 		}
 
 		return true;
@@ -240,8 +239,8 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 		if (debug_)
 		{
-			printf("choose edge #%d in layer %d with cost %lf\n", it->second, l, it->first);
-			printf("entering next searching state.\n");
+			printf("^^^choose edge #%d in layer %d with cost %lf\n", it->second, l, it->first);
+			printf("^^^entering next searching state.\n");
 		}
 
 		if (GenerateSeq(l, h + 1, t))
@@ -257,7 +256,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 	if (debug_)
 	{
-		printf("searching at layer %d, head %d, (tail %d) ended.\n", l, h, t);
+		printf("---searching at layer %d, head %d, (tail %d) ended.\n", l, h, t);
 	}
 
 	return false;
@@ -279,7 +278,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 		if (debug_)
 		{
-			printf("Attempting edge #%d, layer %d, head %d\n",
+			printf("###Attempting edge #%d, layer %d, head %d\n",
 				j, l, print_queue_.size());
 		}
 
@@ -289,26 +288,25 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 		if (0 == L)
 		{
-			printf("collision examination failed.\n");
+			printf("...collision examination failed.\n");
 			return -1;
 		}
 
 
 		/* stabiliy weight */
+		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		int uj = ptr_frame_->GetEndu(orig_j);
 		int vj = ptr_frame_->GetEndv(orig_j);
-		point pos_uj = ptr_frame_->GetPosition(uj);
-		point pos_vj = ptr_frame_->GetPosition(vj);
 		bool exist_uj = ptr_subgraph_->isExistingVert(uj);
 		bool exist_vj = ptr_subgraph_->isExistingVert(vj);
-		double z = (min(pos_uj.z(), pos_vj.z()) - min_z_) / (max_z_ - min_z_);
+		double z = (ej->CenterPos().z() - min_z_) / (max_z_ - min_z_);
 
 		if (exist_uj && exist_vj)
 		{
 			/* edge j share two ends with printed structure */
 			if (debug_)
 			{
-				printf("it shares two ends with printed structure\n");
+				printf("^^^it shares two ends with printed structure\n");
 			}
 			P = z;
 		}
@@ -318,10 +316,12 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 				/* edge j share one end with printed structure */
 				if (debug_)
 				{
-					printf("it shares only one ends with printed structure\n");
+					printf("^^^it shares only one ends with printed structure\n");
 				}
 
 				double ang;
+				point pos_uj = ptr_frame_->GetPosition(uj);
+				point pos_vj = ptr_frame_->GetPosition(vj);
 				if (exist_uj)
 				{
 					ang = Geometry::angle(point(0, 0, 1), pos_vj - pos_uj);
@@ -336,7 +336,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 			{
 				if (debug_)
 				{
-					printf("it floats, skip\n");
+					printf("...it floats, skip\n");
 				}
 				return -1;
 			}
@@ -369,7 +369,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		if (!TestifyStiffness())
 		{
 			/* examination failed */
-			printf("Stiffness examination failed.\n");
+			printf("...Stiffness examination failed.\n");
 			return -1;
 		}
 
@@ -398,7 +398,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		//double cost = Wl_ * L + Wp_ * P + Wi_ * I;
 		if (debug_)
 		{
-			printf("L: %lf, P: %lf\ncost: %f\n", L, P, cost);
+			printf("###L: %lf, P: %lf\ncost: %f\n", L, P, cost);
 		}
 		return cost;
 	}

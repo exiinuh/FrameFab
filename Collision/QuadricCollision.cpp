@@ -215,8 +215,13 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 
 bool QuadricCollision::SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal)
 {
-	if (angle(normal, order_s - connect) < extruder_.Angle())
+
+
+if (angle(normal, order_s - connect) < extruder_.Angle())
+	{
+		
 		return true;
+	}
 
 	if (DetectCone(target_s, normal, connect, order_s))
 		return true;
@@ -298,6 +303,7 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 
 bool QuadricCollision::DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end)
 {
+
 	gte::Cone3<float> start_cone;
 	start_cone.angle = extruder_.Angle();
 	start_cone.height = extruder_.Height();
@@ -309,6 +315,7 @@ bool QuadricCollision::DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start,
 	start_ray.origin = s;
 	s[0] = normal.getX(); s[1] = normal.getY(); s[2] = normal.getZ();
 	start_ray.direction = s;
+	start_cone.ray = start_ray;
 	gte::Segment<3, float> segment;
 	segment = Seg(target_start, target_end);
 	gte::FIQuery<float, gte::Segment<3, float>, gte::Cone3<float>> intersection;
@@ -405,18 +412,16 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 }
 
 
-void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal)
+void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal)
 {
-	//face: front (up, down) back(up,down)
-
-	GeoV3 t = end - connect;
+	GeoV3 t = target_s - connect;
 	double edge_length = t.norm();
 	t.normalize();
 
 	GeoV3 p = cross(t, normal);
 	p.normalize();
 
-	double ¦Å = 10;
+	double ¦Å = 1;
 
 	GeoV3 start_cone_center = normal*extruder_.Height() + connect;
 
@@ -434,7 +439,10 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 end, GeoV3 target_end
 	bulk_.push_back(Triangle(start, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cylinder, start_back_cone));
+
 }
+
+
 
 
 bool QuadricCollision::Parallel(GeoV3 a, GeoV3 b)
@@ -489,59 +497,79 @@ gte::Triangle<3, float> QuadricCollision::Tri(GeoV3 a, GeoV3 b, GeoV3 c)
 
 void QuadricCollision::Debug()
 {
-	//point b;
-	//
-	//WF_edge *a = ptr_frame_->GetEdge(33);
-	//b = a->pvert_->Position();
-	//cout << b.x() << ", " <<b.y() << ", " <<b.z()<< ", " << endl;
-	//a = a->ppair_;
-	//b = a->pvert_->Position();
-	//cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
-	//a = ptr_frame_->GetEdge(55);
-	//b = a->pvert_->Position();
-	//cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
-	//a = a->ppair_;
-	//b = a->pvert_->Position();
-	//cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
-	//DetectCollision(ptr_frame_->GetEdge(33), ptr_frame_->GetEdge(55));
 
-	//DetectBulk(ptr_frame_->GetEdge(55),0.628319,1.5708);
-
-	//double ¦È, ¦Õ;
-
-	//for (int j = 0; j < 3; j++)
-	//{
-	//	for (int i = 0; i < divide_; i++)
-	//	{
-	//		lld mask = (lld)1 << i;			
-	//			if (i < 20)
-	//			{
-	//				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-	//				¦Õ = i*18.0 / 180.0*F_PI;
-	//			}
-	//			if (i>19 && i < 40)
-	//			{
-	//				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-	//				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
-	//			}
-	//			if (i>39)
-	//			{
-	//				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-	//				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
-	//			}
-	//		if (colli_map_[j] & mask)
-	//		{
-	//			cout << ¦È << ", " << ¦Õ << ",0" << endl;
-	//			continue;
-	//		}						
-	//	}
-	//}
+//
+//	int seq[100] = { 192, 190, 194, 196, 198, 10, 80, 126, 158, 178, 12, 182,
+//		162, 164, 130, 132, 84, 86, 16, 18, 14, 82, 128, 160, 180, 38, 186, 170, 172,
+//		142, 144, 102, 104, 42, 44, 40, 100, 140, 168, 184, 60, 188, 174, 176, 150, 152, 118,
+//		120, 62, 64, 112, 30, 52, 72, 92, 76, 78, 56, 58, 34, 36, 32, 116, 96, 98, 114, 20, 54, 74, 94,
+//		136, 138, 108, 110, 68, 70, 26, 28, 22, 156, 24, 66, 106, 134, 154, 46, 166, 146, 148, 122, 124, 88, 90, 48, 50, 0, 2, 4, 6, 8 };
+//	vector<WF_edge*> exist_edge;
+//	for (int i = 0; i < 21; i++)
+//	{
+//		exist_edge.push_back(ptr_frame_->GetEdge(seq[i]));
+//	}
+//
+//	vector<GeoV3> angle;
+////	angle = DetectStructure(ptr_frame_->GetEdge(seq[22]), exist_edge);
+//		 
+//
+//
+//	//-------------------------
+//	point b;
+//	
+//	WF_edge *a = ptr_frame_->GetEdge(22);
+//	b = a->pvert_->Position();
+//	cout << b.x() << ", " <<b.y() << ", " <<b.z()<< ", " << endl;
+//	a = a->ppair_;
+//	b = a->pvert_->Position();
+//	cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
+//	a = ptr_frame_->GetEdge(20);
+//	b = a->pvert_->Position();
+//	cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
+//	a = a->ppair_;
+//	b = a->pvert_->Position();
+//	cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
+//	
+//	vector<lld> col_map;
+//	DetectCollision(ptr_frame_->GetEdge(22), ptr_frame_->GetEdge(20),col_map);
+//	cout << "           ---" << endl;
+//	cout << DetectBulk(ptr_frame_->GetEdge(20), 0.314159, 1.25664) << endl;
+//	double ¦È, ¦Õ;
+//	for (int j = 0; j < 3; j++)
+//	{
+//		for (int i = 0; i < divide_; i++)
+//		{
+//				
+//				if (i < 20)
+//				{
+//					¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+//					¦Õ = i*18.0 / 180.0*F_PI;
+//				}
+//				if (i>19 && i < 40)
+//				{
+//					¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+//					¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+//				}
+//				if (i>39)
+//				{
+//					¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+//					¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+//				}
+//				if (DetectBulk(ptr_frame_->GetEdge(20), ¦È, ¦Õ))
+//			{			
+//				continue;
+//			}	
+//				cout << ¦È << ", " << ¦Õ << ",0" << endl;					
+//		}
+//	}
 }
 
 
 vector<GeoV3> QuadricCollision::DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_)
 {
 	vector<GeoV3>temp;
+	temp.clear();
 	double ¦È, ¦Õ;
 	target_e_ = target_e;
 	//North Point
@@ -585,7 +613,10 @@ bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, doubl
 	for (int i = 0; i < exist_edge.size(); i++)
 	{
 		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
+		{
+			
 			return true;
+		}
 	}
 	return false;
 }
