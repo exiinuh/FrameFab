@@ -13,7 +13,7 @@ ExtruderCone::ExtruderCone()
 	*				   cone solid
 	*/
 	normal_		= Vec3f(0, 0, 1);
-	angle_		= 1 * F_PI / 9;
+	angle_		= 2* F_PI / 9;
 	//angle_		= F_PI /4;
 	height_		= 20;
 	wave_angle_ = F_PI / 18;
