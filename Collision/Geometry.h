@@ -2,7 +2,7 @@
 /*INCLUDE FILE*/
 #include <cmath>
 #include <iostream>
-#include"Stiffness\GCommon.h"
+#include "GCommon.h"
 #include "WireFrame\WireFrame.h"
 
 using std::cout;
