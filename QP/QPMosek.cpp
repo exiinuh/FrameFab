@@ -573,7 +573,7 @@ bool QPMosek::test() const
 #endif
 }
 
-bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const double& rot_tol, bool _debug)
+bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _debug)
 {
 	bool success = false;
 
@@ -639,12 +639,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const do
 					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					double	  qval[] = { 2, 2, 2 };
-					r = MSK_putqconk(task, 2 * i, 3, qsubi, qsubj, qval);
-
-					MSKint32t qsubri[] = { 6 * i + 3, 6 * i + 4, 6 * i + 5 };
-					MSKint32t qsubrj[] = { 6 * i + 3, 6 * i + 4, 6 * i + 5 };
-					double	  qrval[] = { 2, 2, 2 };
-					r = MSK_putqconk(task, 2 * i + 1, 3, qsubri, qsubrj, qrval);
+					r = MSK_putqconk(task, i, 3, qsubi, qsubj, qval);
 				}
 				
 			}
@@ -674,23 +669,11 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, const do
 			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
 			for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
 			{
-				if (0 == i % 2)
-				{
 					r = MSK_putconbound(task,
 						i,							/* Index of constraint.*/
 						MSK_BK_UP,	/* Bound key.*/
 						-MYINF,			/* Numerical value of lower bound.*/
 						d_tol);			/* Numerical value of upper bound.*/
-				}
-				else
-				{
-					r = MSK_putconbound(task,
-						i,							/* Index of constraint.*/
-						MSK_BK_UP,	/* Bound key.*/
-						-MYINF,			/* Numerical value of lower bound.*/
-						rot_tol);			/* Numerical value of upper bound.*/
-				}
-
 			}
 
 			if (r == MSK_RES_OK && !linprog)

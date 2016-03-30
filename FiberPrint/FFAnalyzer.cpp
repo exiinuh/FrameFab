@@ -491,14 +491,12 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 		for (int k = 0; k < Ns; k++)
 		{
 			VX offset(3);
-			VX distortion(3);
 			for (int l = 0; l < 3; l++)
 			{
 				offset[l] = D[k * 6 + l];
-				distortion[l] = D[k * 6 + l + 3];
 			}
 
-			if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+			if (offset.norm() >= Dt_tol_)
 			{
 				stiff_success = false;
 				getchar();
