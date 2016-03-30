@@ -20,7 +20,7 @@
 * ==========================================================================
 */
 #pragma once
-#include "Stiffness\GCommon.h"
+#include "GCommon.h"
 #include "WireFrame\WireFrame.h"
 #include "Triangle.h"
 
