@@ -2,8 +2,6 @@
 
 
 FiberPrintPARM::FiberPrintPARM()
-	:Dt_tol_(5), Dr_tol_(10 * F_PI / 180), penalty_(1e3), pri_tol_(1e-3),
-	dual_tol_(1e-3), gamma_(100.0), Wl_(1.0), Wp_(1.0)
 {
 	/*
 	*	For Your Inference; Unit Transfer
@@ -34,21 +32,31 @@ FiberPrintPARM::FiberPrintPARM()
 	youngs_modulus_ = 1100;
 	shear_modulus_ = 1032;
 	poisson_ratio_ = 0.39;
+	Dt_tol_ = 5.0;
+	Dr_tol_ = 10 * F_PI / 180;
+	penalty_ = 1e3;
+	pri_tol_ = 1e-3;
+	dual_tol_ = 1e-3;
 }
 
 
-FiberPrintPARM::FiberPrintPARM(double radius, double density, double g,
-								double youngs_modulus, double shear_modulus,
-								double Dt_tol, double Dr_tol,
-								double penalty, double pri_tol, double dual_tol,
-								double gamma, double Wl, double Wp)
-			   :radius_(radius), density_(density), g_(g), 
-			   youngs_modulus_(youngs_modulus), shear_modulus_(shear_modulus),
-			   poisson_ratio_(0.39), Dt_tol_(Dt_tol), Dr_tol_(Dr_tol),
-			   penalty_(penalty), pri_tol_(pri_tol), dual_tol_(dual_tol), 
-			   gamma_(gamma), Wl_(Wl), Wp_(Wp)
+FiberPrintPARM::FiberPrintPARM(double Wl, double Wp, double Wa)
 {
+	radius_ = 0.6;
+	density_ = 1210 * 1e-12;
+	g_ = -9806.33;
+	youngs_modulus_ = 1100;
+	shear_modulus_ = 1032;
+	poisson_ratio_ = 0.39;
+	Dt_tol_ = 5.0;
+	Dr_tol_ = 10 * F_PI / 180;
+	penalty_ = 1e3;
+	pri_tol_ = 1e-3;
+	dual_tol_ = 1e-3;
 
+	Wl_ = Wl;
+	Wp_ = Wp;
+	Wa_ = Wa;
 }
 
 

@@ -40,8 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	QVBoxLayout *layout_right = new QVBoxLayout;
 	layout_right->addWidget(groupbox_fiber_);
-	layout_right->addWidget(groupbox_fiberpara_);
 	layout_right->addWidget(groupbox_meshpara_);
+	layout_right->addWidget(groupbox_seqpara_);
 	layout_right->addWidget(groupbox_debug_);
 	layout_right->addWidget(groupbox_sep2_);
 	layout_right->addStretch(1);
@@ -145,23 +145,12 @@ void MainWindow::CreateLabels()
 	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
 
 
-	label_radius_		= new QLabel(QString("Radius: "), this);
-	label_density_		= new QLabel(QString("Density: "), this);
-	label_g_			= new QLabel(QString("Gravity: "), this);
-	label_youngsmodulus_= new QLabel(QString("Young's modulus: "), this);
-	label_shearmodulus_ = new QLabel(QString("Shear modulus: "), this);
-
-	label_Dttol_	= new QLabel(QString("Stiff-offset tolerance: "), this);
-	label_Drtol_	= new QLabel(QString("Stiff-rotation tolerance: "), this);
-	label_penalty_	= new QLabel(QString("ADMM penalty: "), this);
-	label_pritol_	= new QLabel(QString("ADMM primal tolerance: "), this);
-	label_dualtol_	= new QLabel(QString("ADMM dual tolerance: "), this);
-	label_gamma_	= new QLabel(QString("Seq gamma: "), this);
 	label_wl_		= new QLabel(QString("Seq Wl: "), this);
 	label_wp_		= new QLabel(QString("Seq Wp: "), this);
+	label_wa_		= new QLabel(QString("Seq Wa: "), this);
 
 	label_scale_	= new QLabel(QString("Scale: "), this);
-	label_prolen_	= new QLabel(QString("Projection length: "), this);
+	label_prolen_	= new QLabel(QString("Pillar length: "), this);
 
 	label_from1_	= new QLabel(QString("From"), this);
 	label_to1_		= new QLabel(QString("To"), this);
@@ -172,88 +161,6 @@ void MainWindow::CreateLabels()
 
 void MainWindow::CreateSpinBoxes()
 {
-	spinbox_radius_ = new QDoubleSpinBox(this);
-	spinbox_radius_->setFixedWidth(140);
-	spinbox_radius_->setDecimals(2);
-	spinbox_radius_->setRange(0.01, 0.5);
-	spinbox_radius_->setValue(0.6);
-	spinbox_radius_->setSingleStep(0.01);
-	spinbox_radius_->setSuffix(" mm");
-
-	spinbox_density_ = new QDoubleSpinBox(this);
-	spinbox_density_->setFixedWidth(140);
-	spinbox_density_->setDecimals(0);
-	spinbox_density_->setRange(500, 5000);
-	spinbox_density_->setValue(1210);
-	spinbox_density_->setSingleStep(10);
-	spinbox_density_->setSuffix(" *10^-12 T/mm^3");
-
-	spinbox_g_ = new QDoubleSpinBox(this);
-	spinbox_g_->setFixedWidth(140);
-	spinbox_g_->setDecimals(2);
-	spinbox_g_->setRange(-12000.00, -7000.00);
-	spinbox_g_->setValue(-9806.33);
-	spinbox_g_->setSingleStep(100);
-	spinbox_g_->setSuffix(" mm/s^2");
-
-	spinbox_youngsmodulus_ = new QDoubleSpinBox(this);
-	spinbox_youngsmodulus_->setFixedWidth(140);
-	spinbox_youngsmodulus_->setDecimals(0);
-	spinbox_youngsmodulus_->setRange(0, 10000);
-	spinbox_youngsmodulus_->setValue(1100);
-	spinbox_youngsmodulus_->setSingleStep(1);
-	spinbox_youngsmodulus_->setSuffix(" MPa");
-
-	spinbox_shearmodulus_ = new QDoubleSpinBox(this);
-	spinbox_shearmodulus_->setFixedWidth(140);
-	spinbox_shearmodulus_->setDecimals(0);
-	spinbox_shearmodulus_->setRange(0, 10000);
-	spinbox_shearmodulus_->setValue(1032);
-	spinbox_shearmodulus_->setSingleStep(1);
-	spinbox_shearmodulus_->setSuffix(" MPa");
-
-	spinbox_Dttol_ = new QDoubleSpinBox(this);
-	spinbox_Dttol_->setFixedWidth(140);
-	spinbox_Dttol_->setDecimals(4);
-	spinbox_Dttol_->setRange(0, 100);
-	spinbox_Dttol_->setValue(5);
-	spinbox_Dttol_->setSingleStep(0.01);
-
-	spinbox_Drtol_ = new QDoubleSpinBox(this);
-	spinbox_Drtol_->setFixedWidth(140);
-	spinbox_Drtol_->setDecimals(4);
-	spinbox_Drtol_->setRange(0, 1);
-	spinbox_Drtol_->setValue(10 * F_PI / 180);
-	spinbox_Drtol_->setSingleStep(0.01);
-
-	spinbox_penalty_ = new QDoubleSpinBox(this);
-	spinbox_penalty_->setFixedWidth(140);
-	spinbox_penalty_->setDecimals(2);
-	spinbox_penalty_->setRange(0, 10000);
-	spinbox_penalty_->setValue(1000);
-	spinbox_penalty_->setSingleStep(1);
-
-	spinbox_pritol_ = new QDoubleSpinBox(this);
-	spinbox_pritol_->setFixedWidth(140);
-	spinbox_pritol_->setDecimals(4);
-	spinbox_pritol_->setRange(0, 1);
-	spinbox_pritol_->setValue(0.001);
-	spinbox_pritol_->setSingleStep(0.0001);
-
-	spinbox_dualtol_ = new QDoubleSpinBox(this);
-	spinbox_dualtol_->setFixedWidth(140);
-	spinbox_dualtol_->setDecimals(4);
-	spinbox_dualtol_->setRange(0, 1);
-	spinbox_dualtol_->setValue(0.001);
-	spinbox_dualtol_->setSingleStep(0.0001);
-
-	spinbox_gamma_ = new QDoubleSpinBox(this);
-	spinbox_gamma_->setFixedWidth(140);
-	spinbox_gamma_->setDecimals(2);
-	spinbox_gamma_->setRange(0, 100000);
-	spinbox_gamma_->setValue(100);
-	spinbox_gamma_->setSingleStep(1);
-
 	spinbox_wl_ = new QDoubleSpinBox(this);
 	spinbox_wl_->setFixedWidth(140);
 	spinbox_wl_->setDecimals(2);
@@ -267,6 +174,13 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wp_->setRange(0, 10000);
 	spinbox_wp_->setValue(1.0);
 	spinbox_wp_->setSingleStep(1);
+
+	spinbox_wa_ = new QDoubleSpinBox(this);
+	spinbox_wa_->setFixedWidth(140);
+	spinbox_wa_->setDecimals(2);
+	spinbox_wa_->setRange(0, 10000);
+	spinbox_wa_->setValue(1.0);
+	spinbox_wa_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
 	spinbox_scale_->setFixedWidth(140);
@@ -396,58 +310,27 @@ void MainWindow::CreatePushButtons()
 	pushbutton_nextlayer_->setFixedSize(80, 25);
 	connect(pushbutton_nextlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextLayer()));
 
-	pushbutton_simplify_ = new QPushButton(tr("Simplify"), this);
-	pushbutton_simplify_->setFixedSize(80, 25);
-	connect(pushbutton_simplify_, SIGNAL(clicked()), renderingwidget_, SLOT(SimplifyFrame()));
-
-	//pushbutton_refine_ = new QPushButton(tr("Refine"), this);
-	//pushbutton_refine_->setFixedSize(80, 25);
-	//connect(pushbutton_refine_, SIGNAL(clicked()), renderingwidget_, SLOT(RefineFrame()));
-
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
 	pushbutton_fiberprint_->setFixedSize(140, 35);
 	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
 	connect(this, 
-		SIGNAL(SendFiberParas(
-			double, double, double, 
-			double, double, 
-			double, double,
-			double, double, double, 
-			double, double, double)), 
+		SIGNAL(SendFiberParas(double, double, double)), 
 		renderingwidget_, 
-		SLOT(FiberPrintAnalysis(
-			double, double, double, 
-			double, double, 
-			double, double, 
-			double, double, double, 
-			double, double, double)));
+		SLOT(FiberPrintAnalysis(double, double, double)));
 
 	pushbutton_project_ = new QPushButton(tr("Project"), this);
 	pushbutton_project_->setFixedSize(140, 35);
 	connect(pushbutton_project_, SIGNAL(clicked()), this, SLOT(GetProjectionParas()));
 	connect(this, SIGNAL(SendProjectionParas(double)), renderingwidget_, SLOT(ProjectBound(double)));
 
-	/* ********************************************** */
-
 	pushbutton_deformation_ = new QPushButton(tr("Calculate\nDeformation"), this);
 	pushbutton_deformation_->setFixedSize(140, 70);
 	connect(pushbutton_deformation_, SIGNAL(clicked()), this, SLOT(GetDeformParas()));
 	connect(this,
-		SIGNAL(SendDeformParas(
-		double, double, double,
-		double, double,
-		double, double,
-		double, double, double,
-		double, double, double)),
+		SIGNAL(SendDeformParas(double, double, double)),
 		renderingwidget_,
-		SLOT(DeformationAnalysis(
-		double, double, double,
-		double, double,
-		double, double,
-		double, double, double,
-		double, double, double)));
+		SLOT(DeformationAnalysis(double, double, double)));
 
-	/* -------------------------------------- */
 	
 	pushbutton_rightarrow_ = new QPushButton(tr(">>"), this);
 	pushbutton_rightarrow_->setFlat(true);
@@ -545,9 +428,6 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
-	//edit_layout->addWidget(toolbutton_addedge_);
-	//edit_layout->addWidget(toolbutton_addface_);
-	edit_layout->addWidget(pushbutton_simplify_);
 
 	// separator group
 	groupbox_sep1_ = new QGroupBox(this);
@@ -564,22 +444,6 @@ void MainWindow::CreateGroups()
 	fiber_layout->addWidget(pushbutton_project_);
 	fiber_layout->addWidget(pushbutton_deformation_);
 
-	// parameter group
-	groupbox_fiberpara_ = new QGroupBox(tr("Printing parameter"), this);
-	groupbox_fiberpara_->setFlat(true);
-
-	QVBoxLayout *fiberpara_layout = new QVBoxLayout(groupbox_fiberpara_);
-	fiberpara_layout->addWidget(label_radius_);
-	fiberpara_layout->addWidget(spinbox_radius_);
-	fiberpara_layout->addWidget(label_density_);
-	fiberpara_layout->addWidget(spinbox_density_);
-	fiberpara_layout->addWidget(label_g_);
-	fiberpara_layout->addWidget(spinbox_g_);
-	fiberpara_layout->addWidget(label_youngsmodulus_);
-	fiberpara_layout->addWidget(spinbox_youngsmodulus_);
-	fiberpara_layout->addWidget(label_shearmodulus_);
-	fiberpara_layout->addWidget(spinbox_shearmodulus_);
-
 	groupbox_meshpara_ = new QGroupBox(tr("Mesh parameter"), this);
 	groupbox_meshpara_->setFlat(true);
 
@@ -588,30 +452,25 @@ void MainWindow::CreateGroups()
 	meshpara_layout->addWidget(spinbox_scale_);
 	meshpara_layout->addWidget(label_prolen_);
 	meshpara_layout->addWidget(spinbox_prolen_);
-	meshpara_layout->addWidget(pushbutton_rightarrow_);
+
+	// seqpara group
+	groupbox_seqpara_ = new QGroupBox(tr("Seq parameter"), this);
+	groupbox_seqpara_->setFlat(true);
+
+	QVBoxLayout *seqpara_layout = new QVBoxLayout(groupbox_seqpara_);
+	seqpara_layout->addWidget(label_wl_);
+	seqpara_layout->addWidget(spinbox_wl_);
+	seqpara_layout->addWidget(label_wp_);
+	seqpara_layout->addWidget(spinbox_wp_);
+	seqpara_layout->addWidget(label_wa_);
+	seqpara_layout->addWidget(spinbox_wa_);
+	seqpara_layout->addWidget(pushbutton_rightarrow_);
 
 	// debug group
 	groupbox_debug_ = new QGroupBox(tr("Debug"), this);
 	groupbox_debug_->setFlat(true);
 
 	QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
-	debug_layout->addWidget(label_Dttol_);
-	debug_layout->addWidget(spinbox_Dttol_);
-	debug_layout->addWidget(label_Drtol_);
-	debug_layout->addWidget(spinbox_Drtol_);
-	debug_layout->addWidget(label_penalty_);
-	debug_layout->addWidget(spinbox_penalty_);
-	debug_layout->addWidget(label_pritol_);
-	debug_layout->addWidget(spinbox_pritol_);
-	debug_layout->addWidget(label_dualtol_);
-	debug_layout->addWidget(spinbox_dualtol_);
-	debug_layout->addWidget(label_gamma_);
-	debug_layout->addWidget(spinbox_gamma_);
-	debug_layout->addWidget(label_wl_);
-	debug_layout->addWidget(spinbox_wl_);
-	debug_layout->addWidget(label_wp_);
-	debug_layout->addWidget(spinbox_wp_);
-
 	debug_layout->addWidget(pushbutton_leftarrow_);
 
 	// separator group
@@ -717,38 +576,18 @@ void MainWindow::ChooseCeilingClicked(bool down)
 void MainWindow::GetFiberParas()
 {
 	emit(SendFiberParas(
-		spinbox_radius_->value(),
-		spinbox_density_->value() * 1e-12,
-		spinbox_g_->value(),
-		spinbox_youngsmodulus_->value(),
-		spinbox_shearmodulus_->value(),
-		spinbox_Dttol_->value(),
-		spinbox_Drtol_->value(),
-		spinbox_penalty_->value(),
-		spinbox_pritol_->value(),
-		spinbox_dualtol_->value(),
-		spinbox_gamma_->value(),
 		spinbox_wl_->value(),
-		spinbox_wp_->value()));
+		spinbox_wp_->value(),
+		spinbox_wa_->value()));
 }
 
 
 void MainWindow::GetDeformParas()
 {
 	emit(SendDeformParas(
-		spinbox_radius_->value(),
-		spinbox_density_->value() * 1e-12,
-		spinbox_g_->value(),
-		spinbox_youngsmodulus_->value(),
-		spinbox_shearmodulus_->value(),
-		spinbox_Dttol_->value(),
-		spinbox_Drtol_->value(),
-		spinbox_penalty_->value(),
-		spinbox_pritol_->value(),
-		spinbox_dualtol_->value(),
-		spinbox_gamma_->value(),
 		spinbox_wl_->value(),
-		spinbox_wp_->value()));
+		spinbox_wp_->value(),
+		spinbox_wa_->value()));
 }
 
 
@@ -886,15 +725,15 @@ void MainWindow::SwitchParaBox()
 {
 	if (sender() == pushbutton_rightarrow_)
 	{
-		groupbox_fiberpara_->setVisible(false);
 		groupbox_meshpara_->setVisible(false);
+		groupbox_seqpara_->setVisible(false);
 		groupbox_debug_->setVisible(true);
 	}
 	else
 	{
 		groupbox_debug_->setVisible(false);
-		groupbox_fiberpara_->setVisible(true);
 		groupbox_meshpara_->setVisible(true);
+		groupbox_seqpara_->setVisible(true);
 	}
 }
 
@@ -942,7 +781,7 @@ void MainWindow::OpenExportDialog()
 
 void MainWindow::ShowMeshInfo(int npoint, int nedge)
 {
-	label_meshinfo_->setText(QString("MeshInfo: p: %1 e: %2").arg(npoint).arg(nedge));
+	label_meshinfo_->setText(QString("MeshInfo: p: %1 e: %2").arg(npoint).arg(nedge / 2));
 }
 
 
@@ -964,7 +803,7 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 {
 	if (id != -1)
 	{
-		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id).arg(len));
+		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id / 2).arg(len));
 		label_capture_->setVisible(true);
 	}
 	else
@@ -1019,7 +858,7 @@ void MainWindow::Reset()
 	groupbox_edit_->setVisible(true);
 
 	groupbox_debug_->setVisible(false);
-	groupbox_fiberpara_->setVisible(true);
+	groupbox_seqpara_->setVisible(true);
 	groupbox_meshpara_->setVisible(true);
 }
 /*

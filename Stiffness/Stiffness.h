@@ -115,13 +115,13 @@ public:
 	
 private:
 	//private:
-	DualGraph			*ptr_dualgraph_;
-	FiberPrintPARM		*ptr_parm_;
+	DualGraph		*ptr_dualgraph_;
+	FiberPrintPARM	*ptr_parm_;
 
-	StiffnessIO			stiff_io_;
-	StiffnessSolver		stiff_solver_;
+	StiffnessIO		stiff_io_;
+	StiffnessSolver	stiff_solver_;
 
-	CoordTrans			transf_;
+	CoordTrans		transf_;
 
 	SpMat			K_;						// x-Weighted global stiffness matrix, 6n*6n
 	vector<MX>		eK_;					// elastic K, indexed by dual id

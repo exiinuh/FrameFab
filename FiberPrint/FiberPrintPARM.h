@@ -6,11 +6,7 @@ class FiberPrintPARM
 {
 public:
 	FiberPrintPARM();
-	FiberPrintPARM(double radius, double density, double g,
-					double youngs_modulus, double shear_modulus,
-					double Dt_tol, double Dr_tol, 
-					double penalty, double pri_tol, double dual_tol, 
-					double gamma, double Wl, double Wp);
+	FiberPrintPARM(double Wl, double Wp, double Wa);
 	~FiberPrintPARM();
 
 public:
@@ -32,8 +28,8 @@ public:
 	double		dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	// Sequence Analyzer
-	double		gamma_;
 	double		Wl_;
 	double		Wp_;
+	double		Wa_;
 };
 

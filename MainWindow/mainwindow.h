@@ -61,16 +61,8 @@ protected:
 
 signals:
 	void	ChangeEdgeMode(int);
-	void	SendFiberParas(double, double, double, 
-							double, double, 
-							double, double,
-							double, double, double, 
-							double, double, double);
-	void	SendDeformParas(double, double, double,
-							double, double,
-							double, double,
-							double, double, double,
-							double, double, double);
+	void	SendFiberParas(double, double, double);
+	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
 	void	SendSavePWFParas(bool, bool, 
@@ -134,20 +126,9 @@ private:
 	QLabel				*label_modeinfo_;
 	QLabel				*label_capture_;
 
-	QLabel				*label_radius_;
-	QLabel				*label_density_;
-	QLabel				*label_g_;
-	QLabel				*label_youngsmodulus_;
-	QLabel				*label_shearmodulus_;
-
-	QLabel				*label_Dttol_;
-	QLabel				*label_Drtol_;
-	QLabel				*label_penalty_;
-	QLabel				*label_pritol_;
-	QLabel				*label_dualtol_;
-	QLabel				*label_gamma_;
 	QLabel				*label_wl_;
 	QLabel				*label_wp_;
+	QLabel				*label_wa_;
 
 	QLabel				*label_scale_;
 	QLabel				*label_prolen_;
@@ -158,20 +139,9 @@ private:
 	QLabel				*label_to2_;
 
 	// Spinboxes
-	QDoubleSpinBox		*spinbox_radius_;
-	QDoubleSpinBox		*spinbox_density_;
-	QDoubleSpinBox		*spinbox_g_;
-	QDoubleSpinBox		*spinbox_youngsmodulus_;
-	QDoubleSpinBox		*spinbox_shearmodulus_;
-
-	QDoubleSpinBox		*spinbox_Dttol_;
-	QDoubleSpinBox		*spinbox_Drtol_;
-	QDoubleSpinBox		*spinbox_penalty_;
-	QDoubleSpinBox		*spinbox_pritol_;
-	QDoubleSpinBox		*spinbox_dualtol_;
-	QDoubleSpinBox		*spinbox_gamma_;
 	QDoubleSpinBox		*spinbox_wl_;
 	QDoubleSpinBox		*spinbox_wp_;
+	QDoubleSpinBox		*spinbox_wa_;
 
 	QDoubleSpinBox		*spinbox_scale_;
 	QDoubleSpinBox		*spinbox_prolen_;
@@ -208,7 +178,6 @@ private:
 	QPushButton			*pushbutton_rotateyz_;
 	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_nextlayer_;
-	QPushButton			*pushbutton_simplify_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;
@@ -232,8 +201,8 @@ private:
 	QGroupBox			*groupbox_orderdisplay_;
 	QGroupBox			*groupbox_edit_;
 	QGroupBox			*groupbox_fiber_;
-	QGroupBox			*groupbox_fiberpara_;
 	QGroupBox			*groupbox_meshpara_;
+	QGroupBox			*groupbox_seqpara_;
 	QGroupBox			*groupbox_debug_;
 	QGroupBox			*groupbox_sep1_;
 	QGroupBox			*groupbox_sep2_;

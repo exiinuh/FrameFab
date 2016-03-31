@@ -43,12 +43,11 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 		colli_map_[i] = NULL;
 	}
 
-	gamma_ = ptr_parm->gamma_;
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wl_ = ptr_parm->Wl_;
 	Wp_ = ptr_parm->Wp_;
-	Wa_ = 1.0;
+	Wa_ = ptr_parm->Wa_;
 }
 
 

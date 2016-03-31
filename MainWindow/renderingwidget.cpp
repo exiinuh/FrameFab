@@ -1126,11 +1126,7 @@ void RenderingWidget::DrawOrder(bool bv)
 }
 
 
-void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g,
-										double youngs_modulus, double shear_modulus,
-										double Dt_tol, double Dr_tol,
-										double penalty, double pri_tol, double dual_tol,
-										double gamma, double Wl, double Wp)
+void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 {
 	QString dirname = QFileDialog::
 		getExistingDirectory(this, 
@@ -1151,12 +1147,7 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 	QByteArray bydirname = dirname.toLocal8Bit();
 
 	
-	FiberPrintPARM *ptr_parm = new FiberPrintPARM(
-		radius, density, g, 
-		youngs_modulus, shear_modulus, 
-		Dt_tol, Dr_tol, 
-		penalty, pri_tol, dual_tol, 
-		gamma, Wl, Wp);
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
 
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
@@ -1173,11 +1164,7 @@ void RenderingWidget::FiberPrintAnalysis(double radius, double density, double g
 }
 
 
-void RenderingWidget::DeformationAnalysis(double radius, double density, double g,
-	double youngs_modulus, double shear_modulus,
-	double Dt_tol, double Dr_tol,
-	double penalty, double pri_tol, double dual_tol,
-	double gamma, double Wl, double Wp)
+void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 {
 	QString dirname = QFileDialog::
 		getExistingDirectory(this,
@@ -1198,12 +1185,7 @@ void RenderingWidget::DeformationAnalysis(double radius, double density, double 
 	QByteArray bydirname = dirname.toLocal8Bit();
 
 
-	FiberPrintPARM *ptr_parm = new FiberPrintPARM(
-		radius, density, g,
-		youngs_modulus, shear_modulus,
-		Dt_tol, Dr_tol,
-		penalty, pri_tol, dual_tol,
-		gamma, Wl, Wp);
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
 
 	delete ptr_fiberprint_;
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
@@ -1214,22 +1196,6 @@ void RenderingWidget::DeformationAnalysis(double radius, double density, double 
 	emit(SetMaxOrderSlider(0));
 
 	delete ptr_parm;
-}
-
-
-void RenderingWidget::SimplifyFrame()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-	ptr_frame_->SimplifyFrame();
-
-	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
-	emit(operatorInfo(QString("")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-
-	updateGL();
 }
 
 
