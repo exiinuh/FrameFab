@@ -68,7 +68,8 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, i
 	}
 	
 	solver.setMaxIterations(3000);
-	D = solver.solve(F);
+	//D = solver.solve(F);
+	D = solver.solveWithGuess(F, D0);
 
 	if (solver.info() != Eigen::Success)
 	{
@@ -76,13 +77,12 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, i
 		return false;
 	}
 
+	D0 = D;
 	return true;
 }
 
-bool StiffnessSolver::LUDecomp(
-	MX &A,
-	VX &x,
-	VX &b	)
+
+bool StiffnessSolver::LUDecomp(MX &A, VX &x, VX &b)
 {
 	x = A.fullPivLu().solve(b);
 

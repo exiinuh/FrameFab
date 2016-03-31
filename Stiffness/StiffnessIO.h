@@ -28,7 +28,7 @@
 #include "CoordTrans.h"
 #include "I_O\Statistics.h"
 
-#include "GCommon.h"
+#include "GlobalFunctions\GCommon.h"
 #include "GUtil.h"
 #include "StiffnessSolver.h"
 

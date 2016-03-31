@@ -2,7 +2,7 @@
 /*INCLUDE FILE*/
 #include <cmath>
 #include <iostream>
-#include "GCommon.h"
+#include "GlobalFunctions\GCommon.h"
 #include "WireFrame\WireFrame.h"
 
 using std::cout;

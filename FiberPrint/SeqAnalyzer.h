@@ -8,7 +8,7 @@
 *
 *	  Version:  1.2
 *	  Created:  Oct/20/2015
-*     Update :  Mar/25/2015
+*     Update :  Mar/30/2016
 *
 *	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
 *	  Company:  GCL@USTC
@@ -66,6 +66,9 @@ public:
 	QuadricCollision* GetCollision(){ return ptr_collision_; }
 
 protected:
+	void			UpdateStructure(WF_edge *e);
+	void			RecoverStructure(WF_edge *e);
+
 	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
 	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
 
@@ -76,15 +79,20 @@ public:
 	WireFrame			*ptr_frame_;
 
 protected:
-	DualGraph			*ptr_subgraph_;
 	QuadricCollision	*ptr_collision_;
 	char				*ptr_path_;
 
+	/* output */
 	vector<QueueInfo>	print_queue_;
-	vector<vector<int>>	layers_;					// store dual_node's id for each layers
+
+	/* maintaining for sequence */
+	DualGraph			*ptr_subgraph_;
+	VX					D0_;
 	vector<vector<lld>> angle_state_;
 	vector<vector<lld>*>colli_map_;
+	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 
+	/* parameters */
 	FiberPrintPARM		*ptr_parm_;
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
 	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness

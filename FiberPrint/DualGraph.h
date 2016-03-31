@@ -87,14 +87,14 @@ public:
 	void	UpdateDualization(VectorXd *ptr_x);				// update from graphcut
 	void	Establish();
 
-	void	UpdateDualization(WF_edge *e);					// insert a trail edge ei from frame 
-	void	RemoveUpdation(WF_edge *e);						// remove the trail edge
+	int		UpdateDualization(WF_edge *e);					// insert a trail edge ei from frame 
+	int		RemoveUpdation(WF_edge *e);						// remove the trail edge
 
 	void	InsertVertex(WF_edge *e);
 	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w);
-	void	InsertFace(WF_vert *p);
+	int		InsertFace(WF_vert *p);							// insert a dual face at the end of free face
 	void	DeleteVertex(WF_edge *e);
-	void	DeleteFace(WF_vert *p);
+	int		DeleteFace(WF_vert *p);							// delete a dual face by moving
 
 	vector<DualVertex*>		*GetVertList()		{ return vert_list_; }
 	vector<DualEdge*>		*GetEdgeList()		{ return edge_list_; }

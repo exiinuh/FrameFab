@@ -11,9 +11,9 @@
 *				   Output Gnuplot file for explicit displacement display
 *				   Output .3dd file for frame3dd analysis
 *
-*	 Version:  1.0
+*	 Version:  1.2
 *	 Created:  Oct/15/2015 by Xin Hu
-*	 Updated:  Mar/30/2016 by Xin Hu
+*	 Updated:  Mar/31/2016 by Xin Hu
 *
 *	 Author:   Xin Hu,  Yijiang Huang, Guoxian Song
 *	 Company:  GCL@USTC
@@ -57,7 +57,7 @@
 #include "FiberPrint\FiberPrintPARM.h"
 #include "CoordTrans.h"
 
-#include "GCommon.h"
+#include "GlobalFunctions\GCommon.h"
 #include "StiffnessIO.h"
 #include "StiffnessSolver.h"
 #include "IllCondDetector.h"
@@ -91,12 +91,12 @@ public:
 	/* Socket to GraphCut */
 	bool		CalculateD(VectorXd &D);
 	bool		CalculateD(VectorXd &D, const VectorXd &x, 
-							int write_matrix, int write_3dd, int cut_count);
+							int cut_count, bool verbose, bool cond_num, bool write_3dd);
 
 	/* Socket to SeqAnalyzer */
 	bool		CalculateD(VectorXd &D, VectorXd &D0);
 	bool		CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x, 
-							int verbose, int write_data, int seq_id);
+							int seq_id, bool verbose, bool cond_num, bool write_3dd);
 
 	/* Check condition number */
 	bool		CheckIllCondition(IllCondDetector &stiff_inspector, int verbose);

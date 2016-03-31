@@ -20,7 +20,7 @@
 * ==========================================================================
 */
 #pragma once
-#include "GCommon.h"
+#include "GlobalFunctions\GCommon.h"
 #include "WireFrame\WireFrame.h"
 #include "Triangle.h"
 

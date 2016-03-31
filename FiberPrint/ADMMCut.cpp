@@ -302,7 +302,7 @@ void ADMMCut::MakeLayers()
 		SetStartingPoints(cut_count);
 		CreateA();
 
-		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
+		ptr_stiff_->CalculateD(D_, x_, cut_count, false, false, false);
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -859,5 +859,5 @@ void ADMMCut::Debug()
 	int cut_count = 0;
 	SetStartingPoints(cut_count);
 
-	ptr_stiff_->CalculateD(D_, x_, 1, 1, 0);
+	ptr_stiff_->CalculateD(D_, x_, 0, false, false, false);
 }

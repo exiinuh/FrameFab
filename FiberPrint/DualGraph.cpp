@@ -200,21 +200,23 @@ void DualGraph::Establish()
 }
 
 
-void DualGraph::UpdateDualization(WF_edge *e)
+int DualGraph::UpdateDualization(WF_edge *e)
 {
 	int i = e->ID();
 	int j = e->ppair_->ID();
 	int	u = e->pvert_->ID();
 	int	v = e->ppair_->pvert_->ID();
+	int dual_u = -1;
+	int dual_v = -1;
 	if (!exist_edge_[i])
 	{
 		if (exist_vert_[u] == 0)
 		{
-			InsertFace(ptr_frame_->GetVert(u));
+			dual_u = InsertFace(ptr_frame_->GetVert(u));
 		}
 		if (exist_vert_[v] == 0)
 		{
-			InsertFace(ptr_frame_->GetVert(v));
+			dual_v = InsertFace(ptr_frame_->GetVert(v));
 		}
 		exist_vert_[u]++;
 		exist_vert_[v]++;
@@ -222,15 +224,18 @@ void DualGraph::UpdateDualization(WF_edge *e)
 		InsertVertex(e);
 		exist_edge_[i] = exist_edge_[j] = true;
 	}
+	assert(dual_u != -1 && dual_v != -1);
+	return (max(dual_u, dual_v));
 }
 
 
-void DualGraph::RemoveUpdation(WF_edge *e)
+int DualGraph::RemoveUpdation(WF_edge *e)
 {
 	int i = e->ID();
 	int j = e->ppair_->ID();
 	int	u = e->pvert_->ID();
 	int	v = e->ppair_->pvert_->ID();
+	int ret_dual = -1;
 
 	if (exist_edge_[i])
 	{
@@ -238,16 +243,18 @@ void DualGraph::RemoveUpdation(WF_edge *e)
 		exist_vert_[v]--;
 		if (exist_vert_[u] == 0)
 		{
-			DeleteFace(ptr_frame_->GetVert(u));
+			ret_dual = DeleteFace(ptr_frame_->GetVert(u));
 		}
 		if (exist_vert_[v] == 0)
 		{
-			DeleteFace(ptr_frame_->GetVert(v));
+			ret_dual = DeleteFace(ptr_frame_->GetVert(v));
 		}
 
 		DeleteVertex(e);
 		exist_edge_[i] = exist_edge_[j] = false;
 	}
+
+	return ret_dual;
 }
 
 
@@ -275,9 +282,10 @@ void DualGraph::InsertEdge(WF_edge *e1, WF_edge *e2, double w)
 }
 
 
-void DualGraph::InsertFace(WF_vert *p)
+int DualGraph::InsertFace(WF_vert *p)
 {
 	int u = p->ID();
+	int ret_dual = -1;
 	if (p->isFixed())
 	{
 		(*face_list_)[u]->SetDualId(Fd_);
@@ -302,10 +310,12 @@ void DualGraph::InsertFace(WF_vert *p)
 			(*face_list_)[Fd_]->SetOrigId(orig_v);
 		}
 
+		ret_dual = Fd_free_;
 		Fd_free_++;
 	}
 
 	Fd_++;
+	return ret_dual;
 }
 
 
@@ -330,7 +340,7 @@ void DualGraph::DeleteVertex(WF_edge *e)
 }
 
 
-void DualGraph::DeleteFace(WF_vert *p)
+int DualGraph::DeleteFace(WF_vert *p)
 {
 	int orig_u = p->ID();
 	int dual_u = (*face_list_)[orig_u]->dual_id();
@@ -349,6 +359,8 @@ void DualGraph::DeleteFace(WF_vert *p)
 		Fd_free_--;
 	}
 	Fd_--;
+
+	return dual_u;
 }
 
 

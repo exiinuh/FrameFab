@@ -336,27 +336,29 @@ bool Stiffness::CalculateD(VectorXd &D)
 	VX x(Nd); 
 	x.setOnes();
 
-	return CalculateD(D, x, 0, 0, 0);
+	return CalculateD(D, x, 0, false, false, false);
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, 
-	int verbose, int write_data, int cut_count)
+bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x,
+	int cut_count, bool verbose, bool cond_num, bool write_3dd)
 {
 	D.resize(6 * Ns_);
-
-	// Parameter for StiffnessSolver
-	int	info;
 
 	CreateGlobalK(x);
 	CreateF(x);
 
+	/* Parameter for StiffnessSolver */
+	int	info;
 	IllCondDetector	stiff_inspector(K_);
 
 	/* --- Check Stiffness Matrix Condition Number --- */
-	if (!CheckIllCondition(stiff_inspector, verbose))
+	if (cond_num)
 	{
-		return false;
+		if (!CheckIllCondition(stiff_inspector, verbose))
+		{
+			return false;
+		}
 	}
 
 	/* --- Solving Process --- */
@@ -378,7 +380,7 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x,
 	}
 
 	/* --- Output Process --- */
-	if (write_data)
+	if (write_3dd)
 	{
 		WriteData(D, verbose, cut_count, "FiberTest_cut");
 	}
@@ -393,27 +395,29 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0)
 	VX x(Nd);
 	x.setOnes();
 
-	return CalculateD(D, D0, x, 0, 0, 0);
+	return CalculateD(D, D0, x, 0, false, false, false);
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x, 
-	int verbose, int write_data, int seq_id)
+bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
+	int seq_id, bool verbose, bool cond_num, bool write_3dd)
 {
 	D.resize(6 * Ns_);
-
-	// Parameter for StiffnessSolver
-	int	info;
 
 	CreateGlobalK(x);
 	CreateF(x);
 
+	/* Parameter for StiffnessSolver */
+	int	info;
 	IllCondDetector	stiff_inspector(K_);
 
 	/* --- Check Stiffness Matrix Condition Number --- */
-	if (!CheckIllCondition(stiff_inspector, verbose))
+	if (cond_num)
 	{
-		return false;
+		if (!CheckIllCondition(stiff_inspector, verbose))
+		{
+			return false;
+		}
 	}
 
 	/* --- Solving Process --- */
@@ -435,7 +439,7 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
 	}
 
 	/* --- Output Process --- */
-	if (write_data)
+	if (write_3dd)
 	{
 		WriteData(D, verbose, seq_id, "FiberTest_seq");
 	}
@@ -464,6 +468,8 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
 		printf("Press any key to exit...\n");
 		return false;
 	}
+
+	return true;
 }
 
 

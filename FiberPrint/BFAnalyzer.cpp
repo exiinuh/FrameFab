@@ -73,6 +73,9 @@ bool BFAnalyzer::TestifySeq()
 
 		ptr_subgraph_->UpdateDualization(e);
 
+		/* floating edge */
+		
+
 		/* testify collision */
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
 			& angle_state_[dual_i][2])) == 0)

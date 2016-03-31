@@ -75,6 +75,37 @@ bool SeqAnalyzer::SeqPrint()
 }
 
 
+void SeqAnalyzer::UpdateStructure(WF_edge *e)
+{
+	int dual_upd = ptr_subgraph_->UpdateDualization(e);
+
+	/* modify D0 */
+	if (dual_upd != -1)
+	{
+		int Ns = ptr_subgraph_->SizeOfFreeFace();
+		D0_.conservativeResize(6 * Ns);
+	}
+}
+
+
+void SeqAnalyzer::RecoverStructure(WF_edge *e)
+{
+	int dual_del = ptr_subgraph_->RemoveUpdation(e);
+	
+	/* modify D0 */
+	if (dual_del != -1)
+	{
+		int Ns = ptr_subgraph_->SizeOfFreeFace();
+		if (dual_del != Ns)
+		{
+			D0_.block(6 * dual_del, 0, 6 * (Ns - dual_del), 1) =
+				D0_.block(6 * (dual_del + 1), 0, 6 * (Ns - dual_del), 1);
+		}
+		D0_.conservativeResize(6 * Ns);
+	}
+}
+
+
 void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 {
 	WF_edge *order_e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_i));
@@ -123,14 +154,14 @@ void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 
 
 bool SeqAnalyzer::TestifyStiffness()
-{		
+{
 	/* examinate stiffness on printing subgraph */
 	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);
 	D.setZero();
 
-	if (ptr_stiffness->CalculateD(D, D))
+	if (ptr_stiffness->CalculateD(D, D0_))
 	{
 		for (int k = 0; k < Ns; k++)
 		{

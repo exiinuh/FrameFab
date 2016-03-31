@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GCommon.h"
+#include "GlobalFunctions\GCommon.h"
 
 class FiberPrintPARM
 {
