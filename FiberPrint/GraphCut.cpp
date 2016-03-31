@@ -20,6 +20,4 @@ GraphCut::~GraphCut()
 
 void GraphCut::MakeLayers()
 {
-
-
 }

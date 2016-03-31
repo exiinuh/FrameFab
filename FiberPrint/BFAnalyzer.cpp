@@ -13,6 +13,8 @@ BFAnalyzer::~BFAnalyzer()
 
 bool BFAnalyzer::SeqPrint()
 {
+	Init();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 
 	inqueue_.resize(Nd);

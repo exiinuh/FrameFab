@@ -13,6 +13,8 @@ FFAnalyzer::~FFAnalyzer()
 
 bool FFAnalyzer::SeqPrint()
 {
+	Init();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
@@ -70,8 +72,7 @@ bool FFAnalyzer::SeqPrint()
 		printf("Size of layer %d is %d\n", l, layers_[l].size());
 	}
 
-	
-	angle_state_.resize(Nd);
+	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
 		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);

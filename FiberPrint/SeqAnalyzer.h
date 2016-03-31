@@ -57,6 +57,8 @@ public:
 	virtual bool	SeqPrint();
 
 public:
+	void			Init();
+
 	void			GetPrintOrder();
 	void			InputPrintOrder(vector<int> &print_queue);
 	void			OutputPrintOrder(vector<int> &print_queue);

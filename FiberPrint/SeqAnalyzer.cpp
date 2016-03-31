@@ -38,15 +38,6 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	debug_ = true;
 	fileout_ = false;
 
-	ptr_dualgraph_->Dualization();
-
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	colli_map_.resize(Nd*Nd);
-	for (int i = 0; i < Nd*Nd; i++)
-	{
-		colli_map_[i] = NULL;
-	}
-
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wl_ = ptr_parm->Wl_;
@@ -194,6 +185,30 @@ bool SeqAnalyzer::TestifyStiffness()
 	
 	delete ptr_stiffness;
 	return true;
+}
+
+
+void SeqAnalyzer::Init()
+{
+	ptr_dualgraph_->Dualization();
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+
+	D0_.resize(0);
+	D0_.setZero();
+
+	print_queue_.clear();
+
+	angle_state_.clear();
+	angle_state_.resize(Nd);
+
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
+	delete ptr_subgraph_;
+	ptr_subgraph_ = new DualGraph(ptr_frame_);
 }
 
 
