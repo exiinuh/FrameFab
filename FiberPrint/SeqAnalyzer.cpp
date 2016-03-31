@@ -3,14 +3,14 @@
 
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wa_(1.0), extru_(false), debug_(false), fileout_(false)
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
 {
 }
 
 
 SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wa_(1.0), extru_(false), debug_(true), fileout_(false)
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(true), fileout_(false)
 {
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
@@ -30,7 +30,6 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
 	ptr_collision_ = new QuadricCollision(ptr_frame_);
 
-	extru_ = false;
 	debug_ = true;
 	fileout_ = false;
 
@@ -190,14 +189,40 @@ bool SeqAnalyzer::TestifyStiffness()
 }
 
 
-void SeqAnalyzer::GetQueue(vector<int> &print_queue)
+void SeqAnalyzer::GetPrintOrder()
 {
-	print_queue.clear();
+	print_order_.clear();
 
 	int Nq = print_queue_.size();
 	for (int i = 0; i < Nq; i++)
 	{
 		int dual_e = print_queue_[i].dual_id_;
-		print_queue.push_back(ptr_dualgraph_->e_orig_id(dual_e));
+		print_order_.push_back(ptr_dualgraph_->e_orig_id(dual_e));
 	}
 }
+
+
+void SeqAnalyzer::InputPrintOrder(vector<int> &print_queue)
+{
+	print_order_.clear();
+
+	int Nq = print_queue.size();
+	for (int i = 0; i < Nq; i++)
+	{
+		print_order_.push_back(print_queue[i]);
+	}
+}
+
+
+void SeqAnalyzer::OutputPrintOrder(vector<int> &print_queue)
+{
+	print_queue.clear();
+
+	int Nq = print_order_.size();
+	for (int i = 0; i < Nq; i++)
+	{
+		print_queue.push_back(print_order_[i]);
+	}
+}
+
+

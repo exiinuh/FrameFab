@@ -23,11 +23,10 @@ ProcAnalyzer::ProcAnalyzer(SeqAnalyzer *seqanalyzer, char *path)
 
 void ProcAnalyzer::ProcPrint()
 {
-	//
-
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
-	ptr_collision_ = ptr_seqanalyzer_->GetCollision();
+
+	QuadricCollision *ptr_collision = new QuadricCollision(ptr_frame);
 
 
 	if (debug_)
@@ -37,7 +36,7 @@ void ProcAnalyzer::ProcPrint()
 	}
 	else
 	{
-		ptr_seqanalyzer_->GetQueue(layer_queue_);
+		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
 	}
 
 
@@ -58,7 +57,7 @@ void ProcAnalyzer::ProcPrint()
 		}
 		else
 		{
-			temp.normal_ = ptr_collision_->DetectStructure(e, exist_edge_);
+			temp.normal_ = ptr_collision->DetectStructure(e, exist_edge_);
 		}
 		exist_edge_.push_back(e);
 		process_list_.push_back(temp);
@@ -117,6 +116,9 @@ void ProcAnalyzer::ProcPrint()
 		process_list_[i] = temp;
 	}
 	Write();
+
+	delete ptr_collision;
+	ptr_collision = NULL;
 }
 
 void ProcAnalyzer::ReadLayerQueue()

@@ -57,13 +57,9 @@ public:
 	virtual bool	SeqPrint();
 
 public:
-	void			GetQueue(vector<int> &layer_queue);
-
-	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
-	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
-	int				GetSupport()		{ return support_; }
-	double			GetWave(int id)		{ return wave_[id]; }
-	QuadricCollision* GetCollision(){ return ptr_collision_; }
+	void			GetPrintOrder();
+	void			InputPrintOrder(vector<int> &print_queue);
+	void			OutputPrintOrder(vector<int> &print_queue);
 
 protected:
 	void			UpdateStructure(WF_edge *e);
@@ -83,11 +79,12 @@ protected:
 	char				*ptr_path_;
 
 	/* output */
-	vector<QueueInfo>	print_queue_;
+	vector<int>			print_order_; 
 
 	/* maintaining for sequence */
 	DualGraph			*ptr_subgraph_;
 	VX					D0_;
+	vector<QueueInfo>	print_queue_;
 	vector<vector<lld>> angle_state_;
 	vector<vector<lld>*>colli_map_;
 	vector<vector<int>>	layers_;					// store dual_node's id for each layers
@@ -101,13 +98,6 @@ protected:
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
 	double				Wa_;						// Wa_		: tradeoff weight for printing cost
 
-	/* Printing Orientation Related Data */
-	int					support_;
-	bool				extru_;
-
-	vector<ExtruderCone>	extruder_list_;
-	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
-												// index computed by seq analyzer, output data
 	bool				debug_;
 	bool				fileout_;
 };

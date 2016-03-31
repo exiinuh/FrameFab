@@ -4,7 +4,7 @@
 RenderingWidget::RenderingWidget(QWidget *parent, MainWindow* mainwindow)
 : QGLWidget(parent), ptr_mainwindow_(mainwindow), eye_distance_(10.0),
 has_lighting_(false), is_draw_point_(true), is_draw_edge_(false), is_draw_heat_(false),
-is_draw_bulk_(false), is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
+is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_frame_ = NULL;
@@ -30,7 +30,6 @@ void RenderingWidget::InitDrawData()
 {
 	is_draw_edge_ = false;
 	is_draw_heat_ = false;
-	is_draw_bulk_ = false;
 	is_draw_order_ = false;
 }
 
@@ -423,7 +422,6 @@ void RenderingWidget::Render()
 	DrawPoints(is_draw_point_);
 	DrawEdge(is_draw_edge_);
 	DrawHeat(is_draw_heat_);
-	DrawBulk(is_draw_bulk_);
 	DrawOrder(is_draw_order_);
 }
 
@@ -579,15 +577,15 @@ void RenderingWidget::WriteFrame(bool bVert, bool bLine,
 }
 
 
-void RenderingWidget::ImportFrame()
+void RenderingWidget::Import3DD()
 {
 	QString filename = QFileDialog::
-		getOpenFileName(this, tr("Import Mesh"),
-		"..");
+		getOpenFileName(this, tr("Import .3dd"),
+		"..", tr("3DD files(*.3dd)"));
 
 	if (filename.isEmpty())
 	{
-		emit(operatorInfo(QString("Import Mesh Failed!")));
+		emit(operatorInfo(QString("Import Failed!")));
 		return;
 	}
 
@@ -607,6 +605,51 @@ void RenderingWidget::ImportFrame()
 	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+	emit(Reset());
+
+	InitDrawData();
+	InitCapturedData();
+	InitFiberData();
+
+	updateGL();
+}
+
+
+void RenderingWidget::ImportSeq()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	QString filename = QFileDialog::
+		getOpenFileName(this, tr("Import sequence"),
+		"..", tr("txt files(*.txt)"));
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Import Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	if (ptr_fiberprint_ == NULL)
+	{
+		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	}
+	int M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
+
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
+
+	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
+	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+	emit(SetMaxOrderSlider(M));
 	emit(Reset());
 
 	InitDrawData();
@@ -652,6 +695,39 @@ void RenderingWidget::ExportFrame(int min_layer, int max_layer,
 }
 
 
+void RenderingWidget::ExportSeq()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Export Sequence"),
+		"..", tr("txt files(*.txt)"));
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Export Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	if (ptr_fiberprint_ == NULL)
+	{
+		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	}
+	ptr_fiberprint_->ExportPrintOrder(byfilename.data());
+
+	emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
+}
+
+
 void RenderingWidget::CheckDrawPoint(bool bv)
 {
 	is_draw_point_ = bv;
@@ -666,35 +742,24 @@ void RenderingWidget::CheckEdgeMode(int type)
 	case NONE:
 		is_draw_edge_ = false;
 		is_draw_heat_ = false;
-		is_draw_bulk_ = false;
 		is_draw_order_ = false;
 		break;
 
 	case EDGE:
 		is_draw_edge_ = true;
 		is_draw_heat_ = false;
-		is_draw_bulk_ = false;
 		is_draw_order_ = false;
 		break;
 
 	case HEAT:
 		is_draw_edge_ = false;
 		is_draw_heat_ = true;
-		is_draw_bulk_ = false;
-		is_draw_order_ = false;
-		break;
-
-	case BULK:
-		is_draw_edge_ = false;
-		is_draw_heat_ = false;
-		is_draw_bulk_ = true;
 		is_draw_order_ = false;
 		break;
 
 	case ORDER:
 		is_draw_edge_ = false;
 		is_draw_heat_ = false;
-		is_draw_bulk_ = false;
 		is_draw_order_ = true;
 		break;
 
@@ -982,120 +1047,6 @@ void RenderingWidget::DrawHeat(bool bv)
 }
 
 
-void RenderingWidget::DrawBulk(bool bv)
-{
-	//if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
-	//{
-	//	return;
-	//}
-
-	//const vector<DualVertex*> dual_vert = *(ptr_fiberprint_->GetDualVertList());
-	//const vector<BaseBulk*> bulk_list = *(ptr_fiberprint_->GetBulk());
-	//vector<vector<int>> range_state = *(ptr_fiberprint_->GetRangeState());
-	//const std::vector<WF_edge*>& edges = *(ptr_frame_->GetEdgeList());
-	//int M = ptr_frame_->SizeOfEdgeList();
-
-	///*Draw Collision*/
-	//for (size_t i = 0; i < M; i++)
-	//{
-	//	WF_edge *e = edges[i];
-	//	WF_edge *e_pair = edges[i]->ppair_;
-
-	//	if (e->ID() < e_pair->ID())
-	//	{
-	//		glBegin(GL_LINE_LOOP);
-
-	//		//decide line color
-	//		if (captured_edge_ != NULL)
-	//		{
-	//			int e_id = dual_vert[i]->dual_id();
-	//			int cap_id = dual_vert[captured_edge_->ID()]->dual_id();
-	//			if (captured_edge_->ID() == i)
-	//			{
-	//				glColor4f(0.0, 0.0, 1.0, 1);
-
-	//				// draw bulk
-	//				if (!has_lighting_)
-	//				{
-	//					glDepthMask(GL_FALSE);
-	//				}
-	//				
-	//					BaseBulk *bulk = bulk_list[cap_id];
-	//				if (bulk)
-	//				{
-	//					if (bulk->flag == 1)
-	//					{
-	//					bulk->Face(0)->Render(ptr_frame_, 0.1);
-	//					bulk->Face(1)->Render(ptr_frame_, 0.6);
-	//					bulk->Face(2)->Render(ptr_frame_, 0.2);
-	//					bulk->Face(3)->Render(ptr_frame_, 0.2);
-	//					bulk->Face(4)->Render(ptr_frame_, 0.35);
-	//					bulk->Face(5)->Render(ptr_frame_, 0.35);
-	//					bulk->Face(6)->Render(ptr_frame_, 0.4);
-	//					bulk->Face(7)->Render(ptr_frame_, 0.4);
-	//					bulk->Face(8)->Render(ptr_frame_, 0.3);
-	//					bulk->Face(9)->Render(ptr_frame_, 0.3);
-	//					bulk->Face(10)->Render(ptr_frame_, 0.3);
-	//					bulk->Face(11)->Render(ptr_frame_, 0.5);
-	//					bulk->Face(12)->Render(ptr_frame_, 0.3);
-	//					bulk->Face(13)->Render(ptr_frame_, 0.3);
-
-	//					}
-	//					if (bulk->flag == 2)
-	//					{
-	//					
-	//							bulk->Face(0)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(1)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(2)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(3)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(4)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(5)->Render(ptr_frame_, 0.1);
-	//							bulk->Face(6)->Render(ptr_frame_, 0.5);
-	//							bulk->Face(7)->Render(ptr_frame_, 0.5);
-	//							bulk->Face(8)->Render(ptr_frame_, 0.3);
-	//							bulk->Face(9)->Render(ptr_frame_, 0.3);
-	//							bulk->Face(10)->Render(ptr_frame_, 0.3);
-	//							bulk->Face(11)->Render(ptr_frame_, 0.5);
-	//							bulk->Face(12)->Render(ptr_frame_, 0.4);		
-	//							bulk->Face(13)->Render(ptr_frame_, 0.4);
-	//							bulk->Face(14)->Render(ptr_frame_, 0.4);
-	//					}
-	//					
-	//				}
-	//				if (!has_lighting_)
-	//				{
-	//					glDepthMask(GL_TRUE);
-	//				}
-	//			}
-	//			else
-	//			if (range_state[cap_id][e_id] == 1)
-	//			{
-	//				glColor4f(0.00, 1, 0.00, 0.4);
-	//			}
-	//			else
-	//			if (range_state[cap_id][e_id] == 2)
-	//			{
-	//				glColor4f(1.0, 0.0, 0.0, 1);
-	//			}
-	//			else
-	//			{
-	//				glColor4f(1.0, 1.0, 1.0, 1);
-	//			}
-	//		}
-	//		else
-	//		{
-	//			glColor4f(1.0, 1.0, 1.0, 1);
-	//		}
-
-	//		glVertex3fv(e->pvert_->RenderPos().data());
-	//		glVertex3fv(e->ppair_->pvert_->RenderPos().data());
-
-	//		glEnd();
-	//	}
-	//}
-}
-
-
 void RenderingWidget::DrawOrder(bool bv)
 {
 	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
@@ -1106,7 +1057,7 @@ void RenderingWidget::DrawOrder(bool bv)
 	if (op_mode_ == NORMAL)
 	{
 		vector<int> print_queue; 
-		ptr_fiberprint_->GetQueue(print_queue);
+		ptr_fiberprint_->OutputPrintOrder(print_queue);
 		for (int i = 0; i < print_order_; i++)
 		{
 			WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
@@ -1301,7 +1252,7 @@ void RenderingWidget::PrintNextStep()
 void RenderingWidget::PrintNextLayer()
 {
 	vector<int> print_queue;
-	ptr_fiberprint_->GetQueue(print_queue);
+	ptr_fiberprint_->OutputPrintOrder(print_queue);
 
 	int next_layer;
 	if (print_order_ == 0)

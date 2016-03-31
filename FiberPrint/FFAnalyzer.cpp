@@ -173,8 +173,7 @@ bool FFAnalyzer::SeqPrint()
 		WritePathRender();
 	}
 
-	/* detect extruder angles */
-	//DetectBulk();
+	GetPrintOrder();
 
 	return true;
 }
@@ -516,19 +515,19 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 
 void FFAnalyzer::WriteLayerQueue()
 {
-	string path = ptr_path_;
-	string queue_path = path + "/Queue.txt";
+	//string path = ptr_path_;
+	//string queue_path = path + "/Queue.txt";
 
-	FILE *fp = fopen(queue_path.c_str(), "w");
+	//FILE *fp = fopen(queue_path.c_str(), "w");
 
-	vector<int> layer_queue;
-	GetQueue(layer_queue);
-	int Nq = layer_queue.size();
-	for (int i = 0; i < Nq; i++)
-	{
-		fprintf(fp, "%d\n", layer_queue[i]);
-	}
-	fclose(fp);
+	//vector<int> layer_queue;
+	//GetQueue(layer_queue);
+	//int Nq = layer_queue.size();
+	//for (int i = 0; i < Nq; i++)
+	//{
+	//	fprintf(fp, "%d\n", layer_queue[i]);
+	//}
+	//fclose(fp);
 }
 
 

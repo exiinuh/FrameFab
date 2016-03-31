@@ -100,9 +100,11 @@ public slots:
 	void	WriteFrame(bool bVert, bool bLine, 
 						bool bBase, bool bCeiling, bool bCut,
 						int min_layer, int max_layer, QString filename);
-	void	ImportFrame();
+	void	Import3DD();
+	void	ImportSeq();
 	void	ExportFrame(int min_layer, int max_layer, 
 						QString vert_path, QString line_path);
+	void	ExportSeq();
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
@@ -118,7 +120,6 @@ private:
 	void	DrawPoints(bool bv);
 	void	DrawEdge(bool bv);
 	void	DrawHeat(bool bv);
-	void	DrawBulk(bool bv);
 	void	DrawOrder(bool bv);
 
 public slots:
@@ -153,7 +154,6 @@ public:
 	bool			is_draw_point_;
 	bool			is_draw_edge_;
 	bool			is_draw_heat_;
-	bool			is_draw_bulk_;
 	bool			is_draw_order_;
 	bool			has_lighting_;
 	bool			is_draw_axes_;

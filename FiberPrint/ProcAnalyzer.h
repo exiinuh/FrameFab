@@ -31,8 +31,8 @@ private:
 
 private:
 	SeqAnalyzer			*ptr_seqanalyzer_;
-	QuadricCollision	*ptr_collision_;
 	char				*path_;
+
 	vector<int>			layer_queue_;
 	vector<point>		exist_point_;
 	vector<WF_edge*>	exist_edge_;

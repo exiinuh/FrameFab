@@ -25,6 +25,9 @@ public:
 	~FiberPrintPlugIn();
 
 public:
+	void			Init();
+
+	/* Fiber printing */
 	void			FrameFabPrint();
 	void			BruteForcePrint();
 	void			SweepingPrint();
@@ -32,11 +35,13 @@ public:
 	/* apply stiffness computation directly to the input frame shape */
 	void			GetDeformation();
 
-	vector<DualVertex*>*GetDualVertList()				{ return ptr_graphcut_->GetDualVertList(); }
-	void				GetQueue(vector<int> &queue)	{ ptr_seqanalyzer_->GetQueue(queue); }
-	//vector<BaseBulk*>	*GetBulk()			{ return ptr_seqanalyzer_->GetBulk(); }
+	int				ImportPrintOrder(char *fname);
+	void			ExportPrintOrder(char *fname);
 
-	void				Debug();		// return value: edge index in mesh, for cut rendering
+	void			InputPrintOrder(vector<int> &queue)		{ ptr_seqanalyzer_->InputPrintOrder(queue); }
+	void			OutputPrintOrder(vector<int> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
+
+	void			Debug();		// return value: edge index in mesh, for cut rendering
 
 public:
 	WireFrame		*ptr_frame_;

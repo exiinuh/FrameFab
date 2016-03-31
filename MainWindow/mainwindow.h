@@ -27,7 +27,6 @@ enum EdgeRenderMode
 	NONE,
 	EDGE,
 	HEAT,
-	BULK,
 	ORDER,
 };
 
@@ -113,8 +112,10 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
-	QAction				*action_import_;
+	QAction				*action_import3dd_;
+	QAction				*action_importseq_;
 	QAction				*action_export_;
+	QAction				*action_exportseq_;
 
 	QAction				*action_background_;
 
@@ -168,7 +169,6 @@ private:
 
 	// Radiobuttons
 	QRadioButton		*radiobutton_heat_;
-	QRadioButton		*radiobutton_bulk_;
 	QRadioButton		*radiobutton_order_;
 	QRadioButton		*radiobutton_none_;
 

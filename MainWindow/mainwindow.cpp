@@ -80,13 +80,21 @@ void MainWindow::CreateActions()
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), this, SLOT(OpenSaveDialog()));
 
-	action_import_ = new QAction(tr("Import"), this);
-	action_import_->setStatusTip(tr("Import the document from disk"));
-	connect(action_import_, SIGNAL(triggered()), renderingwidget_, SLOT(ImportFrame()));
+	action_import3dd_ = new QAction(tr("Import .3dd"), this);
+	action_import3dd_->setStatusTip(tr("Import .3dd from disk"));
+	connect(action_import3dd_, SIGNAL(triggered()), renderingwidget_, SLOT(Import3DD()));
 
-	action_export_ = new QAction(tr("Export"), this);
-	action_export_->setStatusTip(tr("Export the document to disk"));
+	action_importseq_ = new QAction(tr("Import sequence"), this);
+	action_importseq_->setStatusTip(tr("Import sequence from disk"));
+	connect(action_importseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ImportSeq()));
+
+	action_export_ = new QAction(tr("Export frame"), this);
+	action_export_->setStatusTip(tr("Export frame to disk"));
 	connect(action_export_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
+
+	action_exportseq_ = new QAction(tr("Export sequence"), this);
+	action_exportseq_->setStatusTip(tr("Export sequence to disk"));
+	connect(action_exportseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportSeq()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -105,8 +113,10 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_save_);
 
 	menu_file_->addSeparator();
-	menu_file_->addAction(action_import_);
+	menu_file_->addAction(action_import3dd_);
+	menu_file_->addAction(action_importseq_);
 	menu_file_->addAction(action_export_);
+	menu_file_->addAction(action_exportseq_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
@@ -277,9 +287,6 @@ void MainWindow::CreateRadioButtons()
 	radiobutton_heat_ = new QRadioButton(tr("Heat"), this);
 	connect(radiobutton_heat_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
-	radiobutton_bulk_ = new QRadioButton(tr("Bulk"), this);
-	connect(radiobutton_bulk_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
-
 	radiobutton_order_ = new QRadioButton(tr("Order"), this);
 	connect(radiobutton_order_, SIGNAL(clicked(bool)), this, SLOT(CheckEdgeMode()));
 
@@ -406,7 +413,6 @@ void MainWindow::CreateGroups()
 
 	QVBoxLayout* edge_layout = new QVBoxLayout(groupbox_edge_);
 	edge_layout->addWidget(radiobutton_heat_);
-	edge_layout->addWidget(radiobutton_bulk_);
 	edge_layout->addWidget(radiobutton_order_);
 
 	edge_layout->addWidget(radiobutton_none_);
@@ -664,21 +670,6 @@ void MainWindow::CheckEdgeMode()
 				radiobutton_heat_->setChecked(true);
 				edge_render_ = HEAT;
 				emit(ChangeEdgeMode(HEAT));
-
-				groupbox_orderdisplay_->setVisible(false);
-				groupbox_edit_->setVisible(true);
-
-				return;
-			}
-		}
-		else
-		if (sender() == radiobutton_bulk_)
-		{
-			if (edge_render_ != BULK)
-			{
-				radiobutton_bulk_->setChecked(true);
-				edge_render_ = BULK;
-				emit(ChangeEdgeMode(BULK));
 
 				groupbox_orderdisplay_->setVisible(false);
 				groupbox_edit_->setVisible(true);

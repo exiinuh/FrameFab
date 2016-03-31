@@ -26,7 +26,12 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 {
 	if (h > t)
 	{
-		return TestifySeq();
+		if (TestifySeq())
+		{
+			GetPrintOrder();
+			return true;
+		}
+		return false;
 	}
 	for (int i = 0; i < t; i++)
 	{
