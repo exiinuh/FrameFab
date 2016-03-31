@@ -3,6 +3,9 @@
 
 DualGraph::DualGraph()
 {
+	vert_list_ = NULL;
+	edge_list_ = NULL;
+	face_list_ = NULL;
 }
 
 
@@ -43,32 +46,41 @@ DualGraph::DualGraph(WireFrame *ptr_frame)
 
 DualGraph::~DualGraph()
 {
-	int N = vert_list_->size();
-	for (int i = 0; i < N; i++)
+	if (vert_list_ != NULL)
 	{
-		delete (*vert_list_)[i];
-		(*vert_list_)[i] = NULL;
+		int N = vert_list_->size();
+		for (int i = 0; i < N; i++)
+		{
+			delete (*vert_list_)[i];
+			(*vert_list_)[i] = NULL;
+		}
+		delete vert_list_;
+		vert_list_ = NULL;
 	}
-	delete vert_list_;
-	vert_list_ = NULL;
 
-	int M = edge_list_->size();
-	for (int i = 0; i < M; i++)
+	if (edge_list_ != NULL)
 	{
-		delete (*edge_list_)[i];
-		(*edge_list_)[i] = NULL;
+		int M = edge_list_->size();
+		for (int i = 0; i < M; i++)
+		{
+			delete (*edge_list_)[i];
+			(*edge_list_)[i] = NULL;
+		}
+		delete edge_list_;
+		edge_list_ = NULL;
 	}
-	delete edge_list_;
-	edge_list_ = NULL;
 
-	int F = face_list_->size();
-	for (int i = 0; i < F; i++)
+	if (face_list_ != NULL)
 	{
-		delete (*face_list_)[i];
-		(*face_list_)[i] = NULL;
+		int F = face_list_->size();
+		for (int i = 0; i < F; i++)
+		{
+			delete (*face_list_)[i];
+			(*face_list_)[i] = NULL;
+		}
+		delete face_list_;
+		face_list_ = NULL;
 	}
-	delete face_list_;
-	face_list_ = NULL;
 }
 
 
@@ -224,7 +236,7 @@ int DualGraph::UpdateDualization(WF_edge *e)
 		InsertVertex(e);
 		exist_edge_[i] = exist_edge_[j] = true;
 	}
-	assert(dual_u != -1 && dual_v != -1);
+	assert(dual_u == -1 || dual_v == -1);
 	return (max(dual_u, dual_v));
 }
 

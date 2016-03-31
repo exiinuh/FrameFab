@@ -57,7 +57,7 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 
 bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, int &info)
 {
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+	Eigen::ConjugateGradient<SpMat, Eigen::Lower, Eigen::IdentityPreconditioner> solver;
 	solver.compute(K);
 	info = 0;
 	

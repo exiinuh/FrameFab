@@ -36,7 +36,7 @@ public:
 	~GraphCut();
 
 public:
-	virtual void	MakeLayers();						
+	virtual void	MakeLayers();	
 
 public:
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }

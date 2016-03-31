@@ -3,6 +3,8 @@
 
 GraphCut::GraphCut()
 {
+	ptr_dualgraph_ = NULL;
+	ptr_stiff_ = NULL;
 }
 
 
@@ -21,4 +23,3 @@ void GraphCut::MakeLayers()
 
 
 }
-

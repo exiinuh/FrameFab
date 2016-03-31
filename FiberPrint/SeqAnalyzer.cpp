@@ -5,6 +5,11 @@ SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
 	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
 {
+	ptr_frame_		= NULL;
+	ptr_dualgraph_	= NULL;
+	ptr_subgraph_	= NULL;
+	ptr_collision_	= NULL;
+	ptr_parm_		= NULL;
 }
 
 
@@ -58,11 +63,14 @@ SeqAnalyzer::~SeqAnalyzer()
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	for (int i = 0; i < Nd*Nd; i++)
+	if (ptr_dualgraph_ != NULL)
 	{
-		delete colli_map_[i];
-		colli_map_[i] = NULL;
+		int Nd = ptr_dualgraph_->SizeOfVertList();
+		for (int i = 0; i < Nd*Nd; i++)
+		{
+			delete colli_map_[i];
+			colli_map_[i] = NULL;
+		}
 	}
 }
 
