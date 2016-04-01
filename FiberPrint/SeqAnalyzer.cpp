@@ -81,6 +81,40 @@ void SeqAnalyzer::UpdateStructure(WF_edge *e)
 	{
 		int Ns = ptr_subgraph_->SizeOfFreeFace();
 		D0_.conservativeResize(6 * Ns);
+
+		/* set initiate value by neighbors */
+		int orig_u = ptr_subgraph_->v_orig_id(dual_upd);
+		WF_edge *eu = ptr_frame_->GetNeighborEdge(orig_u);
+
+		VX sum_D(6);
+		sum_D.setZero();
+		int sum = 0;
+
+		while (eu != NULL)
+		{
+			WF_vert *v = eu->pvert_;
+			int dual_v = ptr_subgraph_->v_dual_id(v->ID());
+			if (dual_v != -1 && !v->isFixed())
+			{
+				VX tmp_D(6);
+				for (int i = 0; i < 6; i++)
+				{
+					tmp_D[i] = D0_[6 * dual_v + i];
+				}
+				sum_D += tmp_D;
+				sum++;
+			}
+			eu = eu->pnext_;
+		}
+
+		if (sum != 0)
+		{
+			sum_D /= sum;
+		}
+		for (int i = 0; i < 6; i++)
+		{
+			D0_[6 * (Ns - 1) + i] = sum_D[i];
+		}
 	}
 }
 
