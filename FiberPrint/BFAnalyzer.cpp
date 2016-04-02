@@ -60,10 +60,20 @@ bool BFAnalyzer::TestifySeq()
 	printf("Test on sequence starts.\n");
 
 	int Nd = ptr_dualgraph_->SizeOfVertList();
-	
+
+	D0_.resize(0);
+	D0_.setZero();
+
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
 	delete ptr_subgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
-	
+
+	angle_state_.clear();
 	angle_state_.resize(Nd);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -78,10 +88,15 @@ bool BFAnalyzer::TestifySeq()
 		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
 		WF_edge *e = ptr_frame_->GetEdge(orig_i);
 
-		ptr_subgraph_->UpdateDualization(e);
+		/* detect floating edge */
+		if (!ptr_subgraph_->isExistingVert(e->pvert_->ID())
+			&& !ptr_subgraph_->isExistingVert(e->ppair_->pvert_->ID()))
+		{
+			return false;
+		}
 
-		/* floating edge */
-		
+		/* update structure */
+		ptr_subgraph_->UpdateDualization(e);
 
 		/* testify collision */
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
