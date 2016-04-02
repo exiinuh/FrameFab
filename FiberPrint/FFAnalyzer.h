@@ -57,6 +57,8 @@ private:
 	double			GenerateCost(int l, int j, WF_edge *ei);
 
 	bool			GenerateSeq(int h, int t);
+
+	void			PrintOutTimer();
 	void			WriteLayerQueue();
 	void			WritePathRender();
 

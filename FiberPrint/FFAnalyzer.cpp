@@ -514,6 +514,26 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 }
 
 
+void FFAnalyzer::PrintOutTimer()
+{
+	printf("***Timer result:\n");
+	printf("UpdateStructure: ");
+	upd_struct_.Print();
+	printf("RecoverStructure:");
+	rec_struct_.Print();
+	printf("UpdateStateMap:  ");
+	upd_map_.Print();
+	printf(">>>Collision:       ");
+	upd_map_collision_.Print();
+	printf("RecoverStateMap: ");
+	rec_map_.Print();
+	printf("TestifyStiffness:");
+	test_stiff_.Print();
+	printf(">>>CalculateD:      ");
+	test_stiff_cal_.Print();
+}
+
+
 void FFAnalyzer::WriteLayerQueue()
 {
 	//string path = ptr_path_;

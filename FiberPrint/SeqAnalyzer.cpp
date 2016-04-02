@@ -72,8 +72,15 @@ bool SeqAnalyzer::SeqPrint()
 }
 
 
+void SeqAnalyzer::PrintOutTimer()
+{
+}
+
+
 void SeqAnalyzer::UpdateStructure(WF_edge *e)
 {
+	upd_struct_.Start();
+
 	int dual_upd = ptr_subgraph_->UpdateDualization(e);
 
 	/* modify D0 */
@@ -116,11 +123,15 @@ void SeqAnalyzer::UpdateStructure(WF_edge *e)
 			D0_[6 * (Ns - 1) + i] = sum_D[i];
 		}
 	}
+
+	upd_struct_.Stop();
 }
 
 
 void SeqAnalyzer::RecoverStructure(WF_edge *e)
 {
+	rec_struct_.Start();
+
 	int dual_del = ptr_subgraph_->RemoveUpdation(e);
 	
 	/* modify D0 */
@@ -134,11 +145,15 @@ void SeqAnalyzer::RecoverStructure(WF_edge *e)
 		}
 		D0_.conservativeResize(6 * Ns);
 	}
+
+	rec_struct_.Stop();
 }
 
 
 void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 {
+	upd_map_.Start();
+
 	WF_edge *order_e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_i));
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	for (int dual_j = 0; dual_j< Nd; dual_j++)
@@ -152,7 +167,10 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 			if (colli_map_[id] == NULL)
 			{
 				colli_map_[id] = new vector < lld > ;
+
+				upd_map_collision_.Start();
 				ptr_collision_->DetectCollision(target_e, order_e, *colli_map_[id]);
+				upd_map_collision_.Stop();
 			}
 
 			for (int k = 0; k < 3; k++)
@@ -162,11 +180,15 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 			ptr_collision_->ModifyAngle(angle_state_[dual_j], *colli_map_[id]);
 		}
 	}
+
+	upd_map_.Stop();
 }
 
 
 void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 {
+	rec_map_.Start();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int p = 0;
 	for (int dual_j = 0; dual_j < Nd; dual_j++)
@@ -181,18 +203,26 @@ void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 			p++;
 		}
 	}
+
+	rec_map_.Stop();
 }
 
 
 bool SeqAnalyzer::TestifyStiffness()
 {
+	test_stiff_.Start();
+
 	/* examinate stiffness on printing subgraph */
 	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);
 	D.setZero();
 
-	if (ptr_stiffness->CalculateD(D, D0_))
+	test_stiff_cal_.Start();
+	bool bSuccess = ptr_stiffness->CalculateD(D, D0_);
+	test_stiff_cal_.Stop();
+
+	if (bSuccess)
 	{
 		for (int k = 0; k < Ns; k++)
 		{
@@ -206,18 +236,15 @@ bool SeqAnalyzer::TestifyStiffness()
 
 			if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
 			{
-				delete ptr_stiffness;
-				return false;
+				bSuccess = false;
+				break;
 			}
 		}
 	}
-	else
-	{
-		delete ptr_stiffness;
-		return false;
-	}
 	
 	delete ptr_stiffness;
+
+	test_stiff_.Stop();
 	return true;
 }
 

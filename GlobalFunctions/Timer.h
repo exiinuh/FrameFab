@@ -20,12 +20,14 @@ public:
 	void	Start();
 	void	Stop();
 	void	Reset();
+	void	Print();
 	std::string ToString() const;
 
 private:
 	TimePoint	start_time_;
 	TimePoint	end_time_;
 	double		sum_time_;
+	int			count_;
 };
 
 std::ostream& operator << (std::ostream & os, const Timer& t);

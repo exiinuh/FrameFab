@@ -37,6 +37,7 @@ public:
 
 public:
 	virtual void	MakeLayers();	
+	virtual void	PrintOutTimer();
 
 public:
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }

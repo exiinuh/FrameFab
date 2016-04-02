@@ -55,6 +55,7 @@ public:
 
 public:
 	virtual bool	SeqPrint();
+	virtual void	PrintOutTimer();
 
 public:
 	void			Init();
@@ -102,5 +103,13 @@ protected:
 
 	bool				debug_;
 	bool				fileout_;
+
+	Timer				upd_struct_;
+	Timer				rec_struct_;
+	Timer				upd_map_;
+	Timer				upd_map_collision_;
+	Timer				rec_map_;
+	Timer				test_stiff_;
+	Timer				test_stiff_cal_;
 };
 
