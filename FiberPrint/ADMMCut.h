@@ -78,6 +78,7 @@ public:
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev, int count);
 
+	void		PrintOutTimer();
 	void		WriteWeight();
 	void		WriteStiffness(string offset, string rotation);
 	void		Debug();
@@ -116,5 +117,18 @@ private:
 	double			penalty_;		// penalty  : penalty factor used in ADMM  
 	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
+
+	Timer			set_bound_;
+	Timer			create_a_;
+	Timer			create_c_;
+	Timer			cal_x_;
+	Timer			cal_q_;
+	Timer			cal_x_qp_;
+	Timer			cal_d_;
+	Timer			cal_d_k_;
+	Timer			cal_d_qp_;
+	Timer			update_lambda_;
+	Timer			update_cut_;
+	Timer			update_r_;
 };
 

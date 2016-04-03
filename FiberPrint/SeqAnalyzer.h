@@ -8,7 +8,7 @@
 *
 *	  Version:  1.2
 *	  Created:  Oct/20/2015
-*     Update :  Mar/25/2015
+*     Update :  Mar/30/2016
 *
 *	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
 *	  Company:  GCL@USTC
@@ -55,17 +55,19 @@ public:
 
 public:
 	virtual bool	SeqPrint();
+	virtual void	PrintOutTimer();
 
 public:
-	void			GetQueue(vector<int> &layer_queue);
+	void			Init();
 
-	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
-	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
-	int				GetSupport()		{ return support_; }
-	double			GetWave(int id)		{ return wave_[id]; }
-	QuadricCollision* GetCollision(){ return ptr_collision_; }
+	void			GetPrintOrder();
+	void			InputPrintOrder(vector<int> &print_queue);
+	void			OutputPrintOrder(vector<int> &print_queue);
 
 protected:
+	void			UpdateStructure(WF_edge *e);
+	void			RecoverStructure(WF_edge *e);
+
 	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
 	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
 
@@ -76,15 +78,21 @@ public:
 	WireFrame			*ptr_frame_;
 
 protected:
-	DualGraph			*ptr_subgraph_;
 	QuadricCollision	*ptr_collision_;
 	char				*ptr_path_;
 
+	/* output */
+	vector<int>			print_order_; 
+
+	/* maintaining for sequence */
+	DualGraph			*ptr_subgraph_;
+	VX					D0_;
 	vector<QueueInfo>	print_queue_;
-	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 	vector<vector<lld>> angle_state_;
 	vector<vector<lld>*>colli_map_;
+	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 
+	/* parameters */
 	FiberPrintPARM		*ptr_parm_;
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
 	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
@@ -93,14 +101,15 @@ protected:
 	double				Wp_;						// Wp_		: tradeoff weight for printing cost
 	double				Wa_;						// Wa_		: tradeoff weight for printing cost
 
-	/* Printing Orientation Related Data */
-	int					support_;
-	bool				extru_;
-
-	vector<ExtruderCone>	extruder_list_;
-	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
-												// index computed by seq analyzer, output data
 	bool				debug_;
 	bool				fileout_;
+
+	Timer				upd_struct_;
+	Timer				rec_struct_;
+	Timer				upd_map_;
+	Timer				upd_map_collision_;
+	Timer				rec_map_;
+	Timer				test_stiff_;
+	Timer				test_stiff_cal_;
 };
 

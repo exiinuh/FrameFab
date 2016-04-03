@@ -36,7 +36,8 @@ public:
 	~GraphCut();
 
 public:
-	virtual void	MakeLayers();						
+	virtual void	MakeLayers();	
+	virtual void	PrintOutTimer();
 
 public:
 	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
@@ -50,6 +51,9 @@ public:
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
 	char			*path_;
 
+
+	/* for debuging */
 	bool			debug_;
+
 };
 

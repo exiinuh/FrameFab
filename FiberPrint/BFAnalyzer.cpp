@@ -13,6 +13,8 @@ BFAnalyzer::~BFAnalyzer()
 
 bool BFAnalyzer::SeqPrint()
 {
+	Init();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 
 	inqueue_.resize(Nd);
@@ -26,7 +28,12 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 {
 	if (h > t)
 	{
-		return TestifySeq();
+		if (TestifySeq())
+		{
+			GetPrintOrder();
+			return true;
+		}
+		return false;
 	}
 	for (int i = 0; i < t; i++)
 	{
@@ -53,10 +60,20 @@ bool BFAnalyzer::TestifySeq()
 	printf("Test on sequence starts.\n");
 
 	int Nd = ptr_dualgraph_->SizeOfVertList();
-	
+
+	D0_.resize(0);
+	D0_.setZero();
+
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
 	delete ptr_subgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
-	
+
+	angle_state_.clear();
 	angle_state_.resize(Nd);
 	for (int i = 0; i < Nd; i++)
 	{
@@ -71,20 +88,34 @@ bool BFAnalyzer::TestifySeq()
 		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
 		WF_edge *e = ptr_frame_->GetEdge(orig_i);
 
+		/* detect floating edge */
+		if (!e->isPillar() && !ptr_subgraph_->isExistingVert(e->pvert_->ID())
+			&& !ptr_subgraph_->isExistingVert(e->ppair_->pvert_->ID()))
+		{
+			printf("Edge #%d: floating edge detected.\n", i);
+			return false;
+		}
+
+		/* update structure */
 		ptr_subgraph_->UpdateDualization(e);
 
 		/* testify collision */
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
 			& angle_state_[dual_i][2])) == 0)
 		{
-			printf("Test on collision falied.\n");
+			printf("Edge #%d: test on collision falied.\n", i);
 			return false;
 		}
 
 		/* testify stiffness */
 		if (!TestifyStiffness())
 		{
-			printf("Test on stiffness falied.\n");
+			//if (i == Nd / 2 - 1)
+			//{
+			//	PrintOutQueue(Nd / 2);
+			//	getchar();
+			//}
+			printf("Edge #%d: test on stiffness falied.\n", i);
 			return false;
 		}
 
@@ -93,4 +124,21 @@ bool BFAnalyzer::TestifySeq()
 	}
 
 	return true;
+}
+
+
+void BFAnalyzer::PrintOutQueue(int N)
+{	
+	string path = ptr_path_;
+	string queue_path = path + "/BruteForceQueue.txt";
+
+	FILE *fp = fopen(queue_path.c_str(), "w");
+
+	for (int i = 0; i < N; i++)
+	{
+		int dual_id = print_queue_[i].dual_id_;
+		fprintf(fp, "%d\n", ptr_dualgraph_->e_orig_id(dual_id) / 2);
+	}
+
+	fclose(fp);
 }

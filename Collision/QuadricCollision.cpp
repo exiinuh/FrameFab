@@ -48,6 +48,49 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e,
 }
 
 
+void QuadricCollision::DetectCollision(WF_edge *target_e,
+	vector<WF_edge*> exist_edge, vector<GeoV3> &output)
+{
+	output.clear();
+
+	double ¦È, ¦Õ;
+	target_e_ = target_e;
+	//North Point
+	if (!DetectEdges(exist_edge, 0, 0))
+		output.push_back(Orientation(0, 0));
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < divide_; i++)
+		{
+			if (i < 20)
+			{
+				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+				¦Õ = i*18.0 / 180.0*F_PI;
+			}
+
+			if (i>19 && i < 40)
+			{
+				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+			}
+
+			if (i>39)
+			{
+				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+			}
+			if (DetectEdges(exist_edge, ¦È, ¦Õ))
+				continue;
+			output.push_back(Orientation(¦È, ¦Õ));
+		}
+	}
+
+	//South Point not consider
+	/*if (!DetectEdges(exist_edge_, 0, 0))
+	temp.push_back(Orientation(F_PI, 0));*/
+}
+
+
 void QuadricCollision::Init(vector<lld> &colli_map)
 {
 	lld temp = 0;
@@ -107,6 +150,19 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
 	}
 }
 
+
+bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
+{
+	for (int i = 0; i < exist_edge.size(); i++)
+	{
+		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
+		{
+
+			return true;
+		}
+	}
+	return false;
+}
 
 
 bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
@@ -303,7 +359,6 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 
 bool QuadricCollision::DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end)
 {
-
 	gte::Cone3<float> start_cone;
 	start_cone.angle = extruder_.Angle();
 	start_cone.height = extruder_.Height();
@@ -439,10 +494,7 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	bulk_.push_back(Triangle(start, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cylinder, start_back_cone));
-
 }
-
-
 
 
 bool QuadricCollision::Parallel(GeoV3 a, GeoV3 b)
@@ -566,57 +618,3 @@ void QuadricCollision::Debug()
 }
 
 
-vector<GeoV3> QuadricCollision::DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_)
-{
-	vector<GeoV3>temp;
-	temp.clear();
-	double ¦È, ¦Õ;
-	target_e_ = target_e;
-	//North Point
-	if (!DetectEdges(exist_edge_, 0, 0))
-		temp.push_back(Orientation(0, 0));
-	for (int j = 0; j < 3; j++)
-	{
-		for (int i = 0; i < divide_; i++)
-		{
-			if (i < 20)
-			{
-				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-				¦Õ = i*18.0 / 180.0*F_PI;
-			}
-
-			if (i>19 && i < 40)
-			{
-				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
-			}
-
-			if (i>39)
-			{
-				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
-			}
-			if (DetectEdges(exist_edge_, ¦È, ¦Õ))
-				continue;
-			temp.push_back(Orientation(¦È, ¦Õ));
-		}
-	}
-
-	//South Point not consider
-	/*if (!DetectEdges(exist_edge_, 0, 0))
-	temp.push_back(Orientation(F_PI, 0));*/
-	return temp;
-}
-
-bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
-{
-	for (int i = 0; i < exist_edge.size(); i++)
-	{
-		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
-		{
-			
-			return true;
-		}
-	}
-	return false;
-}

@@ -23,11 +23,10 @@ ProcAnalyzer::ProcAnalyzer(SeqAnalyzer *seqanalyzer, char *path)
 
 void ProcAnalyzer::ProcPrint()
 {
-	//
-
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
-	ptr_collision_ = ptr_seqanalyzer_->GetCollision();
+
+	QuadricCollision *ptr_collision = new QuadricCollision(ptr_frame);
 
 
 	if (debug_)
@@ -37,20 +36,9 @@ void ProcAnalyzer::ProcPrint()
 	}
 	else
 	{
-		ptr_seqanalyzer_->GetQueue(layer_queue_);
+		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
 	}
 
-	string path = path_;
-	string seq_path = path + "/ISeq.txt";
-	FILE *seq = fopen(seq_path.c_str(), "w+");
-	for (int i = 0; i < layer_queue_.size(); i++)
-	{
-		fprintf(seq, "%d", layer_queue_[i]);
-		fprintf(seq, ",");
-
-	}
-
-	std::fclose(seq);
 
 	exist_point_.clear();
 	process_list_.clear();
@@ -69,7 +57,7 @@ void ProcAnalyzer::ProcPrint()
 		}
 		else
 		{
-			temp.normal_ = ptr_collision_->DetectStructure(e, exist_edge_);
+			ptr_collision->DetectCollision(e, exist_edge_, temp.normal_);
 		}
 		exist_edge_.push_back(e);
 		process_list_.push_back(temp);
@@ -128,6 +116,9 @@ void ProcAnalyzer::ProcPrint()
 		process_list_[i] = temp;
 	}
 	Write();
+
+	delete ptr_collision;
+	ptr_collision = NULL;
 }
 
 void ProcAnalyzer::ReadLayerQueue()
@@ -166,12 +157,10 @@ void ProcAnalyzer::Write()
 	string iend_path = path + "/IEnd.txt";
 	string isupport_path = path + "/ISupport.txt";
 
-
 	FILE *fans = fopen(fan_path.c_str(), "w+");
 	FILE *start = fopen(istart_path.c_str(), "w+");
 	FILE *end = fopen(iend_path.c_str(), "w+");
 	FILE *support = fopen(isupport_path.c_str(), "w+");
-
 	fprintf(support, "%d", support_);
 	std::fclose(support);
 
@@ -207,9 +196,6 @@ void ProcAnalyzer::Write()
 			fprintf(vector, "%lf ,%lf ,%lf", temp.normal_[j].getX(), temp.normal_[j].getY(), temp.normal_[j].getZ());
 			fprintf(vector, "\n");
 		}
-
-	
-
 		std::fclose(vector);
 	}
 	std::fclose(start);

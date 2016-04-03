@@ -119,6 +119,8 @@ void ADMMCut::SetStartingPoints(int count)
 
 void ADMMCut::SetBoundary()
 {
+	set_bound_.Start();
+
 	// Set lower boundary and upper boundary
 	// equality constraints W*x = d
 	// Identify Base nodes(1) and Upper Nodes(2)
@@ -173,11 +175,15 @@ void ADMMCut::SetBoundary()
 		}
 	}
 	W_.setFromTriplets(W_list.begin(), W_list.end());
+
+	set_bound_.Stop();
 }
 
 
 void ADMMCut::CreateA()
 {
+	create_a_.Start();
+
 	A_.resize(Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -188,11 +194,15 @@ void ADMMCut::CreateA()
 		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
 	}
 	A_.setFromTriplets(A_list.begin(), A_list.end());
+
+	create_a_.Stop();
 }
 
 
 void ADMMCut::CreateC(int cut, int rew)
 {
+	create_c_.Start();
+
 	C_.resize(Md_, Md_);
 	vector<Triplet<double>> C_list;
 	vector<double> v_r;
@@ -218,6 +228,8 @@ void ADMMCut::CreateC(int cut, int rew)
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
+
+	create_c_.Stop();
 }
 
 
@@ -302,7 +314,7 @@ void ADMMCut::MakeLayers()
 		SetStartingPoints(cut_count);
 		CreateA();
 
-		ptr_stiff_->CalculateD(D_, x_, 0, 0, cut_count);
+		ptr_stiff_->CalculateD(D_, x_, cut_count, false, false, false);
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -467,6 +479,8 @@ void ADMMCut::MakeLayers()
 
 void ADMMCut::CalculateX()
 {
+	cal_x_.Start();
+
 	// Construct Hessian Matrix for D-Qp problem
 	SpMat Q;
 	CalculateQ(D_, Q);
@@ -488,12 +502,17 @@ void ADMMCut::CalculateX()
 	lb.setZero();
 	ub.setOnes();
 
+	cal_x_qp_.Start();
 	qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
+	cal_x_qp_.Stop();
+	cal_x_.Stop();
 }
 
 
 void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 {
+	cal_q_.Start();
+
 	// Construct Hessian Matrix for D-Qp problem
 	Q.resize(6 * Ns_, Nd_);
 	vector<Eigen::Triplet<double>> Q_list;
@@ -558,14 +577,20 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 	}
 
 	Q.setFromTriplets(Q_list.begin(), Q_list.end());
+
+	cal_q_.Stop();
 }
 
 
 void ADMMCut::CalculateD()
 {
+	cal_d_.Start();
+
 	// Construct Hessian Matrix for D-Qp problem
 	// Here, K is continuous-x weighted
+	cal_d_k_.Start();
 	ptr_stiff_->CreateGlobalK(x_);
+	cal_d_k_.Stop();
 	SpMat K = *(ptr_stiff_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
@@ -576,12 +601,17 @@ void ADMMCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 
 	/* 10 degree rotation tolerance, from degree to radians */
-	qp_->solve(Q, a, D_, Dt_tol_, Dr_tol_, debug_);
+	cal_d_qp_.Start();
+	qp_->solve(Q, a, D_, Dt_tol_, debug_);
+	cal_d_qp_.Stop();
+	cal_d_.Stop();
 }
 
 
 void ADMMCut::UpdateLambda()
 {
+	update_lambda_.Start();
+
 	// Recompute K(x_{k+1}) and F(x_{k+1})
 	ptr_stiff_->CreateGlobalK(x_);
 	SpMat K = *(ptr_stiff_->WeightedK());
@@ -590,11 +620,15 @@ void ADMMCut::UpdateLambda()
 	VX F = *(ptr_stiff_->WeightedF());
 
 	lambda_ = lambda_ + penalty_ * (K * D_ - F);
+
+	update_lambda_.Stop();
 }
 
 
 void ADMMCut::UpdateCut()
 {
+	update_cut_.Start();
+
 	// Convert previous continuous computed result to discrete 1-0 label
 	for (int i = 0; i < M_; i++)
 	{
@@ -643,11 +677,15 @@ void ADMMCut::UpdateCut()
 			}
 		}
 	}
+
+	update_cut_.Stop();
 }
 
 
 bool ADMMCut::UpdateR(VX &x_prev, int count)
 {
+	update_r_.Start();
+
 	double max_improv = 0;
 	for (int i = 0; i < Nd_; i++)
 	{
@@ -675,6 +713,7 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 		r_(u, v) = 1.0 / (1e-5 + w * abs(x_[u] - x_[v]));
 	}
 
+	update_r_.Stop();
 
 	if (max_improv < 1e-2 || count > 20)
 	{
@@ -685,7 +724,36 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	{
 		return false;
 	}
+}
 
+
+void ADMMCut::PrintOutTimer()
+{
+	printf("***Timer result:\n");
+	printf("SetBoundary:  ");
+	set_bound_.Print();
+	printf("CreateA:      ");
+	create_a_.Print();
+	printf("CreateC:      ");
+	create_c_.Print();
+	printf("CalculateX:   ");
+	cal_x_.Print();
+	printf(">>>CalculateQ:   ");
+	cal_q_.Print();
+	printf(">>>qp:           ");
+	cal_x_qp_.Print();
+	printf("CalculateD:   ");
+	cal_d_.Print();
+	printf(">>>CreateGlobalK:");
+	cal_d_k_.Print();
+	printf(">>>qp:           ");
+	cal_d_qp_.Print();
+	printf("UpdateLambda: ");
+	update_lambda_.Print();
+	printf("UpdateCut:    ");
+	update_cut_.Print();
+	printf("UpdateR:      ");
+	update_r_.Print();
 }
 
 
@@ -788,20 +856,17 @@ void ADMMCut::WriteStiffness(string offset, string rotation)
 			int j = ptr_dualgraph_->v_dual_id(i);
 
 			VX offset(3);
-			VX rotation(3);
 			for (int k = 0; k < 3; k++)
 			{
 				offset[k] = D_[j * 6 + k];
-				rotation[k] = D_[j * 6 + k + 3];
 			}
 
-			if (offset.norm() >= Dt_tol_ || rotation.norm() >= Dr_tol_)
+			if (offset.norm() >= Dt_tol_)
 			{
-				printf(".............. %lf %lf\n", offset.norm(), rotation.norm());
+				printf(".............. %lf\n", offset.norm());
 				getchar();
 			}
 			ss[i][0] = offset.norm() / Dt_tol_;
-			ss[i][1] = rotation.norm() / Dr_tol_;
 		}
 		else
 		{
@@ -862,5 +927,5 @@ void ADMMCut::Debug()
 	int cut_count = 0;
 	SetStartingPoints(cut_count);
 
-	ptr_stiff_->CalculateD(D_, x_, 1, 1, 0);
+	ptr_stiff_->CalculateD(D_, x_, 0, false, false, false);
 }

@@ -49,7 +49,7 @@ void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, 
 	assert(fname != NULL);
 
 	const char *outdir;
-	outdir = getenv("FRAME3DD_OUTDIR");
+	outdir = getenv("FRAMEFAB_OUTDIR");
 	if (outdir == NULL) 
 	{
 		if (default_outdir == NULL)

@@ -5,7 +5,7 @@
 
 
 #include "QP.h"
-#include "Timer.h"
+#include "GlobalFunctions\Timer.h"
 
 
 class QPMosek : public QP
@@ -24,7 +24,7 @@ public:
 	
 	/* for WirePrint graphcut: CalculateD*/
 	virtual bool solve(const S& H, const V& f, V &_x,
-		const double& d_tol, const double& rot_tol, 
+		const double& d_tol,
 		bool _debug);
 
 	virtual std::string report() const;

@@ -336,29 +336,30 @@ bool Stiffness::CalculateD(VectorXd &D)
 	VX x(Nd); 
 	x.setOnes();
 
-	return CalculateD(D, x, 0, 0, 0);
+	return CalculateD(D, x, 0, false, false, false);
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int write_data, int cut_count)
+bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x,
+	int cut_count, bool verbose, bool cond_num, bool write_3dd)
 {
 	D.resize(6 * Ns_);
 
-	// Parameter for StiffnessSolver
-	int	info;
-
-	char IN_file[FILENMAX];
-	string str = "FiberTest_Cut" + to_string(cut_count) + ".3dd";
-	sprintf_s(IN_file, "%s", str.c_str());
-
-
-	if (write_data)
-	{
-		stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
-	}
-	
 	CreateGlobalK(x);
 	CreateF(x);
+
+	/* Parameter for StiffnessSolver */
+	int	info;
+	IllCondDetector	stiff_inspector(K_);
+
+	/* --- Check Stiffness Matrix Condition Number --- */
+	if (cond_num)
+	{
+		if (!CheckIllCondition(stiff_inspector, verbose))
+		{
+			return false;
+		}
+	}
 
 	/* --- Solving Process --- */
 	if (verbose)
@@ -372,8 +373,83 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		return false;
 	}
 
+	/* --- Equilibrium Error Check --- */
+	if (!CheckError(stiff_inspector, D, verbose))
+	{
+		return false;
+	}
+
+	/* --- Output Process --- */
+	if (write_3dd)
+	{
+		WriteData(D, verbose, cut_count, "FiberTest_cut");
+	}
+
+	return true;
+}
+
+
+bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0)
+{
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	VX x(Nd);
+	x.setOnes();
+
+	return CalculateD(D, D0, x, 0, false, true, false);
+}
+
+
+bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
+	int seq_id, bool verbose, bool cond_num, bool write_3dd)
+{
+	D.resize(6 * Ns_);
+
+	CreateGlobalK(x);
+	CreateF(x);
+
+	/* Parameter for StiffnessSolver */
+	int	info;
+	IllCondDetector	stiff_inspector(K_);
+
 	/* --- Check Stiffness Matrix Condition Number --- */
-	IllCondDetector		stiff_inspector(K_);
+	if (cond_num)
+	{
+		if (!CheckIllCondition(stiff_inspector, verbose))
+		{
+			return false;
+		}
+	}
+
+	/* --- Solving Process --- */
+	if (verbose)
+	{
+		fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
+	}
+
+	if (!stiff_solver_.SolveSystem(K_, D, F_, D0, verbose, info))
+	{
+		cout << "Stiffness Solver fail!\n" << endl;
+		return false;
+	}
+
+	/* --- Equilibrium Error Check --- */
+	if (!CheckError(stiff_inspector, D, verbose))
+	{
+		return false;
+	}
+
+	/* --- Output Process --- */
+	if (write_3dd)
+	{
+		WriteData(D, verbose, seq_id, "FiberTest_seq");
+	}
+
+	return true;
+}
+
+
+bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
+{	
 	double cond_num;
 	cond_num = stiff_inspector.ComputeCondNum();
 	printf("Condition Number = %9.3e\n", cond_num);
@@ -390,11 +466,15 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		printf(" > tol = %7.1e\n", MCOND_TOL);
 		printf(" * Ill Conditioned Stiffness Matrix! *\n");
 		printf("Press any key to exit...\n");
-		getchar();
-		exit(0);
+		return false;
 	}
 
-	/* --- Equilibrium Error Check --- */
+	return true;
+}
+
+
+bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
+{	
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
 	printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
 	if (error < STIFF_TOL)
@@ -410,18 +490,27 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		printf(" > tol = %7.1e\n", STIFF_TOL);
 		printf(" !! Not Converged !!\n");
 		printf("Press any key to exit...\n");
-		getchar();
-		exit(0);
+		return false;
 	}
 
+	return true;
+}
+
+
+void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
+{	
 	/* --- Gnuplot File Generation --- */
 	char meshpath[FILENMAX],
-		 plotpath[FILENMAX];
+		plotpath[FILENMAX];
 
 	double  exagg_static = 1;
 	float	scale = 1;
 
 	/* append restrained node's 0 deformation at the end of D */
+	char IN_file[FILENMAX];
+	string str = fname + to_string(id) + ".3dd";
+	sprintf_s(IN_file, "%s", str.c_str());
+
 	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
 	D_joined.setZero();
 
@@ -430,12 +519,10 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x, int verbose, int writ
 		D_joined[i] = D[i];
 	}
 
-
+	stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
 	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
 	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
-
-	return true;
 }
 
 
@@ -522,9 +609,4 @@ VectorXd Stiffness::Fe(int ei)
 		}
 	}
 	return tmpF;
-}
-
-
-void Stiffness::Debug()
-{
 }

@@ -13,6 +13,8 @@ FFAnalyzer::~FFAnalyzer()
 
 bool FFAnalyzer::SeqPrint()
 {
+	Init();
+
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
@@ -54,7 +56,7 @@ bool FFAnalyzer::SeqPrint()
 		{
 			point center = e->CenterPos();
 			base_queue.insert(make_pair(center.x(), i));
-			ptr_subgraph_->UpdateDualization(e);
+			UpdateStructure(e);
 		}
 	}
 
@@ -70,9 +72,7 @@ bool FFAnalyzer::SeqPrint()
 		printf("Size of layer %d is %d\n", l, layers_[l].size());
 	}
 
-	
-
-	angle_state_.resize(Nd);
+	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
 		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
@@ -174,8 +174,7 @@ bool FFAnalyzer::SeqPrint()
 		WritePathRender();
 	}
 
-	/* detect extruder angles */
-	//DetectBulk();
+	GetPrintOrder();
 
 	return true;
 }
@@ -199,7 +198,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	WF_edge *ei = ptr_frame_->GetEdge(orig_i);
 
 	/* update printed subgraph */
-	ptr_subgraph_->UpdateDualization(ei);
+	UpdateStructure(ei);
 
 	/* exit */
 	if (h == t - 1)
@@ -251,7 +250,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		RecoverStateMap(dual_j, tmp_angle);
 	}
 
-	ptr_subgraph_->RemoveUpdation(ei);
+	RecoverStructure(ei);
 	print_queue_.pop_back();
 
 	if (debug_)
@@ -283,10 +282,10 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		}
 
 		/* collision weight */
-		L = (double)ptr_collision_->ColFreeAngle(angle_state_[dual_j]) /
-			ptr_collision_->Divide();
+		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
+		L = free_angle * 1.0 / ptr_collision_->Divide();
 
-		if (0 == L)
+		if (L < eps)
 		{
 			printf("...collision examination failed.\n");
 			return -1;
@@ -363,7 +362,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 		/* stiffness */
 		/* insert a trail edge */
-		ptr_subgraph_->UpdateDualization(ej);
+		UpdateStructure(ej);
 
 		/* examinate stiffness on printing subgraph */
 		if (!TestifyStiffness())
@@ -374,28 +373,10 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		}
 
 		/* remove the trail edge */
-		ptr_subgraph_->RemoveUpdation(ej);
-
-
-		///* influence weight */
-		//int sum_angle = 0;
-		//int Nd = ptr_dualgraph_->SizeOfVertList();
-		//int remaining = Nd - ptr_subgraph_->SizeOfVertList();
-		//for (int dual_k = 0; dual_k < Nd; dual_k++)
-		//{
-		//	int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
-		//	if (dual_j != dual_k && !ptr_subgraph_->isExistingEdge(orig_k))
-		//	{
-		//		ptr_collision_->DetectCollision(ptr_frame_->GetEdge(orig_k), ej);
-		//		lld tmp_angle = (ptr_collision_->Angle() | angle_state_[dual_k]);
-		//		sum_angle += ptr_collision_->ColFreeAngle(tmp_angle);
-		//	}
-		//}
-		//I = (double)sum_angle / remaining / ptr_collision_->Divide();
+		RecoverStructure(ej);
 
 
 		double cost = Wl_*L + Wp_*P + Wa_*A;
-		//double cost = Wl_ * L + Wp_ * P + Wi_ * I;
 		if (debug_)
 		{
 			printf("###L: %lf, P: %lf\ncost: %f\n", L, P, cost);
@@ -404,68 +385,6 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 	}
 
 	return -1;
-}
-
-
-void FFAnalyzer::DetectBulk()
-{
-	//cout << "---------Angle Detection--------" << endl;
-	//DualGraph *ptr_dualgraph = ptr_graphcut_->ptr_dualgraph_;
-	//WireFrame *ptr_frame = ptr_graphcut_->ptr_frame_;
-
-	//vector<GeoV3 > Normal;
-	//vector<double> Wave;
-
-	//support_ = 0;
-	//for (int i = 0; i < print_queue_.size(); i++)
-	//{
-	//	int orig_e = ptr_dualgraph->e_orig_id(print_queue_[i].dual_id_);
-	//	WF_edge *target = ptr_frame->GetEdge(orig_e);
-
-	//	if (target->isPillar())
-	//	{
-	//		Normal.push_back(GeoV3(0, 0, 1));
-	//		Wave.push_back(2 * F_PI);
-
-	//		support_ += 1;
-	//		continue;
-	//	}
-
-	//	Collision col(ptr_graphcut_->ptr_frame_, target);
-	//	for (int j = 0; j < i; j++)
-	//	{
-	//		orig_e = ptr_dualgraph->e_orig_id(print_queue_[j].dual_id_);
-	//		col.DetectCollision(ptr_frame->GetEdge(orig_e));
-
-	//		if (col.normal_.size() == 0)
-	//		{
-	//			cout << "Oops~~, What is wrong?!" << endl;
-	//		}
-	//	}
-	//	ResolveAngle resolve(col.normal_);
-	//	Normal.push_back(resolve.dec);
-	//	Wave.push_back(resolve.wave);
-
-	//}
-
-	//wave_ = Wave;
-
-	////Extruder
-	//for (int i = 0; i < print_queue_.size(); i++)
-	//{
-	//	extru_ = true;
-	//	ExtruderCone temp_extruder;
-
-	//	/* original edge id */
-	//	int orig_e = ptr_dualgraph->e_orig_id(print_queue_[i].dual_id_);
-	//	WF_edge *temp_edge = ptr_frame->GetEdge(orig_e);
-
-	//	temp_extruder.Rotation(Normal[i], temp_edge->pvert_->Position(), 
-	//		temp_edge->ppair_->pvert_->Position());
-	//	extruder_list_.push_back(temp_extruder);
-	//}
-
-	//cout << "---------Angle Detection done--------" << endl;
 }
 
 
@@ -491,14 +410,12 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 		for (int k = 0; k < Ns; k++)
 		{
 			VX offset(3);
-			VX distortion(3);
 			for (int l = 0; l < 3; l++)
 			{
 				offset[l] = D[k * 6 + l];
-				distortion[l] = D[k * 6 + l + 3];
 			}
 
-			if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+			if (offset.norm() >= Dt_tol_)
 			{
 				stiff_success = false;
 				getchar();
@@ -597,21 +514,41 @@ bool FFAnalyzer::GenerateSeq(int h, int t)
 }
 
 
+void FFAnalyzer::PrintOutTimer()
+{
+	printf("***Timer result:\n");
+	printf("UpdateStructure: ");
+	upd_struct_.Print();
+	printf("RecoverStructure:");
+	rec_struct_.Print();
+	printf("UpdateStateMap:  ");
+	upd_map_.Print();
+	printf(">>>Collision:       ");
+	upd_map_collision_.Print();
+	printf("RecoverStateMap: ");
+	rec_map_.Print();
+	printf("TestifyStiffness:");
+	test_stiff_.Print();
+	printf(">>>CalculateD:      ");
+	test_stiff_cal_.Print();
+}
+
+
 void FFAnalyzer::WriteLayerQueue()
 {
-	string path = ptr_path_;
-	string queue_path = path + "/Queue.txt";
+	//string path = ptr_path_;
+	//string queue_path = path + "/Queue.txt";
 
-	FILE *fp = fopen(queue_path.c_str(), "w");
+	//FILE *fp = fopen(queue_path.c_str(), "w");
 
-	vector<int> layer_queue;
-	GetQueue(layer_queue);
-	int Nq = layer_queue.size();
-	for (int i = 0; i < Nq; i++)
-	{
-		fprintf(fp, "%d\n", layer_queue[i]);
-	}
-	fclose(fp);
+	//vector<int> layer_queue;
+	//GetQueue(layer_queue);
+	//int Nq = layer_queue.size();
+	//for (int i = 0; i < Nq; i++)
+	//{
+	//	fprintf(fp, "%d\n", layer_queue[i]);
+	//}
+	//fclose(fp);
 }
 
 
