@@ -54,7 +54,7 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
-	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
@@ -72,6 +72,7 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	ptr_graphcut_->PrintOutTimer();
 	ptr_seqanalyzer_->PrintOutTimer();
+//	ptr_procanalyzer_->ProcPrint();
 }
 
 
@@ -113,7 +114,7 @@ void FiberPrintPlugIn::SweepingPrint()
 		return;
 	}
 	printf("Sweeping print done.\n");
-	ptr_procanalyzer_->ProcPrint();
+	//ptr_procanalyzer_->ProcPrint();
 }
 
 void FiberPrintPlugIn::GetDeformation()
