@@ -278,14 +278,6 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 	case Qt::Key_C:
 		//SwitchToChooseBound();
 		break;
-	/*
-	case Qt::Key_I:
-		SwitchToAddEdge();
-		break;
-	case Qt::Key_F:
-		SwitchToAddFace();
-		break;
-	*/
 	case Qt::Key_Escape:
 		SwitchToNormal();
 		break;

@@ -424,8 +424,6 @@ void MainWindow::CreateGroups()
 	groupbox_orderdisplay_ = new QGroupBox(tr("Display"), this);
 	groupbox_orderdisplay_->setFlat(true);
 
-	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
-
 	QVBoxLayout* orderbar_layout = new QVBoxLayout();
 	orderbar_layout->addWidget(slider_order_);
 
@@ -435,6 +433,7 @@ void MainWindow::CreateGroups()
 	orderbutton_layout->addWidget(pushbutton_lastlayer_, 1, 0);
 	orderbutton_layout->addWidget(pushbutton_nextlayer_, 1, 1);
 
+	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
 	orderdisplay_layout->addLayout(orderbar_layout);
 	orderdisplay_layout->addLayout(orderbutton_layout);
 

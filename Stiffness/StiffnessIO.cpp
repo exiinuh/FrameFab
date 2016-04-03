@@ -334,7 +334,11 @@ void StiffnessIO::GnuPltStaticMesh(
 * Nov/25/2015
 */
 void StiffnessIO::GnuPltCubicBentBeam(
-	FILE *fpm, VX &D, int dual_i, DualGraph *ptr_dualgraph, WireFrame *ptr_frame, double exagg
+	FILE *fpm, 
+	VX &D, 
+	int dual_i, 
+	DualGraph *ptr_dualgraph, WireFrame *ptr_frame, 
+	double exagg
 	)
 {
 	double	t0, t1, t2, t3, t4, t5, t6, t7, t8, 	/* coord transf matrix entries	*/
