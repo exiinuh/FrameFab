@@ -78,7 +78,7 @@ public:
 public:
 	Stiffness();
 	Stiffness(DualGraph *ptr_dualgraph);
-	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm);
+	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~Stiffness();
 
 public:
@@ -117,6 +117,7 @@ private:
 	//private:
 	DualGraph		*ptr_dualgraph_;
 	FiberPrintPARM	*ptr_parm_;
+	char			*ptr_path_;
 
 	StiffnessIO		stiff_io_;
 	StiffnessSolver	stiff_solver_;

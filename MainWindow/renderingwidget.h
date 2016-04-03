@@ -29,6 +29,7 @@ enum OperationMode
 	NORMAL,
 	CHOOSEBASE,
 	CHOOSECEILING,
+	CHOOSESUBG,
 };
 
 
@@ -48,6 +49,12 @@ public:
 	void	InitDrawData();
 	void	InitCapturedData();
 	void	InitFiberData();
+	void	InitInfoData(
+				int vert_size, int edge_size,
+				QString oper_info,
+				QString mode_info,
+				int max_slider
+			);
 
 protected:
 	void	initializeGL();
@@ -69,6 +76,7 @@ public:
 signals:
 	void	ChooseBasePressed(bool);
 	void	ChooseCeilingPressed(bool);
+	void	ChooseSubGPressed(bool);
 
 	void	SetOrderSlider(int);
 	void	SetMaxOrderSlider(int);
@@ -97,14 +105,17 @@ public slots:
 
 	void	ReadFrame();
 	void	WriteFrame(QString filename);
-	void	WriteFrame(bool bVert, bool bLine, 
-						bool bBase, bool bCeiling, bool bCut,
-						int min_layer, int max_layer, QString filename);
-	void	Import3DD();
-	void	ImportSeq();
-	void	ExportFrame(int min_layer, int max_layer, 
-						QString vert_path, QString line_path);
-	void	ExportSeq();
+	void	WriteFrame(
+				bool bVert, bool bLine, 
+				bool bBase, bool bCeiling, bool bCut,
+				int min_layer, int max_layer, QString filename
+			);
+	void	Import();
+	void	Export();
+	void	Export(
+				int min_layer, int max_layer, 
+				QString vert_path, QString line_path
+			);
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
@@ -114,6 +125,7 @@ public slots:
 	void	SwitchToNormal();
 	void	SwitchToChooseBase();
 	void	SwitchToChooseCeiling();
+	void	SwitchToChooseSubG();
 
 private:
 	void	DrawAxes(bool bv);
@@ -135,7 +147,9 @@ public slots:
 	void	RotateYZ();
 
 	void	PrintOrder(int order);
+	void	PrintLastStep();
 	void	PrintNextStep();
+	void	PrintLastLayer();
 	void	PrintNextLayer();
 
 public:
@@ -167,7 +181,6 @@ public:
 	vector<bool>		is_captured_edge_;
 
 	vector<WF_vert*>	base_;
-	vector<WF_edge*>	ceiling_;
 
 	float				scale_;
 	int					print_order_;

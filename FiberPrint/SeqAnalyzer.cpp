@@ -213,7 +213,7 @@ bool SeqAnalyzer::TestifyStiffness()
 	test_stiff_.Start();
 
 	/* examinate stiffness on printing subgraph */
-	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
+	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_, ptr_path_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);
 	D.setZero();

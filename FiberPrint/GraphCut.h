@@ -49,7 +49,7 @@ public:
 	WireFrame		*ptr_frame_;
 	DualGraph		*ptr_dualgraph_;
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
-	char			*path_;
+	char			*ptr_path_;
 
 
 	/* for debuging */

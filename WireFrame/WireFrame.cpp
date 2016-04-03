@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-	:fixed_vert_(0), delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
+	:b_fixed_vert_(0), delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -524,6 +524,60 @@ void WireFrame::ImportFrom3DD(const char *path)
 }
 
 
+void WireFrame::ExportSubgraph(const char *path)
+{
+	FILE *fp = fopen(path, "wb+");
+	int N = SizeOfVertList();
+	int M = SizeOfEdgeList();
+
+	vector<int> export_vert;
+	vector<int> hash(N);
+	fill(hash.begin(), hash.end(), -1);
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->isSubgraph())
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			if (hash[u] == -1)
+			{
+				export_vert.push_back(u);
+				hash[u] = export_vert.size();
+			}
+			if (hash[v] == -1)
+			{
+				export_vert.push_back(v);
+				hash[v] = export_vert.size();
+			}
+		}
+	}
+
+	int Ne = export_vert.size();
+	for (int i = 0; i < Ne; i++)
+	{
+		point p = (*pvert_list_)[export_vert[i]]->Position();
+		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->isSubgraph())
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
+		}
+	}
+
+	fclose(fp);
+}
+
+
 void WireFrame::ExportPoints(int min_layer, int max_layer, const char *path)
 {
 	if ((*pedge_list_)[0]->Layer() == -1)
@@ -671,9 +725,9 @@ void WireFrame::Unify()
 	minz_ = 1e20;
 	base_ = 1e20;
 
-	fixed_vert_ = 0;
-	pillar_size_ = 0;
-	ceiling_size_ = 0;
+	b_fixed_vert_ = 0;
+	b_pillar_size_ = 0;
+	b_ceiling_size_ = 0;
 	max_layer_ = -1;
 
 	int N = SizeOfVertList();
@@ -729,11 +783,11 @@ void WireFrame::Unify()
 		(*pedge_list_)[i]->SetID(i);
 		if ((*pedge_list_)[i]->isPillar())
 		{
-			pillar_size_++;
+			b_pillar_size_++;
 		}
 		if ((*pedge_list_)[i]->isCeiling())
 		{
-			ceiling_size_++;
+			b_ceiling_size_++;
 		}
 		if ((*pedge_list_)[i]->Layer() > max_layer_)
 		{
@@ -763,7 +817,7 @@ void WireFrame::Unify()
 		(*pvert_list_)[i]->SetRenderPos( Unify((*pvert_list_)[i]->Position()) );
 		if ((*pvert_list_)[i]->isFixed())
 		{
-			fixed_vert_++;
+			b_fixed_vert_++;
 		}
 	}
 }
@@ -895,12 +949,46 @@ void WireFrame::ModifyProjection(double len)
 
 void WireFrame::MakeCeiling(vector<WF_edge*> &bound)
 {
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetCeiling(false);
+	}
+
 	int Mb = bound.size();
 	for (int i = 0; i < Mb; i++)
 	{
 		WF_edge *e = bound[i];
 		e->SetCeiling(true);
 		e->ppair_->SetCeiling(true);
+	}
+
+	Unify();
+}
+
+
+void WireFrame::MakeSubGraph(vector<WF_edge*> &subg_e)
+{
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		(*pvert_list_)[i]->SetSubgraph(false);
+	}
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetSubgraph(false);
+	}
+
+	int Mb = subg_e.size();
+	for (int i = 0; i < Mb; i++)
+	{
+		WF_edge *e = subg_e[i];
+		e->SetSubgraph(true);
+		e->ppair_->SetSubgraph(true);
+		e->pvert_->SetSubgraph(true);
+		e->ppair_->pvert_->SetSubgraph(true);
 	}
 
 	Unify();

@@ -22,11 +22,11 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame)
 }
 
 
-ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
+ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm);
+	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
@@ -34,7 +34,7 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	path_ = path;
+	ptr_path_ = ptr_path;
 	debug_ = true;
 }
 
@@ -759,166 +759,166 @@ void ADMMCut::PrintOutTimer()
 
 void ADMMCut::WriteWeight()
 {
-	string path = path_;
+	//string path = path_;
 
-	string weight_path = path + "/point_weight.txt";
-	string line_path = path + "/line.txt";
+	//string weight_path = path + "/point_weight.txt";
+	//string line_path = path + "/line.txt";
 
-	FILE *fp = fopen(weight_path.c_str(), "w+");
+	//FILE *fp = fopen(weight_path.c_str(), "w+");
 
-	int N = ptr_frame_->SizeOfVertList();
-	double minz = ptr_dualgraph_->minZ();
-	double maxz = ptr_dualgraph_->maxZ();
-	vector<double> ww(N);
-	for (int i = 0; i < N; i++)
-	{
-		if (ptr_dualgraph_->isExistingVert(i))
-		{
-			if (ptr_frame_->GetDegree(i) > 1)
-			{
-				//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
-				double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz) / (maxz - minz), 2));
-				ww[i] = w;
-			}
-			else
-			{
-				ww[i] = 1.0;
-			}
-		}
-	}
+	//int N = ptr_frame_->SizeOfVertList();
+	//double minz = ptr_dualgraph_->minZ();
+	//double maxz = ptr_dualgraph_->maxZ();
+	//vector<double> ww(N);
+	//for (int i = 0; i < N; i++)
+	//{
+	//	if (ptr_dualgraph_->isExistingVert(i))
+	//	{
+	//		if (ptr_frame_->GetDegree(i) > 1)
+	//		{
+	//			//double w = 1 - (verts[i]->Position().z() - minz) / (maxz - minz);
+	//			double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz) / (maxz - minz), 2));
+	//			ww[i] = w;
+	//		}
+	//		else
+	//		{
+	//			ww[i] = 1.0;
+	//		}
+	//	}
+	//}
 
-	for (int i = 0; i < N; i++)
-	{
-		point p = ptr_frame_->GetVert(i)->RenderPos();
-		fprintf(fp, "%lf %lf %lf ", p.x(), p.y(), p.z());
+	//for (int i = 0; i < N; i++)
+	//{
+	//	point p = ptr_frame_->GetVert(i)->RenderPos();
+	//	fprintf(fp, "%lf %lf %lf ", p.x(), p.y(), p.z());
 
-		double r;
-		double g;
-		double b;
+	//	double r;
+	//	double g;
+	//	double b;
 
-		if (ww[i] < 0.25)
-		{
-			r = 0.0;
-			g = ww[i] * 4.0;
-			b = 1.0;
-		}
-		else
-			if (ww[i] < 0.5)
-			{
-				r = 0.0;
-				g = 1.0;
-				b = (0.5 - ww[i]) * 4.0;
-			}
-			else
-				if (ww[i] < 0.75)
-				{
-					r = (ww[i] - 0.5) * 4.0;
-					g = 1.0;
-					b = 0.0;
-				}
-				else
-				{
-					r = 1.0;
-					g = (1.0 - ww[i]) * 4.0;
-					b = 0.0;
-				}
+	//	if (ww[i] < 0.25)
+	//	{
+	//		r = 0.0;
+	//		g = ww[i] * 4.0;
+	//		b = 1.0;
+	//	}
+	//	else
+	//		if (ww[i] < 0.5)
+	//		{
+	//			r = 0.0;
+	//			g = 1.0;
+	//			b = (0.5 - ww[i]) * 4.0;
+	//		}
+	//		else
+	//			if (ww[i] < 0.75)
+	//			{
+	//				r = (ww[i] - 0.5) * 4.0;
+	//				g = 1.0;
+	//				b = 0.0;
+	//			}
+	//			else
+	//			{
+	//				r = 1.0;
+	//				g = (1.0 - ww[i]) * 4.0;
+	//				b = 0.0;
+	//			}
 
-		fprintf(fp, "%lf %lf %lf\n", r, g, b);
-	}
+	//	fprintf(fp, "%lf %lf %lf\n", r, g, b);
+	//}
 
-	fclose(fp);
-	//ptr_frame_->ExportLines(line_path.c_str());
+	//fclose(fp);
+	////ptr_frame_->ExportLines(line_path.c_str());
 }
 
 
 void ADMMCut::WriteStiffness(string offset, string rotation)
 {
-	string path = path_;
+	//string path = path_;
 
-	string offset_path = path + "/" + offset;
-	string rotation_path = path + "/" + rotation;
+	//string offset_path = path + "/" + offset;
+	//string rotation_path = path + "/" + rotation;
 
-	vector<FILE*> fp(2);
-	fp[0] = fopen(offset_path.c_str(), "w+");
-	fp[1] = fopen(rotation_path.c_str(), "w+");
+	//vector<FILE*> fp(2);
+	//fp[0] = fopen(offset_path.c_str(), "w+");
+	//fp[1] = fopen(rotation_path.c_str(), "w+");
 
-	fprintf(fp[0], "#offset colormap#\r\n");
-	fprintf(fp[1], "#rotation colormap#\r\n",
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+	//fprintf(fp[0], "#offset colormap#\r\n");
+	//fprintf(fp[1], "#rotation colormap#\r\n",
+	//	0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-	int N = ptr_frame_->SizeOfVertList();
-	vector<vector<double>> ss(N);
-	for (int i = 0; i < N; i++)
-	{
-		ss[i].resize(2);
-		if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
-		{
-			int j = ptr_dualgraph_->v_dual_id(i);
+	//int N = ptr_frame_->SizeOfVertList();
+	//vector<vector<double>> ss(N);
+	//for (int i = 0; i < N; i++)
+	//{
+	//	ss[i].resize(2);
+	//	if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
+	//	{
+	//		int j = ptr_dualgraph_->v_dual_id(i);
 
-			VX offset(3);
-			for (int k = 0; k < 3; k++)
-			{
-				offset[k] = D_[j * 6 + k];
-			}
+	//		VX offset(3);
+	//		for (int k = 0; k < 3; k++)
+	//		{
+	//			offset[k] = D_[j * 6 + k];
+	//		}
 
-			if (offset.norm() >= Dt_tol_)
-			{
-				printf(".............. %lf\n", offset.norm());
-				getchar();
-			}
-			ss[i][0] = offset.norm() / Dt_tol_;
-		}
-		else
-		{
-			ss[i][0] = 0.0;
-			ss[i][1] = 0.0;
-		}
+	//		if (offset.norm() >= Dt_tol_)
+	//		{
+	//			printf(".............. %lf\n", offset.norm());
+	//			getchar();
+	//		}
+	//		ss[i][0] = offset.norm() / Dt_tol_;
+	//	}
+	//	else
+	//	{
+	//		ss[i][0] = 0.0;
+	//		ss[i][1] = 0.0;
+	//	}
 
-		//if (ptr_dualgraph_->isExistingVert(i))
-		{
-			point p = ptr_frame_->GetVert(i)->RenderPos();
-			for (int j = 0; j < 2; j++)
-			{
-				fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
+	//	//if (ptr_dualgraph_->isExistingVert(i))
+	//	{
+	//		point p = ptr_frame_->GetVert(i)->RenderPos();
+	//		for (int j = 0; j < 2; j++)
+	//		{
+	//			fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
 
-				double r;
-				double g;
-				double b;
+	//			double r;
+	//			double g;
+	//			double b;
 
-				if (ss[i][j] < 0.25)
-				{
-					r = 0.0;
-					g = ss[i][j] * 4.0;
-					b = 1.0;
-				}
-				else
-					if (ss[i][j] < 0.5)
-					{
-						r = 0.0;
-						g = 1.0;
-						b = (0.5 - ss[i][j]) * 4.0;
-					}
-					else
-						if (ss[i][j] < 0.75)
-						{
-							r = (ss[i][j] - 0.5) * 4.0;
-							g = 1.0;
-							b = 0.0;
-						}
-						else
-						{
-							r = 1.0;
-							g = (1.0 - ss[i][j]) * 4.0;
-							b = 0.0;
-						}
+	//			if (ss[i][j] < 0.25)
+	//			{
+	//				r = 0.0;
+	//				g = ss[i][j] * 4.0;
+	//				b = 1.0;
+	//			}
+	//			else
+	//				if (ss[i][j] < 0.5)
+	//				{
+	//					r = 0.0;
+	//					g = 1.0;
+	//					b = (0.5 - ss[i][j]) * 4.0;
+	//				}
+	//				else
+	//					if (ss[i][j] < 0.75)
+	//					{
+	//						r = (ss[i][j] - 0.5) * 4.0;
+	//						g = 1.0;
+	//						b = 0.0;
+	//					}
+	//					else
+	//					{
+	//						r = 1.0;
+	//						g = (1.0 - ss[i][j]) * 4.0;
+	//						b = 0.0;
+	//					}
 
-				fprintf(fp[j], "%lf %lf %lf\r\n", r, g, b);
-			}
-		}
-	}
+	//			fprintf(fp[j], "%lf %lf %lf\r\n", r, g, b);
+	//		}
+	//	}
+	//}
 
-	fclose(fp[0]);
-	fclose(fp[1]);
+	//fclose(fp[0]);
+	//fclose(fp[1]);
 }
 
 

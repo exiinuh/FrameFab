@@ -80,21 +80,17 @@ void MainWindow::CreateActions()
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), this, SLOT(OpenSaveDialog()));
 
-	action_import3dd_ = new QAction(tr("Import .3dd"), this);
-	action_import3dd_->setStatusTip(tr("Import .3dd from disk"));
-	connect(action_import3dd_, SIGNAL(triggered()), renderingwidget_, SLOT(Import3DD()));
+	action_import_ = new QAction(tr("Import"), this);
+	action_import_->setStatusTip(tr("Import from disk"));
+	connect(action_import_, SIGNAL(triggered()), renderingwidget_, SLOT(Import()));
 
-	action_importseq_ = new QAction(tr("Import sequence"), this);
-	action_importseq_->setStatusTip(tr("Import sequence from disk"));
-	connect(action_importseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ImportSeq()));
+	action_export_ = new QAction(tr("Export"), this);
+	action_export_->setStatusTip(tr("Export to disk"));
+	connect(action_export_, SIGNAL(triggered()), renderingwidget_, SLOT(Export()));
 
-	action_export_ = new QAction(tr("Export frame"), this);
-	action_export_->setStatusTip(tr("Export frame to disk"));
-	connect(action_export_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
-
-	action_exportseq_ = new QAction(tr("Export sequence"), this);
-	action_exportseq_->setStatusTip(tr("Export sequence to disk"));
-	connect(action_exportseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportSeq()));
+	action_export_maya_ = new QAction(tr("Export to Maya"), this);
+	action_export_maya_->setStatusTip(tr("Export vertex & line to disk"));
+	connect(action_export_maya_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -113,10 +109,9 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_save_);
 
 	menu_file_->addSeparator();
-	menu_file_->addAction(action_import3dd_);
-	menu_file_->addAction(action_importseq_);
+	menu_file_->addAction(action_import_);
 	menu_file_->addAction(action_export_);
-	menu_file_->addAction(action_exportseq_);
+	menu_file_->addAction(action_export_maya_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
@@ -264,7 +259,7 @@ void MainWindow::CreateCheckBoxes()
 	checkbox_savevert_ = new QCheckBox(tr("Vert"), this);
 	checkbox_saveline_ = new QCheckBox(tr("Line"), this);
 	checkbox_savebase_ = new QCheckBox(tr("Base"), this);
-	checkbox_saveceiling_ = new QCheckBox(tr("Ceiling"), this);
+	checkbox_saveb_ceiling_ = new QCheckBox(tr("Ceiling"), this);
 	checkbox_savecut_ = new QCheckBox(tr("Cut"), this);
 }
 
@@ -309,12 +304,20 @@ void MainWindow::CreatePushButtons()
 	connect(pushbutton_rotatexz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateXZ()));
 	connect(pushbutton_rotateyz_, SIGNAL(clicked()), renderingwidget_, SLOT(RotateYZ()));
 
-	pushbutton_nextedge_ = new QPushButton(tr("Next edge"), this);
-	pushbutton_nextedge_->setFixedSize(80, 25);
+	pushbutton_lastedge_ = new QPushButton(tr("<"), this);
+	pushbutton_lastedge_->setFixedSize(35, 20);
+	connect(pushbutton_lastedge_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintLastStep()));
+
+	pushbutton_nextedge_ = new QPushButton(tr(">"), this);
+	pushbutton_nextedge_->setFixedSize(35, 20);
 	connect(pushbutton_nextedge_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextStep()));
 
-	pushbutton_nextlayer_ = new QPushButton(tr("Next layer"), this);
-	pushbutton_nextlayer_->setFixedSize(80, 25);
+	pushbutton_lastlayer_ = new QPushButton(tr("<<"), this);
+	pushbutton_lastlayer_->setFixedSize(35, 20);
+	connect(pushbutton_lastlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintLastLayer()));
+
+	pushbutton_nextlayer_ = new QPushButton(tr(">>"), this);
+	pushbutton_nextlayer_->setFixedSize(35, 20);
 	connect(pushbutton_nextlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextLayer()));
 
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
@@ -359,7 +362,7 @@ void MainWindow::CreatePushButtons()
 	pushbutton_export_ = new QPushButton(tr("Export"), this);
 	connect(pushbutton_export_, SIGNAL(clicked()), this, SLOT(GetExportParas()));
 	connect(this, SIGNAL(SendExportParas(int, int, QString, QString)),
-		renderingwidget_, SLOT(ExportFrame(int, int, QString, QString)));
+		renderingwidget_, SLOT(Export(int, int, QString, QString)));
 
 	pushbutton_exportvert_ = new QPushButton(tr("..."), this);
 	pushbutton_exportvert_->setFixedWidth(30);
@@ -378,18 +381,19 @@ void MainWindow::CreateToolButtons()
 	toolbutton_choosebase_->setFixedSize(140, 35);
 	connect(toolbutton_choosebase_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseBase()));
 
-	toolbutton_chooseceiling_ = new QToolButton(this);
-	toolbutton_chooseceiling_->setText(tr("Choose ceiling"));
-	toolbutton_chooseceiling_->setFixedSize(140, 35);
-	connect(toolbutton_chooseceiling_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseCeiling()));
+	toolbutton_chooseb_ceiling_ = new QToolButton(this);
+	toolbutton_chooseb_ceiling_->setText(tr("Choose ceiling"));
+	toolbutton_chooseb_ceiling_->setFixedSize(140, 35);
+	connect(toolbutton_chooseb_ceiling_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseCeiling()));
 
-	//toolbutton_addface_ = new QToolButton(this);
-	//toolbutton_addface_->setText(tr("Set face"));
-	//toolbutton_addface_->setMaximumSize(84, 50);
-	//connect(toolbutton_addface_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToAddFace()));
+	toolbutton_choosesubg_ = new QToolButton(this);
+	toolbutton_choosesubg_->setText(tr("Choose\nsubgraph"));
+	toolbutton_choosesubg_->setFixedSize(80, 50);
+	connect(toolbutton_choosesubg_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseSubG()));
 
 	connect(renderingwidget_, SIGNAL(ChooseBasePressed(bool)), this, SLOT(ChooseBaseClicked(bool)));
 	connect(renderingwidget_, SIGNAL(ChooseCeilingPressed(bool)), this, SLOT(ChooseCeilingClicked(bool)));
+	connect(renderingwidget_, SIGNAL(ChooseSubGPressed(bool)), this, SLOT(ChooseSubGClicked(bool)));
 }
 
 
@@ -414,7 +418,6 @@ void MainWindow::CreateGroups()
 	QVBoxLayout* edge_layout = new QVBoxLayout(groupbox_edge_);
 	edge_layout->addWidget(radiobutton_heat_);
 	edge_layout->addWidget(radiobutton_order_);
-
 	edge_layout->addWidget(radiobutton_none_);
 
 	// order display group
@@ -422,9 +425,18 @@ void MainWindow::CreateGroups()
 	groupbox_orderdisplay_->setFlat(true);
 
 	QVBoxLayout* orderdisplay_layout = new QVBoxLayout(groupbox_orderdisplay_);
-	orderdisplay_layout->addWidget(slider_order_);
-	orderdisplay_layout->addWidget(pushbutton_nextedge_);
-	orderdisplay_layout->addWidget(pushbutton_nextlayer_);
+
+	QVBoxLayout* orderbar_layout = new QVBoxLayout();
+	orderbar_layout->addWidget(slider_order_);
+
+	QGridLayout* orderbutton_layout = new QGridLayout();
+	orderbutton_layout->addWidget(pushbutton_lastedge_, 0, 0);
+	orderbutton_layout->addWidget(pushbutton_nextedge_, 0, 1);
+	orderbutton_layout->addWidget(pushbutton_lastlayer_, 1, 0);
+	orderbutton_layout->addWidget(pushbutton_nextlayer_, 1, 1);
+
+	orderdisplay_layout->addLayout(orderbar_layout);
+	orderdisplay_layout->addLayout(orderbutton_layout);
 
 	// edit group
 	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
@@ -434,6 +446,7 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
+	edit_layout->addWidget(toolbutton_choosesubg_);
 
 	// separator group
 	groupbox_sep1_ = new QGroupBox(this);
@@ -446,7 +459,7 @@ void MainWindow::CreateGroups()
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
 	fiber_layout->addWidget(toolbutton_choosebase_);
-	fiber_layout->addWidget(toolbutton_chooseceiling_);
+	fiber_layout->addWidget(toolbutton_chooseb_ceiling_);
 	fiber_layout->addWidget(pushbutton_project_);
 	fiber_layout->addWidget(pushbutton_deformation_);
 
@@ -512,7 +525,7 @@ void MainWindow::CreateGroups()
 	saveinfo_layout->addWidget(checkbox_savevert_, 1, 1);
 	saveinfo_layout->addWidget(checkbox_saveline_, 1, 2);
 	saveinfo_layout->addWidget(checkbox_savebase_, 2, 1);
-	saveinfo_layout->addWidget(checkbox_saveceiling_, 2, 2);
+	saveinfo_layout->addWidget(checkbox_saveb_ceiling_, 2, 2);
 	saveinfo_layout->addWidget(checkbox_savecut_, 3, 1);
 
 	groupbox_savelayer_ = new QGroupBox(tr("Save layer"), this);
@@ -575,7 +588,13 @@ void MainWindow::ChooseBaseClicked(bool down)
 
 void MainWindow::ChooseCeilingClicked(bool down)
 {
-	toolbutton_chooseceiling_->setDown(down);
+	toolbutton_chooseb_ceiling_->setDown(down);
+}
+
+
+void MainWindow::ChooseSubGClicked(bool down)
+{
+	toolbutton_choosesubg_->setDown(down);
 }
 
 
@@ -610,7 +629,7 @@ void MainWindow::GetSaveParas()
 		checkbox_savevert_->isChecked(),
 		checkbox_saveline_->isChecked(),
 		checkbox_savebase_->isChecked(),
-		checkbox_saveceiling_->isChecked(),
+		checkbox_saveb_ceiling_->isChecked(),
 		checkbox_savecut_->isChecked(),
 		spinbox_minlayer1_->value(),
 		spinbox_maxlayer1_->value(),
@@ -743,16 +762,21 @@ void MainWindow::SetMaxOrderSlider(int max_value)
 
 void MainWindow::OpenSaveDialog()
 {
-	QString filename = QFileDialog::
-		getSaveFileName(this, tr("Save Mesh"),
-		"..", tr("OBJ files(*.obj);;PWF files(*.pwf)"));
+	QString selected_filter;
+	QString filename = QFileDialog::getSaveFileName(
+		this, 
+		tr("Save Mesh"),
+		"..", 
+		tr("OBJ files(*.obj);;PWF files(*.pwf)"),
+		&selected_filter
+		);
 
 	if (filename.isEmpty())
 	{
 		return;
 	}
 
-	if (filename.contains(".obj") || filename.contains(".OBJ"))
+	if (selected_filter == "OBJ files(*.obj)")
 	{
 		emit(SendSaveOBJParas(filename));
 	}

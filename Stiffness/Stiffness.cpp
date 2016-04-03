@@ -15,10 +15,11 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph)
 }
 
 
-Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm)
+Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path)
 {
 	ptr_dualgraph_ = ptr_dualgraph;
 	ptr_parm_ = ptr_parm;
+	ptr_path_ = ptr_path;
 
 	r_ = ptr_parm->radius_;
 	nr_ = 0.0;
@@ -499,18 +500,6 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
 
 void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 {	
-	/* --- Gnuplot File Generation --- */
-	char meshpath[FILENMAX],
-		plotpath[FILENMAX];
-
-	double  exagg_static = 1;
-	float	scale = 1;
-
-	/* append restrained node's 0 deformation at the end of D */
-	char IN_file[FILENMAX];
-	string str = fname + to_string(id) + ".3dd";
-	sprintf_s(IN_file, "%s", str.c_str());
-
 	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
 	D_joined.setZero();
 
@@ -519,9 +508,18 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 		D_joined[i] = D[i];
 	}
 
-	stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
-	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
-	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
+
+	/* --- Gnuplot File Generation --- */
+	string path = ptr_path_;
+	string fpath = path + '/' + fname + ".3dd";
+	string meshpath = path + '/' + fname + "-msh";
+	string plotpath = path + '/' + fname + ".plt";
+
+	double  exagg_static = 1;
+	float	scale = 1;
+
+	stiff_io_.WriteInputData(fpath.c_str(), ptr_dualgraph_, ptr_parm_, verbose);
+	stiff_io_.GnuPltStaticMesh(fpath.c_str(), meshpath.c_str(), plotpath.c_str(),
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
 }
 

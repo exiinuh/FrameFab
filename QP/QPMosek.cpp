@@ -104,7 +104,7 @@ bool QPMosek::solve(const S& H, const V& f,
 				r = MSK_appendcons(task, numcon);
 
 			/* Append 'NUMVAR' variables.
-			The variables will initially be fixed at zero (x=0). */
+			The variables will initially be b_fixed at zero (x=0). */
 			if (r == MSK_RES_OK)
 				r = MSK_appendvars(task, numvar);
 
@@ -433,7 +433,7 @@ bool QPMosek::test() const
 			r = MSK_appendcons(task, numcon);
 
 		/* Append 'numvar' variables.
-		The variables will initially be fixed at zero (x=0). */
+		The variables will initially be b_fixed at zero (x=0). */
 		if (r == MSK_RES_OK)
 			r = MSK_appendvars(task, numvar);
 
@@ -623,7 +623,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 				r = MSK_appendcons(task, numcon);
 
 			/* Append 'NUMVAR' variables.
-			The variables will initially be fixed at zero (x=0). */
+			The variables will initially be b_fixed at zero (x=0). */
 			if (r == MSK_RES_OK)
 				r = MSK_appendvars(task, numvar);
 

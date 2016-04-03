@@ -116,7 +116,7 @@ void FiberPrintPlugIn::SweepingPrint()
 void FiberPrintPlugIn::GetDeformation()
 {
 	DualGraph *ptr_dualgraph = new DualGraph(ptr_frame_);
-	Stiffness *ptr_stiff = new Stiffness(ptr_dualgraph, ptr_parm_);
+	Stiffness *ptr_stiff = new Stiffness(ptr_dualgraph, ptr_parm_, ptr_path_);
 
 	ptr_dualgraph->Dualization();
 	ptr_stiff->Init();
@@ -129,7 +129,7 @@ void FiberPrintPlugIn::GetDeformation()
 	VX x(Nd);
 	x.setOnes();
 
-	ptr_stiff->CalculateD(D, x, 0, true, true, false);
+	ptr_stiff->CalculateD(D, x, 0, true, true, true);
 }
 
 

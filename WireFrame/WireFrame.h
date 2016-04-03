@@ -21,24 +21,26 @@ class WF_vert
 {
 public:
 	WF_vert()
-		: pedge_(NULL), id_(0), degree_(0), fixed_(0)
+		: pedge_(NULL), id_(0), degree_(0), b_fixed_(false), b_subg_(false)
 	{}
 	WF_vert(Vec3f p)
 		: pedge_(NULL), position_(p), render_pos_(p), 
-		id_(0), degree_(0), fixed_(0)
+		id_(0), degree_(0), b_fixed_(false), b_subg_(false)
 	{}
 	WF_vert(double x, double y, double z)
 		: pedge_(NULL), position_(point(x, y, z)), render_pos_(point(x, y, z)), 
-		id_(0), degree_(0), fixed_(0)
+		id_(0), degree_(0), b_fixed_(false), b_subg_(false)
 	{}
 	~WF_vert(){}
 
 public:
-	point		Position()	{ return position_; }
-	point		RenderPos()	{ return render_pos_; }
-	int			ID()		{ return id_; }
-	int			Degree()	{ return degree_; }
-	bool		isFixed()	{ return fixed_; }
+	point		Position()		{ return position_; }
+	point		RenderPos()		{ return render_pos_; }
+	int			ID()			{ return id_; }
+	int			Degree()		{ return degree_; }
+
+	bool		isFixed()		{ return b_fixed_; }
+	bool		isSubgraph()	{ return b_subg_; }
 
 	void		SetPosition(point p)						{ position_ = p; }
 	void		SetPosition(double x, double y, double z)	{ position_ = point(x, y, z); }
@@ -46,7 +48,9 @@ public:
 	void		SetRenderPos(double x, double y, double z)	{ render_pos_ = point(x, y, z); }
 	void		SetID(int id)								{ id_ = id; }
 	void		IncreaseDegree()							{ degree_++; }
-	void		SetFixed(bool fixed)						{ fixed_ = fixed; }
+
+	void		SetFixed(bool b_fixed)						{ b_fixed_ = b_fixed; }
+	void		SetSubgraph(bool b_subg)					{ b_subg_ = b_subg; }
 
 public:
 	WF_edge		*pedge_;
@@ -56,7 +60,8 @@ private:
 	point		render_pos_;
 	int			id_;
 	int			degree_;
-	bool		fixed_;
+	bool		b_fixed_;
+	bool		b_subg_;
 };
 
 
@@ -65,20 +70,22 @@ class WF_edge
 public:
 	WF_edge()
 		:pvert_(NULL), pnext_(NULL), ppair_(NULL), 
-		id_(0), layer_(-1), pillar_(false), ceiling_(false)
+		id_(0), layer_(-1), b_pillar_(false), b_ceiling_(false), b_subg_(false)
 	{}
 	~WF_edge(){}
 
 public:
 	int			ID()			{ return id_; }
 	int			Layer()			{ return layer_; }
-	bool		isPillar()		{ return pillar_; }
-	bool		isCeiling()		{ return ceiling_; }
+	bool		isPillar()		{ return b_pillar_; }
+	bool		isCeiling()		{ return b_ceiling_; }
+	bool		isSubgraph()	{ return b_subg_; }
 
 	void		SetID(int id)				{ id_ = id; }
 	void		SetLayer(int layer)			{ layer_ = layer; }
-	void		SetPillar(bool pillar)		{ pillar_ = pillar; }
-	void		SetCeiling(bool ceiling)	{ ceiling_ = ceiling; }
+	void		SetPillar(bool b_pillar)	{ b_pillar_ = b_pillar; }
+	void		SetCeiling(bool b_ceiling)	{ b_ceiling_ = b_ceiling; }
+	void		SetSubgraph(bool b_subg)	{ b_subg_ = b_subg; }
 
 	point CenterPos()
 	{
@@ -105,8 +112,9 @@ public:
 private:
 	int			id_;
 	int			layer_;
-	bool		pillar_;
-	bool		ceiling_;
+	bool		b_pillar_;
+	bool		b_ceiling_;
+	bool		b_subg_;
 };
 
 
@@ -138,6 +146,7 @@ public:
 
 	void		ImportFrom3DD(const char *path);
 
+	void		ExportSubgraph(const char *path);
 	void		ExportPoints(int min_layer, int max_layer, const char *path);
 	void		ExportLines(int min_layer, int max_layer, const char *path);
 
@@ -152,12 +161,13 @@ public:
 	void		ProjectBound(vector<WF_vert*> &bound, double len);
 	void		ModifyProjection(double len);
 	void		MakeCeiling(vector<WF_edge*> &bound);
+	void		MakeSubGraph(vector<WF_edge*> &subg_e);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
-	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
-	inline int					SizeOfPillar()			{ return pillar_size_; }
-	inline int					SizeOfCeiling()			{ return ceiling_size_; }
+	inline int					SizeOfFixedVert()		{ return b_fixed_vert_; }
+	inline int					SizeOfPillar()			{ return b_pillar_size_; }
+	inline int					SizeOfCeiling()			{ return b_ceiling_size_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
@@ -217,9 +227,9 @@ private:
 	vector<WF_vert*>	*pvert_list_;
 	vector<WF_edge*>	*pedge_list_;
 
-	int					fixed_vert_;
-	int					pillar_size_;
-	int					ceiling_size_;
+	int					b_fixed_vert_;
+	int					b_pillar_size_;
+	int					b_ceiling_size_;
 	int					max_layer_;
 
 	double				maxx_;
