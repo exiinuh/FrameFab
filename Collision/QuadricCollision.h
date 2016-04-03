@@ -27,15 +27,15 @@ public:
 	~QuadricCollision();
 
 public:
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); // 
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); 
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
+	void	DetectCollision(WF_edge *target_e, vector<WF_edge*> exist_edge, vector<GeoV3> &output);
 
 	void	Init(vector<lld> &colli_map);
 
-
-	vector<GeoV3> DetectStructure(WF_edge *target_e, vector<WF_edge*> exist_edge_);
 private:
 	void	DetectEdge(WF_edge *order_e, vector<lld> &colli_map);
+	bool	DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ);
 	bool	DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ);
 	bool	DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, GeoV3 normal);
 
@@ -46,8 +46,6 @@ private:
 
 	bool	ParallelCase(GeoV3 target_start, GeoV3 target_end,
 				GeoV3 order_start, GeoV3 order_end, GeoV3 normal);
-
-	bool DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ);
 
 	bool	DetectCone(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 	bool	DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);

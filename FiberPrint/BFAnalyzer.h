@@ -37,6 +37,8 @@ private:
 	bool	GenerateSeq(int h, int t);
 	bool	TestifySeq();
 
+	void	PrintOutQueue(int N);
+
 private:
 	vector<bool>	inqueue_;
 };

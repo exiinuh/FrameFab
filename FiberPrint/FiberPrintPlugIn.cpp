@@ -60,13 +60,13 @@ void FiberPrintPlugIn::FrameFabPrint()
 	cout << "Graph Cut completed." << endl;
 
 
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
 
-	//	return;
-	//}
+		return;
+	}
 
 	printf("FrameFab print done.\n");
 
@@ -110,7 +110,7 @@ void FiberPrintPlugIn::SweepingPrint()
 
 		return;
 	}
-	printf("BruteForce print done.\n");
+	printf("Sweeping print done.\n");
 }
 
 void FiberPrintPlugIn::GetDeformation()

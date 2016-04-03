@@ -89,9 +89,10 @@ bool BFAnalyzer::TestifySeq()
 		WF_edge *e = ptr_frame_->GetEdge(orig_i);
 
 		/* detect floating edge */
-		if (!ptr_subgraph_->isExistingVert(e->pvert_->ID())
+		if (!e->isPillar() && !ptr_subgraph_->isExistingVert(e->pvert_->ID())
 			&& !ptr_subgraph_->isExistingVert(e->ppair_->pvert_->ID()))
 		{
+			printf("Edge #%d: floating edge detected.\n", i);
 			return false;
 		}
 
@@ -102,14 +103,19 @@ bool BFAnalyzer::TestifySeq()
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
 			& angle_state_[dual_i][2])) == 0)
 		{
-			printf("Test on collision falied.\n");
+			printf("Edge #%d: test on collision falied.\n", i);
 			return false;
 		}
 
 		/* testify stiffness */
 		if (!TestifyStiffness())
 		{
-			printf("Test on stiffness falied.\n");
+			//if (i == Nd / 2 - 1)
+			//{
+			//	PrintOutQueue(Nd / 2);
+			//	getchar();
+			//}
+			printf("Edge #%d: test on stiffness falied.\n", i);
 			return false;
 		}
 
@@ -118,4 +124,21 @@ bool BFAnalyzer::TestifySeq()
 	}
 
 	return true;
+}
+
+
+void BFAnalyzer::PrintOutQueue(int N)
+{	
+	string path = ptr_path_;
+	string queue_path = path + "/BruteForceQueue.txt";
+
+	FILE *fp = fopen(queue_path.c_str(), "w");
+
+	for (int i = 0; i < N; i++)
+	{
+		int dual_id = print_queue_[i].dual_id_;
+		fprintf(fp, "%d\n", ptr_dualgraph_->e_orig_id(dual_id) / 2);
+	}
+
+	fclose(fp);
 }

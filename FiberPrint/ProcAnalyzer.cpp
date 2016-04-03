@@ -57,7 +57,7 @@ void ProcAnalyzer::ProcPrint()
 		}
 		else
 		{
-			temp.normal_ = ptr_collision->DetectStructure(e, exist_edge_);
+			ptr_collision->DetectCollision(e, exist_edge_, temp.normal_);
 		}
 		exist_edge_.push_back(e);
 		process_list_.push_back(temp);

@@ -282,10 +282,10 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		}
 
 		/* collision weight */
-		L = (double)ptr_collision_->ColFreeAngle(angle_state_[dual_j]) /
-			ptr_collision_->Divide();
+		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
+		L = free_angle * 1.0 / ptr_collision_->Divide();
 
-		if (0 == L)
+		if (L < eps)
 		{
 			printf("...collision examination failed.\n");
 			return -1;
