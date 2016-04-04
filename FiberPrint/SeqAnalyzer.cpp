@@ -54,14 +54,11 @@ SeqAnalyzer::~SeqAnalyzer()
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
 
-	if (ptr_dualgraph_ != NULL)
+	int Nm = colli_map_.size();
+	for (int i = 0; i < Nm; i++)
 	{
-		int Nd = ptr_dualgraph_->SizeOfVertList();
-		for (int i = 0; i < Nd*Nd; i++)
-		{
-			delete colli_map_[i];
-			colli_map_[i] = NULL;
-		}
+		delete colli_map_[i];
+		colli_map_[i] = NULL;
 	}
 }
 

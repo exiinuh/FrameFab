@@ -258,8 +258,8 @@ void MainWindow::CreateCheckBoxes()
 
 	checkbox_savevert_ = new QCheckBox(tr("Vert"), this);
 	checkbox_saveline_ = new QCheckBox(tr("Line"), this);
-	checkbox_savebase_ = new QCheckBox(tr("Base"), this);
-	checkbox_saveb_ceiling_ = new QCheckBox(tr("Ceiling"), this);
+	checkbox_savepillar_ = new QCheckBox(tr("Pillar"), this);
+	checkbox_saveceiling_ = new QCheckBox(tr("Ceiling"), this);
 	checkbox_savecut_ = new QCheckBox(tr("Cut"), this);
 }
 
@@ -523,8 +523,8 @@ void MainWindow::CreateGroups()
 	QGridLayout *saveinfo_layout = new QGridLayout(groupbox_saveinfo_);
 	saveinfo_layout->addWidget(checkbox_savevert_, 1, 1);
 	saveinfo_layout->addWidget(checkbox_saveline_, 1, 2);
-	saveinfo_layout->addWidget(checkbox_savebase_, 2, 1);
-	saveinfo_layout->addWidget(checkbox_saveb_ceiling_, 2, 2);
+	saveinfo_layout->addWidget(checkbox_savepillar_, 2, 1);
+	saveinfo_layout->addWidget(checkbox_saveceiling_, 2, 2);
 	saveinfo_layout->addWidget(checkbox_savecut_, 3, 1);
 
 	groupbox_savelayer_ = new QGroupBox(tr("Save layer"), this);
@@ -627,8 +627,8 @@ void MainWindow::GetSaveParas()
 	emit(SendSavePWFParas(
 		checkbox_savevert_->isChecked(),
 		checkbox_saveline_->isChecked(),
-		checkbox_savebase_->isChecked(),
-		checkbox_saveb_ceiling_->isChecked(),
+		checkbox_savepillar_->isChecked(),
+		checkbox_saveceiling_->isChecked(),
 		checkbox_savecut_->isChecked(),
 		spinbox_minlayer1_->value(),
 		spinbox_maxlayer1_->value(),

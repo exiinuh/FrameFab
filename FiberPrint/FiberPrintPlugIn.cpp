@@ -31,21 +31,21 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame,
 
 FiberPrintPlugIn::~FiberPrintPlugIn()
 {
-	delete ptr_seqanalyzer_;
-	ptr_seqanalyzer_ = NULL;
-
 	delete ptr_graphcut_;
 	ptr_graphcut_ = NULL;
+
+	delete ptr_seqanalyzer_;
+	ptr_seqanalyzer_ = NULL;
 }
 
 
 void FiberPrintPlugIn::Init()
 {
-	delete ptr_seqanalyzer_;
-	ptr_seqanalyzer_ = NULL;
-
 	delete ptr_graphcut_;
 	ptr_graphcut_ = NULL;
+
+	delete ptr_seqanalyzer_;
+	ptr_seqanalyzer_ = NULL;
 }
 
 
@@ -61,13 +61,13 @@ void FiberPrintPlugIn::FrameFabPrint()
 	cout << "Graph Cut completed." << endl;
 
 
-	if (!ptr_seqanalyzer_->SeqPrint())
-	{
-		cout << "Model not printable!" << endl;
-		getchar();
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
 
-		return;
-	}
+	//	return;
+	//}
 
 	printf("FrameFab print done.\n");
 

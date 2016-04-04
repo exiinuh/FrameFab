@@ -69,9 +69,68 @@ protected:
 	void	mouseDoubleClickEvent(QMouseEvent *e);
 	void	wheelEvent(QWheelEvent *e);
 
-public:
 	void	keyPressEvent(QKeyEvent *e);
 	void	keyReleaseEvent(QKeyEvent *e);
+
+private:
+	void	Render();
+	void	SetLight();
+
+	void	DrawAxes(bool bv);
+	void	DrawPoints(bool bv);
+	void	DrawEdge(bool bv);
+	void	DrawHeat(bool bv);
+	void	DrawOrder(bool bv);
+
+	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
+	bool	CaptureVertex(QPoint mouse);
+	bool	CaptureEdge(QPoint mouse);
+
+public slots:
+	void	SetBackground();
+
+	void	CheckDrawPoint(bool bv);
+	void	CheckEdgeMode(int type);
+	void	CheckLight(bool bv);
+	void	CheckDrawAxes(bool bv);
+
+	void	SwitchToNormal();
+	void	SwitchToChooseBase();
+	void	SwitchToChooseCeiling();
+	void	SwitchToChooseSubG();
+
+public slots:
+	void	ReadFrame();
+	void	WriteFrame(QString filename);
+	void	WriteFrame(
+				bool bVert, bool bLine, 
+				bool bPillar, bool bCeiling,
+				bool bCut, int min_layer, int max_layer, 
+				QString filename
+			);
+	void	Import();
+	void	Export();
+	void	Export(
+				int min_layer, int max_layer, 
+				QString vert_path, QString line_path
+			);
+	void	ScaleFrame(double scale);
+
+	void	FiberPrintAnalysis(double Wl, double Wp, double Wa);
+	void	DeformationAnalysis(double Wl, double Wp, double Wa);
+
+	void	ProjectBound(double len);
+	void	ModifyProjection(double len);
+
+	void	RotateXY();
+	void	RotateXZ();
+	void	RotateYZ();
+
+	void	PrintOrder(int order);
+	void	PrintLastStep();
+	void	PrintNextStep();
+	void	PrintLastLayer();
+	void	PrintNextLayer();
 
 signals:
 	void	ChooseBasePressed(bool);
@@ -91,72 +150,12 @@ signals:
 
 	void	Reset();
 
-private:
-	void	CoordinatesTransform(QPoint p, double *x, double *y, double *z);
-	bool	CaptureVertex(QPoint mouse);
-	bool	CaptureEdge(QPoint mouse);
-
-	void	Render();
-	void	SetLight();
-
-public slots:
-	void	SetBackground();
-	void	ScaleFrame(double scale);
-
-	void	ReadFrame();
-	void	WriteFrame(QString filename);
-	void	WriteFrame(
-				bool bVert, bool bLine, 
-				bool bBase, bool bCeiling, bool bCut,
-				int min_layer, int max_layer, QString filename
-			);
-	void	Import();
-	void	Export();
-	void	Export(
-				int min_layer, int max_layer, 
-				QString vert_path, QString line_path
-			);
-
-	void	CheckDrawPoint(bool bv);
-	void	CheckEdgeMode(int type);
-	void	CheckLight(bool bv);
-	void	CheckDrawAxes(bool bv);
-
-	void	SwitchToNormal();
-	void	SwitchToChooseBase();
-	void	SwitchToChooseCeiling();
-	void	SwitchToChooseSubG();
-
-private:
-	void	DrawAxes(bool bv);
-	void	DrawPoints(bool bv);
-	void	DrawEdge(bool bv);
-	void	DrawHeat(bool bv);
-	void	DrawOrder(bool bv);
-
-public slots:
-
-	void	FiberPrintAnalysis(double Wl, double Wp, double Wa);
-	void	DeformationAnalysis(double Wl, double Wp, double Wa);
-
-	void	ProjectBound(double len);
-	void	ModifyProjection(double len);
-
-	void	RotateXY();
-	void	RotateXZ();
-	void	RotateYZ();
-
-	void	PrintOrder(int order);
-	void	PrintLastStep();
-	void	PrintNextStep();
-	void	PrintLastLayer();
-	void	PrintNextLayer();
-
 public:
 	MainWindow		*ptr_mainwindow_;
 	CArcBall		*ptr_arcball_;
 	WireFrame		*ptr_frame_;
 
+private:
 	// eye
 	GLfloat			eye_distance_;
 	point			eye_goal_;

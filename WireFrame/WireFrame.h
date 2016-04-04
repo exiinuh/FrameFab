@@ -1,9 +1,12 @@
 #pragma once
 
+#include <assert.h>
 #include <vector>
 #include <map>
 #include <cmath>
+
 #include "WireFrame\Vec.h"
+
 
 using namespace std;
 using trimesh::vec;
@@ -148,9 +151,12 @@ public:
 	void		LoadFromOBJ(const char *path);
 	void		LoadFromPWF(const char *path);
 	void		WriteToOBJ(const char *path);
-	void		WriteToPWF(bool bVert, bool bLine, 
-							bool bBase, bool bCeiling, bool bCut,
-							int min_layer, int max_layer, const char *path);
+	void		WriteToPWF(
+					bool bVert, bool bLine, 
+					bool bPillar, bool bCeiling,
+					bool bCut, int min_layer, int max_layer, 
+					const char *path
+				);
 
 	void		ImportFrom3DD(const char *path);
 
@@ -204,7 +210,6 @@ public:
 	inline double		minY()		{ return miny_; }
 	inline double		maxZ()		{ return maxz_; }
 	inline double		minZ()		{ return minz_; }
-	inline double		Base()		{ return base_; }
 
 	inline double Norm(point u)
 	{
@@ -249,7 +254,6 @@ private:
 	double				minx_;
 	double				miny_;
 	double				minz_;
-	double				base_;
 
 	Vec3f				center_pos_;
 	float				scaleV_;

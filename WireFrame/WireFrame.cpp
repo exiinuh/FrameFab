@@ -33,6 +33,8 @@ WireFrame::~WireFrame()
 
 void WireFrame::LoadFromOBJ(const char *path)
 {
+	/* need to deal with replication */
+
 	FILE *fp = fopen(path, "r");
 
 	try
@@ -145,6 +147,8 @@ void WireFrame::LoadFromOBJ(const char *path)
 
 void WireFrame::LoadFromPWF(const char *path)
 {
+	/* assert that there is no replication in PWF */
+
 	FILE *fp = fopen(path, "r");
 
 	try
@@ -153,7 +157,6 @@ void WireFrame::LoadFromPWF(const char *path)
 		fseek(fp, 0, SEEK_SET);
 		char pLine[512];
 		char *tok;
-		vector<WF_vert*> tmp_points;
 		while (fgets(pLine, 512, fp))
 		{
 			if (pLine[0] == 'v' && pLine[1] == ' ')
@@ -170,8 +173,7 @@ void WireFrame::LoadFromPWF(const char *path)
 				}
 
 				p = point(p.x(), p.y(), p.z());
-				WF_vert *u = InsertVertex(p);
-				tmp_points.push_back(u);
+				InsertVertex(p);
 			}
 		}
 
@@ -204,34 +206,6 @@ void WireFrame::LoadFromPWF(const char *path)
 				{
 					e->SetLayer(layer);
 					e->ppair_->SetLayer(layer);
-				}
-			}
-		}
-
-		// read ceiling
-		fseek(fp, 0, SEEK_SET);
-		while (fgets(pLine, 512, fp))
-		{
-			if (pLine[0] == 'c' && pLine[1] == ' ')
-			{
-				tok = strtok(pLine, " ");
-
-				char tmp[128];
-				tok = strtok(NULL, " ");
-				strcpy(tmp, tok);
-				tmp[strcspn(tmp, " ")] = 0;
-				int u = (int)atof(tmp) - 1;
-
-				tok = strtok(NULL, " ");
-				strcpy(tmp, tok);
-				tmp[strcspn(tmp, " ")] = 0;
-				int v = (int)atof(tmp) - 1;
-
-				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
-				if (e != NULL)
-				{
-					e->SetCeiling(true);
-					e->ppair_->SetCeiling(true);
 				}
 			}
 		}
@@ -272,45 +246,71 @@ void WireFrame::LoadFromPWF(const char *path)
 
 				if (prev != -1)
 				{
-					InsertEdge(tmp_points[prev], tmp_points[curv]);
+					InsertEdge((*pvert_list_)[prev], (*pvert_list_)[curv]);
 				}
 
 				prev = curv;
 			}
 		}
 
-		// read base
+		// read pillar
 		fseek(fp, 0, SEEK_SET);
-		while (c = fgetc(fp), c != EOF)
+		while (fgets(pLine, 512, fp))
 		{
-			while (c != 'b' && c != EOF)
+			if (pLine[0] == 'p' && pLine[1] == ' ')
 			{
-				c = fgetc(fp);
-			}
+				tok = strtok(pLine, " ");
 
-			if ((c = fgetc(fp)) != ' ')
-			{
-				continue;
-			}
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
 
-			int base_id;
-			while (c != '\n' && c != EOF)
-			{
-				while (c = fgetc(fp), c != '\n' && c != EOF && !isdigit(c))
-					;
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
 
-				for (base_id = 0; isdigit(c); c = fgetc(fp))
-				{
-					base_id = base_id * 10 + c - '0';
-				}
+				WF_vert *b = (*pvert_list_)[u];
+				b->SetBase(true);
 
-				(*pvert_list_)[base_id - 1]->SetFixed(true);
-				WF_edge *e = (*pvert_list_)[base_id - 1]->pedge_;
-				while (e != NULL)
+				WF_vert *f = (*pvert_list_)[v];
+				f->SetFixed(true);
+
+				WF_edge *e = InsertEdge(b, f);
+				if (e != NULL)
 				{
 					e->SetPillar(true);
 					e->ppair_->SetPillar(true);
-					e = e->pnext_;
+				}
+			}
+		}
+
+		// read ceiling
+		fseek(fp, 0, SEEK_SET);
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'c' && pLine[1] == ' ')
+			{
+				tok = strtok(pLine, " ");
+
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
+
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
+
+				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
+				if (e != NULL)
+				{
+					e->SetCeiling(true);
+					e->ppair_->SetCeiling(true);
 				}
 			}
 		}
@@ -352,9 +352,11 @@ void WireFrame::WriteToOBJ(const char *path)
 }
 
 
-void WireFrame::WriteToPWF(bool bVert, bool bLine,
-	bool bBase, bool bCeiling, bool bCut,
-	int min_layer, int max_layer, const char *path)
+void WireFrame::WriteToPWF(
+	bool bVert, bool bLine,
+	bool bPillar, bool bCeiling,
+	bool bCut, int min_layer, int max_layer, 
+	const char *path)
 {
 	if ((*pedge_list_)[0]->Layer() == -1)
 	{
@@ -376,6 +378,11 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		WF_edge *e2 = e1->ppair_;
 		if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 		{
+			if (e1->isPillar() && !bPillar)
+			{
+				continue;
+			}
+
 			int u = e2->pvert_->ID();
 			int v = e1->pvert_->ID();
 			if (hash[u] == -1)
@@ -407,7 +414,8 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		{
 			WF_edge *e1 = (*pedge_list_)[i];
 			WF_edge *e2 = e1->ppair_;
-			if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
+			if (i < e2->ID() && !e1->isPillar() && 
+				e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 			{
 				int u = e2->pvert_->ID();
 				int v = e1->pvert_->ID();
@@ -416,14 +424,19 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		}
 	}
 
-	if (bBase)
+	if (bPillar)
 	{
-		for (int i = 0; i < Ne; i++)
+		for (int i = 0; i < M; i++)
 		{
-			int u = export_vert[i];
-			if ((*pvert_list_)[u]->isFixed() && hash[u] != -1)
+			WF_edge *e1 = (*pedge_list_)[i];
+			WF_edge *e2 = e1->ppair_;
+			if (i < e2->ID() && e1->isPillar()
+				&& e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 			{
-				fprintf(fp, "b %d\n", hash[u]);
+				int u = e2->pvert_->ID();
+				int v = e1->pvert_->ID();
+				assert(e2->pvert_->isBase());
+				fprintf(fp, "p %d %d\n", hash[u], hash[v]);
 			}
 		}
 	}
@@ -669,6 +682,7 @@ WF_vert* WireFrame::InsertVertex(Vec3f p)
 
 	WF_vert *vert = new WF_vert(p);
 	pvert_list_->push_back(vert);
+	vert->SetID(N);
 	return vert;
 }
 
@@ -723,7 +737,6 @@ void WireFrame::Unify()
 	minx_ = 1e20;
 	miny_ = 1e20;
 	minz_ = 1e20;
-	base_ = 1e20;
 
 	fixed_vert_ = 0;
 	base_vert_ = 0;
@@ -764,18 +777,6 @@ void WireFrame::Unify()
 				minz_ = p.z();
 			}
 		}
-		else
-		{
-			if (p.z() < base_)
-			{
-				base_ = p.z();
-			}
-		}
-	}
-
-	if (base_ > minz_)
-	{
-		base_ = minz_;
 	}
 
 	int M = SizeOfEdgeList();
@@ -954,8 +955,7 @@ void WireFrame::ModifyProjection(double len)
 			double x = u->Position().x();
 			double y = u->Position().y();
 			double z = u->Position().z();
-			z += u->pedge_->Length();
-			z -= len;
+			z = minz_ - len;
 			u->SetPosition(x, y, z);
 		}
 	}

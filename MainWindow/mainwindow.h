@@ -64,9 +64,12 @@ signals:
 	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
-	void	SendSavePWFParas(bool, bool, 
-							bool, bool, bool,
-							int, int, QString);
+	void	SendSavePWFParas(
+				bool, bool,  
+				bool, bool, 
+				bool, int, int, 
+				QString
+			);
 	void	SendExportParas(int, int, QString, QString);
 
 public slots:
@@ -163,8 +166,8 @@ private:
 	QCheckBox			*checkbox_axes_;
 	QCheckBox			*checkbox_savevert_;
 	QCheckBox			*checkbox_saveline_;
-	QCheckBox			*checkbox_savebase_;
-	QCheckBox			*checkbox_saveb_ceiling_;
+	QCheckBox			*checkbox_savepillar_;
+	QCheckBox			*checkbox_saveceiling_;
 	QCheckBox			*checkbox_savecut_;
 
 	// Radiobuttons
