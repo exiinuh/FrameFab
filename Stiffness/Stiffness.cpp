@@ -608,8 +608,3 @@ VectorXd Stiffness::Fe(int ei)
 	}
 	return tmpF;
 }
-
-
-void Stiffness::Debug()
-{
-}
