@@ -9,6 +9,8 @@
 #include "NoneCut.h"
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
+#include "ProcAnalyzer.h"
+
 
 class FiberPrintPlugIn
 {
@@ -51,6 +53,7 @@ public:
 private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
+	ProcAnalyzer* ptr_procanalyzer_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

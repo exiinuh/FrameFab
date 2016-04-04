@@ -101,8 +101,24 @@ void QuadricCollision::Init(vector<lld> &colli_map)
 }
 
 
+double QuadricCollision::DistanceEdge(WF_edge* order_e)
+{
+
+	gte::Segment<3, float> segment,segment_target;
+	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
+	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
+	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
+	auto result = distance(segment, segment_target);
+	return result.distance;
+
+}
+
 void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
 {
+	
+	if (DistanceEdge(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
+		return;
+
 	double ¦È;								// angle with Z axis (rad)
 	double ¦Õ;								// angle with X axis (rad)
 

@@ -52,8 +52,6 @@ private:
 	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
 
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
-
-
 	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
 
 	bool	Parallel(GeoV3 a, GeoV3 b);
@@ -62,6 +60,7 @@ private:
 	gte::Segment<3, float>		Seg(GeoV3 target_start, GeoV3 target_end);
 	gte::Triangle<3, float>		Tri(GeoV3 a, GeoV3 b, GeoV3 c);
 
+	double DistanceEdge(WF_edge* order_e);
 	GeoV3 Orientation(double ¦È, double ¦Õ)
 	{ 
 		return GeoV3(sin(¦È)*cos(¦Õ), sin(¦È)*sin(¦Õ), cos(¦È)); 
@@ -85,6 +84,9 @@ public:
 			lld mask = ((lld)1 << j);
 			for (int i = 0; i < 3; i++)
 			{
+				if (i<2 && j>59)
+					continue;
+
 				if ((colli_map[i] & mask) == 0)
 				{
 					sum_angle++;
@@ -97,7 +99,7 @@ public:
 
 	int Divide()
 	{
-		return 18 * 18 + 2;
+		return 18 * 10 + 2;
 	}
 
 	void			Debug();

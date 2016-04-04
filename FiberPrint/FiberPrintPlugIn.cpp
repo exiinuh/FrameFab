@@ -1,5 +1,6 @@
 #include "FiberPrintPlugIn.h"
 
+
 FiberPrintPlugIn::FiberPrintPlugIn()
 {
 	ptr_graphcut_ = new GraphCut();
