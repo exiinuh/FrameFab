@@ -801,11 +801,7 @@ void RenderingWidget::SwitchToNormal()
 
 	if (op_mode_ == CHOOSEBASE)
 	{
-		base_.clear();
-		for (int i = 0; i < captured_verts_.size(); i++)
-		{
-			base_.push_back(captured_verts_[i]);
-		}
+		ptr_frame_->MakeBase(captured_verts_);
 	}
 	else
 	if (op_mode_ == CHOOSECEILING)
@@ -960,9 +956,14 @@ void RenderingWidget::DrawPoints(bool bv)
 			glColor3f(0.0, 1.0, 1.0);
 		}
 
-		if (verts[i]->isSubgraph())
+		if (verts[i]->isBase())
 		{
 			glColor3f(0.0, 0.0, 1.0);
+		}
+
+		if (verts[i]->isSubgraph())
+		{
+			glColor3f(0.0, 1.0, 0.0);
 		}
 
 		if (is_captured_vert_[i])
@@ -1011,7 +1012,7 @@ void RenderingWidget::DrawEdge(bool bv)
 
 			if (e->isSubgraph())
 			{
-				glColor3f(0.0, 0.0, 1.0);
+				glColor3f(0.0, 1.0, 0.0);
 			}
 
 			if (is_captured_edge_[i])
@@ -1188,11 +1189,7 @@ void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 
 void RenderingWidget::ProjectBound(double len)
 {
-	if (base_.size() <= 0)
-	{
-		return;
-	}
-	ptr_frame_->ProjectBound(base_, len);
+	ptr_frame_->ProjectBound(len);
 
 	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	emit(operatorInfo(QString("")));

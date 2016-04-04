@@ -21,15 +21,18 @@ class WF_vert
 {
 public:
 	WF_vert()
-		: pedge_(NULL), id_(0), degree_(0), b_fixed_(false), b_subg_(false)
+		: pedge_(NULL), id_(0), degree_(0), 
+		b_fixed_(false), b_base_(false), b_subg_(false)
 	{}
 	WF_vert(Vec3f p)
 		: pedge_(NULL), position_(p), render_pos_(p), 
-		id_(0), degree_(0), b_fixed_(false), b_subg_(false)
+		id_(0), degree_(0), 
+		b_fixed_(false), b_base_(false), b_subg_(false)
 	{}
 	WF_vert(double x, double y, double z)
 		: pedge_(NULL), position_(point(x, y, z)), render_pos_(point(x, y, z)), 
-		id_(0), degree_(0), b_fixed_(false), b_subg_(false)
+		id_(0), degree_(0), 
+		b_fixed_(false), b_base_(false), b_subg_(false)
 	{}
 	~WF_vert(){}
 
@@ -40,6 +43,7 @@ public:
 	int			Degree()		{ return degree_; }
 
 	bool		isFixed()		{ return b_fixed_; }
+	bool		isBase()		{ return b_base_; }
 	bool		isSubgraph()	{ return b_subg_; }
 
 	void		SetPosition(point p)						{ position_ = p; }
@@ -50,6 +54,7 @@ public:
 	void		IncreaseDegree()							{ degree_++; }
 
 	void		SetFixed(bool b_fixed)						{ b_fixed_ = b_fixed; }
+	void		SetBase(bool b_base)						{ b_base_ = b_base; }
 	void		SetSubgraph(bool b_subg)					{ b_subg_ = b_subg; }
 
 public:
@@ -58,8 +63,11 @@ public:
 private:
 	point		position_;
 	point		render_pos_;
+
 	int			id_;
 	int			degree_;
+
+	bool		b_base_;
 	bool		b_fixed_;
 	bool		b_subg_;
 };
@@ -158,16 +166,18 @@ public:
 	point		Unify(Vec3f p);
 
 	void		SimplifyFrame();
-	void		ProjectBound(vector<WF_vert*> &bound, double len);
+	void		ProjectBound(double len);
 	void		ModifyProjection(double len);
-	void		MakeCeiling(vector<WF_edge*> &bound);
+	void		MakeBase(vector<WF_vert*> &base_v);
+	void		MakeCeiling(vector<WF_edge*> &bound_e);
 	void		MakeSubGraph(vector<WF_edge*> &subg_e);
 
 	inline int					SizeOfVertList()		{ return pvert_list_->size(); }
 	inline int					SizeOfEdgeList()		{ return pedge_list_->size(); }
-	inline int					SizeOfFixedVert()		{ return b_fixed_vert_; }
-	inline int					SizeOfPillar()			{ return b_pillar_size_; }
-	inline int					SizeOfCeiling()			{ return b_ceiling_size_; }
+	inline int					SizeOfFixedVert()		{ return fixed_vert_; }
+	inline int					SizeOfBaseVert()		{ return base_vert_; }
+	inline int					SizeOfPillar()			{ return pillar_size_; }
+	inline int					SizeOfCeiling()			{ return ceiling_size_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
@@ -227,9 +237,10 @@ private:
 	vector<WF_vert*>	*pvert_list_;
 	vector<WF_edge*>	*pedge_list_;
 
-	int					b_fixed_vert_;
-	int					b_pillar_size_;
-	int					b_ceiling_size_;
+	int					fixed_vert_;
+	int					base_vert_;
+	int					pillar_size_;
+	int					ceiling_size_;
 	int					max_layer_;
 
 	double				maxx_;

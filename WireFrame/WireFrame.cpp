@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-	:b_fixed_vert_(0), delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
+	:delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -725,9 +725,10 @@ void WireFrame::Unify()
 	minz_ = 1e20;
 	base_ = 1e20;
 
-	b_fixed_vert_ = 0;
-	b_pillar_size_ = 0;
-	b_ceiling_size_ = 0;
+	fixed_vert_ = 0;
+	base_vert_ = 0;
+	pillar_size_ = 0;
+	ceiling_size_ = 0;
 	max_layer_ = -1;
 
 	int N = SizeOfVertList();
@@ -783,11 +784,11 @@ void WireFrame::Unify()
 		(*pedge_list_)[i]->SetID(i);
 		if ((*pedge_list_)[i]->isPillar())
 		{
-			b_pillar_size_++;
+			pillar_size_++;
 		}
 		if ((*pedge_list_)[i]->isCeiling())
 		{
-			b_ceiling_size_++;
+			ceiling_size_++;
 		}
 		if ((*pedge_list_)[i]->Layer() > max_layer_)
 		{
@@ -817,7 +818,11 @@ void WireFrame::Unify()
 		(*pvert_list_)[i]->SetRenderPos( Unify((*pvert_list_)[i]->Position()) );
 		if ((*pvert_list_)[i]->isFixed())
 		{
-			b_fixed_vert_++;
+			fixed_vert_++;
+		}
+		if ((*pvert_list_)[i]->isBase())
+		{
+			base_vert_++;
 		}
 	}
 }
@@ -898,27 +903,38 @@ void WireFrame::SimplifyFrame()
 }
 
 
-void WireFrame::ProjectBound(vector<WF_vert*> &bound, double len)
+void WireFrame::ProjectBound(double len)
 {
-	int Nb = bound.size();
-	for (int i = 0; i < Nb; i++)
+	if (base_vert_ == 0)
 	{
-		WF_vert *u = bound[i]; 
-
-		point v_pos = u->Position();
-		v_pos.z() = minz_ - len;
-
-		WF_vert *v = InsertVertex(v_pos);
-		v->SetFixed(true);
-
-		WF_edge *e = InsertEdge(u, v);
-		e->SetPillar(true);
-		e->ppair_->SetPillar(true);
+		return;
 	}
-	
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetPillar(false);
+	}
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		WF_vert *u = (*pvert_list_)[i];
+		if (u->isBase())
+		{
+			point v_pos = u->Position();
+			v_pos.z() = minz_ - len;
+
+			WF_vert *v = InsertVertex(v_pos);
+			v->SetFixed(true);
+
+			WF_edge *e = InsertEdge(u, v);
+			e->SetPillar(true);
+			e->ppair_->SetPillar(true);
+		}
+	}
+
 	Unify();
-	//InsertEdge(N, SizeOfVertList() - 1);
-	//UpdateFrame();
 }
 
 
@@ -947,7 +963,7 @@ void WireFrame::ModifyProjection(double len)
 }
 
 
-void WireFrame::MakeCeiling(vector<WF_edge*> &bound)
+void WireFrame::MakeCeiling(vector<WF_edge*> &bound_e)
 {
 	int M = SizeOfEdgeList();
 	for (int i = 0; i < M; i++)
@@ -955,12 +971,32 @@ void WireFrame::MakeCeiling(vector<WF_edge*> &bound)
 		(*pedge_list_)[i]->SetCeiling(false);
 	}
 
-	int Mb = bound.size();
+	int Mb = bound_e.size();
 	for (int i = 0; i < Mb; i++)
 	{
-		WF_edge *e = bound[i];
+		WF_edge *e = bound_e[i];
 		e->SetCeiling(true);
 		e->ppair_->SetCeiling(true);
+	}
+
+	Unify();
+}
+
+
+void WireFrame::MakeBase(vector<WF_vert*> &base_v)
+{
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		(*pvert_list_)[i]->SetBase(false);
+		(*pvert_list_)[i]->SetFixed(false);
+	}
+
+	int Nb = base_v.size();
+	for (int i = 0; i < Nb; i++)
+	{
+		WF_vert *v = base_v[i];
+		v->SetBase(true);
 	}
 
 	Unify();

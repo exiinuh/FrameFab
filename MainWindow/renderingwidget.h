@@ -180,8 +180,6 @@ public:
 	vector<WF_edge*>	captured_edges_;
 	vector<bool>		is_captured_edge_;
 
-	vector<WF_vert*>	base_;
-
 	float				scale_;
 	int					print_order_;
 };
