@@ -27,6 +27,7 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
+	ptr_path_ = ptr_path;
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
@@ -34,7 +35,6 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	ptr_path_ = ptr_path;
 	debug_ = true;
 }
 
@@ -472,6 +472,8 @@ void ADMMCut::MakeLayers()
 		cut_count++;
 
 	} while (!CheckLabel(cut_count));
+
+	ptr_frame_->Unify();
 
 	fprintf(stdout, "All done!\n");
 }

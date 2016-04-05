@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-	:delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
+	:delta_tol_(1e-1), unify_size_(2.0), layer_size_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -742,7 +742,7 @@ void WireFrame::Unify()
 	base_vert_ = 0;
 	pillar_size_ = 0;
 	ceiling_size_ = 0;
-	max_layer_ = -1;
+	layer_size_ = -1;
 
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
@@ -791,12 +791,12 @@ void WireFrame::Unify()
 		{
 			ceiling_size_++;
 		}
-		if ((*pedge_list_)[i]->Layer() > max_layer_)
+		if ((*pedge_list_)[i]->Layer() > layer_size_)
 		{
-			max_layer_ = (*pedge_list_)[i]->Layer();
+			layer_size_ = (*pedge_list_)[i]->Layer();
 		}
 	}
-	max_layer_++;
+	layer_size_++;
 
 	float scaleX = maxx_ - minx_;
 	float scaleY = maxy_ - miny_;
@@ -911,12 +911,6 @@ void WireFrame::ProjectBound(double len)
 		return;
 	}
 
-	int M = SizeOfEdgeList();
-	for (int i = 0; i < M; i++)
-	{
-		(*pedge_list_)[i]->SetPillar(false);
-	}
-
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
 	{
@@ -965,6 +959,11 @@ void WireFrame::ModifyProjection(double len)
 
 void WireFrame::MakeCeiling(vector<WF_edge*> &bound_e)
 {
+	if (bound_e.size() == 0)
+	{
+		return;
+	}
+
 	int M = SizeOfEdgeList();
 	for (int i = 0; i < M; i++)
 	{
@@ -985,6 +984,17 @@ void WireFrame::MakeCeiling(vector<WF_edge*> &bound_e)
 
 void WireFrame::MakeBase(vector<WF_vert*> &base_v)
 {
+	if (base_v.size() == 0)
+	{
+		return;
+	}
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetPillar(false);
+	}
+
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
 	{
@@ -1005,6 +1015,11 @@ void WireFrame::MakeBase(vector<WF_vert*> &base_v)
 
 void WireFrame::MakeSubGraph(vector<WF_edge*> &subg_e)
 {
+	if (subg_e.size() == 0)
+	{
+		return;
+	}
+
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
 	{

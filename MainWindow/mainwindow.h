@@ -93,6 +93,9 @@ public slots:
 	void	SetOrderSlider(int value);
 	void	SetMaxOrderSlider(int max_value);
 
+	void	SetMinLayer(int min_value);
+	void	SetMaxLayer(int max_value);
+
 	void	OpenSaveDialog();
 	void	OpenExportDialog();
 
@@ -100,6 +103,8 @@ public slots:
 	void	ShowCapturedVert(int id, int degree);
 	void	ShowCapturedEdge(int id, double len);
 	void	ShowScale(double scale);
+	void	ShowLayerInfo(int layer_id, int total_id);
+
 	void	ShowAbout();
 	void	ShowError(QString error_msg);
 
@@ -129,6 +134,7 @@ private:
 	QLabel				*label_operatorinfo_;
 	QLabel				*label_modeinfo_;
 	QLabel				*label_capture_;
+	QLabel				*label_layer_;
 
 	QLabel				*label_wl_;
 	QLabel				*label_wp_;

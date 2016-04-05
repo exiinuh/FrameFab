@@ -21,20 +21,8 @@ bool FFAnalyzer::SeqPrint()
 
 	/* split layers */
 	/* label stores layer index of each dual node */
-	int max_layer = 0;
-	for (int i = 0; i < Nd; i++)
-	{
-		int orig_i = ptr_dualgraph_->e_orig_id(i);
-		int label = ptr_frame_->GetEdge(orig_i)->Layer();
-		if (label > max_layer)
-		{
-			max_layer = label;
-		}
-	}
-
-	max_layer++;
-	ptr_frame_->SetMaxLayer(max_layer);
-	layers_.resize(max_layer);
+	int layer_size = ptr_frame_->SizeOfLayer();
+	layers_.resize(layer_size);
 	for (int i = 0; i < Nd; i++)
 	{
 		int orig_i = ptr_dualgraph_->e_orig_id(i);
@@ -67,7 +55,7 @@ bool FFAnalyzer::SeqPrint()
 	}
 
 	printf("Size of base queue: %d\n", base_queue.size());
-	for (int l = 0; l < max_layer; l++)
+	for (int l = 0; l < layer_size; l++)
 	{
 		printf("Size of layer %d is %d\n", l, layers_[l].size());
 	}
@@ -84,7 +72,7 @@ bool FFAnalyzer::SeqPrint()
 	}
 
 	/* print starting from the first layer */
-	for (int l = 0; l < max_layer; l++)
+	for (int l = 0; l < layer_size; l++)
 	{
 		/*
 		* Nl: number of dual verts in current layer

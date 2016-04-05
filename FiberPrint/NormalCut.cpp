@@ -47,4 +47,6 @@ void NormalCut::MakeLayers()
 			it->second->ppair_->SetLayer(l);
 		}
 	}
+
+	ptr_frame_->Unify();
 }

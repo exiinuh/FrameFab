@@ -184,6 +184,7 @@ public:
 	inline int					SizeOfBaseVert()		{ return base_vert_; }
 	inline int					SizeOfPillar()			{ return pillar_size_; }
 	inline int					SizeOfCeiling()			{ return ceiling_size_; }
+	inline int					SizeOfLayer()			{ return layer_size_; }
 
 	inline vector<WF_vert*>		*GetVertList()			{ return pvert_list_; }
 	inline vector<WF_edge*>		*GetEdgeList()			{ return pedge_list_; }
@@ -200,9 +201,6 @@ public:
 
 	inline bool			isFixed(int u)				{ return (u >= SizeOfVertList() || u < 0) ? NULL : (*pvert_list_)[u]->isFixed(); }
 	inline bool			isPillar(int i)				{ return (i >= SizeOfEdgeList() || i < 0) ? NULL : (*pedge_list_)[i]->isPillar(); }
-
-	inline void 		SetMaxLayer(int max_layer)	{ max_layer_ = max_layer; }
-	inline int			GetMaxLayer()				{ return max_layer_; }
 
 	inline double		maxX()		{ return maxx_; }
 	inline double		minX()		{ return minx_; }
@@ -246,7 +244,7 @@ private:
 	int					base_vert_;
 	int					pillar_size_;
 	int					ceiling_size_;
-	int					max_layer_;
+	int					layer_size_;
 
 	double				maxx_;
 	double				maxy_;

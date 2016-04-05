@@ -61,13 +61,13 @@ void FiberPrintPlugIn::FrameFabPrint()
 	cout << "Graph Cut completed." << endl;
 
 
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
 
-	//	return;
-	//}
+		return;
+	}
 
 	printf("FrameFab print done.\n");
 
@@ -104,13 +104,13 @@ void FiberPrintPlugIn::SweepingPrint()
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 
-	if (!ptr_seqanalyzer_->SeqPrint())
-	{
-		cout << "Model not printable!" << endl;
-		getchar();
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
 
-		return;
-	}
+	//	return;
+	//}
 	printf("Sweeping print done.\n");
 }
 

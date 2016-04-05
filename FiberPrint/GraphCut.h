@@ -51,7 +51,7 @@ public:
 	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
 	char			*ptr_path_;
 
-
+protected:
 	/* for debuging */
 	bool			debug_;
 

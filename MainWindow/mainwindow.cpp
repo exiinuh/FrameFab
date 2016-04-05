@@ -136,11 +136,10 @@ void MainWindow::CreateLabels()
 
 	label_capture_ = new QLabel(this);
 
+	label_layer_ = new QLabel(this);
+
 	statusBar()->addWidget(label_meshinfo_);
 	connect(renderingwidget_, SIGNAL(meshInfo(int, int)), this, SLOT(ShowMeshInfo(int, int)));
-	
-	statusBar()->addWidget(label_operatorinfo_);
-	connect(renderingwidget_, SIGNAL(operatorInfo(QString)), label_operatorinfo_, SLOT(setText(QString)));
 
 	statusBar()->addWidget(label_modeinfo_);
 	connect(renderingwidget_, SIGNAL(modeInfo(QString)), label_modeinfo_, SLOT(setText(QString)));
@@ -148,6 +147,12 @@ void MainWindow::CreateLabels()
 	statusBar()->addWidget(label_capture_);
 	connect(renderingwidget_, SIGNAL(CapturedVert(int, int)), this, SLOT(ShowCapturedVert(int, int)));
 	connect(renderingwidget_, SIGNAL(CapturedEdge(int, double)), this, SLOT(ShowCapturedEdge(int, double)));
+
+	statusBar()->addWidget(label_layer_);
+	connect(renderingwidget_, SIGNAL(layerInfo(int, int)), this, SLOT(ShowLayerInfo(int, int)));
+
+	statusBar()->addWidget(label_operatorinfo_);
+	connect(renderingwidget_, SIGNAL(operatorInfo(QString)), label_operatorinfo_, SLOT(setText(QString)));
 
 
 	label_wl_		= new QLabel(QString("Seq Wl: "), this);
@@ -206,27 +211,31 @@ void MainWindow::CreateSpinBoxes()
 
 	spinbox_minlayer1_ = new QSpinBox(this);
 	spinbox_minlayer1_->setFixedWidth(60);
-	spinbox_minlayer1_->setRange(0, 20);
-	spinbox_minlayer1_->setValue(0);
+	spinbox_minlayer1_->setRange(1, 1);
+	spinbox_minlayer1_->setValue(1);
 	spinbox_minlayer1_->setSingleStep(1);
 
 	spinbox_maxlayer1_ = new QSpinBox(this);
 	spinbox_maxlayer1_->setFixedWidth(60);
-	spinbox_maxlayer1_->setRange(0, 20);
-	spinbox_maxlayer1_->setValue(0);
+	spinbox_maxlayer1_->setRange(1, 1);
+	spinbox_maxlayer1_->setValue(1);
 	spinbox_maxlayer1_->setSingleStep(1);
 
 	spinbox_minlayer2_ = new QSpinBox(this);
 	spinbox_minlayer2_->setFixedWidth(60);
-	spinbox_minlayer2_->setRange(0, 20);
-	spinbox_minlayer2_->setValue(0);
+	spinbox_minlayer2_->setRange(1, 1);
+	spinbox_minlayer2_->setValue(1);
 	spinbox_minlayer2_->setSingleStep(1);
 
 	spinbox_maxlayer2_ = new QSpinBox(this);
 	spinbox_maxlayer2_->setFixedWidth(60);
-	spinbox_maxlayer2_->setRange(0, 20);
-	spinbox_maxlayer2_->setValue(0);
+	spinbox_maxlayer2_->setRange(1, 1);
+	spinbox_maxlayer2_->setValue(1);
 	spinbox_maxlayer2_->setSingleStep(1);
+	connect(renderingwidget_, SIGNAL(SetMaxLayer(int)), this, SLOT(SetMaxLayer(int)));
+	connect(spinbox_maxlayer1_, SIGNAL(valueChanged(int)), this, SLOT(SetMinLayer(int)));
+	connect(spinbox_maxlayer2_, SIGNAL(valueChanged(int)), this, SLOT(SetMinLayer(int)));
+
 	//pushbutton_scale_ = new QPushButton(tr("Scale"), this);
 	//pushbutton_scale_->setFixedSize(80, 25);
 	//connect(pushbutton_scale_, SIGNAL(clicked()), this, SLOT(CheckScale()));
@@ -759,6 +768,23 @@ void MainWindow::SetMaxOrderSlider(int max_value)
 }
 
 
+
+void MainWindow::SetMinLayer(int min_value)
+{
+	spinbox_minlayer1_->setMaximum(min_value);
+	spinbox_minlayer2_->setMaximum(min_value);
+}
+
+
+void MainWindow::SetMaxLayer(int max_value)
+{
+	spinbox_maxlayer1_->setMaximum(max_value);
+	spinbox_maxlayer2_->setMaximum(max_value);
+	spinbox_minlayer1_->setMaximum(spinbox_maxlayer1_->value());
+	spinbox_minlayer2_->setMaximum(spinbox_maxlayer2_->value());
+}
+
+
 void MainWindow::OpenSaveDialog()
 {
 	QString selected_filter;
@@ -830,6 +856,28 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 void MainWindow::ShowScale(double scale)
 {
 	label_operatorinfo_->setText(QString("Scale: %1").arg(scale));
+}
+
+
+void MainWindow::ShowLayerInfo(int layer_id, int total_id)
+{
+	if (layer_id <= 0)
+	{
+		if (total_id <= 0)
+		{
+			label_layer_->setVisible(false);
+		}
+		else
+		{
+			label_layer_->setText(QString("Total layer: %1").arg(total_id));
+			label_capture_->setVisible(true);
+		}
+	}
+	else
+	{
+		label_layer_->setText(QString("Layer: %1 / %2").arg(layer_id).arg(total_id));
+		label_capture_->setVisible(true);
+	}
 }
 
 

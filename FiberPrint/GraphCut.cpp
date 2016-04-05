@@ -22,6 +22,7 @@ void GraphCut::MakeLayers()
 {
 }
 
+
 void GraphCut::PrintOutTimer()
 {
 }

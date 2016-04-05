@@ -57,8 +57,12 @@ void RenderingWidget::InitFiberData()
 }
 
 
-void RenderingWidget::InitInfoData(int vert_size, int edge_size, QString oper_info,
-	QString mode_info, int max_slider)
+void RenderingWidget::InitInfoData(
+	int vert_size, int edge_size, 
+	QString oper_info,
+	QString mode_info, 
+	int max_slider,
+	int layer_id, int total_id)
 {
 	emit(ChooseBasePressed(false));
 	emit(ChooseCeilingPressed(false));
@@ -67,7 +71,12 @@ void RenderingWidget::InitInfoData(int vert_size, int edge_size, QString oper_in
 	emit(operatorInfo(oper_info));
 	emit(modeInfo(mode_info));
 	emit(meshInfo(vert_size, edge_size));
+
 	emit(SetMaxOrderSlider(max_slider));
+
+	emit(layerInfo(layer_id, total_id));
+	emit(SetMaxLayer(total_id));
+
 	emit(Reset());
 }
 
@@ -617,6 +626,7 @@ bool RenderingWidget::CaptureVertex(QPoint mouse)
 				captured_verts_.push_back(verts[i]);
 				is_captured_vert_[i] = true;
 				emit(CapturedVert(i + 1, verts[i]->Degree()));
+				emit(layerInfo(-1, -1));
 			}
 
 			return true;
@@ -666,8 +676,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 					is_captured_edge_[i] = true;
 					is_captured_edge_[edges[i]->ppair_->ID()] = true;
 					emit(CapturedEdge(i + 1, edges[i]->Length()));
-
-					printf("%d %d\n", i, edges[i]->ppair_->ID());
+					emit(layerInfo(edges[i]->Layer(), ptr_frame_->SizeOfLayer()));
 				}
 
 				return true;
@@ -893,14 +902,11 @@ void RenderingWidget::ReadFrame()
 		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
 		QString(""),
 		QString("Choose base (B) | Choose ceiling (C)"),
-		0
-		);
+		0,
+		-1, ptr_frame_->SizeOfLayer()
+	);
 
 	updateGL();
-
-	QuadricCollision test(ptr_frame_);
-	test.Debug();
-
 }
 
 
@@ -1005,8 +1011,9 @@ void RenderingWidget::Import()
 		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
 		QString(""),
 		QString("Choose base (B) | Choose ceiling (C)"),
-		M
-		);
+		M,
+		-1, ptr_frame_->SizeOfLayer()
+	);
 
 	updateGL();
 }
@@ -1153,8 +1160,13 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	//ptr_fiberprint_->SweepingPrint();
 	//ptr_fiberprint_->GetDeformation();
 
-	emit(SetOrderSlider(0));
-	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
+		QString(""),
+		QString(""),
+		ptr_frame_->SizeOfEdgeList() / 2,
+		-1, ptr_frame_->SizeOfLayer()
+	);
 
 	delete ptr_parm;
 }

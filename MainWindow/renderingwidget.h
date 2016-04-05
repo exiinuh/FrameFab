@@ -53,7 +53,8 @@ public:
 				int vert_size, int edge_size,
 				QString oper_info,
 				QString mode_info,
-				int max_slider
+				int max_slider,
+				int layer_id, int total_id
 			);
 
 protected:
@@ -140,11 +141,14 @@ signals:
 	void	SetOrderSlider(int);
 	void	SetMaxOrderSlider(int);
 
+	void	SetMaxLayer(int);
+
 	void	meshInfo(int, int);
 	void	operatorInfo(QString);
 	void	modeInfo(QString);
 	void	CapturedVert(int, int);
 	void	CapturedEdge(int, double);
+	void	layerInfo(int, int);
 
 	void	Error(QString);
 
