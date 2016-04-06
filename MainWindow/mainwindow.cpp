@@ -6,14 +6,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 	ui.mainToolBar->setVisible(false);
-
 	this->setWindowTitle("Fiber printing");
-
-	renderingwidget_ = new RenderingWidget(this);
-//	setCentralWidget(renderingwidget_);
-
 	setGeometry(200, 150, 1000, 700);
 	
+	renderingwidget_ = new RenderingWidget(this);
+	connect(renderingwidget_, SIGNAL(Error(QString)), this, SLOT(ShowError(QString)));
+	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
+
 	CreateActions();
 	CreateMenus();
 	CreateLabels();
@@ -26,9 +25,6 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateToolButtons();
 	CreateGroups();
 	CreateDialogs();
-
-	connect(renderingwidget_, SIGNAL(Error(QString)), this, SLOT(ShowError(QString)));
-	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
 	
 	QVBoxLayout *layout_left = new QVBoxLayout;
 	layout_left->addWidget(groupbox_render_);
