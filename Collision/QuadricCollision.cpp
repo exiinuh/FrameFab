@@ -273,14 +273,21 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 	if (DetectCylinder(target_end, normal, order_start, order_end))
 		return true;
 
+	//Top
+	if (DetectTopCylinder(target_start, normal, order_start, order_end))
+		return true;
+	if (DetectTopCylinder(target_end, normal, order_start, order_end))
+		return true;
+
 	//Face
 	GenerateVolume(target_start, target_end, order_start, order_end, normal);
 	for (int i = 0; i < bulk_.size(); i++)
 	{
 		if (DetectTriangle(bulk_[i], order_start, order_end))
 			return true;
-
 	}
+
+
 
 	return false;
 }
@@ -289,7 +296,7 @@ bool QuadricCollision::SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s,
 {
 
 
-if (angle(normal, order_s - connect) < extruder_.Angle())
+	if (angle(normal, order_s - connect) < extruder_.Angle())
 	{
 		
 		return true;
@@ -300,6 +307,13 @@ if (angle(normal, order_s - connect) < extruder_.Angle())
 
 	if (DetectCylinder(target_s, normal, connect, order_s))
 		return true;
+
+	//Top
+	if (DetectTopCylinder(connect, normal, connect, order_s))
+		return true;
+	if (DetectTopCylinder(target_s, normal, connect, order_s))
+		return true;
+
 
 	//Face
 	GenerateVolume(connect, target_s, order_s, normal);
@@ -367,6 +381,12 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 		return true;
 
 	if (DetectCylinder(target_end, normal, order_start, order_end))
+		return true;
+
+	//Top
+	if (DetectTopCylinder(target_start, normal, order_start, order_end))
+		return true;
+	if (DetectTopCylinder(target_end, normal, order_start, order_end))
 		return true;
 
 	return false;
@@ -490,6 +510,25 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
 
 
+	//Top face
+
+	GeoV3 start_top_front_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter())+p*extruder_.TopRadii();
+	GeoV3 start_top_front_down = start + normal*( extruder_.TopCenter() -extruder_.TopLenth() / 2 )+ p*extruder_.TopRadii();
+
+	GeoV3 start_top_back_up =  start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
+	GeoV3 start_top_back_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
+
+	GeoV3 end_top_front_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
+	GeoV3 end_top_front_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
+
+	GeoV3 end_top_back_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
+	GeoV3 end_top_back_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
+
+	bulk_.push_back(Triangle(start_top_front_up, start_top_front_down, end_top_front_down));
+	bulk_.push_back(Triangle(start_top_front_up, end_top_front_up, end_top_front_down));
+	bulk_.push_back(Triangle(start_top_back_up, start_top_back_down, end_top_back_down));
+	bulk_.push_back(Triangle(start_top_back_up, end_top_back_up, end_top_back_down));
+
 	//front
 	bulk_.push_back(Triangle(start, end, start_front_cone));
 	bulk_.push_back(Triangle(end, end_front_cone, start_front_cone));
@@ -535,6 +574,10 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cylinder, start_back_cone));
 
 
+
+
+
+
 	//Circle 
 	start = connect;
 	GeoV3 end = target_s;
@@ -557,6 +600,24 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	}
 	bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
 	bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
+
+	//Top face
+	GeoV3 start_top_front_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
+	GeoV3 start_top_front_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
+
+	GeoV3 start_top_back_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
+	GeoV3 start_top_back_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
+
+	GeoV3 end_top_front_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
+	GeoV3 end_top_front_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
+
+	GeoV3 end_top_back_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
+	GeoV3 end_top_back_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
+
+	bulk_.push_back(Triangle(start_top_front_up, start_top_front_down, end_top_front_down));
+	bulk_.push_back(Triangle(start_top_front_up, end_top_front_up, end_top_front_down));
+	bulk_.push_back(Triangle(start_top_back_up, start_top_back_down, end_top_back_down));
+	bulk_.push_back(Triangle(start_top_back_up, end_top_back_up, end_top_back_down));
 
 }
 
@@ -682,3 +743,28 @@ void QuadricCollision::Debug()
 }
 
 
+bool QuadricCollision::DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end)
+{
+	gte::Cylinder3<float> cylinder;
+	cylinder.axis;
+	gte::Line3<float> cylinder_line;
+	std::array<float, 3>s;
+	GeoV3 cylin_center;
+	cylin_center = start + normal*extruder_.TopCenter();
+	s[0] = cylin_center.getX(); s[1] = cylin_center.getY(); s[2] = cylin_center.getZ();
+	cylinder_line.origin = s;
+	s[0] = normal.getX(); s[1] = normal.getY(); s[2] = normal.getZ();
+	cylinder_line.direction = s;
+	cylinder.axis = cylinder_line;
+
+	cylinder.height = extruder_.ToolLenth();
+	cylinder.radius = extruder_.TopRadii();
+
+
+	gte::Segment<3, float> segment;
+	segment = Seg(target_start, target_end);
+	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> intersection;
+	auto result = intersection(segment, cylinder);
+
+	return result.intersect;
+}

@@ -54,7 +54,11 @@ private:
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
 	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
 
+	
+
 	bool	Parallel(GeoV3 a, GeoV3 b);
+
+	bool DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 
 	gte::Segment<3, float>		Seg(point target_start, point target_end);
 	gte::Segment<3, float>		Seg(GeoV3 target_start, GeoV3 target_end);

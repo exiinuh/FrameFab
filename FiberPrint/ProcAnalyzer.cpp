@@ -23,6 +23,7 @@ ProcAnalyzer::ProcAnalyzer(SeqAnalyzer *seqanalyzer, char *path)
 
 void ProcAnalyzer::ProcPrint()
 {
+
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
 
@@ -97,26 +98,38 @@ void ProcAnalyzer::ProcPrint()
 			if (IfPointInVector(down) && IfPointInVector(up))
 			{
 				temp.fan_state_ = false;
-				temp.start_ = up;
-				temp.end_ = down;
+				temp.start_ = down;
+				temp.end_ = up;
 			}
 			else if (IfPointInVector(down))
 			{
 				temp.fan_state_ = true;
 				temp.start_ = down;
 				temp.end_ = up;
+				exist_point_.push_back(up);
 			}
 			else
 			{
 				temp.fan_state_ = true;
 				temp.start_ = up;
 				temp.end_ = down;
+				exist_point_.push_back(down);
 			}
-		}
+		} 
 		process_list_[i] = temp;
 	}
-	Write();
 
+
+	for (int i = 0; i < process_list_.size(); i++)
+	{
+		if (process_list_[i].fan_state_)
+			continue;
+		else
+			CheckProcess(process_list_[i]);
+	}
+
+
+	Write();
 	delete ptr_collision;
 	ptr_collision = NULL;
 }
@@ -202,4 +215,44 @@ void ProcAnalyzer::Write()
 	std::fclose(end);
 	std::fclose(fans);
 
+}
+
+
+bool  ProcAnalyzer::IfCoOrientation(GeoV3 a, vector<GeoV3> &b)
+{
+	for (int i = 0; i < b.size(); i++)
+	{
+		if (angle(a, b[i]) < (F_PI / 2))
+			return true;
+	}
+	return false;
+}
+
+void ProcAnalyzer::CheckProcess(Process &a)
+{
+	GeoV3 t = a.end_ - a.start_;
+	t.normalize();
+	vector<GeoV3> temp_normal;
+	if (!IfCoOrientation(t, a.normal_))
+	{
+		point temp = a.end_;
+		a.end_ = a.start_; 
+		a.start_ = temp;
+		for (int i = 0; i < a.normal_.size(); i++)
+		{
+			if (angle(t, a.normal_[i]) <(F_PI / 2))
+				continue;
+		  else
+				temp_normal.push_back(a.normal_[i]);
+		}		
+	}
+	else
+	{
+		for (int i = 0; i < a.normal_.size(); i++)
+		{
+			if (angle(t, a.normal_[i]) <(F_PI / 2))				
+				temp_normal.push_back(a.normal_[i]);
+		}
+	}	
+	a.normal_ = temp_normal;
 }
