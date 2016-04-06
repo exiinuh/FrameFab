@@ -2,7 +2,7 @@
 
 
 WireFrame::WireFrame()
-	:fixed_vert_(0), delta_tol_(1e-1), unify_size_(2.0), max_layer_(0)
+	:delta_tol_(1e-1), unify_size_(2.0), layer_size_(0)
 {
 	pvert_list_ = new vector<WF_vert*>;
 	pedge_list_ = new vector<WF_edge*>;
@@ -33,6 +33,8 @@ WireFrame::~WireFrame()
 
 void WireFrame::LoadFromOBJ(const char *path)
 {
+	/* need to deal with replication */
+
 	FILE *fp = fopen(path, "r");
 
 	try
@@ -145,6 +147,8 @@ void WireFrame::LoadFromOBJ(const char *path)
 
 void WireFrame::LoadFromPWF(const char *path)
 {
+	/* assert that there is no replication in PWF */
+
 	FILE *fp = fopen(path, "r");
 
 	try
@@ -153,7 +157,6 @@ void WireFrame::LoadFromPWF(const char *path)
 		fseek(fp, 0, SEEK_SET);
 		char pLine[512];
 		char *tok;
-		vector<WF_vert*> tmp_points;
 		while (fgets(pLine, 512, fp))
 		{
 			if (pLine[0] == 'v' && pLine[1] == ' ')
@@ -170,8 +173,7 @@ void WireFrame::LoadFromPWF(const char *path)
 				}
 
 				p = point(p.x(), p.y(), p.z());
-				WF_vert *u = InsertVertex(p);
-				tmp_points.push_back(u);
+				InsertVertex(p);
 			}
 		}
 
@@ -204,34 +206,6 @@ void WireFrame::LoadFromPWF(const char *path)
 				{
 					e->SetLayer(layer);
 					e->ppair_->SetLayer(layer);
-				}
-			}
-		}
-
-		// read ceiling
-		fseek(fp, 0, SEEK_SET);
-		while (fgets(pLine, 512, fp))
-		{
-			if (pLine[0] == 'c' && pLine[1] == ' ')
-			{
-				tok = strtok(pLine, " ");
-
-				char tmp[128];
-				tok = strtok(NULL, " ");
-				strcpy(tmp, tok);
-				tmp[strcspn(tmp, " ")] = 0;
-				int u = (int)atof(tmp) - 1;
-
-				tok = strtok(NULL, " ");
-				strcpy(tmp, tok);
-				tmp[strcspn(tmp, " ")] = 0;
-				int v = (int)atof(tmp) - 1;
-
-				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
-				if (e != NULL)
-				{
-					e->SetCeiling(true);
-					e->ppair_->SetCeiling(true);
 				}
 			}
 		}
@@ -272,45 +246,71 @@ void WireFrame::LoadFromPWF(const char *path)
 
 				if (prev != -1)
 				{
-					InsertEdge(tmp_points[prev], tmp_points[curv]);
+					InsertEdge((*pvert_list_)[prev], (*pvert_list_)[curv]);
 				}
 
 				prev = curv;
 			}
 		}
 
-		// read base
+		// read pillar
 		fseek(fp, 0, SEEK_SET);
-		while (c = fgetc(fp), c != EOF)
+		while (fgets(pLine, 512, fp))
 		{
-			while (c != 'b' && c != EOF)
+			if (pLine[0] == 'p' && pLine[1] == ' ')
 			{
-				c = fgetc(fp);
-			}
+				tok = strtok(pLine, " ");
 
-			if ((c = fgetc(fp)) != ' ')
-			{
-				continue;
-			}
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
 
-			int base_id;
-			while (c != '\n' && c != EOF)
-			{
-				while (c = fgetc(fp), c != '\n' && c != EOF && !isdigit(c))
-					;
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
 
-				for (base_id = 0; isdigit(c); c = fgetc(fp))
-				{
-					base_id = base_id * 10 + c - '0';
-				}
+				WF_vert *b = (*pvert_list_)[u];
+				b->SetBase(true);
 
-				(*pvert_list_)[base_id - 1]->SetFixed(true);
-				WF_edge *e = (*pvert_list_)[base_id - 1]->pedge_;
-				while (e != NULL)
+				WF_vert *f = (*pvert_list_)[v];
+				f->SetFixed(true);
+
+				WF_edge *e = InsertEdge(b, f);
+				if (e != NULL)
 				{
 					e->SetPillar(true);
 					e->ppair_->SetPillar(true);
-					e = e->pnext_;
+				}
+			}
+		}
+
+		// read ceiling
+		fseek(fp, 0, SEEK_SET);
+		while (fgets(pLine, 512, fp))
+		{
+			if (pLine[0] == 'c' && pLine[1] == ' ')
+			{
+				tok = strtok(pLine, " ");
+
+				char tmp[128];
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int u = (int)atof(tmp) - 1;
+
+				tok = strtok(NULL, " ");
+				strcpy(tmp, tok);
+				tmp[strcspn(tmp, " ")] = 0;
+				int v = (int)atof(tmp) - 1;
+
+				WF_edge *e = InsertEdge((*pvert_list_)[u], (*pvert_list_)[v]);
+				if (e != NULL)
+				{
+					e->SetCeiling(true);
+					e->ppair_->SetCeiling(true);
 				}
 			}
 		}
@@ -352,9 +352,11 @@ void WireFrame::WriteToOBJ(const char *path)
 }
 
 
-void WireFrame::WriteToPWF(bool bVert, bool bLine,
-	bool bBase, bool bCeiling, bool bCut,
-	int min_layer, int max_layer, const char *path)
+void WireFrame::WriteToPWF(
+	bool bVert, bool bLine,
+	bool bPillar, bool bCeiling,
+	bool bCut, int min_layer, int max_layer, 
+	const char *path)
 {
 	if ((*pedge_list_)[0]->Layer() == -1)
 	{
@@ -376,6 +378,11 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		WF_edge *e2 = e1->ppair_;
 		if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 		{
+			if (e1->isPillar() && !bPillar)
+			{
+				continue;
+			}
+
 			int u = e2->pvert_->ID();
 			int v = e1->pvert_->ID();
 			if (hash[u] == -1)
@@ -407,7 +414,8 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		{
 			WF_edge *e1 = (*pedge_list_)[i];
 			WF_edge *e2 = e1->ppair_;
-			if (i < e2->ID() && e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
+			if (i < e2->ID() && !e1->isPillar() && 
+				e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 			{
 				int u = e2->pvert_->ID();
 				int v = e1->pvert_->ID();
@@ -416,14 +424,19 @@ void WireFrame::WriteToPWF(bool bVert, bool bLine,
 		}
 	}
 
-	if (bBase)
+	if (bPillar)
 	{
-		for (int i = 0; i < Ne; i++)
+		for (int i = 0; i < M; i++)
 		{
-			int u = export_vert[i];
-			if ((*pvert_list_)[u]->isFixed() && hash[u] != -1)
+			WF_edge *e1 = (*pedge_list_)[i];
+			WF_edge *e2 = e1->ppair_;
+			if (i < e2->ID() && e1->isPillar()
+				&& e1->Layer() >= min_layer - 1 && e1->Layer() < max_layer)
 			{
-				fprintf(fp, "b %d\n", hash[u]);
+				int u = e2->pvert_->ID();
+				int v = e1->pvert_->ID();
+				assert(e2->pvert_->isBase());
+				fprintf(fp, "p %d %d\n", hash[u], hash[v]);
 			}
 		}
 	}
@@ -524,6 +537,60 @@ void WireFrame::ImportFrom3DD(const char *path)
 }
 
 
+void WireFrame::ExportSubgraph(const char *path)
+{
+	FILE *fp = fopen(path, "wb+");
+	int N = SizeOfVertList();
+	int M = SizeOfEdgeList();
+
+	vector<int> export_vert;
+	vector<int> hash(N);
+	fill(hash.begin(), hash.end(), -1);
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->isSubgraph())
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			if (hash[u] == -1)
+			{
+				export_vert.push_back(u);
+				hash[u] = export_vert.size();
+			}
+			if (hash[v] == -1)
+			{
+				export_vert.push_back(v);
+				hash[v] = export_vert.size();
+			}
+		}
+	}
+
+	int Ne = export_vert.size();
+	for (int i = 0; i < Ne; i++)
+	{
+		point p = (*pvert_list_)[export_vert[i]]->Position();
+		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
+	}
+
+	for (int i = 0; i < M; i++)
+	{
+		WF_edge *e1 = (*pedge_list_)[i];
+		WF_edge *e2 = e1->ppair_;
+		if (i < e2->ID() && e1->isSubgraph())
+		{
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
+		}
+	}
+
+	fclose(fp);
+}
+
+
 void WireFrame::ExportPoints(int min_layer, int max_layer, const char *path)
 {
 	if ((*pedge_list_)[0]->Layer() == -1)
@@ -615,6 +682,7 @@ WF_vert* WireFrame::InsertVertex(Vec3f p)
 
 	WF_vert *vert = new WF_vert(p);
 	pvert_list_->push_back(vert);
+	vert->SetID(N);
 	return vert;
 }
 
@@ -669,12 +737,12 @@ void WireFrame::Unify()
 	minx_ = 1e20;
 	miny_ = 1e20;
 	minz_ = 1e20;
-	base_ = 1e20;
 
 	fixed_vert_ = 0;
+	base_vert_ = 0;
 	pillar_size_ = 0;
 	ceiling_size_ = 0;
-	max_layer_ = -1;
+	layer_size_ = -1;
 
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
@@ -709,18 +777,6 @@ void WireFrame::Unify()
 				minz_ = p.z();
 			}
 		}
-		else
-		{
-			if (p.z() < base_)
-			{
-				base_ = p.z();
-			}
-		}
-	}
-
-	if (base_ > minz_)
-	{
-		base_ = minz_;
 	}
 
 	int M = SizeOfEdgeList();
@@ -735,12 +791,12 @@ void WireFrame::Unify()
 		{
 			ceiling_size_++;
 		}
-		if ((*pedge_list_)[i]->Layer() > max_layer_)
+		if ((*pedge_list_)[i]->Layer() > layer_size_)
 		{
-			max_layer_ = (*pedge_list_)[i]->Layer();
+			layer_size_ = (*pedge_list_)[i]->Layer();
 		}
 	}
-	max_layer_++;
+	layer_size_++;
 
 	float scaleX = maxx_ - minx_;
 	float scaleY = maxy_ - miny_;
@@ -764,6 +820,10 @@ void WireFrame::Unify()
 		if ((*pvert_list_)[i]->isFixed())
 		{
 			fixed_vert_++;
+		}
+		if ((*pvert_list_)[i]->isBase())
+		{
+			base_vert_++;
 		}
 	}
 }
@@ -844,27 +904,32 @@ void WireFrame::SimplifyFrame()
 }
 
 
-void WireFrame::ProjectBound(vector<WF_vert*> &bound, double len)
+void WireFrame::ProjectBound(double len)
 {
-	int Nb = bound.size();
-	for (int i = 0; i < Nb; i++)
+	if (base_vert_ == 0)
 	{
-		WF_vert *u = bound[i]; 
-
-		point v_pos = u->Position();
-		v_pos.z() = minz_ - len;
-
-		WF_vert *v = InsertVertex(v_pos);
-		v->SetFixed(true);
-
-		WF_edge *e = InsertEdge(u, v);
-		e->SetPillar(true);
-		e->ppair_->SetPillar(true);
+		return;
 	}
-	
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		WF_vert *u = (*pvert_list_)[i];
+		if (u->isBase())
+		{
+			point v_pos = u->Position();
+			v_pos.z() = minz_ - len;
+
+			WF_vert *v = InsertVertex(v_pos);
+			v->SetFixed(true);
+
+			WF_edge *e = InsertEdge(u, v);
+			e->SetPillar(true);
+			e->ppair_->SetPillar(true);
+		}
+	}
+
 	Unify();
-	//InsertEdge(N, SizeOfVertList() - 1);
-	//UpdateFrame();
 }
 
 
@@ -884,8 +949,7 @@ void WireFrame::ModifyProjection(double len)
 			double x = u->Position().x();
 			double y = u->Position().y();
 			double z = u->Position().z();
-			z += u->pedge_->Length();
-			z -= len;
+			z = minz_ - len;
 			u->SetPosition(x, y, z);
 		}
 	}
@@ -893,14 +957,89 @@ void WireFrame::ModifyProjection(double len)
 }
 
 
-void WireFrame::MakeCeiling(vector<WF_edge*> &bound)
+void WireFrame::MakeCeiling(vector<WF_edge*> &bound_e)
 {
-	int Mb = bound.size();
+	if (bound_e.size() == 0)
+	{
+		return;
+	}
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetCeiling(false);
+	}
+
+	int Mb = bound_e.size();
 	for (int i = 0; i < Mb; i++)
 	{
-		WF_edge *e = bound[i];
+		WF_edge *e = bound_e[i];
 		e->SetCeiling(true);
 		e->ppair_->SetCeiling(true);
+	}
+
+	Unify();
+}
+
+
+void WireFrame::MakeBase(vector<WF_vert*> &base_v)
+{
+	if (base_v.size() == 0)
+	{
+		return;
+	}
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetPillar(false);
+	}
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		(*pvert_list_)[i]->SetBase(false);
+		(*pvert_list_)[i]->SetFixed(false);
+	}
+
+	int Nb = base_v.size();
+	for (int i = 0; i < Nb; i++)
+	{
+		WF_vert *v = base_v[i];
+		v->SetBase(true);
+	}
+
+	Unify();
+}
+
+
+void WireFrame::MakeSubGraph(vector<WF_edge*> &subg_e)
+{
+	if (subg_e.size() == 0)
+	{
+		return;
+	}
+
+	int N = SizeOfVertList();
+	for (int i = 0; i < N; i++)
+	{
+		(*pvert_list_)[i]->SetSubgraph(false);
+	}
+
+	int M = SizeOfEdgeList();
+	for (int i = 0; i < M; i++)
+	{
+		(*pedge_list_)[i]->SetSubgraph(false);
+	}
+
+	int Mb = subg_e.size();
+	for (int i = 0; i < Mb; i++)
+	{
+		WF_edge *e = subg_e[i];
+		e->SetSubgraph(true);
+		e->ppair_->SetSubgraph(true);
+		e->pvert_->SetSubgraph(true);
+		e->ppair_->pvert_->SetSubgraph(true);
 	}
 
 	Unify();

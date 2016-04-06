@@ -257,7 +257,7 @@ bool QuadricCollision::DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, G
 bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end, 
 	GeoV3 order_start, GeoV3 order_end, GeoV3 normal)
 {
-	GenerateVolume(target_start, target_end, order_start, order_end, normal);
+	
 
 	//Cone
 	if (DetectCone(target_start, normal, order_start, order_end))
@@ -274,7 +274,7 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 		return true;
 
 	//Face
-
+	GenerateVolume(target_start, target_end, order_start, order_end, normal);
 	for (int i = 0; i < bulk_.size(); i++)
 	{
 		if (DetectTriangle(bulk_[i], order_start, order_end))
@@ -469,6 +469,27 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 
 	bulk_.clear();
 
+	//Circle 
+	GeoV3 q = cross(normal, p);
+	q.normalize();
+	vector<GeoV3> start_circle_point,end_circle_point;
+	for (int i = 0; i < 16; i++)
+	{
+		double part = 2 * F_PI / 16;
+		double ¦È = i*part;
+		start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
+		end_circle_point.push_back(start_circle_point[i] + end - start);
+	}
+
+	for (int i = 0; i < 15; i++)
+	{	
+		bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
+		bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
+	}
+	bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
+	bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
+
+
 	//front
 	bulk_.push_back(Triangle(start, end, start_front_cone));
 	bulk_.push_back(Triangle(end, end_front_cone, start_front_cone));
@@ -480,6 +501,8 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	bulk_.push_back(Triangle(start, start_back_cone, end_back_cone));
 	bulk_.push_back(Triangle(start_back_cone, end_back_cylinder, end_back_cone));
 	bulk_.push_back(Triangle(start_back_cone, start_back_cylinder, end_back_cylinder));
+
+
 }
 
 
@@ -503,13 +526,38 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	//face back
 	GeoV3 start_back_cone = start_cone_center - p*extruder_.Radii() + t*¦Å;
 	GeoV3 start_back_cylinder = start_back_cone + normal*extruder_.CyclinderLenth() + t*¦Å;
-
 	GeoV3 start = connect + t*¦Å;
+
 	//front
 	bulk_.clear();
 	bulk_.push_back(Triangle(start, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cylinder, start_back_cone));
+
+
+	//Circle 
+	start = connect;
+	GeoV3 end = target_s;
+
+	GeoV3 q = cross(normal, p);
+	q.normalize();
+	vector<GeoV3> start_circle_point, end_circle_point;
+	for (int i = 0; i < 16; i++)
+	{
+		double part = 2 * F_PI / 16;
+		double ¦È = i*part;
+		start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
+		end_circle_point.push_back(start_circle_point[i] + end - start);
+	}
+
+	for (int i = 0; i < 15; i++)
+	{
+		bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
+		bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
+	}
+	bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
+	bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
+
 }
 
 

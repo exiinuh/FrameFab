@@ -17,7 +17,7 @@
 *	  Company:  GCL@USTC
 *
 *    WARNING:  DO NOT insert node and edge after you dualize the graph,
-*    as we append all project fixed point at the end of dual face.
+*    as we append all project b_fixed point at the end of dual face.
 *    Further inserting will cause stiffness matrix and force creation error.
 * ==========================================================================
 */
@@ -53,7 +53,7 @@ class ADMMCut : public GraphCut
 public:
 	ADMMCut();
 	ADMMCut(WireFrame *ptr_frame);
-	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
+	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~ADMMCut();
 
 public:

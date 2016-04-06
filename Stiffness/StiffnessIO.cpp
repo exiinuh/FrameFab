@@ -74,78 +74,6 @@ void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, 
 
 
 /*
-* READ_RUN_DATA  -  read information for analysis
-* 29 Dec 2008
-*/
-void StiffnessIO::ReadRunData(
-	char OUT_file[],	 /**< output data file name							*/
-	char meshpath[],	 /**< file name for mesh data output				*/
-	char plotpath[],	 /**< file name for Gnuplot script					*/
-	int  verbose
-	)
-{
-	int	full_len = 0, len = 0, i;
-	char	base_file[96] = "EMPTY_BASE";
-	char	mesh_file[96] = "EMPTY_MESH";
-	char	plot_file[96] = "EMPTY_PLOT";
-	int	sfrv = 0;		/* *scanf return value */
-
-	strcpy(base_file, OUT_file);
-
-	/* strip the suffix to get name */
-	while (base_file[len++] != '\0')
-	{
-		/* the length of the base_file */;
-		full_len = len;
-	}
-
-	while (base_file[len--] != '.' && len > 0)
-	{
-		/* find the last '.' in base_file */;
-		if (len == 0)	len = full_len;
-	}
-		
-	base_file[++len] = '\0';	/* end base_file at the last '.' */
-
-	// GnuPlot file
-	strcpy(plot_file, base_file);
-	strcat(plot_file, ".plt");
-	OutputPath(plot_file, plotpath, FRAME3DD_PATHMAX, NULL, verbose);
-
-	//// Internal force file
-	//strcpy(infcpath, base_file);
-	//strcat(infcpath, ".if");
-
-	while (base_file[len] != '/' && base_file[len] != '\\' && len > 0)
-	{
-		len--;	/* find the last '/' or '\' in base_file */
-	}
-			
-	i = 0; 
-	
-	while (base_file[len] != '\0')
-	{
-		mesh_file[i++] = base_file[len++];
-	}
-	
-	mesh_file[i] = '\0';
-	strcat(mesh_file, "-msh");
-	OutputPath(mesh_file, meshpath, FRAME3DD_PATHMAX, NULL, verbose);
-
-	if (verbose) 
-	{
-		fprintf(stderr, "OUT_FILE  = %s \n", OUT_file);
-		fprintf(stderr, "BASE_FILE = %s \n", base_file);
-		fprintf(stderr, "PLOTPATH  = %s \n", plotpath);
-		fprintf(stderr, "MESH_FILE = %s \n", mesh_file);
-		fprintf(stderr, "MESHPATH  = %s \n", meshpath);
-	}
-
-	return;
-}
-
-
-/*
 * GnuPltStaticMesh  - create mesh data of deformed and undeformed mesh  25/Nov/2015
 * use gnuplot
 * useful gnuplot options: unset xtics ytics ztics border view key
@@ -155,8 +83,8 @@ void StiffnessIO::ReadRunData(
 * torsion, and internal bending moment diagrams.
 */
 void StiffnessIO::GnuPltStaticMesh(
-	char IN_file[],
-	char meshpath[], char plotpath[],
+	const char *fpath,
+	const char *meshpath, const char *plotpath,
 	VX &D,
 	double exagg_static, float scale,
 	DualGraph *ptr_dualgraph, WireFrame *ptr_frame
@@ -406,7 +334,11 @@ void StiffnessIO::GnuPltStaticMesh(
 * Nov/25/2015
 */
 void StiffnessIO::GnuPltCubicBentBeam(
-	FILE *fpm, VX &D, int dual_i, DualGraph *ptr_dualgraph, WireFrame *ptr_frame, double exagg
+	FILE *fpm, 
+	VX &D, 
+	int dual_i, 
+	DualGraph *ptr_dualgraph, WireFrame *ptr_frame, 
+	double exagg
 	)
 {
 	double	t0, t1, t2, t3, t4, t5, t6, t7, t8, 	/* coord transf matrix entries	*/
@@ -510,18 +442,20 @@ void StiffnessIO::GnuPltCubicBentBeam(
 }
 
 
-void StiffnessIO::WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int verbose)
+void StiffnessIO::WriteInputData(
+	const char *fpath,
+	DualGraph *ptr_dualgraph,
+	FiberPrintPARM *ptr_parm,
+	int verbose
+	)
 {
-	FILE	*fp;
-	char OUT_path[FILENMAX];
+	FILE *fp;
 	string title_s = "FiberPrint Test File -- static analysis (N,mm,Ton)\n";
 	char errMsg[512];
 
-	OutputPath(IN_file, OUT_path, FRAME3DD_PATHMAX, NULL, verbose);
-
-	if ((fp = fopen(OUT_path, "w")) == NULL)
+	if ((fp = fopen(fpath, "w")) == NULL)
 	{
-		sprintf_s(errMsg, "\n ERROR: cannot open .3dd transfer data file '%s'", OUT_path);
+		sprintf_s(errMsg, "\n ERROR: cannot open .3dd transfer data file '%s'", fpath);
 		errorMsg(errMsg);
 		exit(11);
 	}
@@ -570,7 +504,7 @@ void StiffnessIO::WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, Fiber
 	}
 	fprintf(fp, "\n");
 	fprintf(fp, "%d					# number of nodes with reaction\n", nR);
-	fprintf(fp, "#.node  x  y  z  xx  yy  zz			1=fixed, 0=free\n");
+	fprintf(fp, "#.node  x  y  z  xx  yy  zz			1=b_fixed, 0=free\n");
 	for (int i = 0; i < nR; i++)
 	{
 		fprintf(fp, "%d  1  1  1  1  1  1\n", res_index[i]);

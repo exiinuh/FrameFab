@@ -3,16 +3,17 @@
 *
 *       class: StiffnessIO
 *
-*    Description:  create mesh data of deformed and undeformed mesh for GnuPlot.
+* Description: create mesh data of deformed and undeformed mesh for GnuPlot.
 *
-*	 Version:  1.0
-*	 Created:  Mar/20/2016
+*	  Version: 1.1
+*	  Created: Mar/20/2016
+*	  Updated: Apr/03/2016
 *
-*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
-*	 Company:  GCL@USTC
-*	 Note:	   This file is modified from frame3dd_io.c, which is a part of Frame3dd.
-*			You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
-*			You can download Gnuplot at	http://sourceforge.net/projects/gnuplot/
+*	   Author: Yijiang Huang, Xin Hu, Guoxian Song
+*	  Company: GCL@USTC
+*	     Note: This file is modified from frame3dd_io.c, which is a part of Frame3dd.
+*			   You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
+*			   You can download Gnuplot at	http://sourceforge.net/projects/gnuplot/
 * ==========================================================================
 */
 #ifndef STIFFNESS_IO_H
@@ -57,24 +58,16 @@ public:
 
 public:
 
-	void		GetlineNoComment(FILE *fp, char *s, int lim);
-	void		OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose);
-
-	/*--- GnuPlot output path generation ---*/
-	void ReadRunData(
-		char OUT_file[],	 /**< output data file name							*/
-		char meshpath[],	 /**< file name for mesh data output				*/
-		char plotpath[],	 /**< file name for Gnuplot script					*/
-		int  verbose
-		);
+	void	GetlineNoComment(FILE *fp, char *s, int lim);
+	void	OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose);
 
 	/*--- GnuPlot file output ---*/
 	/*
 	* GnuPltStaticMesh - create mesh data of deformed and undeformed mesh, use gnuplot	 Mar/20/2016
 	*/
 	void GnuPltStaticMesh(
-		char IN_file[],
-		char meshpath[], char plotpath[],
+		const char *fpath,
+		const char *meshpath, const char *plotpath,
 		VX &D,
 		double exagg_static, float scale,
 		DualGraph *ptr_dualgraph, WireFrame *ptr_frame
@@ -97,7 +90,12 @@ public:
 	/*
 	* WriteInputData - write input data to a .3dd file			Mar/20/2016
 	*/
-	void WriteInputData(char IN_file[], DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, int verbose);
+	void WriteInputData(
+		const char *fpath, 
+		DualGraph *ptr_dualgraph, 
+		FiberPrintPARM *ptr_parm, 
+		int verbose
+		);
 
 	/*
 	* SaveUpperMatrix - save a symmetric matrix of dimension [1..n][1..n]	Nov/26/2015

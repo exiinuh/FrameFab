@@ -54,14 +54,11 @@ SeqAnalyzer::~SeqAnalyzer()
 	delete ptr_collision_;
 	ptr_collision_ = NULL;
 
-	if (ptr_dualgraph_ != NULL)
+	int Nm = colli_map_.size();
+	for (int i = 0; i < Nm; i++)
 	{
-		int Nd = ptr_dualgraph_->SizeOfVertList();
-		for (int i = 0; i < Nd*Nd; i++)
-		{
-			delete colli_map_[i];
-			colli_map_[i] = NULL;
-		}
+		delete colli_map_[i];
+		colli_map_[i] = NULL;
 	}
 }
 
@@ -213,7 +210,7 @@ bool SeqAnalyzer::TestifyStiffness()
 	test_stiff_.Start();
 
 	/* examinate stiffness on printing subgraph */
-	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_);
+	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_, ptr_path_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);
 	D.setZero();

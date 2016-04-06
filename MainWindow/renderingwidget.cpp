@@ -57,6 +57,30 @@ void RenderingWidget::InitFiberData()
 }
 
 
+void RenderingWidget::InitInfoData(
+	int vert_size, int edge_size, 
+	QString oper_info,
+	QString mode_info, 
+	int max_slider,
+	int layer_id, int total_id)
+{
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
+	emit(ChooseSubGPressed(false));
+
+	emit(operatorInfo(oper_info));
+	emit(modeInfo(mode_info));
+	emit(meshInfo(vert_size, edge_size));
+
+	emit(SetMaxOrderSlider(max_slider));
+
+	emit(layerInfo(layer_id, total_id));
+	emit(SetMaxLayer(total_id));
+
+	emit(Reset());
+}
+
+
 void RenderingWidget::initializeGL()
 {
 	glClearColor(0.3, 0.3, 0.3, 0.0);
@@ -174,7 +198,7 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 			}
 		}
 		else
-		if (op_mode_ == CHOOSECEILING)
+		if (op_mode_ == CHOOSECEILING || op_mode_ == CHOOSESUBG)
 		{
 			if (captured_edges_.size() > 0)
 			{
@@ -263,14 +287,6 @@ void RenderingWidget::keyPressEvent(QKeyEvent *e)
 	case Qt::Key_C:
 		//SwitchToChooseBound();
 		break;
-	/*
-	case Qt::Key_I:
-		SwitchToAddEdge();
-		break;
-	case Qt::Key_F:
-		SwitchToAddFace();
-		break;
-	*/
 	case Qt::Key_Escape:
 		SwitchToNormal();
 		break;
@@ -290,129 +306,6 @@ void RenderingWidget::keyReleaseEvent(QKeyEvent *e)
 	default:
 		break;
 	}
-}
-
-
-void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy, double *objz)
-{
-	double modelview[16];
-	double projection[16];
-	int viewport[4];
-
-	glPushMatrix();
-
-	glMultMatrixf(ptr_arcball_->GetBallMatrix());
-
-	// Read the projection, modelview and viewport matrices using the glGet functions.
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
-	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-	glGetIntegerv(GL_VIEWPORT, viewport);
-
-	glPopMatrix();
-
-	// Read the window z value from the z-buffer 
-	double winx = p.rx();
-	double winy = viewport[3] - p.ry();
-	float winz = 1.0;
-	glReadPixels(winx, winy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winz);
-
-	// Use the gluUnProject to get the world co-ordinates of the point the user clicked and save in objx, objy, objz.
-	gluUnProject(winx, winy, winz, modelview, projection, viewport, objx, objy, objz);
-}
-
-
-bool RenderingWidget::CaptureVertex(QPoint mouse)
-{
-	if (ptr_frame_ == NULL)
-	{
-		return 0;
-	}
-
-	double x = 0;
-	double y = 0;
-	double z = 0;
-	CoordinatesTransform(mouse, &x, &y, &z);
-
-	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
-	int N = verts.size();
-	for (int i = 0; i < N; i++)
-	{
-		double dx = verts[i]->RenderPos().x() - x;
-		double dy = verts[i]->RenderPos().y() - y;
-		double dz = verts[i]->RenderPos().z() - z;
-		double dis = sqrt(dx*dx + dy*dy + dz*dz);
-		if (dis < 0.015)
-		{
-			if (op_mode_ == NORMAL)
-			{
-				captured_verts_.clear();
-				fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
-				captured_edges_.clear();
-				fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
-			}
-
-			if (!is_captured_vert_[i])
-			{
-				captured_verts_.push_back(verts[i]);
-				is_captured_vert_[i] = true;
-				emit(CapturedVert(i + 1, verts[i]->Degree()));
-			}
-
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-bool RenderingWidget::CaptureEdge(QPoint mouse)
-{
-	if (ptr_frame_ == NULL)
-	{
-		return 0;
-	}
-
-	double x = 0;
-	double y = 0;
-	double z = 0;
-	CoordinatesTransform(mouse, &x, &y, &z);
-
-	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
-	int M = edges.size();
-	for (size_t i = 0; i < M; i++)
-	{
-		if (edges[i]->ID() < edges[i]->ppair_->ID())
-		{
-			WF_vert	u = WF_vert(x, y, z);
-			WF_vert *v1 = edges[i]->pvert_;
-			WF_vert *v2 = edges[i]->ppair_->pvert_;
-
-			double delta = ptr_frame_->ArcHeight(u.RenderPos(), v1->RenderPos(), v2->RenderPos());
-			if (delta < 0.007)
-			{
-				if (op_mode_ == NORMAL)
-				{
-					captured_verts_.clear();
-					fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
-					captured_edges_.clear();
-					fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
-				}
-	
-				if (!is_captured_edge_[i])
-				{
-					captured_edges_.push_back(edges[i]);
-					is_captured_edge_[i] = true;
-					is_captured_edge_[edges[i]->ppair_->ID()] = true;
-					emit(CapturedEdge(i + 1, edges[i]->Length()));
-				}
-
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 
@@ -443,428 +336,6 @@ void RenderingWidget::SetLight()
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-}
-
-
-void RenderingWidget::SetBackground()
-{
-	QColor color = QColorDialog::getColor(Qt::white, this, tr("background color"));
-	GLfloat r = (color.red()) / 255.0f;
-	GLfloat g = (color.green()) / 255.0f;
-	GLfloat b = (color.blue()) / 255.0f;
-	GLfloat alpha = color.alpha() / 255.0f;
-	glClearColor(r, g, b, alpha);
-	updateGL();
-}
-
-
-void RenderingWidget::ScaleFrame(double scale)
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-
-	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
-	int N = ptr_frame_->SizeOfVertList();
-	float size = scale / scale_;
-	for (int i = 0; i < N; i++)
-	{
-		Vec3f p = verts[i]->Position();
-		verts[i]->SetPosition(p * size);
-	}
-	scale_ = scale;
-	ptr_frame_->Unify();
-
-	int cape_size = captured_edges_.size();
-	if (cape_size != 0)
-	{
-		emit(CapturedEdge(captured_edges_[cape_size - 1]->ID() + 1,
-			captured_edges_[cape_size - 1]->Length()));
-	}
-
-	updateGL();
-}
-
-
-void RenderingWidget::ReadFrame()
-{
-	QString filename = QFileDialog::
-		getOpenFileName(this, tr("Read Mesh"),
-		"..", tr("Mesh files(*.obj *.pwf)"));
-
-	if (filename.isEmpty())
-	{
-		emit(operatorInfo(QString("Read Mesh Failed!")));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	delete ptr_frame_; 
-	ptr_frame_ = new WireFrame();
-
-	if (filename.contains(".obj") || filename.contains(".OBJ"))
-	{
-		ptr_frame_->LoadFromOBJ(byfilename.data());
-	}
-	else
-	{
-		ptr_frame_->LoadFromPWF(byfilename.data());
-	}
-
-	emit(ChooseBasePressed(false));
-	emit(ChooseCeilingPressed(false));
-
-	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
-	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-	emit(Reset());
-
-	InitDrawData();
-	InitCapturedData();
-	InitFiberData();
-
-	updateGL();
-
-	QuadricCollision test(ptr_frame_);
-	test.Debug();
-
-}
-
-
-void RenderingWidget::WriteFrame(QString filename)
-{
-	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
-	{
-		emit(QString("The mesh is Empty !"));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	ptr_frame_->WriteToOBJ(filename.toLatin1().data());
-
-	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
-}
-
-
-void RenderingWidget::WriteFrame(bool bVert, bool bLine, 
-	bool bBase, bool bCeiling, bool bCut, 
-	int min_layer, int max_layer, QString filename)
-{
-	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
-	{
-		emit(QString("The mesh is Empty !"));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	ptr_frame_->WriteToPWF(bVert, bLine, bBase, bCeiling, bCut,
-		min_layer, max_layer, filename.toLatin1().data());
-
-	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
-}
-
-
-void RenderingWidget::Import3DD()
-{
-	QString filename = QFileDialog::
-		getOpenFileName(this, tr("Import .3dd"),
-		"..", tr("3DD files(*.3dd)"));
-
-	if (filename.isEmpty())
-	{
-		emit(operatorInfo(QString("Import Failed!")));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	delete ptr_frame_;
-	ptr_frame_ = new WireFrame();
-
-	ptr_frame_->ImportFrom3DD(byfilename.data());
-
-	emit(ChooseBasePressed(false));
-	emit(ChooseCeilingPressed(false));
-
-	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
-	// emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-	emit(Reset());
-
-	InitDrawData();
-	InitCapturedData();
-	InitFiberData();
-
-	updateGL();
-}
-
-
-void RenderingWidget::ImportSeq()
-{
-	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
-	{
-		emit(QString("The mesh is Empty !"));
-		return;
-	}
-
-	QString filename = QFileDialog::
-		getOpenFileName(this, tr("Import sequence"),
-		"..", tr("txt files(*.txt)"));
-
-	if (filename.isEmpty())
-	{
-		emit(operatorInfo(QString("Import Failed!")));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	if (ptr_fiberprint_ == NULL)
-	{
-		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	}
-	int M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
-
-	emit(ChooseBasePressed(false));
-	emit(ChooseCeilingPressed(false));
-
-	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
-	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
-	emit(SetMaxOrderSlider(M));
-	emit(Reset());
-
-	InitDrawData();
-	InitCapturedData();
-	InitFiberData();
-
-	updateGL();
-}
-
-
-void RenderingWidget::ExportFrame(int min_layer, int max_layer,
-	QString vert_path, QString line_path)
-{	
-	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
-	{
-		emit(QString("The mesh is Empty !"));
-		return;
-	}
-
-	if (min_layer == 0 || max_layer == 0 || min_layer > max_layer)
-	{
-		emit(Error(QString("Invalid layer information")));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-
-	if (!vert_path.isEmpty())
-	{
-		ptr_frame_->ExportPoints(min_layer, max_layer,
-			vert_path.toLocal8Bit().data());
-	}
-
-	if (!line_path.isEmpty())
-	{
-		ptr_frame_->ExportLines(min_layer, max_layer,
-			line_path.toLocal8Bit().data());
-	}
-
-	emit(operatorInfo(QString("Export mesh done")));	
-}
-
-
-void RenderingWidget::ExportSeq()
-{
-	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
-	{
-		emit(QString("The mesh is Empty !"));
-		return;
-	}
-
-	QString filename = QFileDialog::
-		getSaveFileName(this, tr("Export Sequence"),
-		"..", tr("txt files(*.txt)"));
-
-	if (filename.isEmpty())
-	{
-		emit(operatorInfo(QString("Export Failed!")));
-		return;
-	}
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray byfilename = filename.toLocal8Bit();
-
-	if (ptr_fiberprint_ == NULL)
-	{
-		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
-	}
-	ptr_fiberprint_->ExportPrintOrder(byfilename.data());
-
-	emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
-}
-
-
-void RenderingWidget::CheckDrawPoint(bool bv)
-{
-	is_draw_point_ = bv;
-	updateGL();
-}
-
-
-void RenderingWidget::CheckEdgeMode(int type)
-{
-	switch (type)
-	{
-	case NONE:
-		is_draw_edge_ = false;
-		is_draw_heat_ = false;
-		is_draw_order_ = false;
-		break;
-
-	case EDGE:
-		is_draw_edge_ = true;
-		is_draw_heat_ = false;
-		is_draw_order_ = false;
-		break;
-
-	case HEAT:
-		is_draw_edge_ = false;
-		is_draw_heat_ = true;
-		is_draw_order_ = false;
-		break;
-
-	case ORDER:
-		is_draw_edge_ = false;
-		is_draw_heat_ = false;
-		is_draw_order_ = true;
-		break;
-
-	default:
-		break;
-	}
-	updateGL();
-}
-
-
-void RenderingWidget::CheckLight(bool bv)
-{
-	has_lighting_ = bv;
-	updateGL();
-}
-
-
-void RenderingWidget::CheckDrawAxes(bool bV)
-{
-	is_draw_axes_ = bV;
-	updateGL();
-}
-
-
-void RenderingWidget::SwitchToNormal()
-{
-	emit(ChooseBasePressed(false));
-	emit(ChooseCeilingPressed(false));
-
-	if (ptr_frame_ == NULL)
-	{
-		emit(modeInfo(QString("")));
-	}
-	else
-	{
-		emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
-	}
-
-	if (op_mode_ == CHOOSEBASE)
-	{
-		base_.clear();
-		for (int i = 0; i < captured_verts_.size(); i++)
-		{
-			base_.push_back(captured_verts_[i]);
-		}
-	}
-	else
-	if (op_mode_ == CHOOSECEILING)
-	{
-		ceiling_.clear();
-		for (int i = 0; i < captured_edges_.size(); i++)
-		{
-			ceiling_.push_back(captured_edges_[i]);
-		}
-		
-		ptr_frame_->MakeCeiling(ceiling_);
-	}
-
-	InitCapturedData();
-}
-
-
-void RenderingWidget::SwitchToChooseBase()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-
-	if (op_mode_ == CHOOSEBASE)
-	{
-		SwitchToNormal();
-	}
-	else
-	{
-		emit(ChooseCeilingPressed(false));
-		emit(CapturedVert(-1, -1));
-
-		emit(ChooseBasePressed(true));
-		emit(modeInfo(QString("Choosing base...Press again or press ESC to exit.")));
-		op_mode_ = CHOOSEBASE;
-	}
-}
-
-
-void RenderingWidget::SwitchToChooseCeiling()
-{
-	if (ptr_frame_ == NULL)
-	{
-		return;
-	}
-
-	if (op_mode_ == CHOOSECEILING)
-	{
-		SwitchToNormal();
-	}
-	else
-	{
-		emit(ChooseBasePressed(false));
-		emit(CapturedVert(-1, -1));
-
-		emit(ChooseCeilingPressed(true));
-		emit(modeInfo(QString("Choosing ceiling...Press again or press ESC to exit.")));
-		op_mode_ = CHOOSECEILING;
-	}
 }
 
 
@@ -934,6 +405,16 @@ void RenderingWidget::DrawPoints(bool bv)
 			glColor3f(0.0, 1.0, 1.0);
 		}
 
+		if (verts[i]->isBase())
+		{
+			glColor3f(0.0, 0.0, 1.0);
+		}
+
+		if (verts[i]->isSubgraph())
+		{
+			glColor3f(0.0, 1.0, 0.0);
+		}
+
 		if (is_captured_vert_[i])
 		{
 			glColor3f(1.0, 0.0, 0.0);
@@ -976,6 +457,11 @@ void RenderingWidget::DrawEdge(bool bv)
 			if (e->isCeiling())
 			{
 				glColor3f(1.0, 1.0, 0.0);
+			}
+
+			if (e->isSubgraph())
+			{
+				glColor3f(0.0, 1.0, 0.0);
 			}
 
 			if (is_captured_edge_[i])
@@ -1056,7 +542,7 @@ void RenderingWidget::DrawOrder(bool bv)
 
 	if (op_mode_ == NORMAL)
 	{
-		vector<int> print_queue; 
+		vector<int> print_queue;
 		ptr_fiberprint_->OutputPrintOrder(print_queue);
 		for (int i = 0; i < print_order_; i++)
 		{
@@ -1074,6 +560,572 @@ void RenderingWidget::DrawOrder(bool bv)
 		}
 	}
 
+}
+
+
+void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy, double *objz)
+{
+	double modelview[16];
+	double projection[16];
+	int viewport[4];
+
+	glPushMatrix();
+
+	glMultMatrixf(ptr_arcball_->GetBallMatrix());
+
+	// Read the projection, modelview and viewport matrices using the glGet functions.
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glPopMatrix();
+
+	// Read the window z value from the z-buffer 
+	double winx = p.rx();
+	double winy = viewport[3] - p.ry();
+	float winz = 1.0;
+	glReadPixels(winx, winy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winz);
+
+	// Use the gluUnProject to get the world co-ordinates of the point the user clicked and save in objx, objy, objz.
+	gluUnProject(winx, winy, winz, modelview, projection, viewport, objx, objy, objz);
+}
+
+
+bool RenderingWidget::CaptureVertex(QPoint mouse)
+{
+	if (ptr_frame_ == NULL)
+	{
+		return 0;
+	}
+
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	CoordinatesTransform(mouse, &x, &y, &z);
+
+	vector<WF_vert*> verts = *(ptr_frame_->GetVertList());
+	int N = verts.size();
+	for (int i = 0; i < N; i++)
+	{
+		double dx = verts[i]->RenderPos().x() - x;
+		double dy = verts[i]->RenderPos().y() - y;
+		double dz = verts[i]->RenderPos().z() - z;
+		double dis = sqrt(dx*dx + dy*dy + dz*dz);
+		if (dis < 0.015)
+		{
+			if (op_mode_ == NORMAL)
+			{
+				captured_verts_.clear();
+				fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
+				captured_edges_.clear();
+				fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
+			}
+
+			if (!is_captured_vert_[i])
+			{
+				captured_verts_.push_back(verts[i]);
+				is_captured_vert_[i] = true;
+				emit(CapturedVert(i + 1, verts[i]->Degree()));
+				emit(layerInfo(-1, -1));
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+bool RenderingWidget::CaptureEdge(QPoint mouse)
+{
+	if (ptr_frame_ == NULL)
+	{
+		return 0;
+	}
+
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	CoordinatesTransform(mouse, &x, &y, &z);
+
+	vector<WF_edge*> edges = *(ptr_frame_->GetEdgeList());
+	int M = edges.size();
+	for (size_t i = 0; i < M; i++)
+	{
+		if (edges[i]->ID() < edges[i]->ppair_->ID())
+		{
+			WF_vert	u = WF_vert(x, y, z);
+			WF_vert *v1 = edges[i]->pvert_;
+			WF_vert *v2 = edges[i]->ppair_->pvert_;
+
+			double delta = ptr_frame_->ArcHeight(u.RenderPos(), v1->RenderPos(), v2->RenderPos());
+			if (delta < 0.007)
+			{
+				if (op_mode_ == NORMAL)
+				{
+					captured_verts_.clear();
+					fill(is_captured_vert_.begin(), is_captured_vert_.end(), false);
+					captured_edges_.clear();
+					fill(is_captured_edge_.begin(), is_captured_edge_.end(), false);
+				}
+	
+				if (!is_captured_edge_[i])
+				{
+					captured_edges_.push_back(edges[i]);
+					is_captured_edge_[i] = true;
+					is_captured_edge_[edges[i]->ppair_->ID()] = true;
+					emit(CapturedEdge(i + 1, edges[i]->Length()));
+					emit(layerInfo(edges[i]->Layer(), ptr_frame_->SizeOfLayer()));
+				}
+
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+void RenderingWidget::SetBackground()
+{
+	QColor color = QColorDialog::getColor(Qt::white, this, tr("background color"));
+	GLfloat r = (color.red()) / 255.0f;
+	GLfloat g = (color.green()) / 255.0f;
+	GLfloat b = (color.blue()) / 255.0f;
+	GLfloat alpha = color.alpha() / 255.0f;
+	glClearColor(r, g, b, alpha);
+	updateGL();
+}
+
+
+void RenderingWidget::CheckDrawPoint(bool bv)
+{
+	is_draw_point_ = bv;
+	updateGL();
+}
+
+
+void RenderingWidget::CheckEdgeMode(int type)
+{
+	switch (type)
+	{
+	case NONE:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_order_ = false;
+		break;
+
+	case EDGE:
+		is_draw_edge_ = true;
+		is_draw_heat_ = false;
+		is_draw_order_ = false;
+		break;
+
+	case HEAT:
+		is_draw_edge_ = false;
+		is_draw_heat_ = true;
+		is_draw_order_ = false;
+		break;
+
+	case ORDER:
+		is_draw_edge_ = false;
+		is_draw_heat_ = false;
+		is_draw_order_ = true;
+		break;
+
+	default:
+		break;
+	}
+	updateGL();
+}
+
+
+void RenderingWidget::CheckLight(bool bv)
+{
+	has_lighting_ = bv;
+	updateGL();
+}
+
+
+void RenderingWidget::CheckDrawAxes(bool bV)
+{
+	is_draw_axes_ = bV;
+	updateGL();
+}
+
+
+void RenderingWidget::SwitchToNormal()
+{
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
+	emit(ChooseSubGPressed(false));
+
+	if (ptr_frame_ == NULL)
+	{
+		emit(modeInfo(QString("")));
+	}
+	else
+	{
+		emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
+	}
+
+	if (op_mode_ == CHOOSEBASE)
+	{
+		ptr_frame_->MakeBase(captured_verts_);
+	}
+	else
+		if (op_mode_ == CHOOSECEILING)
+		{
+			ptr_frame_->MakeCeiling(captured_edges_);
+		}
+		else
+			if (op_mode_ == CHOOSESUBG)
+			{
+				ptr_frame_->MakeSubGraph(captured_edges_);
+			}
+
+	InitCapturedData();
+}
+
+
+void RenderingWidget::SwitchToChooseBase()
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+
+	if (op_mode_ == CHOOSEBASE)
+	{
+		SwitchToNormal();
+	}
+	else
+	{
+		emit(ChooseCeilingPressed(false));
+		emit(ChooseSubGPressed(false));
+		emit(CapturedVert(-1, -1));
+
+		emit(ChooseBasePressed(true));
+		emit(modeInfo(QString("Choosing base...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSEBASE;
+	}
+}
+
+
+void RenderingWidget::SwitchToChooseCeiling()
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+
+	if (op_mode_ == CHOOSECEILING)
+	{
+		SwitchToNormal();
+	}
+	else
+	{
+		emit(ChooseBasePressed(false));
+		emit(ChooseSubGPressed(false));
+		emit(CapturedVert(-1, -1));
+
+		emit(ChooseCeilingPressed(true));
+		emit(modeInfo(QString("Choosing ceiling...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSECEILING;
+	}
+}
+
+
+void RenderingWidget::SwitchToChooseSubG()
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+
+	if (op_mode_ == CHOOSESUBG)
+	{
+		SwitchToNormal();
+	}
+	else
+	{
+		emit(ChooseBasePressed(false));
+		emit(ChooseCeilingPressed(false));
+		emit(CapturedVert(-1, -1));
+
+		emit(ChooseSubGPressed(true));
+		emit(modeInfo(QString("Choosing subgraph...Press again or press ESC to exit.")));
+		op_mode_ = CHOOSESUBG;
+	}
+}
+
+
+void RenderingWidget::ReadFrame()
+{
+	QString filename = QFileDialog::getOpenFileName(
+		this, 
+		tr("Read Mesh"),
+		"..", 
+		tr("Mesh files(*.obj *.pwf)")
+		);
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Mesh Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	delete ptr_frame_; 
+	ptr_frame_ = new WireFrame();
+
+	if (filename.contains(".obj") || filename.contains(".OBJ"))
+	{
+		ptr_frame_->LoadFromOBJ(byfilename.data());
+	}
+	else
+	{
+		ptr_frame_->LoadFromPWF(byfilename.data());
+	}
+
+
+	InitDrawData();
+	InitCapturedData();
+	InitFiberData();
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
+		QString(""),
+		QString("Choose base (B) | Choose ceiling (C)"),
+		0,
+		-1, ptr_frame_->SizeOfLayer()
+	);
+
+	updateGL();
+}
+
+
+void RenderingWidget::WriteFrame(QString filename)
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	ptr_frame_->WriteToOBJ(filename.toLatin1().data());
+
+	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
+}
+
+
+void RenderingWidget::WriteFrame(
+	bool bVert, bool bLine, 
+	bool bPillar, bool bCeiling, 
+	bool bCut, int min_layer, int max_layer, 
+	QString filename)
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	ptr_frame_->WriteToPWF(
+		bVert, bLine, 
+		bPillar, bCeiling,
+		bCut, min_layer, max_layer, 
+		filename.toLatin1().data()
+	);
+
+	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
+}
+
+
+void RenderingWidget::Import()
+{
+	QString selected_filter;
+	QString filename = QFileDialog::getOpenFileName(
+		this, 
+		tr("Import"),
+		"..", 
+		tr("3DD files(*.3dd);;Sequence files(*.txt)"),
+		&selected_filter
+		);
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Import Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	int M = 0;
+	if (selected_filter == "3DD files(*.3dd)")
+	{
+		delete ptr_frame_;
+		ptr_frame_ = new WireFrame();
+
+		ptr_frame_->ImportFrom3DD(byfilename.data());
+	}
+	else
+	{
+		if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+		{
+			emit(QString("The mesh is Empty !"));
+			return;
+		}
+
+		if (ptr_fiberprint_ == NULL)
+		{
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+		}
+
+		M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
+	}
+
+
+	InitDrawData();
+	InitCapturedData();
+	InitFiberData();
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
+		QString(""),
+		QString("Choose base (B) | Choose ceiling (C)"),
+		M,
+		-1, ptr_frame_->SizeOfLayer()
+	);
+
+	updateGL();
+}
+
+
+void RenderingWidget::Export()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	QString selected_filter;
+	QString filename = QFileDialog::getSaveFileName(
+		this,
+		tr("Export"),
+		"..",
+		tr("Sequence(*.txt);;Subgraph(*.obj)"),
+		&selected_filter
+		); 
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Export Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	if (selected_filter == "Sequence(*.txt)")
+	{
+		if (ptr_fiberprint_ == NULL)
+		{
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+		}
+		ptr_fiberprint_->ExportPrintOrder(byfilename.data());
+		emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
+	}
+	else
+	if (selected_filter == "Subgraph(*.obj)")
+	{
+		ptr_frame_->ExportSubgraph(byfilename.data());
+		emit(operatorInfo(QString("Export subgraph to ") + filename + QString(" Done")));
+	}
+}
+
+
+void RenderingWidget::Export(int min_layer, int max_layer,
+	QString vert_path, QString line_path)
+{	
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	if (min_layer == 0 || max_layer == 0 || min_layer > max_layer)
+	{
+		emit(Error(QString("Invalid layer information")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+
+	if (!vert_path.isEmpty())
+	{
+		ptr_frame_->ExportPoints(min_layer, max_layer,
+			vert_path.toLocal8Bit().data());
+	}
+
+	if (!line_path.isEmpty())
+	{
+		ptr_frame_->ExportLines(min_layer, max_layer,
+			line_path.toLocal8Bit().data());
+	}
+
+	emit(operatorInfo(QString("Export mesh done")));	
+}
+
+
+void RenderingWidget::ScaleFrame(double scale)
+{
+	if (ptr_frame_ == NULL)
+	{
+		return;
+	}
+
+	vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
+	int N = ptr_frame_->SizeOfVertList();
+	float size = scale / scale_;
+	for (int i = 0; i < N; i++)
+	{
+		Vec3f p = verts[i]->Position();
+		verts[i]->SetPosition(p * size);
+	}
+	scale_ = scale;
+	ptr_frame_->Unify();
+
+	int cape_size = captured_edges_.size();
+	if (cape_size != 0)
+	{
+		emit(CapturedEdge(captured_edges_[cape_size - 1]->ID() + 1,
+			captured_edges_[cape_size - 1]->Length()));
+	}
+
+	updateGL();
 }
 
 
@@ -1105,11 +1157,16 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 
 	ptr_fiberprint_->FrameFabPrint();
 	//ptr_fiberprint_->BruteForcePrint();
-   //	ptr_fiberprint_->SweepingPrint();
+	//ptr_fiberprint_->SweepingPrint();
 	//ptr_fiberprint_->GetDeformation();
 
-	emit(SetOrderSlider(0));
-	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
+		QString(""),
+		QString(""),
+		ptr_frame_->SizeOfEdgeList() / 2,
+		-1, ptr_frame_->SizeOfLayer()
+	);
 
 	delete ptr_parm;
 }
@@ -1152,11 +1209,7 @@ void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 
 void RenderingWidget::ProjectBound(double len)
 {
-	if (base_.size() <= 0)
-	{
-		return;
-	}
-	ptr_frame_->ProjectBound(base_, len);
+	ptr_frame_->ProjectBound(len);
 
 	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
 	emit(operatorInfo(QString("")));
@@ -1235,6 +1288,19 @@ void RenderingWidget::PrintOrder(int order)
 }
 
 
+void RenderingWidget::PrintLastStep()
+{
+	if (print_order_ > 0)
+	{
+		print_order_--;
+	}
+
+	updateGL();
+
+	emit(SetOrderSlider(print_order_));
+}
+
+
 void RenderingWidget::PrintNextStep()
 {
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
@@ -1249,24 +1315,53 @@ void RenderingWidget::PrintNextStep()
 }
 
 
+void RenderingWidget::PrintLastLayer()
+{
+	vector<int> print_queue;
+	ptr_fiberprint_->OutputPrintOrder(print_queue);
+
+	int M = ptr_frame_->SizeOfEdgeList() / 2;
+	if (print_order_ == M)
+	{
+		print_order_--;
+	}
+	int orig_e = print_queue[print_order_];
+	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 2);
+
+	while (1)
+	{
+		if (print_order_ == 0)
+		{
+			break;
+		}
+
+		int orig_e = print_queue[print_order_];
+		if (ptr_frame_->GetEdge(orig_e)->Layer() == last_layer)
+		{
+			break;
+		}
+		print_order_--;
+	}
+
+	updateGL();
+
+	emit(SetOrderSlider(print_order_));
+}
+
+
 void RenderingWidget::PrintNextLayer()
 {
 	vector<int> print_queue;
 	ptr_fiberprint_->OutputPrintOrder(print_queue);
 
-	int next_layer;
-	if (print_order_ == 0)
-	{
-		next_layer = 1;
-	}
-	else
-	{
-		int orig_e = print_queue[print_order_ - 1];
-		next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 2; 
-	}
-
-
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
+	if (print_order_ == M)
+	{
+		print_order_--;
+	}
+	int orig_e = print_queue[print_order_];
+	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 2;
+
 	while (1)
 	{
 		if (print_order_ == M)

@@ -64,9 +64,12 @@ signals:
 	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
-	void	SendSavePWFParas(bool, bool, 
-							bool, bool, bool,
-							int, int, QString);
+	void	SendSavePWFParas(
+				bool, bool,  
+				bool, bool, 
+				bool, int, int, 
+				QString
+			);
 	void	SendExportParas(int, int, QString, QString);
 
 public slots:
@@ -74,6 +77,7 @@ public slots:
 
 	void	ChooseBaseClicked(bool down);
 	void	ChooseCeilingClicked(bool down);
+	void	ChooseSubGClicked(bool down);
 
 	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
 	void	GetFiberParas();
@@ -89,6 +93,9 @@ public slots:
 	void	SetOrderSlider(int value);
 	void	SetMaxOrderSlider(int max_value);
 
+	void	SetMinLayer(int min_value);
+	void	SetMaxLayer(int max_value);
+
 	void	OpenSaveDialog();
 	void	OpenExportDialog();
 
@@ -96,6 +103,8 @@ public slots:
 	void	ShowCapturedVert(int id, int degree);
 	void	ShowCapturedEdge(int id, double len);
 	void	ShowScale(double scale);
+	void	ShowLayerInfo(int layer_id, int total_id);
+
 	void	ShowAbout();
 	void	ShowError(QString error_msg);
 
@@ -112,10 +121,9 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
-	QAction				*action_import3dd_;
-	QAction				*action_importseq_;
+	QAction				*action_import_;
 	QAction				*action_export_;
-	QAction				*action_exportseq_;
+	QAction				*action_export_maya_;
 
 	QAction				*action_background_;
 
@@ -126,6 +134,7 @@ private:
 	QLabel				*label_operatorinfo_;
 	QLabel				*label_modeinfo_;
 	QLabel				*label_capture_;
+	QLabel				*label_layer_;
 
 	QLabel				*label_wl_;
 	QLabel				*label_wp_;
@@ -163,7 +172,7 @@ private:
 	QCheckBox			*checkbox_axes_;
 	QCheckBox			*checkbox_savevert_;
 	QCheckBox			*checkbox_saveline_;
-	QCheckBox			*checkbox_savebase_;
+	QCheckBox			*checkbox_savepillar_;
 	QCheckBox			*checkbox_saveceiling_;
 	QCheckBox			*checkbox_savecut_;
 
@@ -176,7 +185,9 @@ private:
 	QPushButton			*pushbutton_rotatexy_;
 	QPushButton			*pushbutton_rotatexz_;
 	QPushButton			*pushbutton_rotateyz_;
+	QPushButton			*pushbutton_lastedge_;
 	QPushButton			*pushbutton_nextedge_;
+	QPushButton			*pushbutton_lastlayer_;
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_project_;
@@ -190,7 +201,8 @@ private:
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;
-	QToolButton			*toolbutton_chooseceiling_;
+	QToolButton			*toolbutton_chooseb_ceiling_;
+	QToolButton			*toolbutton_choosesubg_;
 
 	// Sliders
 	QSlider				*slider_order_;
