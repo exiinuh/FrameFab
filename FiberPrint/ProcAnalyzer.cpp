@@ -206,6 +206,10 @@ void ProcAnalyzer::Write()
 		}
 		for (int j = 0; j < temp.normal_.size(); j++)
 		{
+		/*	if (temp.normal_[j].getZ() < 0)
+			{
+				continue;
+			}*/
 			fprintf(vector, "%lf ,%lf ,%lf", temp.normal_[j].getX(), temp.normal_[j].getY(), temp.normal_[j].getZ());
 			fprintf(vector, "\n");
 		}

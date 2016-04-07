@@ -214,6 +214,85 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		}
 	}
 
+
+	///* for rendering */
+	//char layer[10];
+	//char head[10];
+	//sprintf(layer, "%d", l);
+	//sprintf(head, "%d", h);
+	//
+	//
+	//string file = (string)ptr_path_ + "/PathRender_" + "_" + head + ".txt";
+	//FILE *fp = fopen(file.c_str(), "w+");
+
+	//double min_cost = choice.begin()->first;
+	//double max_cost;
+	//
+	//vector<double> tmp_cost(M);
+	//fill(tmp_cost.begin(), tmp_cost.end(), -1);
+	//for (it = choice.begin(); it != choice.end(); it++)
+	//{
+	//	max_cost = it->first;
+	//	int dual_j = layers_[l][it->second];
+	//	int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+	//	tmp_cost[orig_j] = tmp_cost[ptr_frame_->GetEdge(orig_j)->ppair_->ID()] = it->first;
+	//}
+
+	//for (int j = 0; j < M; j++)
+	//{
+	//	double r;
+	//	double g;
+	//	double b;
+	//	WF_edge *e = ptr_frame_->GetEdge(j);
+	//	if (j < e->ppair_->ID())
+	//	{
+	//		if (ptr_subgraph_->isExistingEdge(j))
+	//		{
+	//			r = 0.5;
+	//			g = 0.5;
+	//			b = 0.5;
+	//		}
+	//		else
+	//		if (e->Layer() != l)
+	//		{
+	//			r = 1.0;
+	//			g = 1.0;
+	//			b = 1.0;
+	//		}
+	//		else
+	//		if (tmp_cost[j] == -1)
+	//		{
+	//			r = 0;
+	//			g = 0;
+	//			b = 0;
+	//		}
+	//		else
+	//		{
+	//			double cost_j;
+	//			if (max_cost == min_cost)
+	//			{
+	//				cost_j = 1.0;
+	//			}
+	//			else
+	//			{
+	//				cost_j = (tmp_cost[j] - min_cost) / (max_cost - min_cost);
+	//			}
+
+	//			r = 1.0;
+	//			g = cost_j;
+	//			b = 0.0;
+	//		}
+
+	//		point u = e->pvert_->RenderPos();
+	//		point v = e->ppair_->pvert_->RenderPos();
+	//		fprintf(fp, "%lf, %lf, %lf \n %lf, %lf, %lf \n%lf, %lf, %lf\n",
+	//			u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
+	//	}
+	//}
+	//fclose(fp);
+
+
+
 	/* ranked by weight */
 	for (it = choice.begin(); it != choice.end(); it++)
 	{

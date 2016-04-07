@@ -73,7 +73,7 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	ptr_graphcut_->PrintOutTimer();
 	ptr_seqanalyzer_->PrintOutTimer();
-//	ptr_procanalyzer_->ProcPrint();
+	ptr_procanalyzer_->ProcPrint();
 }
 
 
