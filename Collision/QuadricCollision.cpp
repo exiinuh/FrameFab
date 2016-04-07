@@ -6,22 +6,36 @@ QuadricCollision::QuadricCollision()
 
 }
 
-QuadricCollision::~QuadricCollision()
-{
-}
-
 
 QuadricCollision::QuadricCollision(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
 	divide_ = 60;
+
+	int halfM = ptr_frame->SizeOfEdgeList() / 2;
+	colli_map_.resize(halfM*halfM);
+	for (int i = 0; i < halfM*halfM; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+}
+
+
+QuadricCollision::~QuadricCollision()
+{
+	int Nc = colli_map_.size();
+	for (int i = 0; i < Nc; i++)
+	{
+		delete colli_map_[i];
+		colli_map_[i] = NULL;
+	}
 }
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, 
-	vector<lld> &colli_map)
+	vector<lld> &result_map)
 {
-	Init(colli_map);
+	Init(result_map);
 	target_e_ = target_e;
 
 	/* collision with edge */
@@ -31,20 +45,20 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 		WF_edge *e = ptr_frame_->GetEdge(ptr_subgraph->e_orig_id(i));
 		if (e != target_e_ && e != target_e_->ppair_)
 		{
-			DetectEdge(e, colli_map);
+			DetectEdge(e, result_map);
 		}
 	}
 }
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e, 
-	vector<lld> &colli_map)
+	vector<lld> &result_map)
 {
-	Init(colli_map);
+	Init(result_map);
 	target_e_ = target_e;
 
 	/* collision with edge */
-	DetectEdge(order_e, colli_map);
+	DetectEdge(order_e, result_map);
 }
 
 
@@ -101,68 +115,71 @@ void QuadricCollision::Init(vector<lld> &colli_map)
 }
 
 
-double QuadricCollision::DistanceEdge(WF_edge* order_e)
+void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 {
-
-	gte::Segment<3, float> segment,segment_target;
-	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
-	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
-	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
-	auto result = distance(segment, segment_target);
-	return result.distance;
-
-}
-
-void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
-{
-	
-	if (DistanceEdge(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
-		return;
-
-	double ¦È;								// angle with Z axis (rad)
-	double ¦Õ;								// angle with X axis (rad)
-
-	for (int j = 0; j < 3; j++)
+	if (Distance(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
 	{
-		for (int i = 0; i < divide_; i++)
+		return;
+	}
+	
+	int halfM = ptr_frame_->SizeOfEdgeList() / 2;
+	int mi = order_e->ID() / 2 * halfM + target_e_->ID() / 2;
+	if (colli_map_[mi] == NULL)
+	{
+		colli_map_[mi] = new vector<lld> ;
+		Init(*colli_map_[mi]);
+
+		double ¦È;								// angle with Z axis (rad)
+		double ¦Õ;								// angle with X axis (rad)
+
+		for (int j = 0; j < 3; j++)
 		{
-			if (i < 20)
+			for (int i = 0; i < divide_; i++)
 			{
-				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-				¦Õ = i*18.0 / 180.0*F_PI;
-			}
+				if (i < 20)
+				{
+					¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+					¦Õ = i*18.0 / 180.0*F_PI;
+				}
 
-			if (i>19 && i < 40)
-			{
-				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
-			}
+				if (i > 19 && i < 40)
+				{
+					¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+					¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+				}
 
-			if (i>39)
-			{
-				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+				if (i > 39)
+				{
+					¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+					¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+				}
+				lld mask = ((lld)1 << i);
+				if (DetectBulk(order_e, ¦È, ¦Õ))
+				{
+					(*colli_map_[mi])[j] |= mask;
+				}
 			}
-			lld mask = ((lld)1 << i);
-			if (DetectBulk(order_e, ¦È, ¦Õ))
-			{
-				colli_map[j] |= mask;
-			}		
+		}
+
+		//North Point
+		lld mask = ((lld)1 << 60);
+		if (DetectBulk(order_e, 0, 0))
+		{
+			(*colli_map_[mi])[2] |= mask;
+		}
+
+		//South Point
+		mask = ((lld)1 << 61);
+		if (DetectBulk(order_e, F_PI, 0))
+		{
+			(*colli_map_[mi])[2] |= mask;
 		}
 	}
 
-	//North Point
-	lld mask = ((lld)1 << 60);
-	if (DetectBulk(order_e, 0, 0))
-	{
-		colli_map[2] |= mask;
-	}
 
-	//South Point
-	mask = ((lld)1 << 61);
-	if (DetectBulk(order_e, F_PI, 0))
+	for (int i = 0; i < 3; i++)
 	{
-		colli_map[2] |= mask;
+		result_map[i] |= (*colli_map_[mi])[i];
 	}
 }
 
@@ -518,6 +535,17 @@ bool QuadricCollision::Parallel(GeoV3 a, GeoV3 b)
 	if (abs(angle(a, b)) < eps || abs(angle(a, b) - F_PI) < eps)
 		return true;
 	return false;
+}
+
+
+double QuadricCollision::Distance(WF_edge* order_e)
+{
+	gte::Segment<3, float> segment, segment_target;
+	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
+	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
+	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
+	auto result = distance(segment, segment_target);
+	return result.distance;
 }
 
 

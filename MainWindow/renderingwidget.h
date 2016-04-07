@@ -160,6 +160,7 @@ public:
 	WireFrame		*ptr_frame_;
 
 private:
+	QString			last_dir_;
 	// eye
 	GLfloat			eye_distance_;
 	point			eye_goal_;

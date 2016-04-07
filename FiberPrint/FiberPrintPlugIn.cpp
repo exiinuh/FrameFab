@@ -60,14 +60,13 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
 
-	if (!ptr_seqanalyzer_->SeqPrint())
-	{
-		cout << "Model not printable!" << endl;
-		getchar();
-
-		return;
-	}
+	//	return;
+	//}
 
 	printf("FrameFab print done.\n");
 
@@ -80,7 +79,7 @@ void FiberPrintPlugIn::BruteForcePrint()
 {
 	Init();
 
-	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new BFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
 	if (!ptr_seqanalyzer_->SeqPrint())
@@ -98,7 +97,7 @@ void FiberPrintPlugIn::SweepingPrint()
 {
 	Init();
 
-	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
 	ptr_graphcut_->MakeLayers();

@@ -11,22 +11,12 @@ ADMMCut::ADMMCut()
 }
 
 
-ADMMCut::ADMMCut(WireFrame *ptr_frame)
-	:penalty_(10e2),
-	Dt_tol_(5), Dr_tol_(10 * F_PI / 180),
-	pri_tol_(10e-3), dual_tol_(10e-3)
-{
-	ptr_frame_ = ptr_frame;
-	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_dualgraph_);
-}
-
-
 ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
+	ptr_collision_ = new QuadricCollision(ptr_frame_);
 	ptr_path_ = ptr_path;
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
@@ -82,155 +72,45 @@ void ADMMCut::InitState()
 }
 
 
-void ADMMCut::SetStartingPoints(int count)
-{
-	if (count == 0)
-	{
-		ptr_dualgraph_->Dualization();
-		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
-	}
-	else
-	{
-		ptr_dualgraph_->UpdateDualization(&x_);
-	}
-
-	Nd_ = ptr_dualgraph_->SizeOfVertList();
-	Md_ = ptr_dualgraph_->SizeOfEdgeList();
-	Fd_ = ptr_dualgraph_->SizeOfFaceList();
-	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
-
-	ptr_stiff_->Init();
-
-	/* Reweighting Paramter */
-	r_.resize(Nd_, Nd_);
-	x_.resize(Nd_);
-	lambda_.resize(6 * Ns_);
-	a_.resize(Nd_);
-
-	// Set all label x = 1 and calculate KD = F to obtain inital D_0
-	r_.setOnes();
-	x_.setOnes();
-	lambda_.setZero();
-	a_.setZero();
-
-	//ptr_stiff_->Debug();
-}
-
-
-void ADMMCut::SetBoundary()
-{
-	set_bound_.Start();
-
-	// Set lower boundary and upper boundary
-	// equality constraints W*x = d
-	// Identify Base nodes(1) and Upper Nodes(2)
-	// Here we just take the edge with biggest height
-	d_.resize(Nd_);
-	d_.setZero();
-
-	W_.resize(Nd_, Nd_);
-	W_.setZero();
-
-	VectorXi bound(Nd_);
-	bound.setZero();
-
-	// upper dual
-	int cuts = cutting_edge_.size();
-	for (int i = 0; i < cuts; i++)
-	{
-		int e_id = ptr_dualgraph_->e_dual_id(cutting_edge_[i]);
-		bound[e_id] = 2;
-		x_[e_id] = 0;
-	}
-
-	// base dual 
-	// find boundary nodes, in current stage boundary edge = base edge (for cat_head)
-	for (int i = 0; i < M_; i++)
-	{
-		WF_edge *e = ptr_frame_->GetEdge(i);
-		if (e->ID() < e->ppair_->ID())
-		{
-			int e_id = ptr_dualgraph_->e_dual_id(i);
-			int u = e->ppair_->pvert_->ID();
-			int v = e->pvert_->ID();
-			if (e_id != -1 && (ptr_frame_->isFixed(u) || ptr_frame_->isFixed(v)))
-			{
-				bound[e_id] = 1;
-			}
-		}
-	}
-
-	vector<Eigen::Triplet<double>> W_list;
-	for (int e_id = 0; e_id < Nd_; e_id++)
-	{
-		if (bound[e_id] == 1)
-		{
-			d_[e_id] = 1;
-			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
-		}
-		if (bound[e_id] == 2)
-		{
-			d_[e_id] = 0;
-			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
-		}
-	}
-	W_.setFromTriplets(W_list.begin(), W_list.end());
-
-	set_bound_.Stop();
-}
-
-
-void ADMMCut::CreateA()
-{
-	create_a_.Start();
-
-	A_.resize(Md_, Nd_);
-	vector<Triplet<double>> A_list;
-	for (int i = 0; i < Md_; i++)
-	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
-		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
-		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
-	}
-	A_.setFromTriplets(A_list.begin(), A_list.end());
-
-	create_a_.Stop();
-}
-
-
-void ADMMCut::CreateC(int cut, int rew)
-{
-	create_c_.Start();
-
-	C_.resize(Md_, Md_);
-	vector<Triplet<double>> C_list;
-	vector<double> v_r;
-	vector<double> v_c;
-
-	for (int i = 0; i < Md_; i++)
-	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
-		C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v)));
-		v_r.push_back(r_(u, v));
-		v_c.push_back(pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v));
-	}
-	C_.setFromTriplets(C_list.begin(), C_list.end());
-
-	string str_c = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_C";
-	Statistics s_c(str_c, v_c);
-	s_c.GenerateStdVecFile();
-
-	//string str_r = "Cut_" + to_string(cut) + "_Rew_" + to_string(rew) + "_R";
-	//Statistics s_r(str_r, v_r);
-	//s_r.GenerateStdVecFile();
-
-	H1_ = SpMat(Nd_, Nd_);
-	H1_ = A_.transpose() * C_ * A_;
-
-	create_c_.Stop();
-}
+//void ADMMCut::CreateA()
+//{
+//	create_a_.Start();
+//
+//	A_.resize(Md_, Nd_);
+//	vector<Triplet<double>> A_list;
+//	for (int i = 0; i < Md_; i++)
+//	{
+//		int u = ptr_dualgraph_->u(i);
+//		int v = ptr_dualgraph_->v(i);
+//		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
+//		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
+//	}
+//	A_.setFromTriplets(A_list.begin(), A_list.end());
+//
+//	create_a_.Stop();
+//}
+//
+//
+//void ADMMCut::CreateC(int cut, int rew)
+//{
+//	create_c_.Start();
+//
+//	C_.resize(Md_, Md_);
+//	vector<Triplet<double>> C_list;
+//
+//	for (int i = 0; i < Md_; i++)
+//	{
+//		int u = ptr_dualgraph_->u(i);
+//		int v = ptr_dualgraph_->v(i);
+//		//C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v)));
+//	}
+//	C_.setFromTriplets(C_list.begin(), C_list.end());
+//
+//	H1_ = SpMat(Nd_, Nd_);
+//	H1_ = A_.transpose() * C_ * A_;
+//
+//	create_c_.Stop();
+//}
 
 
 bool ADMMCut::CheckLabel(int count)
@@ -312,7 +192,7 @@ void ADMMCut::MakeLayers()
 	{
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints(cut_count);
-		CreateA();
+		InitWeight();
 
 		ptr_stiff_->CalculateD(D_, x_, cut_count, false, false, false);
 
@@ -348,18 +228,18 @@ void ADMMCut::MakeLayers()
 		VX	  F_init = *(ptr_stiff_->WeightedF());
 
 
-		double icut_energy = 0;
-		VX V_Cut = A_ * x_;
-		for (int i = 0; i < Md_; i++)
-		{
-			icut_energy += abs(V_Cut[i]);
-		}
-		double ideform_energy = (K_init * D_ - F_init).norm();
+		//double icut_energy = 0;
+		//VX V_Cut = A_ * x_;
+		//for (int i = 0; i < Md_; i++)
+		//{
+		//	icut_energy += abs(V_Cut[i]);
+		//}
+		//double ideform_energy = (K_init * D_ - F_init).norm();
 
 		cout << "****************************************" << endl;
 		cout << "ADMMCut Round : " << cut_count << endl;
-		cout << "Initial cut energy before entering ADMM: " << icut_energy << endl;
-		cout << "Initial Lagrangian energy before entering ADMM: " << ideform_energy << endl;
+		//cout << "Initial cut energy before entering ADMM: " << icut_energy << endl;
+		//cout << "Initial Lagrangian energy before entering ADMM: " << ideform_energy << endl;
 		cout << "---------------------------------" << endl;
 
 		int rew_count = 0;
@@ -373,11 +253,11 @@ void ADMMCut::MakeLayers()
 		res energy = (K(x)D - F(x)).norm()
 		*/
 
-		cut_energy.clear();
-		res_energy.clear();
+		//cut_energy.clear();
+		//res_energy.clear();
 
-		cut_energy.push_back(icut_energy);
-		res_energy.push_back(ideform_energy);
+		//cut_energy.push_back(icut_energy);
+		//res_energy.push_back(ideform_energy);
 
 		do
 		{
@@ -385,7 +265,7 @@ void ADMMCut::MakeLayers()
 
 			int ADMM_count = 0;
 			x_prev = x_;
-			CreateC(cut_count, rew_count);
+			CreateL();
 
 			do
 			{
@@ -430,21 +310,21 @@ void ADMMCut::MakeLayers()
 			/* One reweighting process ended! */
 			/* Output energy and residual */
 
-			double energy = 0;
-			VX V_Cut = A_ * x_;
-			for (int i = 0; i < Md_; i++)
-			{
-				energy += ptr_dualgraph_->Weight(i) * abs(V_Cut[i]);
-			}
+			//double energy = 0;
+			//VX V_Cut = A_ * x_;
+			//for (int i = 0; i < Md_; i++)
+			//{
+			//	energy += ptr_dualgraph_->Weight(i) * abs(V_Cut[i]);
+			//}
 
 			/*-------------------Screenplay-------------------*/
 			double res_tmp = primal_res_.norm();
 			cout << "Cut " << cut_count << " Reweight " << rew_count << " completed." << endl;
-			cout << "Cut Energy :" << energy << endl;
+			//cout << "Cut Energy :" << energy << endl;
 			cout << "Res Energy :" << res_tmp << endl;
 			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 
-			cut_energy.push_back(energy);
+			//cut_energy.push_back(energy);
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
@@ -476,6 +356,155 @@ void ADMMCut::MakeLayers()
 	ptr_frame_->Unify();
 
 	fprintf(stdout, "All done!\n");
+}
+
+
+void ADMMCut::SetStartingPoints(int count)
+{
+	if (count == 0)
+	{
+		ptr_dualgraph_->Dualization();
+		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
+	}
+	else
+	{
+		ptr_dualgraph_->UpdateDualization(&x_);
+	}
+
+	Nd_ = ptr_dualgraph_->SizeOfVertList();
+	Md_ = ptr_dualgraph_->SizeOfEdgeList();
+	Fd_ = ptr_dualgraph_->SizeOfFaceList();
+	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
+
+	ptr_stiff_->Init();
+
+	/* Reweighting Paramter */
+	r_.resize(Nd_, Nd_);
+	x_.resize(Nd_);
+	lambda_.resize(6 * Ns_);
+	a_.resize(Nd_);
+
+	// Set all label x = 1 and calculate KD = F to obtain inital D_0
+	r_.setOnes();
+	x_.setOnes();
+	lambda_.setZero();
+	a_.setZero();
+
+	//ptr_stiff_->Debug();
+}
+
+
+void ADMMCut::InitWeight()
+{
+	weight_.resize(Nd_, Nd_);
+	vector<Triplet<double>> weight_list;
+
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		WF_edge *e1 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_u));
+		WF_edge *e2 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_v));
+
+		vector<lld> tmp(3);
+		ptr_collision_->DetectCollision(e1, e2, tmp);
+		double w1 = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+		weight_list.push_back(Triplet<double>(dual_v, dual_u, w1));
+
+		ptr_collision_->DetectCollision(e2, e1, tmp);
+		double w2 = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+		weight_list.push_back(Triplet<double>(dual_u, dual_v, w2));
+	}
+	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+}
+
+
+void ADMMCut::SetBoundary()
+{
+	set_bound_.Start();
+
+	// Set lower boundary and upper boundary
+	// equality constraints W*x = d
+	// Identify Base nodes(1) and Upper Nodes(2)
+	// Here we just take the edge with biggest height
+	d_.resize(Nd_);
+	d_.setZero();
+
+	W_.resize(Nd_, Nd_);
+	W_.setZero();
+
+	VectorXi bound(Nd_);
+	bound.setZero();
+
+	// upper dual
+	int cuts = cutting_edge_.size();
+	for (int i = 0; i < cuts; i++)
+	{
+		int e_id = ptr_dualgraph_->e_dual_id(cutting_edge_[i]);
+		bound[e_id] = 2;
+		x_[e_id] = 0;
+	}
+
+	// base dual 
+	// find boundary nodes, in current stage boundary edge = base edge (for cat_head)
+	for (int i = 0; i < M_; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(i);
+		if (e->ID() < e->ppair_->ID())
+		{
+			int e_id = ptr_dualgraph_->e_dual_id(i);
+			int u = e->ppair_->pvert_->ID();
+			int v = e->pvert_->ID();
+			if (e_id != -1 && (ptr_frame_->isFixed(u) || ptr_frame_->isFixed(v)))
+			{
+				bound[e_id] = 1;
+			}
+		}
+	}
+
+	vector<Eigen::Triplet<double>> W_list;
+	for (int e_id = 0; e_id < Nd_; e_id++)
+	{
+		if (bound[e_id] == 1)
+		{
+			d_[e_id] = 1;
+			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
+		}
+		if (bound[e_id] == 2)
+		{
+			d_[e_id] = 0;
+			W_list.push_back(Eigen::Triplet<double>(e_id, e_id, 1));
+		}
+	}
+	W_.setFromTriplets(W_list.begin(), W_list.end());
+
+	set_bound_.Stop();
+}
+
+
+void ADMMCut::CreateL()
+{
+	create_l_.Start();
+
+	L_.resize(Nd_, Nd_);
+	vector<Triplet<double>> L_list;
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		double Wuv = weight_.coeff(dual_u, dual_v) * r_(dual_u, dual_v);
+		double Wvu = weight_.coeff(dual_v, dual_u) * r_(dual_v, dual_u);
+		L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
+		L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
+		L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
+		L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
+	}
+	L_.setFromTriplets(L_list.begin(), L_list.end());
+
+	H1_ = SpMat(Nd_, Nd_);
+	H1_ = L_.transpose() * L_;
+
+	create_l_.Stop();
 }
 
 
@@ -657,14 +686,12 @@ void ADMMCut::UpdateCut()
 
 	// Update cut
 	cutting_edge_.clear();
-	VectorXd J(Md_);
-	J = A_ * x_;
 	for (int i = 0; i < Md_; i++)
 	{
-		if (J[i] == 1 || J[i] == -1)
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		if (x_[dual_u] != x_[dual_v])
 		{
-			int dual_u = ptr_dualgraph_->u(i);
-			int dual_v = ptr_dualgraph_->v(i);
 			int u = ptr_dualgraph_->e_orig_id(dual_u);
 			int v = ptr_dualgraph_->e_orig_id(dual_v);
 			if (x_[dual_u] == 1)
@@ -679,6 +706,29 @@ void ADMMCut::UpdateCut()
 			}
 		}
 	}
+	//cutting_edge_.clear();
+	//VectorXd J(Md_);
+	//J = A_ * x_;
+	//for (int i = 0; i < Md_; i++)
+	//{
+	//	if (J[i] == 1 || J[i] == -1)
+	//	{
+	//		int dual_u = ptr_dualgraph_->u(i);
+	//		int dual_v = ptr_dualgraph_->v(i);
+	//		int u = ptr_dualgraph_->e_orig_id(dual_u);
+	//		int v = ptr_dualgraph_->e_orig_id(dual_v);
+	//		if (x_[dual_u] == 1)
+	//		{
+	//			// u is the lower dual vertex of cutting-edge 
+	//			cutting_edge_.push_back(u);
+	//		}
+	//		else
+	//		{
+	//			// v is the lower dual vertex of cutting-edge 
+	//			cutting_edge_.push_back(v);
+	//		}
+	//	}
+	//}
 
 	update_cut_.Stop();
 }
@@ -710,9 +760,11 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	{
 		int    u = ptr_dualgraph_->u(i);
 		int    v = ptr_dualgraph_->v(i);
-		double w = dual_edge[i]->w();
+		double Wuv = weight_.coeff(u, v);
+		double Wvu = weight_.coeff(v, u);
 
-		r_(u, v) = 1.0 / (1e-5 + w * abs(x_[u] - x_[v]));
+		r_(u, v) = sqrt(1.0 / (1e-5 + Wuv * abs(x_[u] - x_[v])));
+		r_(v, u) = sqrt(1.0 / (1e-5 + Wvu * abs(x_[v] - x_[u])));
 	}
 
 	update_r_.Stop();
@@ -734,10 +786,8 @@ void ADMMCut::PrintOutTimer()
 	printf("***Timer result:\n");
 	printf("SetBoundary:  ");
 	set_bound_.Print();
-	printf("CreateA:      ");
-	create_a_.Print();
-	printf("CreateC:      ");
-	create_c_.Print();
+	printf("CreateL:      ");
+	create_l_.Print();
 	printf("CalculateX:   ");
 	cal_x_.Print();
 	printf(">>>CalculateQ:   ");

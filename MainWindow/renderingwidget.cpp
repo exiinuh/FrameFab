@@ -14,6 +14,8 @@ is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
 	eye_direction_[0] = eye_direction_[1] = 0.0;
 	eye_direction_[2] = 1.0;
 
+	last_dir_ = "/home";
+
 	setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -676,7 +678,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 					is_captured_edge_[i] = true;
 					is_captured_edge_[edges[i]->ppair_->ID()] = true;
 					emit(CapturedEdge(i + 1, edges[i]->Length()));
-					emit(layerInfo(edges[i]->Layer(), ptr_frame_->SizeOfLayer()));
+					emit(layerInfo(edges[i]->Layer() + 1, ptr_frame_->SizeOfLayer()));
 				}
 
 				return true;
@@ -787,6 +789,8 @@ void RenderingWidget::SwitchToNormal()
 			}
 
 	InitCapturedData();
+
+	updateGL();
 }
 
 
@@ -811,6 +815,8 @@ void RenderingWidget::SwitchToChooseBase()
 		emit(modeInfo(QString("Choosing base...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSEBASE;
 	}
+
+	updateGL();
 }
 
 
@@ -835,6 +841,8 @@ void RenderingWidget::SwitchToChooseCeiling()
 		emit(modeInfo(QString("Choosing ceiling...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSECEILING;
 	}
+
+	updateGL();
 }
 
 
@@ -859,6 +867,8 @@ void RenderingWidget::SwitchToChooseSubG()
 		emit(modeInfo(QString("Choosing subgraph...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSESUBG;
 	}
+
+	updateGL();
 }
 
 
@@ -1134,7 +1144,7 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	QString dirname = QFileDialog::
 		getExistingDirectory(this, 
 							tr("Result Directory"),
-							"/home",
+							last_dir_,
 							QFileDialog::ShowDirsOnly
 							| QFileDialog::DontResolveSymlinks);
 
@@ -1143,6 +1153,8 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 		emit(operatorInfo(QString("Read Directory Failed!")));
 		return;
 	}
+
+	last_dir_ = dirname;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");

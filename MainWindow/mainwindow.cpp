@@ -866,13 +866,13 @@ void MainWindow::ShowLayerInfo(int layer_id, int total_id)
 		else
 		{
 			label_layer_->setText(QString("Total layer: %1").arg(total_id));
-			label_capture_->setVisible(true);
+			label_layer_->setVisible(true);
 		}
 	}
 	else
 	{
 		label_layer_->setText(QString("Layer: %1 / %2").arg(layer_id).arg(total_id));
-		label_capture_->setVisible(true);
+		label_layer_->setVisible(true);
 	}
 }
 

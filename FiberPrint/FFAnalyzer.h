@@ -43,8 +43,6 @@ public:
 
 public:
 	FFAnalyzer();
-	FFAnalyzer(GraphCut *ptr_graphcut)
-		:SeqAnalyzer(ptr_graphcut){}
 	FFAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path)
 		:SeqAnalyzer(ptr_graphcut, ptr_parm, ptr_path){}
 	~FFAnalyzer();

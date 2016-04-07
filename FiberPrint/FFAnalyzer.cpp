@@ -378,125 +378,125 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 bool FFAnalyzer::GenerateSeq(int h, int t)
 {
-	if (h == t)
-	{
-		return true;
-	}
+	//if (h == t)
+	//{
+	//	return true;
+	//}
 
-	printf("head :%d\n", h);
+	//printf("head :%d\n", h);
 
-	/* stiffness */
-	/* examinate stiffness on printing subgraph */
-	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
-	int Ns = ptr_subgraph_->SizeOfFreeFace();
-	VX D(Ns * 6);
-	D.setZero();
+	///* stiffness */
+	///* examinate stiffness on printing subgraph */
+	//Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
+	//int Ns = ptr_subgraph_->SizeOfFreeFace();
+	//VX D(Ns * 6);
+	//D.setZero();
 
-	bool stiff_success = true;
-	if (ptr_stiffness->CalculateD(D))
-	{
-		for (int k = 0; k < Ns; k++)
-		{
-			VX offset(3);
-			for (int l = 0; l < 3; l++)
-			{
-				offset[l] = D[k * 6 + l];
-			}
+	//bool stiff_success = true;
+	//if (ptr_stiffness->CalculateD(D))
+	//{
+	//	for (int k = 0; k < Ns; k++)
+	//	{
+	//		VX offset(3);
+	//		for (int l = 0; l < 3; l++)
+	//		{
+	//			offset[l] = D[k * 6 + l];
+	//		}
 
-			if (offset.norm() >= Dt_tol_)
-			{
-				stiff_success = false;
-				getchar();
-				break;
-			}
-		}
-	}
-	else
-	{
-		stiff_success = false;
-	}
+	//		if (offset.norm() >= Dt_tol_)
+	//		{
+	//			stiff_success = false;
+	//			getchar();
+	//			break;
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	stiff_success = false;
+	//}
 
-	delete ptr_stiffness;
-	ptr_stiffness = NULL;
+	//delete ptr_stiffness;
+	//ptr_stiffness = NULL;
 
-	if (!stiff_success)
-	{
-		return false;
-	}
+	//if (!stiff_success)
+	//{
+	//	return false;
+	//}
 
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	for (int i = 0; i < Nd; i++)
-	{
-		int orig_i = ptr_dualgraph_->e_orig_id(i);
-		WF_edge *ei = ptr_frame_->GetEdge(orig_i);
-		if (!ei->isPillar() && !ptr_subgraph_->isExistingEdge(orig_i))
-		{
-			if (ptr_collision_->ColFreeAngle(angle_state_[i]) == 0)
-			{
-				return false;
-			}
+	//int Nd = ptr_dualgraph_->SizeOfVertList();
+	//for (int i = 0; i < Nd; i++)
+	//{
+	//	int orig_i = ptr_dualgraph_->e_orig_id(i);
+	//	WF_edge *ei = ptr_frame_->GetEdge(orig_i);
+	//	if (!ei->isPillar() && !ptr_subgraph_->isExistingEdge(orig_i))
+	//	{
+	//		if (ptr_collision_->ColFreeAngle(angle_state_[i]) == 0)
+	//		{
+	//			return false;
+	//		}
 
-			if (h != ptr_frame_->SizeOfPillar())
-			{
-				int u = ei->pvert_->ID();
-				int v = ei->ppair_->pvert_->ID();
-				if (!ptr_subgraph_->isExistingVert(u)
-					&& !ptr_subgraph_->isExistingVert(v))
-				{
-					continue;
-				}
-			}
+	//		if (h != ptr_frame_->SizeOfPillar())
+	//		{
+	//			int u = ei->pvert_->ID();
+	//			int v = ei->ppair_->pvert_->ID();
+	//			if (!ptr_subgraph_->isExistingVert(u)
+	//				&& !ptr_subgraph_->isExistingVert(v))
+	//			{
+	//				continue;
+	//			}
+	//		}
 
-			vector<vector<lld>> tmp_angle(3);
-			for (int j = 0; j < Nd; j++)
-			{
-				int orig_j = ptr_dualgraph_->e_orig_id(j);
-				if (i != j &&
-					!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
-				{
-					WF_edge *ej = ptr_frame_->GetEdge(orig_j);
+	//		vector<vector<lld>> tmp_angle(3);
+	//		for (int j = 0; j < Nd; j++)
+	//		{
+	//			int orig_j = ptr_dualgraph_->e_orig_id(j);
+	//			if (i != j &&
+	//				!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
+	//			{
+	//				WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 
-					int id = i*Nd + j;
-					if (colli_map_[id] == NULL)
-					{
-						colli_map_[id] = new vector < lld >;
-						ptr_collision_->DetectCollision(ej, ei, *colli_map_[id]);
-					}
+	//				int id = i*Nd + j;
+	//				if (colli_map_[id] == NULL)
+	//				{
+	//					colli_map_[id] = new vector < lld >;
+	//					ptr_collision_->DetectCollision(ej, ei, *colli_map_[id]);
+	//				}
 
-					for (int k = 0; k < 3; k++)
-					{
-						tmp_angle[k].push_back(angle_state_[j][k]);
-					}
-					ptr_collision_->ModifyAngle(angle_state_[j], *colli_map_[id]);
-				}
-			}
+	//				for (int k = 0; k < 3; k++)
+	//				{
+	//					tmp_angle[k].push_back(angle_state_[j][k]);
+	//				}
+	//				ptr_collision_->ModifyAngle(angle_state_[j], *colli_map_[id]);
+	//			}
+	//		}
 
-			print_queue_.push_back(QueueInfo{ 0, 0, i });
-			ptr_subgraph_->UpdateDualization(ei);
-			if (GenerateSeq(h + 1, t))
-			{
-				return true;
-			}
-			ptr_subgraph_->RemoveUpdation(ei);
-			print_queue_.pop_back();
+	//		print_queue_.push_back(QueueInfo{ 0, 0, i });
+	//		ptr_subgraph_->UpdateDualization(ei);
+	//		if (GenerateSeq(h + 1, t))
+	//		{
+	//			return true;
+	//		}
+	//		ptr_subgraph_->RemoveUpdation(ei);
+	//		print_queue_.pop_back();
 
-			int k = 0;
-			for (int j = 0; j < Nd; j++)
-			{
-				int orig_j = ptr_dualgraph_->e_orig_id(j);
-				if (i != j &&
-					!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
-				{
-					for (int p = 0; p < 3; p++)
-					{
-						angle_state_[j][p] = tmp_angle[p][k];
-					}
-					k++;
-				}
-			}
-		}
-	}
+	//		int k = 0;
+	//		for (int j = 0; j < Nd; j++)
+	//		{
+	//			int orig_j = ptr_dualgraph_->e_orig_id(j);
+	//			if (i != j &&
+	//				!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
+	//			{
+	//				for (int p = 0; p < 3; p++)
+	//				{
+	//					angle_state_[j][p] = tmp_angle[p][k];
+	//				}
+	//				k++;
+	//			}
+	//		}
+	//	}
+	//}
 
 	return false;
 }
