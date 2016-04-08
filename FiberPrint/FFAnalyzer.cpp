@@ -431,6 +431,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	for (; hi < Nd - 1; hi++)
 	{
 		int orig_j = print_order_[hi];
+		int dual_j = ptr_dualgraph_->e_dual_id(orig_j);
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		int l = ej->Layer();
 		int Nl = layers_[l].size();
@@ -509,7 +510,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			else
 			{
 				double cost_k;
-				if (max_cost == -1e20|| max_cost == min_cost)
+				if (max_cost == -1e20 || max_cost == min_cost)
 				{
 					cost_k = 0.0;
 				}
@@ -531,6 +532,10 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 
 		fclose(fp);
 
+		vector<vector<lld>> tmp_angle(3);
+		UpdateStateMap(dual_j, tmp_angle);
+
+		UpdateStructure(ej);
 		ei = ej;
 	}
 
