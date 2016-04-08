@@ -41,6 +41,7 @@
 using namespace std;
 using namespace Eigen;
 
+#define	SPARSE_WEIGHT
 
 class ADMMCut : public GraphCut
 {

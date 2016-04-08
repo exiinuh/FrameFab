@@ -3,25 +3,31 @@
 
 FiberPrintPlugIn::FiberPrintPlugIn()
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut();
+	ptr_seqanalyzer_ = new FFAnalyzer();
+
+	ptr_frame_ = NULL;
+	ptr_parm_ = NULL;
+	ptr_path_ = NULL;
 }
 
 
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
+FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path)
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_path);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_frame, ptr_path);
 
 	ptr_frame_ = ptr_frame;
+	ptr_parm_ = NULL;
+	ptr_path_ = ptr_path;
 }
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
 	FiberPrintPARM *ptr_parm, char *ptr_path)
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, ptr_path);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, ptr_path);
 
 	ptr_frame_ = ptr_frame;
 	ptr_parm_ = ptr_parm;
@@ -36,6 +42,9 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
+
+	delete ptr_parm_;
+	ptr_parm_ = NULL;
 }
 
 
@@ -60,13 +69,13 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
 
-	//	return;
-	//}
+		return;
+	}
 
 	printf("FrameFab print done.\n");
 

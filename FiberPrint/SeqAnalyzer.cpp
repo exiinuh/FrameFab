@@ -10,6 +10,20 @@ SeqAnalyzer::SeqAnalyzer()
 	ptr_subgraph_	= NULL;
 	ptr_collision_	= NULL;
 	ptr_parm_		= NULL;
+	ptr_path_		= NULL;
+}
+
+
+SeqAnalyzer::SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path)
+	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
+{
+	ptr_frame_		= ptr_frame;
+	ptr_dualgraph_	= NULL;
+	ptr_subgraph_	= NULL;
+	ptr_collision_	= NULL;
+	ptr_parm_		= NULL;
+	ptr_path_		= ptr_path;
 }
 
 
@@ -48,6 +62,11 @@ bool SeqAnalyzer::SeqPrint()
 
 
 void SeqAnalyzer::PrintOutTimer()
+{
+}
+
+
+void SeqAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 {
 }
 
@@ -183,6 +202,10 @@ bool SeqAnalyzer::TestifyStiffness()
 	test_stiff_.Start();
 
 	/* examinate stiffness on printing subgraph */
+	if (ptr_parm_ == NULL)
+	{
+		ptr_parm_ = new FiberPrintPARM();
+	}
 	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_, ptr_path_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);

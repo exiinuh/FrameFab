@@ -49,12 +49,14 @@ public:
 
 public:
 	SeqAnalyzer();
+	SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path);
 	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~SeqAnalyzer();
 
 public:
 	virtual bool	SeqPrint();
 	virtual void	PrintOutTimer();
+	virtual void	WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 public:
 	void			Init();

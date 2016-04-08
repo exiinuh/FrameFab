@@ -1012,7 +1012,7 @@ void RenderingWidget::Import()
 
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, byfilename.data());
 		}
 
 		M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
@@ -1066,7 +1066,7 @@ void RenderingWidget::Export()
 	{
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, NULL);
 		}
 		ptr_fiberprint_->ExportPrintOrder(byfilename.data());
 		emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
@@ -1080,8 +1080,10 @@ void RenderingWidget::Export()
 }
 
 
-void RenderingWidget::Export(int min_layer, int max_layer,
-	QString vert_path, QString line_path)
+void RenderingWidget::Export(
+	int min_layer, int max_layer,
+	QString vert_path, QString line_path, QString render_path
+	)
 {	
 	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
 	{
@@ -1111,7 +1113,20 @@ void RenderingWidget::Export(int min_layer, int max_layer,
 			line_path.toLocal8Bit().data());
 	}
 
-	emit(operatorInfo(QString("Export mesh done")));	
+	if (!render_path.isEmpty())
+	{
+		if (ptr_fiberprint_ == NULL)
+		{
+			emit(operatorInfo(QString("Export render path failed.")));
+			return;
+		}
+		ptr_fiberprint_->ExportRenderPath(
+			min_layer, max_layer, 
+			render_path.toLocal8Bit().data()
+		);
+	}
+
+	emit(operatorInfo(QString("Export mesh done.")));	
 }
 
 
@@ -1146,12 +1161,13 @@ void RenderingWidget::ScaleFrame(double scale)
 
 void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 {
-	QString dirname = QFileDialog::
-		getExistingDirectory(this, 
-							tr("Result Directory"),
-							last_result_dir_,
-							QFileDialog::ShowDirsOnly
-							| QFileDialog::DontResolveSymlinks);
+	QString dirname = QFileDialog::getExistingDirectory(
+		this, 
+		tr("Result Directory"),
+		last_result_dir_,
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks
+	);
 
 	if (dirname.isEmpty())
 	{
@@ -1184,8 +1200,6 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 		ptr_frame_->SizeOfEdgeList() / 2,
 		-1, ptr_frame_->SizeOfLayer()
 	);
-
-	delete ptr_parm;
 }
 
 
@@ -1343,7 +1357,7 @@ void RenderingWidget::PrintLastLayer()
 		print_order_--;
 	}
 	int orig_e = print_queue[print_order_];
-	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 2);
+	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 1);
 
 	while (1)
 	{
@@ -1377,7 +1391,7 @@ void RenderingWidget::PrintNextLayer()
 		print_order_--;
 	}
 	int orig_e = print_queue[print_order_];
-	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 2;
+	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 1;
 
 	while (1)
 	{

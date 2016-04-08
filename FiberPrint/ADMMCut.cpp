@@ -301,14 +301,13 @@ void ADMMCut::InitWeight()
 
 		vector<lld> tmp(3);
 		ptr_collision_->DetectCollision(e1, e2, tmp);
-		weight_(j, i) = 
+		weight_(dual_v, dual_u) =
 			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 
 		ptr_collision_->DetectCollision(e2, e1, tmp);
-		weight_(i, j) =
+		weight_(dual_u, dual_v) =
 			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 	}
-	sp_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 #else
 	weight_.resize(Nd_, Nd_);
 	weight_.setZero();
@@ -407,8 +406,8 @@ void ADMMCut::CreateL()
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
-		double Wuv = spt_weight_.coeff(dual_u, dual_v) * r_(dual_u, dual_v);
-		double Wvu = spt_weight_.coeff(dual_v, dual_u) * r_(dual_v, dual_u);
+		double Wuv = weight_.coeff(dual_u, dual_v) * r_(dual_u, dual_v);
+		double Wvu = weight_.coeff(dual_v, dual_u) * r_(dual_v, dual_u);
 		L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
 		L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
 		L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
@@ -687,7 +686,7 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
-#ifdef SPARSE_MATRIX
+#ifdef SPARSE_WEIGHT
 	for (int i = 0; i < Md_; i++)
 	{
 		int    u = ptr_dualgraph_->u(i);

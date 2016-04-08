@@ -113,7 +113,7 @@ public slots:
 	void	Export();
 	void	Export(
 				int min_layer, int max_layer, 
-				QString vert_path, QString line_path
+				QString vert_path, QString line_path, QString render_path
 			);
 	void	ScaleFrame(double scale);
 
