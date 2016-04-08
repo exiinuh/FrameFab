@@ -509,7 +509,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			else
 			{
 				double cost_k;
-				if (max_cost == -1e20)
+				if (max_cost == -1e20|| max_cost == min_cost)
 				{
 					cost_k = 0.0;
 				}
