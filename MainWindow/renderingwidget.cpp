@@ -14,7 +14,8 @@ is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
 	eye_direction_[0] = eye_direction_[1] = 0.0;
 	eye_direction_[2] = 1.0;
 
-	last_dir_ = "/home";
+	last_file_dir_ = "/home";
+	last_result_dir_ = "/home";
 
 	setFocusPolicy(Qt::StrongFocus);
 }
@@ -877,7 +878,7 @@ void RenderingWidget::ReadFrame()
 	QString filename = QFileDialog::getOpenFileName(
 		this, 
 		tr("Read Mesh"),
-		"..", 
+		last_file_dir_,
 		tr("Mesh files(*.obj *.pwf)")
 		);
 
@@ -886,6 +887,8 @@ void RenderingWidget::ReadFrame()
 		emit(operatorInfo(QString("Read Mesh Failed!")));
 		return;
 	}
+
+	last_file_dir_ = filename;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
@@ -973,7 +976,7 @@ void RenderingWidget::Import()
 	QString filename = QFileDialog::getOpenFileName(
 		this, 
 		tr("Import"),
-		"..", 
+		last_file_dir_,
 		tr("3DD files(*.3dd);;Sequence files(*.txt)"),
 		&selected_filter
 		);
@@ -983,6 +986,8 @@ void RenderingWidget::Import()
 		emit(operatorInfo(QString("Import Failed!")));
 		return;
 	}
+
+	last_file_dir_ = filename;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
@@ -1144,7 +1149,7 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	QString dirname = QFileDialog::
 		getExistingDirectory(this, 
 							tr("Result Directory"),
-							last_dir_,
+							last_result_dir_,
 							QFileDialog::ShowDirsOnly
 							| QFileDialog::DontResolveSymlinks);
 
@@ -1154,7 +1159,7 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 		return;
 	}
 
-	last_dir_ = dirname;
+	last_result_dir_ = dirname;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");

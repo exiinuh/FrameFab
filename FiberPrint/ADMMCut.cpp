@@ -72,113 +72,6 @@ void ADMMCut::InitState()
 }
 
 
-//void ADMMCut::CreateA()
-//{
-//	create_a_.Start();
-//
-//	A_.resize(Md_, Nd_);
-//	vector<Triplet<double>> A_list;
-//	for (int i = 0; i < Md_; i++)
-//	{
-//		int u = ptr_dualgraph_->u(i);
-//		int v = ptr_dualgraph_->v(i);
-//		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
-//		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
-//	}
-//	A_.setFromTriplets(A_list.begin(), A_list.end());
-//
-//	create_a_.Stop();
-//}
-//
-//
-//void ADMMCut::CreateC(int cut, int rew)
-//{
-//	create_c_.Start();
-//
-//	C_.resize(Md_, Md_);
-//	vector<Triplet<double>> C_list;
-//
-//	for (int i = 0; i < Md_; i++)
-//	{
-//		int u = ptr_dualgraph_->u(i);
-//		int v = ptr_dualgraph_->v(i);
-//		//C_list.push_back(Triplet<double>(i, i, pow(ptr_dualgraph_->Weight(i), 2) * r_(u, v)));
-//	}
-//	C_.setFromTriplets(C_list.begin(), C_list.end());
-//
-//	H1_ = SpMat(Nd_, Nd_);
-//	H1_ = A_.transpose() * C_ * A_;
-//
-//	create_c_.Stop();
-//}
-
-
-bool ADMMCut::CheckLabel(int count)
-{
-	int l = 0;													// Number of dual vertex in lower set
-	int u = 0;													// Number of dual vertex in upper set
-
-	for (int i = 0; i < Nd_; i++)
-	{
-		if (x_[i] == 1)
-		{
-			l++;
-		}
-		else
-		{
-			u++;
-		}
-	}
-
-	cout << "--------------------------------------------" << endl;
-	cout << "ADMMCut REPORT" << endl;
-	cout << "ADMMCut Round : " << count << endl;
-	cout << "Lower Set edge number : " << l << "\\ " << Nd_w_ << " (Whole dual graph Nd)" << endl;
-	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
-	cout << "--------------------------------------------" << endl;
-
-	if (l < 20 || l < ptr_frame_->SizeOfPillar())
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-
-bool ADMMCut::TerminationCriteria(int count)
-{
-	if (count >= 20)
-	{
-		return true;
-	}
-
-	if (primal_res_.norm() <= pri_tol_ && dual_res_.norm() <= dual_tol_)
-	{
-		return true;
-	}
-	else
-	{
-		double p_r = primal_res_.norm();
-		double d_r = dual_res_.norm();
-
-		if (p_r > d_r)
-		{
-			penalty_ *= 2;
-		}
-
-		if (p_r < d_r)
-		{
-			penalty_ /= 2;
-		}
-
-		return false;
-	}
-}
-
-
 void ADMMCut::MakeLayers()
 {
 	// Initial Cutting Edge Setting
@@ -396,9 +289,9 @@ void ADMMCut::SetStartingPoints(int count)
 
 void ADMMCut::InitWeight()
 {
+#ifdef SPARSE_WEIGHT
 	weight_.resize(Nd_, Nd_);
-	vector<Triplet<double>> weight_list;
-
+	weight_.setZero();
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
@@ -408,14 +301,35 @@ void ADMMCut::InitWeight()
 
 		vector<lld> tmp(3);
 		ptr_collision_->DetectCollision(e1, e2, tmp);
-		double w1 = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-		weight_list.push_back(Triplet<double>(dual_v, dual_u, w1));
+		weight_(j, i) = 
+			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 
 		ptr_collision_->DetectCollision(e2, e1, tmp);
-		double w2 = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-		weight_list.push_back(Triplet<double>(dual_u, dual_v, w2));
+		weight_(i, j) =
+			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 	}
-	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+	sp_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+#else
+	weight_.resize(Nd_, Nd_);
+	weight_.setZero();
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			WF_edge *e1 = ptr_frame_->GetEdge(i);
+			WF_edge *e2 = ptr_frame_->GetEdge(j);
+
+			vector<lld> tmp(3);
+			ptr_collision_->DetectCollision(e1, e2, tmp);
+			weight_(j, i) = 
+				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+		
+			ptr_collision_->DetectCollision(e2, e1, tmp);
+			weight_(i, j) =
+				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+		}
+	}
+#endif
 }
 
 
@@ -486,20 +400,39 @@ void ADMMCut::CreateL()
 {
 	create_l_.Start();
 
+#ifdef SPARSE_WEIGHT
 	L_.resize(Nd_, Nd_);
 	vector<Triplet<double>> L_list;
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
-		double Wuv = weight_.coeff(dual_u, dual_v) * r_(dual_u, dual_v);
-		double Wvu = weight_.coeff(dual_v, dual_u) * r_(dual_v, dual_u);
+		double Wuv = spt_weight_.coeff(dual_u, dual_v) * r_(dual_u, dual_v);
+		double Wvu = spt_weight_.coeff(dual_v, dual_u) * r_(dual_v, dual_u);
 		L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
 		L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
 		L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
 		L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
 	}
 	L_.setFromTriplets(L_list.begin(), L_list.end());
+#else
+	L_.resize(Nd_, Nd_);
+	vector<Triplet<double>> L_list;
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			double Wuv = weight_(i, j) * r_(i, j);
+			double Wvu = weight_(i, j) * r_(i, j);
+
+			L_list.push_back(Triplet<double>(i, i, -Wuv));
+			L_list.push_back(Triplet<double>(i, j, Wuv));
+			L_list.push_back(Triplet<double>(j, j, -Wvu));
+			L_list.push_back(Triplet<double>(j, i, Wvu));
+		}
+	}
+	L_.setFromTriplets(L_list.begin(), L_list.end());
+#endif
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = L_.transpose() * L_;
@@ -754,18 +687,31 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
-	vector<DualEdge*> dual_edge = *(GetDualEdgeList());
-
+#ifdef SPARSE_MATRIX
 	for (int i = 0; i < Md_; i++)
 	{
 		int    u = ptr_dualgraph_->u(i);
 		int    v = ptr_dualgraph_->v(i);
-		double Wuv = weight_.coeff(u, v);
-		double Wvu = weight_.coeff(v, u);
+		double Wuv = weight_(u, v);
+		double Wvu = weight_(v, u);
 
 		r_(u, v) = sqrt(1.0 / (1e-5 + Wuv * abs(x_[u] - x_[v])));
 		r_(v, u) = sqrt(1.0 / (1e-5 + Wvu * abs(x_[v] - x_[u])));
 	}
+#else
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < Nd_; j++)
+		{
+			r_(i, j) = sqrt(1.0 / (1e-5 + weight_(i, j) * abs(x_[i] - x_[j])));
+			r_(j, i) = sqrt(1.0 / (1e-5 + weight_(j, i) * abs(x_[i] - x_[j])));
+			assert(weight_(i, j) >= 0);
+			assert(weight_(j, i) >= 0);
+			assert(r_(i, j) >= 0);
+			assert(r_(j, i) >= 0);
+		}
+	}
+#endif
 
 	update_r_.Stop();
 
@@ -776,6 +722,72 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	}
 	else
 	{
+		return false;
+	}
+}
+
+
+bool ADMMCut::CheckLabel(int count)
+{
+	int l = 0;													// Number of dual vertex in lower set
+	int u = 0;													// Number of dual vertex in upper set
+
+	for (int i = 0; i < Nd_; i++)
+	{
+		if (x_[i] == 1)
+		{
+			l++;
+		}
+		else
+		{
+			u++;
+		}
+	}
+
+	cout << "--------------------------------------------" << endl;
+	cout << "ADMMCut REPORT" << endl;
+	cout << "ADMMCut Round : " << count << endl;
+	cout << "Lower Set edge number : " << l << "\\ " << Nd_w_ << " (Whole dual graph Nd)" << endl;
+	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
+	cout << "--------------------------------------------" << endl;
+
+	if (l < 20 || l < ptr_frame_->SizeOfPillar())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+bool ADMMCut::TerminationCriteria(int count)
+{
+	if (count >= 20)
+	{
+		return true;
+	}
+
+	if (primal_res_.norm() <= pri_tol_ && dual_res_.norm() <= dual_tol_)
+	{
+		return true;
+	}
+	else
+	{
+		double p_r = primal_res_.norm();
+		double d_r = dual_res_.norm();
+
+		if (p_r > d_r)
+		{
+			penalty_ *= 2;
+		}
+
+		if (p_r < d_r)
+		{
+			penalty_ /= 2;
+		}
+
 		return false;
 	}
 }

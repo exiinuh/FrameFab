@@ -58,16 +58,11 @@ public:
 	~ADMMCut();
 
 public:
-	//Initialization
-	void		InitState();
 
-	//Termination
-	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
-	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
-
-	//ADMM
+	void		InitState();						// Initialization
 	void		MakeLayers();						// Main loop of cut
 
+private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		InitWeight();
 	void		SetBoundary();
@@ -79,6 +74,9 @@ public:
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev, int count);
 
+	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
+	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
+
 	void		PrintOutTimer();
 	void		WriteWeight();
 	void		WriteStiffness(string offset, string rotation);
@@ -86,7 +84,7 @@ public:
 
 private:
 	SpMat			L_;				// laplace matrix
-	SpMat			weight_;		// weight matrix
+	MX				weight_;
 	MX				r_;				// for updation of C
 	VX				x_;
 	VX				D_;
