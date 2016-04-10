@@ -302,11 +302,11 @@ void ADMMCut::InitWeight()
 		vector<lld> tmp(3);
 		ptr_collision_->DetectCollision(e1, e2, tmp);
 		weight_(dual_v, dual_u) =
-			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 
 		ptr_collision_->DetectCollision(e2, e1, tmp);
 		weight_(dual_u, dual_v) =
-			abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 	}
 #else
 	weight_.resize(Nd_, Nd_);
@@ -315,16 +315,23 @@ void ADMMCut::InitWeight()
 	{
 		for (int j = 0; j < i; j++)
 		{
-			WF_edge *e1 = ptr_frame_->GetEdge(i);
-			WF_edge *e2 = ptr_frame_->GetEdge(j);
+			WF_edge *e1 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
+			WF_edge *e2 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(j));
+
+			double beta = 1.0;
+			if (e1->pvert_ == e2->pvert_ || e1->pvert_ == e2->ppair_->pvert_ ||
+				e1->ppair_->pvert_ == e2->pvert_ || e1->ppair_->pvert_ == e2->ppair_->pvert_)
+			{
+				beta = 1000000;
+			}
 
 			vector<lld> tmp(3);
 			ptr_collision_->DetectCollision(e1, e2, tmp);
-			weight_(j, i) = 
+			weight_(j, i) = beta *
 				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 		
 			ptr_collision_->DetectCollision(e2, e1, tmp);
-			weight_(i, j) =
+			weight_(i, j) = beta *
 				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
 		}
 	}
