@@ -61,12 +61,12 @@ public:
 public:
 
 	void		InitState();						// Initialization
+	void		InitWeight();
 	void		MakeLayers();						// Main loop of cut
 
 private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();
-	void		InitWeight();
 	void		CreateL();							// Construct laplace matrix L and H1
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
@@ -85,7 +85,7 @@ private:
 
 private:
 	SpMat			L_;				// laplace matrix
-	MX				weight_;		// for weight, indexed by half of original id
+	SpMat			weight_;		// for weight, indexed by half of original id
 	MX				r_;				// for updation of C, indexed by half of dual id
 	VX				x_;
 	VX				D_;

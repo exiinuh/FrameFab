@@ -72,10 +72,78 @@ void ADMMCut::InitState()
 }
 
 
+void ADMMCut::InitWeight()
+{
+	int halfM = M_ / 2;
+	vector<Triplet<double>> weight_list;
+	weight_.resize(halfM, halfM);
+
+#ifdef ADJACENT_WEIGHT
+	/* need updating */
+	weight_.resize(Nd_, Nd_);
+	weight_.setZero();
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		WF_edge *e1 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_u));
+		WF_edge *e2 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_v));
+
+		vector<lld> tmp(3);
+		ptr_collision_->DetectCollision(e1, e2, tmp);
+		weight_(dual_v, dual_u) =
+			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+
+		ptr_collision_->DetectCollision(e2, e1, tmp);
+		weight_(dual_u, dual_v) =
+			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+	}
+#else
+	for (int i = 0; i < halfM; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
+			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
+
+			double beta = 1.0;
+			if (e1->pvert_ == e2->pvert_ || e1->pvert_ == e2->ppair_->pvert_ ||
+				e1->ppair_->pvert_ == e2->pvert_ || e1->ppair_->pvert_ == e2->ppair_->pvert_)
+			{
+				beta = 100.0;
+			}
+
+			vector<lld> tmp(3);
+			double tmp_weight;
+
+			ptr_collision_->DetectCollision(e1, e2, tmp);
+			tmp_weight = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			if (tmp_weight > eps)
+			{
+				tmp_weight *= beta;
+				weight_list.push_back(Triplet<double>(j, i, tmp_weight));
+			}
+
+			ptr_collision_->DetectCollision(e2, e1, tmp);
+			tmp_weight = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			if (tmp_weight > eps)
+			{
+				tmp_weight *= beta;
+				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+			}
+		}
+	}
+
+	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+#endif
+}
+
+
 void ADMMCut::MakeLayers()
 {
 	// Initial Cutting Edge Setting
 	InitState();
+	InitWeight();
 
 	debug_ = false;
 	int cut_count = 0;
@@ -85,7 +153,6 @@ void ADMMCut::MakeLayers()
 	{
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints(cut_count);
-		InitWeight();
 
 		ptr_stiff_->CalculateD(D_, x_, cut_count, false, false, false);
 
@@ -287,58 +354,6 @@ void ADMMCut::SetStartingPoints(int count)
 }
 
 
-void ADMMCut::InitWeight()
-{
-#ifdef SPARSE_WEIGHT
-	weight_.resize(Nd_, Nd_);
-	weight_.setZero();
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
-		WF_edge *e1 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_u));
-		WF_edge *e2 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_v));
-
-		vector<lld> tmp(3);
-		ptr_collision_->DetectCollision(e1, e2, tmp);
-		weight_(dual_v, dual_u) =
-			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-
-		ptr_collision_->DetectCollision(e2, e1, tmp);
-		weight_(dual_u, dual_v) =
-			100 * abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-	}
-#else
-	weight_.resize(Nd_, Nd_);
-	weight_.setZero();
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < i; j++)
-		{
-			WF_edge *e1 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
-			WF_edge *e2 = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(j));
-
-			double beta = 1.0;
-			if (e1->pvert_ == e2->pvert_ || e1->pvert_ == e2->ppair_->pvert_ ||
-				e1->ppair_->pvert_ == e2->pvert_ || e1->ppair_->pvert_ == e2->ppair_->pvert_)
-			{
-				beta = 1000000;
-			}
-
-			vector<lld> tmp(3);
-			ptr_collision_->DetectCollision(e1, e2, tmp);
-			weight_(j, i) = beta *
-				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-		
-			ptr_collision_->DetectCollision(e2, e1, tmp);
-			weight_(i, j) = beta *
-				abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-		}
-	}
-#endif
-}
-
-
 void ADMMCut::SetBoundary()
 {
 	set_bound_.Start();
@@ -406,7 +421,8 @@ void ADMMCut::CreateL()
 {
 	create_l_.Start();
 
-#ifdef SPARSE_WEIGHT
+#ifdef ADJACENT_WEIGHT
+	/* need updating */
 	L_.resize(Nd_, Nd_);
 	vector<Triplet<double>> L_list;
 	for (int i = 0; i < Md_; i++)
@@ -424,17 +440,25 @@ void ADMMCut::CreateL()
 #else
 	L_.resize(Nd_, Nd_);
 	vector<Triplet<double>> L_list;
-	for (int i = 0; i < Nd_; i++)
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
-		for (int j = 0; j < i; j++)
+		for (int dual_j = 0; dual_j < dual_i; dual_j++)
 		{
-			double Wuv = weight_(i, j) * r_(i, j);
-			double Wvu = weight_(i, j) * r_(i, j);
+			int u = ptr_dualgraph_->e_orig_id(dual_i) / 2;
+			int v = ptr_dualgraph_->e_orig_id(dual_j) / 2;
+			double Wuv = weight_.coeff(u, v) * r_(dual_i, dual_j);
+			double Wvu = weight_.coeff(v, u) * r_(dual_j, dual_i);
 
-			L_list.push_back(Triplet<double>(i, i, -Wuv));
-			L_list.push_back(Triplet<double>(i, j, Wuv));
-			L_list.push_back(Triplet<double>(j, j, -Wvu));
-			L_list.push_back(Triplet<double>(j, i, Wvu));
+			if (Wuv > eps)
+			{
+				L_list.push_back(Triplet<double>(dual_i, dual_i, -Wuv));
+				L_list.push_back(Triplet<double>(dual_i, dual_j, Wuv));
+			}
+			if (Wvu > eps)
+			{
+				L_list.push_back(Triplet<double>(dual_j, dual_j, -Wvu));
+				L_list.push_back(Triplet<double>(dual_j, dual_i, Wvu));
+			}
 		}
 	}
 	L_.setFromTriplets(L_list.begin(), L_list.end());
@@ -693,7 +717,7 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
-#ifdef SPARSE_WEIGHT
+#ifdef ADJACENT_WEIGHT
 	for (int i = 0; i < Md_; i++)
 	{
 		int    u = ptr_dualgraph_->u(i);
@@ -705,16 +729,16 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 		r_(v, u) = sqrt(1.0 / (1e-5 + Wvu * abs(x_[v] - x_[u])));
 	}
 #else
-	for (int i = 0; i < Nd_; i++)
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
-		for (int j = 0; j < Nd_; j++)
+		for (int dual_j = 0; dual_j < Nd_; dual_j++)
 		{
-			r_(i, j) = sqrt(1.0 / (1e-5 + weight_(i, j) * abs(x_[i] - x_[j])));
-			r_(j, i) = sqrt(1.0 / (1e-5 + weight_(j, i) * abs(x_[i] - x_[j])));
-			assert(weight_(i, j) >= 0);
-			assert(weight_(j, i) >= 0);
-			assert(r_(i, j) >= 0);
-			assert(r_(j, i) >= 0);
+			int u = ptr_dualgraph_->e_orig_id(dual_i) / 2;
+			int v = ptr_dualgraph_->e_orig_id(dual_j) / 2;
+			r_(dual_i, dual_j) = sqrt(1.0 /
+				(1e-5 + weight_.coeff(u, v) * abs(x_[dual_i] - x_[dual_j])));
+			r_(dual_j, dual_i) = sqrt(1.0 /
+				(1e-5 + weight_.coeff(v, u) * abs(x_[dual_i] - x_[dual_j])));
 		}
 	}
 #endif
