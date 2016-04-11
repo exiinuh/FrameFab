@@ -17,7 +17,11 @@
 *	  Company:  GCL@USTC
 *
 *    WARNING:  DO NOT insert node and edge after you dualize the graph,
+<<<<<<< HEAD
+*    as we append all project fixed point at the end of dual face.
+=======
 *    as we append all project b_fixed point at the end of dual face.
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 *    Further inserting will cause stiffness matrix and force creation error.
 * ==========================================================================
 */
@@ -41,7 +45,10 @@
 using namespace std;
 using namespace Eigen;
 
+<<<<<<< HEAD
+=======
 //#define	ADJACENT_WEIGHT
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 class ADMMCut : public GraphCut
 {
@@ -53,6 +60,27 @@ class ADMMCut : public GraphCut
 
 public:
 	ADMMCut();
+<<<<<<< HEAD
+	ADMMCut(WireFrame *ptr_frame);
+	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
+	~ADMMCut();
+
+public:
+	//Initialization
+	void		InitState();
+	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
+	void		SetBoundary();
+	void		CreateA();							// Construct edge-incidence matrix A
+	void		CreateC(int cut, int rew);
+	// Construct weight diagonal matrix C and H1
+
+	//Termination
+	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
+	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
+
+	//ADMM
+	void		MakeLayers();						// Main loop of cut
+=======
 	ADMMCut(WireFrame *ptr_frame, char *ptr_path)
 		:GraphCut(ptr_frame, ptr_path){}
 	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path);
@@ -68,6 +96,7 @@ private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();
 	void		CreateL();							// Construct laplace matrix L and H1
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
@@ -75,18 +104,27 @@ private:
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev, int count);
 
+<<<<<<< HEAD
+=======
 	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
 	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
 
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	void		PrintOutTimer();
 	void		WriteWeight();
 	void		WriteStiffness(string offset, string rotation);
 	void		Debug();
 
 private:
+<<<<<<< HEAD
+	SpMat			A_;
+	SpMat			C_;
+	MX				r_;				// for updation of C
+=======
 	SpMat			L_;				// laplace matrix
 	SpMat			weight_;		// for weight, indexed by half of original id
 	MX				r_;				// for updation of C, indexed by half of dual id
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	VX				x_;
 	VX				D_;
 	VX				lambda_;
@@ -94,10 +132,19 @@ private:
 	vector<int>		cutting_edge_;
 
 	VX				d_;				// for setting boundary & QP x
+<<<<<<< HEAD
+	SpMat			W_;
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	VX				dual_res_;		// dual residual for ADMM termination criteria
 	VX				primal_res_;	// dual residual for ADMM termination criteria
 
+<<<<<<< HEAD
+	QP				*qp_;			// Solves the quadratic programming problem:
+	// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
+	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
+=======
 	/* 
 	Solves the quadratic programming problem:
 	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
@@ -105,6 +152,7 @@ private:
 	QP				*qp_;			
 	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
 	SpMat			W_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	int				N_;				// N :    Number of nodes in orig graph
 	int				M_;				// M :    Number of edges in orig graph 
@@ -122,7 +170,12 @@ private:
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	Timer			set_bound_;
+<<<<<<< HEAD
+	Timer			create_a_;
+	Timer			create_c_;
+=======
 	Timer			create_l_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	Timer			cal_x_;
 	Timer			cal_q_;
 	Timer			cal_x_qp_;

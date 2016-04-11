@@ -64,6 +64,15 @@ bool BFAnalyzer::TestifySeq()
 	D0_.resize(0);
 	D0_.setZero();
 
+<<<<<<< HEAD
+	colli_map_.resize(Nd*Nd);
+	for (int i = 0; i < Nd*Nd; i++)
+	{
+		colli_map_[i] = NULL;
+	}
+
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	delete ptr_subgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
 

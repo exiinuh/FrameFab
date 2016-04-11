@@ -76,6 +76,19 @@ void MainWindow::CreateActions()
 	action_save_->setStatusTip(tr("Save the document to disk"));
 	connect(action_save_, SIGNAL(triggered()), this, SLOT(OpenSaveDialog()));
 
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	action_import3dd_ = new QAction(tr("Import .3dd"), this);
+	action_import3dd_->setStatusTip(tr("Import .3dd from disk"));
+	connect(action_import3dd_, SIGNAL(triggered()), renderingwidget_, SLOT(Import3DD()));
+
+	action_importseq_ = new QAction(tr("Import sequence"), this);
+	action_importseq_->setStatusTip(tr("Import sequence from disk"));
+	connect(action_importseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ImportSeq()));
+
+	action_export_ = new QAction(tr("Export frame"), this);
+	action_export_->setStatusTip(tr("Export frame to disk"));
+	connect(action_export_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
+=======
 	action_import_ = new QAction(tr("Import"), this);
 	action_import_->setStatusTip(tr("Import from disk"));
 	connect(action_import_, SIGNAL(triggered()), renderingwidget_, SLOT(Import()));
@@ -87,6 +100,11 @@ void MainWindow::CreateActions()
 	action_exportrender_ = new QAction(tr("Export to render"), this);
 	action_exportrender_->setStatusTip(tr("Export to render"));
 	connect(action_exportrender_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
+
+	action_exportseq_ = new QAction(tr("Export sequence"), this);
+	action_exportseq_->setStatusTip(tr("Export sequence to disk"));
+	connect(action_exportseq_, SIGNAL(triggered()), renderingwidget_, SLOT(ExportSeq()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -105,9 +123,14 @@ void MainWindow::CreateMenus()
 	menu_file_->addAction(action_save_);
 
 	menu_file_->addSeparator();
-	menu_file_->addAction(action_import_);
+	menu_file_->addAction(action_import3dd_);
+	menu_file_->addAction(action_importseq_);
 	menu_file_->addAction(action_export_);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	menu_file_->addAction(action_exportseq_);
+=======
 	menu_file_->addAction(action_exportrender_);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
@@ -150,7 +173,10 @@ void MainWindow::CreateLabels()
 	statusBar()->addWidget(label_operatorinfo_);
 	connect(renderingwidget_, SIGNAL(operatorInfo(QString)), label_operatorinfo_, SLOT(setText(QString)));
 
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+=======
 
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	label_wl_		= new QLabel(QString("Seq Wl: "), this);
 	label_wp_		= new QLabel(QString("Seq Wp: "), this);
 	label_wa_		= new QLabel(QString("Seq Wa: "), this);
@@ -207,26 +233,46 @@ void MainWindow::CreateSpinBoxes()
 
 	spinbox_minlayer1_ = new QSpinBox(this);
 	spinbox_minlayer1_->setFixedWidth(60);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	spinbox_minlayer1_->setRange(0, 20);
+	spinbox_minlayer1_->setValue(0);
+=======
 	spinbox_minlayer1_->setRange(1, 1);
 	spinbox_minlayer1_->setValue(1);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	spinbox_minlayer1_->setSingleStep(1);
 
 	spinbox_maxlayer1_ = new QSpinBox(this);
 	spinbox_maxlayer1_->setFixedWidth(60);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	spinbox_maxlayer1_->setRange(0, 20);
+	spinbox_maxlayer1_->setValue(0);
+=======
 	spinbox_maxlayer1_->setRange(1, 1);
 	spinbox_maxlayer1_->setValue(1);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	spinbox_maxlayer1_->setSingleStep(1);
 
 	spinbox_minlayer2_ = new QSpinBox(this);
 	spinbox_minlayer2_->setFixedWidth(60);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	spinbox_minlayer2_->setRange(0, 20);
+	spinbox_minlayer2_->setValue(0);
+=======
 	spinbox_minlayer2_->setRange(1, 1);
 	spinbox_minlayer2_->setValue(1);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	spinbox_minlayer2_->setSingleStep(1);
 
 	spinbox_maxlayer2_ = new QSpinBox(this);
 	spinbox_maxlayer2_->setFixedWidth(60);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+	spinbox_maxlayer2_->setRange(0, 20);
+	spinbox_maxlayer2_->setValue(0);
+=======
 	spinbox_maxlayer2_->setRange(1, 1);
 	spinbox_maxlayer2_->setValue(1);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	spinbox_maxlayer2_->setSingleStep(1);
 	connect(renderingwidget_, SIGNAL(SetMaxLayer(int)), this, SLOT(SetMaxLayer(int)));
 	connect(spinbox_maxlayer1_, SIGNAL(valueChanged(int)), this, SLOT(SetMinLayer(int)));
@@ -318,6 +364,8 @@ void MainWindow::CreatePushButtons()
 	pushbutton_nextedge_->setFixedSize(35, 20);
 	connect(pushbutton_nextedge_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextStep()));
 
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+=======
 	pushbutton_lastlayer_ = new QPushButton(tr("<<"), this);
 	pushbutton_lastlayer_->setFixedSize(35, 20);
 	connect(pushbutton_lastlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintLastLayer()));
@@ -326,6 +374,7 @@ void MainWindow::CreatePushButtons()
 	pushbutton_nextlayer_->setFixedSize(35, 20);
 	connect(pushbutton_nextlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextLayer()));
 
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	pushbutton_fiberprint_ = new QPushButton(tr("Fiber print"), this);
 	pushbutton_fiberprint_->setFixedSize(140, 35);
 	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
@@ -454,7 +503,10 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+=======
 	edit_layout->addWidget(toolbutton_choosesubg_);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 
 	// separator group
 	groupbox_sep1_ = new QGroupBox(this);
@@ -481,6 +533,10 @@ void MainWindow::CreateGroups()
 	// seqpara group
 	groupbox_seqpara_ = new QGroupBox(tr("Seq parameter"), this);
 	groupbox_seqpara_->setFlat(true);
+<<<<<<< HEAD:MainWindow/mainwindow.cpp
+
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.cpp
 	QVBoxLayout *seqpara_layout = new QVBoxLayout(groupbox_seqpara_);
 	seqpara_layout->addWidget(label_wl_);
 	seqpara_layout->addWidget(spinbox_wl_);

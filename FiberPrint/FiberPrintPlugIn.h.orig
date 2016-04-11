@@ -9,7 +9,11 @@
 #include "NoneCut.h"
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
+<<<<<<< HEAD
+#include"ProcAnalyzer.h"
+=======
 #include "ProcAnalyzer.h"
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 
 class FiberPrintPlugIn
@@ -42,10 +46,13 @@ public:
 
 	void			InputPrintOrder(vector<int> &queue)		{ ptr_seqanalyzer_->InputPrintOrder(queue); }
 	void			OutputPrintOrder(vector<int> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
+<<<<<<< HEAD
+=======
 	void			ExportRenderPath(int min_layer, int max_layer, char *ptr_path)
 	{
 		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);
 	}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	void			Debug();		// return value: edge index in mesh, for cut rendering
 
@@ -57,7 +64,11 @@ public:
 private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
+<<<<<<< HEAD
+	ProcAnalyzer* ptr_procanalyzer_;
+=======
 	ProcAnalyzer	*ptr_procanalyzer_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 };
 
 #endif // FIBERPRINTPLUGIN_H

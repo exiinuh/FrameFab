@@ -37,10 +37,13 @@ FiberPrintPARM::FiberPrintPARM()
 	penalty_ = 1e3;
 	pri_tol_ = 1e-3;
 	dual_tol_ = 1e-3;
+<<<<<<< HEAD
+=======
 
 	Wl_ = 1.0;
 	Wp_ = 1.0;
 	Wa_ = 1.0;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 

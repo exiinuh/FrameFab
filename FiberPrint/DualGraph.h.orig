@@ -88,7 +88,11 @@ public:
 	int		RemoveUpdation(WF_edge *e);						// remove the trail edge
 
 	void	InsertVertex(WF_edge *e);
+<<<<<<< HEAD
+	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w);
+=======
 	void	InsertEdge(WF_edge *e1, WF_edge *e2);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	int		InsertFace(WF_vert *p);							// insert a dual face at the end of free face
 	void	DeleteVertex(WF_edge *e);
 	int		DeleteFace(WF_vert *p);							// delete a dual face by moving

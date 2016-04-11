@@ -33,10 +33,15 @@ QuadricCollision::~QuadricCollision()
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, 
+<<<<<<< HEAD
 	vector<lld> &colli_map)
 {
 	Init(colli_map);
-
+=======
+	vector<lld> &result_map)
+{
+	Init(result_map);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	target_e_ = target_e;
 
 	/* collision with edge */
@@ -46,15 +51,18 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 		WF_edge *e = ptr_frame_->GetEdge(ptr_subgraph->e_orig_id(i));
 		if (e != target_e_ && e != target_e_->ppair_)
 		{
-
+<<<<<<< HEAD
 			DetectEdge(e, colli_map);
+=======
+			DetectEdge(e, result_map);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 		}
 	}
 }
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e, 
-
+<<<<<<< HEAD
 	vector<lld> &colli_map)
 {
 	Init(colli_map);
@@ -62,7 +70,15 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e,
 
 	/* collision with edge */
 	DetectEdge(order_e, colli_map);
+=======
+	vector<lld> &result_map)
+{
+	Init(result_map);
+	target_e_ = target_e;
 
+	/* collision with edge */
+	DetectEdge(order_e, result_map);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
@@ -76,6 +92,7 @@ void QuadricCollision::DetectCollision(WF_edge *target_e,
 	//North Point
 	if (!DetectEdges(exist_edge, 0, 0))
 		output.push_back(Orientation(0, 0));
+<<<<<<< HEAD
 	for (int j = 0; j < 3; j++)
 	{
 		for (int i = 0; i < divide_; i++)
@@ -140,7 +157,8 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
 	double ¦È;								// angle with Z axis (rad)
 	double ¦Õ;								// angle with X axis (rad)
 
-
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	for (int j = 0; j < 3; j++)
 	{
 		for (int i = 0; i < divide_; i++)
@@ -162,22 +180,23 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
 				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
 				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
 			}
-
+<<<<<<< HEAD
 			lld mask = ((lld)1 << i);
 			if (DetectBulk(order_e, ¦È, ¦Õ))
 			{
 				colli_map[j] |= mask;
 			}		
-
+=======
+			if (DetectEdges(exist_edge, ¦È, ¦Õ))
+				continue;
+			output.push_back(Orientation(¦È, ¦Õ));
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 		}
 	}
 
 	//South Point not consider
 	/*if (!DetectEdges(exist_edge_, 0, 0))
 	temp.push_back(Orientation(F_PI, 0));*/
-
-
-
 }
 
 
@@ -191,7 +210,81 @@ void QuadricCollision::Init(vector<lld> &colli_map)
 }
 
 
+void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
+{
+	if (Distance(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
+	{
+<<<<<<< HEAD
+		colli_map[2] |= mask;
+=======
+		return;
+	}
+	
+	int halfM = ptr_frame_->SizeOfEdgeList() / 2;
+	int mi = order_e->ID() / 2 * halfM + target_e_->ID() / 2;
+	if (colli_map_[mi] == NULL)
+	{
+		colli_map_[mi] = new vector<lld> ;
+		Init(*colli_map_[mi]);
 
+		double ¦È;								// angle with Z axis (rad)
+		double ¦Õ;								// angle with X axis (rad)
+
+		for (int j = 0; j < 3; j++)
+		{
+			for (int i = 0; i < divide_; i++)
+			{
+				if (i < 20)
+				{
+					¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+					¦Õ = i*18.0 / 180.0*F_PI;
+				}
+
+				if (i > 19 && i < 40)
+				{
+					¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+					¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+				}
+
+				if (i > 39)
+				{
+					¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+					¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+				}
+				lld mask = ((lld)1 << i);
+				if (DetectBulk(order_e, ¦È, ¦Õ))
+				{
+					(*colli_map_[mi])[j] |= mask;
+				}
+			}
+		}
+
+		//North Point
+		lld mask = ((lld)1 << 60);
+		if (DetectBulk(order_e, 0, 0))
+		{
+			(*colli_map_[mi])[2] |= mask;
+		}
+
+		//South Point
+		mask = ((lld)1 << 61);
+		if (DetectBulk(order_e, F_PI, 0))
+		{
+			(*colli_map_[mi])[2] |= mask;
+		}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+	}
+
+
+	for (int i = 0; i < 3; i++)
+	{
+<<<<<<< HEAD
+		colli_map[2] |= mask;
+=======
+		result_map[i] |= (*colli_map_[mi])[i];
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+	}
+}
 
 
 bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)

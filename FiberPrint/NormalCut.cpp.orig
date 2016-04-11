@@ -6,6 +6,16 @@ NormalCut::NormalCut()
 }
 
 
+NormalCut::NormalCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path)
+{
+	ptr_frame_ = ptr_frame;
+	ptr_dualgraph_ = new DualGraph(ptr_frame_);
+
+	path_ = path;
+	debug_ = true;
+}
+
+
 NormalCut::~NormalCut()
 {
 }
@@ -37,6 +47,9 @@ void NormalCut::MakeLayers()
 			it->second->ppair_->SetLayer(l);
 		}
 	}
+<<<<<<< HEAD
+=======
 
 	ptr_frame_->Unify();
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }

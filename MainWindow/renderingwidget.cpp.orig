@@ -413,6 +413,13 @@ void RenderingWidget::DrawPoints(bool bv)
 			glColor3f(0.0, 0.0, 1.0);
 		}
 
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+void RenderingWidget::ReadFrame()
+{
+	QString filename = QFileDialog::
+		getOpenFileName(this, tr("Read Mesh"),
+		"..", tr("Mesh files(*.obj *.pwf)"));
+=======
 		if (verts[i]->isSubgraph())
 		{
 			glColor3f(0.0, 1.0, 0.0);
@@ -422,6 +429,7 @@ void RenderingWidget::DrawPoints(bool bv)
 		{
 			glColor3f(1.0, 0.0, 0.0);
 		}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 
 		glVertex3fv(verts[i]->RenderPos().data());
 	}
@@ -566,11 +574,30 @@ void RenderingWidget::DrawOrder(bool bv)
 }
 
 
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+void RenderingWidget::Import3DD()
+{
+	QString filename = QFileDialog::
+		getOpenFileName(this, tr("Import .3dd"),
+		"..", tr("3DD files(*.3dd)"));
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Import Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+=======
 void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy, double *objz)
 {
 	double modelview[16];
 	double projection[16];
 	int viewport[4];
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 
 	glPushMatrix();
 
@@ -594,9 +621,61 @@ void RenderingWidget::CoordinatesTransform(QPoint p, double *objx, double *objy,
 }
 
 
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+void RenderingWidget::ImportSeq()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	QString filename = QFileDialog::
+		getOpenFileName(this, tr("Import sequence"),
+		"..", tr("txt files(*.txt)"));
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Import Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	if (ptr_fiberprint_ == NULL)
+	{
+		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	}
+	int M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
+
+	emit(ChooseBasePressed(false));
+	emit(ChooseCeilingPressed(false));
+
+	emit(modeInfo(QString("Choose base (B) | Choose ceiling (C)")));
+	emit(meshInfo(ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList()));
+	emit(SetMaxOrderSlider(M));
+	emit(Reset());
+
+	InitDrawData();
+	InitCapturedData();
+	InitFiberData();
+
+	updateGL();
+}
+
+
+void RenderingWidget::ExportFrame(int min_layer, int max_layer,
+	QString vert_path, QString line_path)
+{	
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+=======
 bool RenderingWidget::CaptureVertex(QPoint mouse)
 {
 	if (ptr_frame_ == NULL)
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 	{
 		return 0;
 	}
@@ -700,6 +779,39 @@ void RenderingWidget::SetBackground()
 	GLfloat alpha = color.alpha() / 255.0f;
 	glClearColor(r, g, b, alpha);
 	updateGL();
+}
+
+
+void RenderingWidget::ExportSeq()
+{
+	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
+	{
+		emit(QString("The mesh is Empty !"));
+		return;
+	}
+
+	QString filename = QFileDialog::
+		getSaveFileName(this, tr("Export Sequence"),
+		"..", tr("txt files(*.txt)"));
+
+	if (filename.isEmpty())
+	{
+		emit(operatorInfo(QString("Export Failed!")));
+		return;
+	}
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray byfilename = filename.toLocal8Bit();
+
+	if (ptr_fiberprint_ == NULL)
+	{
+		ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+	}
+	ptr_fiberprint_->ExportPrintOrder(byfilename.data());
+
+	emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
 }
 
 
@@ -1126,11 +1238,15 @@ void RenderingWidget::Export(
 		);
 	}
 
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+void RenderingWidget::DrawOrder(bool bv)
+=======
 	emit(operatorInfo(QString("Export mesh done.")));	
 }
 
 
 void RenderingWidget::ScaleFrame(double scale)
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 {
 	if (ptr_frame_ == NULL)
 	{
@@ -1142,11 +1258,25 @@ void RenderingWidget::ScaleFrame(double scale)
 	float size = scale / scale_;
 	for (int i = 0; i < N; i++)
 	{
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+		vector<int> print_queue; 
+		ptr_fiberprint_->OutputPrintOrder(print_queue);
+		for (int i = 0; i < print_order_; i++)
+		{
+			WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
+			glBegin(GL_LINE_LOOP);
+			glColor3f(1.0, 1.0, 1.0);
+			glVertex3fv(e->pvert_->RenderPos().data());
+			glVertex3fv(e->ppair_->pvert_->RenderPos().data());
+			glEnd();
+		}
+=======
 		Vec3f p = verts[i]->Position();
 		verts[i]->SetPosition(p * size);
 	}
 	scale_ = scale;
 	ptr_frame_->Unify();
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 
 	int cape_size = captured_edges_.size();
 	if (cape_size != 0)
@@ -1190,6 +1320,15 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 
 	ptr_fiberprint_->FrameFabPrint();
 	//ptr_fiberprint_->BruteForcePrint();
+<<<<<<< HEAD:MainWindow/renderingwidget.cpp
+   //	ptr_fiberprint_->SweepingPrint();
+	//ptr_fiberprint_->GetDeformation();
+
+	emit(SetOrderSlider(0));
+	emit(SetMaxOrderSlider(ptr_fiberprint_->ptr_graphcut_->ptr_dualgraph_->SizeOfVertList()));
+
+	delete ptr_parm;
+=======
 	//ptr_fiberprint_->SweepingPrint();
 	//ptr_fiberprint_->GetDeformation();
 
@@ -1200,6 +1339,7 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 		ptr_frame_->SizeOfEdgeList() / 2,
 		-1, ptr_frame_->SizeOfLayer()
 	);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.cpp
 }
 
 

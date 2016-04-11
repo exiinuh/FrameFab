@@ -58,5 +58,12 @@ protected:
 	/* for debuging */
 	bool				debug_;
 
+<<<<<<< HEAD
+
+	/* for debuging */
+	bool			debug_;
+
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 };
 

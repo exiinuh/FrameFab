@@ -89,6 +89,21 @@ private:
 
 public slots:
 	void	SetBackground();
+<<<<<<< HEAD:MainWindow/renderingwidget.h
+	void	ScaleFrame(double scale);
+
+	void	ReadFrame();
+	void	WriteFrame(QString filename);
+	void	WriteFrame(bool bVert, bool bLine, 
+						bool bBase, bool bCeiling, bool bCut,
+						int min_layer, int max_layer, QString filename);
+	void	Import3DD();
+	void	ImportSeq();
+	void	ExportFrame(int min_layer, int max_layer, 
+						QString vert_path, QString line_path);
+	void	ExportSeq();
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.h
 
 	void	CheckDrawPoint(bool bv);
 	void	CheckEdgeMode(int type);
@@ -98,7 +113,17 @@ public slots:
 	void	SwitchToNormal();
 	void	SwitchToChooseBase();
 	void	SwitchToChooseCeiling();
+<<<<<<< HEAD:MainWindow/renderingwidget.h
+
+private:
+	void	DrawAxes(bool bv);
+	void	DrawPoints(bool bv);
+	void	DrawEdge(bool bv);
+	void	DrawHeat(bool bv);
+	void	DrawOrder(bool bv);
+=======
 	void	SwitchToChooseSubG();
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/renderingwidget.h
 
 public slots:
 	void	ReadFrame();

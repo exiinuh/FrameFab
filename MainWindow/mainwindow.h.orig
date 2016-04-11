@@ -124,9 +124,14 @@ private:
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
-	QAction				*action_import_;
+	QAction				*action_import3dd_;
+	QAction				*action_importseq_;
 	QAction				*action_export_;
+<<<<<<< HEAD:MainWindow/mainwindow.h
+	QAction				*action_exportseq_;
+=======
 	QAction				*action_exportrender_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.h
 
 	QAction				*action_background_;
 
@@ -201,7 +206,10 @@ private:
 	QPushButton			*pushbutton_export_;
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
+<<<<<<< HEAD:MainWindow/mainwindow.h
+=======
 	QPushButton			*pushbutton_exportpath_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe:MainWindow/mainwindow.h
 	QPushButton			*pushbutton_deformation_;
 
 	// Toolbuttons

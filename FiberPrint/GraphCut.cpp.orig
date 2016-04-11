@@ -3,6 +3,10 @@
 
 GraphCut::GraphCut()
 {
+<<<<<<< HEAD
+	ptr_dualgraph_ = NULL;
+	ptr_stiff_ = NULL;
+=======
 	ptr_frame_ = NULL;
 	ptr_dualgraph_ = NULL;
 	ptr_stiff_ = NULL;
@@ -19,6 +23,7 @@ GraphCut::GraphCut(WireFrame *ptr_frame, char *ptr_path)
 	ptr_path_ = ptr_path;
 
 	debug_ = true;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
@@ -37,9 +42,17 @@ GraphCut::~GraphCut()
 
 void GraphCut::MakeLayers()
 {
+<<<<<<< HEAD
+}
+
+void GraphCut::PrintOutTimer()
+{
+}
+=======
 }
 
 
 void GraphCut::PrintOutTimer()
 {
 }
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe

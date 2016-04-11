@@ -10,18 +10,20 @@ SeqAnalyzer::SeqAnalyzer()
 	ptr_subgraph_	= NULL;
 	ptr_collision_	= NULL;
 	ptr_parm_		= NULL;
+	ptr_path_		= NULL;
 }
 
 
-SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut)
+SeqAnalyzer::SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(true), fileout_(false)
+	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
 {
-	ptr_frame_ = ptr_graphcut->ptr_frame_;
-	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
-
-	ptr_subgraph_ = new DualGraph(ptr_frame_);
-	ptr_collision_ = new QuadricCollision(ptr_frame_);
+	ptr_frame_		= ptr_frame;
+	ptr_dualgraph_	= NULL;
+	ptr_subgraph_	= NULL;
+	ptr_collision_	= NULL;
+	ptr_parm_		= NULL;
+	ptr_path_		= ptr_path;
 }
 
 
@@ -29,11 +31,11 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 {
 	ptr_frame_ = ptr_graphcut->ptr_frame_;
 	ptr_dualgraph_ = ptr_graphcut->ptr_dualgraph_;
+	ptr_collision_ = ptr_graphcut->ptr_collision_;
 	ptr_parm_ = ptr_parm;
 	ptr_path_ = ptr_path;
 
 	ptr_subgraph_ = new DualGraph(ptr_frame_);
-	ptr_collision_ = new QuadricCollision(ptr_frame_);
 
 	debug_ = true;
 	fileout_ = false;
@@ -50,16 +52,6 @@ SeqAnalyzer::~SeqAnalyzer()
 {
 	delete ptr_subgraph_;
 	ptr_subgraph_ = NULL;
-
-	delete ptr_collision_;
-	ptr_collision_ = NULL;
-
-	int Nm = colli_map_.size();
-	for (int i = 0; i < Nm; i++)
-	{
-		delete colli_map_[i];
-		colli_map_[i] = NULL;
-	}
 }
 
 
@@ -70,6 +62,11 @@ bool SeqAnalyzer::SeqPrint()
 
 
 void SeqAnalyzer::PrintOutTimer()
+{
+}
+
+
+void SeqAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 {
 }
 
@@ -160,21 +157,16 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 		{
 			WF_edge *target_e = ptr_frame_->GetEdge(orig_j);
 
-			int id = dual_i*Nd + dual_j;
-			if (colli_map_[id] == NULL)
-			{
-				colli_map_[id] = new vector < lld > ;
-
-				upd_map_collision_.Start();
-				ptr_collision_->DetectCollision(target_e, order_e, *colli_map_[id]);
-				upd_map_collision_.Stop();
-			}
+			upd_map_collision_.Start();
+			vector<lld> tmp(3);
+			ptr_collision_->DetectCollision(target_e, order_e, tmp);
+			upd_map_collision_.Stop();
 
 			for (int k = 0; k < 3; k++)
 			{
 				state_map[k].push_back(angle_state_[dual_j][k]);
 			}
-			ptr_collision_->ModifyAngle(angle_state_[dual_j], *colli_map_[id]);
+			ptr_collision_->ModifyAngle(angle_state_[dual_j], tmp);
 		}
 	}
 
@@ -210,6 +202,10 @@ bool SeqAnalyzer::TestifyStiffness()
 	test_stiff_.Start();
 
 	/* examinate stiffness on printing subgraph */
+	if (ptr_parm_ == NULL)
+	{
+		ptr_parm_ = new FiberPrintPARM();
+	}
 	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_, ptr_parm_, ptr_path_);
 	int Ns = ptr_subgraph_->SizeOfFreeFace();
 	VX D(Ns * 6);
@@ -258,12 +254,6 @@ void SeqAnalyzer::Init()
 
 	angle_state_.clear();
 	angle_state_.resize(Nd);
-
-	colli_map_.resize(Nd*Nd);
-	for (int i = 0; i < Nd*Nd; i++)
-	{
-		colli_map_[i] = NULL;
-	}
 
 	delete ptr_subgraph_;
 	ptr_subgraph_ = new DualGraph(ptr_frame_);

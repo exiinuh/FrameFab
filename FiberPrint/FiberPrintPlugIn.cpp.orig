@@ -3,19 +3,29 @@
 
 FiberPrintPlugIn::FiberPrintPlugIn()
 {
+<<<<<<< HEAD
+	ptr_graphcut_ = new GraphCut();
+	ptr_seqanalyzer_ = new SeqAnalyzer();
+=======
 	ptr_graphcut_ = new ADMMCut();
 	ptr_seqanalyzer_ = new FFAnalyzer();
 
 	ptr_frame_ = NULL;
 	ptr_parm_ = NULL;
 	ptr_path_ = NULL;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path)
 {
+<<<<<<< HEAD
+	ptr_graphcut_ = new GraphCut();
+	ptr_seqanalyzer_ = new SeqAnalyzer();
+=======
 	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_path);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_frame, ptr_path);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	ptr_frame_ = ptr_frame;
 	ptr_parm_ = NULL;
@@ -26,8 +36,13 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path)
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
 	FiberPrintPARM *ptr_parm, char *ptr_path)
 {
+<<<<<<< HEAD
+	ptr_graphcut_ = new GraphCut();
+	ptr_seqanalyzer_ = new SeqAnalyzer();
+=======
 	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, ptr_path);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, ptr_path);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	ptr_frame_ = ptr_frame;
 	ptr_parm_ = ptr_parm;
@@ -37,12 +52,23 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame,
 
 FiberPrintPlugIn::~FiberPrintPlugIn()
 {
-	delete ptr_graphcut_;
-	ptr_graphcut_ = NULL;
-
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
 
+	delete ptr_graphcut_;
+	ptr_graphcut_ = NULL;
+}
+
+
+void FiberPrintPlugIn::Init()
+{
+	delete ptr_seqanalyzer_;
+	ptr_seqanalyzer_ = NULL;
+
+<<<<<<< HEAD
+	delete ptr_graphcut_;
+	ptr_graphcut_ = NULL;
+=======
 	delete ptr_parm_;
 	ptr_parm_ = NULL;
 }
@@ -55,6 +81,7 @@ void FiberPrintPlugIn::Init()
 
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
@@ -64,7 +91,11 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+<<<<<<< HEAD
+	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+=======
 	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
@@ -77,10 +108,20 @@ void FiberPrintPlugIn::FrameFabPrint()
 	//	return;
 	//}
 
+<<<<<<< HEAD
+		return;
+	}
+
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	printf("FrameFab print done.\n");
 
 	ptr_graphcut_->PrintOutTimer();
 	ptr_seqanalyzer_->PrintOutTimer();
+<<<<<<< HEAD
+	ptr_procanalyzer_->ProcPrint();
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
@@ -88,7 +129,11 @@ void FiberPrintPlugIn::BruteForcePrint()
 {
 	Init();
 
+<<<<<<< HEAD
+	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_parm_, ptr_path_);
+=======
 	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_path_);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	ptr_seqanalyzer_ = new BFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
 	if (!ptr_seqanalyzer_->SeqPrint())
@@ -106,6 +151,25 @@ void FiberPrintPlugIn::SweepingPrint()
 {
 	Init();
 
+<<<<<<< HEAD
+	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+
+	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+
+	ptr_graphcut_->MakeLayers();
+	cout << "Graph Cut completed." << endl;
+
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
+
+		return;
+	}
+	printf("Sweeping print done.\n");
+	//ptr_procanalyzer_->ProcPrint();
+=======
 	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
@@ -120,6 +184,7 @@ void FiberPrintPlugIn::SweepingPrint()
 	//	return;
 	//}
 	printf("Sweeping print done.\n");
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 void FiberPrintPlugIn::GetDeformation()
@@ -138,7 +203,11 @@ void FiberPrintPlugIn::GetDeformation()
 	VX x(Nd);
 	x.setOnes();
 
+<<<<<<< HEAD
+	ptr_stiff->CalculateD(D, x, 0, true, true, false);
+=======
 	ptr_stiff->CalculateD(D, x, 0, true, true, true);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
