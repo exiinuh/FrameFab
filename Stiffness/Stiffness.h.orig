@@ -118,9 +118,15 @@ private:
 	DualGraph		*ptr_dualgraph_;
 	FiberPrintPARM	*ptr_parm_;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	char			*ptr_path_;
 =======
 >>>>>>> 90f3df612187901d80d8ea1b685d3a7672de8740
+=======
+=======
+	char			*ptr_path_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 
 	StiffnessIO		stiff_io_;
 	StiffnessSolver	stiff_solver_;

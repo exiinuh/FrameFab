@@ -1,53 +1,35 @@
 /*
 * ==========================================================================
 *
-*       class: SequenceAnalyzer
+*		class:	SequenceAnalyzer
 *
-*    Description:  perform tool path searching algorithm to generate
-*				   a collision-free, structurally stable 
+* Description:  perform tool path searching algorithm to generate
+*				a collision-free, structurally stable path.
 *
-*	 Version:  1.0
-*	 Created:  Oct/20/2015
-*    Update :  Dec/09/2015
+*	  Version:  1.2
+*	  Created:  Oct/20/2015
+*     Update :  Mar/30/2016
 *
-*	 Author:   Xin Hu, Guoxian Song, Yijiang Huang
-*	 Company:  GCL@USTC
-*	 Note:
-*			   Ver1.0: Backtracking Greedy Approach:
-*					   At every decision state, a trail solution is performed,
-*				unvisited current layer edges that are connected to already printed
-*				structure and calculate their adjacency,collision and stiffness weight.
-*				The total printing cost is weighted sum of the three: wp_ * P + wl_ * L + ws_ * S
-*				P: adjacency cost
+*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
+*	  Company:  GCL@USTC
 *
-*				L: collision cost	- range(dual_i, dual_j) is the prohibited angle range for printing edge i
-*				because of the existence of edge j. Larger prohibited angle means that edge i is difficult to print
-*				due to edge j's blocking, thus we give it larger cost to discourage greedy approach from choosing it.
+*	Successor:	FFAnalyzer - FrameFab sequence analyzer
+*				BFAnalyzer - Brute Force sequence analyzer
 *
 * ==========================================================================
 */
 #pragma once
 #include <cmath>
 
-#include "SeqAnalyzer.h"
-#include "GraphCut.h"
-#include "Collision\Collision.h"
-<<<<<<< HEAD
-#include"Collision\NewCollision\QuadricCollision.h"
-=======
->>>>>>> 103382a6807b91515e95865a297075e679aa049a
+#include "ADMMCut.h"
+#include "NormalCut.h"
+#include "Collision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
 typedef struct Set
 {
 	double min;
 	double max;
-};
-
-enum Orientation
-{
-	SEQUENCE,
-	REVERSE,
 };
 
 typedef struct QueueInfo
@@ -67,63 +49,79 @@ public:
 
 public:
 	SeqAnalyzer();
-	SeqAnalyzer(GraphCut *ptr_graphcut);
-	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *path);
+	SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path);
+	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~SeqAnalyzer();
 
 public:
-	bool			LayerPrint();
-	bool			GenerateSeq(int l, int h, int t);
-	double			GenerateCost(int l, int j);
-	void			DetectAngle();
-
-	void			BruteForcePrint();
-	bool			GenerateSeq(int h, int t);
-
-	void			GetQueue(vector<int> &layer_queue);
-	void			WriteLayerQueue();
-	void			WritePathRender();
-
-	Vec3f			GetNormal(int i)	{ return extruder_list_[i].Normal(); }
-	ExtruderCone	GetExtru(int i)		{ return (extruder_list_)[i]; }
-	int				GetSupport()		{ return support_; }
-	double			GetWave(int id)		{ return wave_[id]; }
+	virtual bool	SeqPrint();
+	virtual void	PrintOutTimer();
+<<<<<<< HEAD
+=======
+	virtual void	WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 public:
-	DualGraph		*ptr_dualgraph_;
-	DualGraph		*ptr_subgraph_;
-	WireFrame		*ptr_frame_;
-	char			*path_;
+	void			Init();
 
-private:
-	double			gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double			Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
-	double			Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
-	double			Wl_;						// Wl_		: tradeoff weight for printing cost
-	double			Wp_;						// Wp_		: tradeoff weight for printing cost
-	double			Wi_;						// Wi_		: tradeoff weight for printing cost
+	void			GetPrintOrder();
+	void			InputPrintOrder(vector<int> &print_queue);
+	void			OutputPrintOrder(vector<int> &print_queue);
 
-	vector<vector<int>>		layers_;			// store dual_node's id for each layers
-	vector<QueueInfo>		layer_queue_;
+protected:
+	void			UpdateStructure(WF_edge *e);
+	void			RecoverStructure(WF_edge *e);
 
-	Collision		*ptr_collision_;
+	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
+	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
+
+	bool			TestifyStiffness();
+
+public:
+	DualGraph			*ptr_dualgraph_;
+	WireFrame			*ptr_frame_;
+
+protected:
+	QuadricCollision	*ptr_collision_;
+	char				*ptr_path_;
+
+	/* output */
+	vector<int>			print_order_; 
+
+	/* maintaining for sequence */
+	DualGraph			*ptr_subgraph_;
+	VX					D0_;
+	vector<QueueInfo>	print_queue_;
+	vector<vector<lld>> angle_state_;
 <<<<<<< HEAD
-	QuadricCollision *ptr_quadriccollision_;
-
-
+	vector<vector<lld>*>colli_map_;
 =======
->>>>>>> 103382a6807b91515e95865a297075e679aa049a
-	vector<lld>		angle_state_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 
-	double			min_z_;
-	double			max_z_;
-	/* Printing Orientation Related Data */
-	int				support_;
-	bool			extru_;
+	/* parameters */
+	FiberPrintPARM		*ptr_parm_;
+	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
+	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
+	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
+	double				Wl_;						// Wl_		: tradeoff weight for printing cost
+	double				Wp_;						// Wp_		: tradeoff weight for printing cost
+	double				Wa_;						// Wa_		: tradeoff weight for printing cost
 
-	vector<ExtruderCone>	extruder_list_;
-	vector<double>			wave_;				// wave_: orientation range data for each printing edge, 
-												// index computed by seq analyzer, output data
-	bool			debug_;
+	bool				debug_;
+	bool				fileout_;
+
+	Timer				upd_struct_;
+	Timer				rec_struct_;
+	Timer				upd_map_;
+	Timer				upd_map_collision_;
+	Timer				rec_map_;
+	Timer				test_stiff_;
+	Timer				test_stiff_cal_;
+<<<<<<< HEAD
+
+	int render_count_;
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 };
 

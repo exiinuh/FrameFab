@@ -97,37 +97,24 @@ void ProcAnalyzer::ProcPrint()
 			if (IfPointInVector(down) && IfPointInVector(up))
 			{
 				temp.fan_state_ = false;
-				temp.start_ = down;
-				temp.end_ = up;
+				temp.start_ = up;
+				temp.end_ = down;
 			}
 			else if (IfPointInVector(down))
 			{
 				temp.fan_state_ = true;
 				temp.start_ = down;
 				temp.end_ = up;
-				exist_point_.push_back(up);
 			}
 			else
 			{
 				temp.fan_state_ = true;
 				temp.start_ = up;
 				temp.end_ = down;
-				exist_point_.push_back(down);
 			}
 		}
 		process_list_[i] = temp;
 	}
-
-
-	for (int i = 0; i < process_list_.size(); i++)
-	{
-		if (process_list_[i].fan_state_)
-			continue;
-		else
-			CheckProcess(process_list_[i]);
-	}
-
-
 	Write();
 
 	delete ptr_collision;
@@ -206,10 +193,13 @@ void ProcAnalyzer::Write()
 		}
 		for (int j = 0; j < temp.normal_.size(); j++)
 		{
+<<<<<<< HEAD
 			if (temp.normal_[j].getZ() < 0)
 			{
 				continue;
 			}
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 			fprintf(vector, "%lf ,%lf ,%lf", temp.normal_[j].getX(), temp.normal_[j].getY(), temp.normal_[j].getZ());
 			fprintf(vector, "\n");
 		}
@@ -219,6 +209,7 @@ void ProcAnalyzer::Write()
 	std::fclose(end);
 	std::fclose(fans);
 
+<<<<<<< HEAD
 }
 
 bool  ProcAnalyzer::IfCoOrientation(GeoV3 a, vector<GeoV3> &b)
@@ -438,4 +429,6 @@ void ProcAnalyzer::CollisionColorMap(int x)
 
 
 
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 }

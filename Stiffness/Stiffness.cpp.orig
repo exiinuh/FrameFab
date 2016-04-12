@@ -497,7 +497,10 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
 	return true;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 
 
 void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
@@ -505,6 +508,7 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 	/* --- Gnuplot File Generation --- */
 	char meshpath[FILENMAX],
 		plotpath[FILENMAX];
+<<<<<<< HEAD
 >>>>>>> 90f3df612187901d80d8ea1b685d3a7672de8740
 
 
@@ -512,12 +516,26 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 {	
 =======
+=======
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+
+
+<<<<<<< HEAD
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	/* append restrained node's 0 deformation at the end of D */
 	char IN_file[FILENMAX];
 	string str = fname + to_string(id) + ".3dd";
 	sprintf_s(IN_file, "%s", str.c_str());
 
+<<<<<<< HEAD
 >>>>>>> 90f3df612187901d80d8ea1b685d3a7672de8740
+=======
+=======
+void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
+{	
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
 	D_joined.setZero();
 
@@ -527,6 +545,13 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
+	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
+	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 
 	/* --- Gnuplot File Generation --- */
 	string path = ptr_path_;
@@ -539,11 +564,15 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
 
 	stiff_io_.WriteInputData(fpath.c_str(), ptr_dualgraph_, ptr_parm_, verbose);
 	stiff_io_.GnuPltStaticMesh(fpath.c_str(), meshpath.c_str(), plotpath.c_str(),
+<<<<<<< HEAD
 =======
 	stiff_io_.WriteInputData(IN_file, ptr_dualgraph_, ptr_parm_, verbose);
 	stiff_io_.ReadRunData(IN_file, meshpath, plotpath, verbose);
 	stiff_io_.GnuPltStaticMesh(IN_file, meshpath, plotpath,
 >>>>>>> 90f3df612187901d80d8ea1b685d3a7672de8740
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
 }
 
@@ -631,4 +660,12 @@ VectorXd Stiffness::Fe(int ei)
 		}
 	}
 	return tmpF;
+<<<<<<< HEAD
 }
+=======
+<<<<<<< HEAD
+}
+=======
+}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c

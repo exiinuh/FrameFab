@@ -28,12 +28,10 @@ public:
 
 public:
 <<<<<<< HEAD
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
-=======
-
 	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); 
-
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+=======
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
 	void	DetectCollision(WF_edge *target_e, vector<WF_edge*> exist_edge, vector<GeoV3> &output);
 
@@ -58,9 +56,11 @@ private:
 	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
 
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
-
+<<<<<<< HEAD
 	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
-
+=======
+	void	GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 
 	bool	Parallel(GeoV3 a, GeoV3 b);
 
@@ -88,10 +88,6 @@ public:
 
 	int ColFreeAngle(vector<lld> &colli_map)
 	{
-		if (colli_map[0] == (lld)0 && colli_map[1] == (lld)0 && colli_map[2] == (lld)0)
-			return Divide();
-
-
 		int sum_angle = 0;
 		for (int j = 0; j < 62; j++)
 		{
@@ -130,8 +126,4 @@ private:
 	/* (Nd * Nd) * (3) */
 	/* (i, j): j's angle map & i printed */
 	vector<vector<lld>*>colli_map_;				
-<<<<<<< HEAD
-	bool strict_;
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 };

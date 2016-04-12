@@ -44,11 +44,6 @@ public:
 	point	BasePoint() { return base_point_; }
 	Vec3f	Normal()	{ return normal_; }
 
-
-	/*top cylidner*/
-	double TopCenter(){ return top_cylin_center_lenth_; }
-	double TopLenth(){ return top_cylin_lenth_; }
-	double TopRadii(){ return top_cylin_radii_; }
 	/* Generate Extruder Cone */
 	void GeneCone();
 
@@ -85,9 +80,4 @@ private:
 	/* Transformation for Rendering */
 	float rotate_[4][4];
 	point start_,end_;
-
-	//Top_Cylinder
-	double top_cylin_center_lenth_;
-	double top_cylin_lenth_;
-	double top_cylin_radii_;
 };

@@ -1,0 +1,74 @@
+#pragma once
+
+#ifndef FIBERPRINTPLUGIN_H
+#define FIBERPRINTPLUGIN_H
+
+#include <vector>
+#include "ADMMCut.h"
+#include "NormalCut.h"
+#include "NoneCut.h"
+#include "FFAnalyzer.h"
+#include "BFAnalyzer.h"
+<<<<<<< HEAD
+#include"ProcAnalyzer.h"
+=======
+#include "ProcAnalyzer.h"
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+
+
+class FiberPrintPlugIn
+{
+public:
+public:
+	typedef Eigen::MatrixXd MX;
+	typedef Eigen::VectorXd VX;
+
+public:
+	FiberPrintPlugIn();
+	FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path);
+	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
+						char *path);
+	~FiberPrintPlugIn();
+
+public:
+	void			Init();
+
+	/* Fiber printing */
+	void			FrameFabPrint();
+	void			BruteForcePrint();
+	void			SweepingPrint();
+
+	/* apply stiffness computation directly to the input frame shape */
+	void			GetDeformation();
+
+	int				ImportPrintOrder(char *fname);
+	void			ExportPrintOrder(char *fname);
+
+	void			InputPrintOrder(vector<int> &queue)		{ ptr_seqanalyzer_->InputPrintOrder(queue); }
+	void			OutputPrintOrder(vector<int> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
+<<<<<<< HEAD
+=======
+	void			ExportRenderPath(int min_layer, int max_layer, char *ptr_path)
+	{
+		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);
+	}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+
+	void			Debug();		// return value: edge index in mesh, for cut rendering
+
+public:
+	WireFrame		*ptr_frame_;
+	GraphCut		*ptr_graphcut_;
+	SeqAnalyzer		*ptr_seqanalyzer_;
+
+private:
+	char			*ptr_path_;
+	FiberPrintPARM	*ptr_parm_;
+<<<<<<< HEAD
+	ProcAnalyzer* ptr_procanalyzer_;
+=======
+	ProcAnalyzer	*ptr_procanalyzer_;
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+};
+
+#endif // FIBERPRINTPLUGIN_H

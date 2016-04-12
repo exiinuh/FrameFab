@@ -44,11 +44,14 @@ private:
 	vector<Process>		process_list_;
 	bool				debug_;
 	int					support_;
+<<<<<<< HEAD
 
 	bool IfCoOrientation(GeoV3 a, vector<GeoV3> &b);
 	void CheckProcess(Process &a);
 
 
 
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 };
 

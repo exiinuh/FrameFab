@@ -6,21 +6,12 @@ QuadricCollision::QuadricCollision()
 
 }
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 
 QuadricCollision::QuadricCollision(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
 	divide_ = 60;
-<<<<<<< HEAD
-	strict_ = STRICT;
-=======
 
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	int halfM = ptr_frame->SizeOfEdgeList() / 2;
 	colli_map_.resize(halfM*halfM);
 	for (int i = 0; i < halfM*halfM; i++)
@@ -42,14 +33,15 @@ QuadricCollision::~QuadricCollision()
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, 
+<<<<<<< HEAD
+	vector<lld> &colli_map)
+{
+	Init(colli_map);
+=======
 	vector<lld> &result_map)
 {
-<<<<<<< HEAD
 	Init(result_map);
-=======
-	Init(colli_map);
-
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	target_e_ = target_e;
 
 	/* collision with edge */
@@ -60,11 +52,10 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 		if (e != target_e_ && e != target_e_->ppair_)
 		{
 <<<<<<< HEAD
-			DetectEdge(e, result_map);
-=======
-
 			DetectEdge(e, colli_map);
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+=======
+			DetectEdge(e, result_map);
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 		}
 	}
 }
@@ -72,22 +63,22 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 
 void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e, 
 <<<<<<< HEAD
-	vector<lld> &result_map)
-=======
-
 	vector<lld> &colli_map)
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+{
+	Init(colli_map);
+	target_e_ = target_e;
+
+	/* collision with edge */
+	DetectEdge(order_e, colli_map);
+=======
+	vector<lld> &result_map)
 {
 	Init(result_map);
 	target_e_ = target_e;
 
 	/* collision with edge */
-<<<<<<< HEAD
 	DetectEdge(order_e, result_map);
-=======
-	DetectEdge(order_e, colli_map);
-
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 }
 
 
@@ -101,6 +92,7 @@ void QuadricCollision::DetectCollision(WF_edge *target_e,
 	//North Point
 	if (!DetectEdges(exist_edge, 0, 0))
 		output.push_back(Orientation(0, 0));
+<<<<<<< HEAD
 	for (int j = 0; j < 3; j++)
 	{
 		for (int i = 0; i < divide_; i++)
@@ -144,10 +136,87 @@ void QuadricCollision::Init(vector<lld> &colli_map)
 }
 
 
+double QuadricCollision::DistanceEdge(WF_edge* order_e)
+{
+
+	gte::Segment<3, float> segment,segment_target;
+	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
+	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
+	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
+	auto result = distance(segment, segment_target);
+	return result.distance;
+
+}
+
+void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &colli_map)
+{
+	
+	if (DistanceEdge(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
+		return;
+
+	double ¦È;								// angle with Z axis (rad)
+	double ¦Õ;								// angle with X axis (rad)
+
+=======
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < divide_; i++)
+		{
+			if (i < 20)
+			{
+				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
+				¦Õ = i*18.0 / 180.0*F_PI;
+			}
+
+			if (i>19 && i < 40)
+			{
+				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+			}
+
+			if (i>39)
+			{
+				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+			}
+<<<<<<< HEAD
+			lld mask = ((lld)1 << i);
+			if (DetectBulk(order_e, ¦È, ¦Õ))
+			{
+				colli_map[j] |= mask;
+			}		
+=======
+			if (DetectEdges(exist_edge, ¦È, ¦Õ))
+				continue;
+			output.push_back(Orientation(¦È, ¦Õ));
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
+		}
+	}
+
+	//South Point not consider
+	/*if (!DetectEdges(exist_edge_, 0, 0))
+	temp.push_back(Orientation(F_PI, 0));*/
+}
+
+
+void QuadricCollision::Init(vector<lld> &colli_map)
+{
+	lld temp = 0;
+	colli_map.clear();
+	colli_map.push_back(temp);
+	colli_map.push_back(temp);
+	colli_map.push_back(temp);
+}
+
+
 void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 {
-	if (DistanceEdge(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
+	if (Distance(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
 	{
+<<<<<<< HEAD
+		colli_map[2] |= mask;
+=======
 		return;
 	}
 	
@@ -161,14 +230,7 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 		double ¦È;								// angle with Z axis (rad)
 		double ¦Õ;								// angle with X axis (rad)
 
-<<<<<<< HEAD
 		for (int j = 0; j < 3; j++)
-=======
-
-	for (int j = 0; j < 3; j++)
-	{
-		for (int i = 0; i < divide_; i++)
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 		{
 			for (int i = 0; i < divide_; i++)
 			{
@@ -204,57 +266,25 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 			(*colli_map_[mi])[2] |= mask;
 		}
 
-<<<<<<< HEAD
 		//South Point
 		mask = ((lld)1 << 61);
 		if (DetectBulk(order_e, F_PI, 0))
 		{
 			(*colli_map_[mi])[2] |= mask;
 		}
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	}
 
 
 	for (int i = 0; i < 3; i++)
 	{
-		result_map[i] |= (*colli_map_[mi])[i];
-	}
+<<<<<<< HEAD
+		colli_map[2] |= mask;
 =======
-			if (i>39)
-			{
-				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
-			}
-
-			lld mask = ((lld)1 << i);
-			if (DetectBulk(order_e, ¦È, ¦Õ))
-			{
-				colli_map[j] |= mask;
-			}		
-
-		}
+		result_map[i] |= (*colli_map_[mi])[i];
+>>>>>>> 0df9b1aa4cb75d1f1eec2055b7cae959c43d6cbe
 	}
-
-	//South Point not consider
-	/*if (!DetectEdges(exist_edge_, 0, 0))
-	temp.push_back(Orientation(F_PI, 0));*/
-
-
-
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 }
-
-
-void QuadricCollision::Init(vector<lld> &colli_map)
-{
-	lld temp = 0;
-	colli_map.clear();
-	colli_map.push_back(temp);
-	colli_map.push_back(temp);
-	colli_map.push_back(temp);
-}
-
-
-
 
 
 bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
@@ -363,17 +393,6 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 	if (DetectCylinder(target_end, normal, order_start, order_end))
 		return true;
 
-<<<<<<< HEAD
-	if (strict_)
-	{
-		//Top
-		if (DetectTopCylinder(target_start, normal, order_start, order_end))
-			return true;
-		if (DetectTopCylinder(target_end, normal, order_start, order_end))
-			return true;
-	}
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	//Face
 
 	for (int i = 0; i < bulk_.size(); i++)
@@ -401,19 +420,7 @@ if (angle(normal, order_s - connect) < extruder_.Angle())
 
 	if (DetectCylinder(target_s, normal, connect, order_s))
 		return true;
-	if (strict_)
-	{
 
-<<<<<<< HEAD
-		//Top
-		if (DetectTopCylinder(connect, normal, connect, order_s))
-			return true;
-		if (DetectTopCylinder(target_s, normal, connect, order_s))
-			return true;
-	}
-
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	//Face
 	GenerateVolume(connect, target_s, order_s, normal);
 	for (int i = 0; i < bulk_.size(); i++)
@@ -482,17 +489,6 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 	if (DetectCylinder(target_end, normal, order_start, order_end))
 		return true;
 
-<<<<<<< HEAD
-	//Top
-	if (strict_)
-	{
-		if (DetectTopCylinder(target_start, normal, order_start, order_end))
-			return true;
-		if (DetectTopCylinder(target_end, normal, order_start, order_end))
-			return true;
-	}
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	return false;
 }
 
@@ -592,51 +588,7 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	GeoV3 end_back_cylinder = end_back_cone + normal*extruder_.CyclinderLenth();
 
 	bulk_.clear();
-<<<<<<< HEAD
-	if (strict_)
-	{
 
-		//Circle 
-		GeoV3 q = cross(normal, p);
-		q.normalize();
-		vector<GeoV3> start_circle_point, end_circle_point;
-		for (int i = 0; i < 16; i++)
-		{
-			double part = 2 * F_PI / 16;
-			double ¦È = i*part;
-			start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
-			end_circle_point.push_back(start_circle_point[i] + end - start);
-		}
-
-		for (int i = 0; i < 15; i++)
-		{
-			bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
-			bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
-		}
-		bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
-		bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
-
-		//Top face
-		GeoV3 start_top_front_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
-		GeoV3 start_top_front_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
-
-		GeoV3 start_top_back_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
-		GeoV3 start_top_back_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
-
-		GeoV3 end_top_front_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
-		GeoV3 end_top_front_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
-
-		GeoV3 end_top_back_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
-		GeoV3 end_top_back_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
-
-		bulk_.push_back(Triangle(start_top_front_up, start_top_front_down, end_top_front_down));
-		bulk_.push_back(Triangle(start_top_front_up, end_top_front_up, end_top_front_down));
-		bulk_.push_back(Triangle(start_top_back_up, start_top_back_down, end_top_back_down));
-		bulk_.push_back(Triangle(start_top_back_up, end_top_back_up, end_top_back_down));
-	}
-=======
-
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	//front
 	bulk_.push_back(Triangle(start, end, start_front_cone));
 	bulk_.push_back(Triangle(end, end_front_cone, start_front_cone));
@@ -678,57 +630,6 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	bulk_.push_back(Triangle(start, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cone, start_front_cone));
 	bulk_.push_back(Triangle(start_front_cylinder, start_back_cylinder, start_back_cone));
-<<<<<<< HEAD
-
-
-
-
-
-	if (strict_)
-	{
-		//Circle 
-		start = connect;
-		GeoV3 end = target_s;
-
-		GeoV3 q = cross(normal, p);
-		q.normalize();
-		vector<GeoV3> start_circle_point, end_circle_point;
-		for (int i = 0; i < 16; i++)
-		{
-			double part = 2 * F_PI / 16;
-			double ¦È = i*part;
-			start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
-			end_circle_point.push_back(start_circle_point[i] + end - start);
-		}
-
-		for (int i = 0; i < 15; i++)
-		{
-			bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
-			bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
-		}
-		bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
-		bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
-
-		//Top face
-		GeoV3 start_top_front_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
-		GeoV3 start_top_front_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
-
-		GeoV3 start_top_back_up = start + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
-		GeoV3 start_top_back_down = start + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
-
-		GeoV3 end_top_front_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) + p*extruder_.TopRadii();
-		GeoV3 end_top_front_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) + p*extruder_.TopRadii();
-
-		GeoV3 end_top_back_up = end + normal*(extruder_.TopLenth() / 2 + extruder_.TopCenter()) - p*extruder_.TopRadii();
-		GeoV3 end_top_back_down = end + normal*(extruder_.TopCenter() - extruder_.TopLenth() / 2) - p*extruder_.TopRadii();
-
-		bulk_.push_back(Triangle(start_top_front_up, start_top_front_down, end_top_front_down));
-		bulk_.push_back(Triangle(start_top_front_up, end_top_front_up, end_top_front_down));
-		bulk_.push_back(Triangle(start_top_back_up, start_top_back_down, end_top_back_down));
-		bulk_.push_back(Triangle(start_top_back_up, end_top_back_up, end_top_back_down));
-	}
-=======
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 }
 
 
@@ -739,29 +640,18 @@ bool QuadricCollision::Parallel(GeoV3 a, GeoV3 b)
 	return false;
 }
 
-double QuadricCollision::DistanceEdge(WF_edge* order_e)
-{
 
-<<<<<<< HEAD
-	gte::Segment<3, float> segment,segment_target;
-=======
 double QuadricCollision::Distance(WF_edge* order_e)
 {
 	gte::Segment<3, float> segment, segment_target;
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
 	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
 	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
 	auto result = distance(segment, segment_target);
 	return result.distance;
-<<<<<<< HEAD
-
-}
-=======
 }
 
 
->>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
 gte::Segment<3, float> QuadricCollision::Seg(point target_start, point target_end)
 {
 	gte::Segment<3, float> segment;
