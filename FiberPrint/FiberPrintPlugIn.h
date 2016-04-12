@@ -58,6 +58,8 @@ private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
 	ProcAnalyzer	*ptr_procanalyzer_;
+
+	Timer			framefab_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

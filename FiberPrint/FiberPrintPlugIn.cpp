@@ -60,6 +60,8 @@ void FiberPrintPlugIn::Init()
 
 void FiberPrintPlugIn::FrameFabPrint()
 {
+	framefab_.Start();
+
 	Init();
 
 	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
@@ -81,6 +83,10 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	ptr_graphcut_->PrintOutTimer();
 	ptr_seqanalyzer_->PrintOutTimer();
+
+	framefab_.Stop();
+	printf("Total time >>>>>>>>>\nFrameFab: ");
+	framefab_.Print();
 }
 
 

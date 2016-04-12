@@ -20,7 +20,8 @@ void Timer::Start()
 void Timer::Stop()
 {
 	end_time_ = std::chrono::system_clock::now();
-	sum_time_ += (end_time_ - start_time_).count();
+	sum_time_ += std::chrono::duration_cast<std::chrono::duration<double>>
+		(end_time_ - start_time_).count();
 	count_++;
 }
 
@@ -34,7 +35,7 @@ void Timer::Reset()
 
 void Timer::Print()
 {
-	printf(" total-time:%12.2lf   count:%4d   avg-time:%10.2lf\n", 
+	printf(" total-time:%3.2lf   count:%4d   avg-time:%3.2lf\n", 
 		sum_time_, count_, sum_time_ / count_);
 }
 

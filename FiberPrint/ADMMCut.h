@@ -41,7 +41,7 @@
 using namespace std;
 using namespace Eigen;
 
-//#define	ADJACENT_WEIGHT
+//#define	COLFREE_WEIGHT
 
 class ADMMCut : public GraphCut
 {
