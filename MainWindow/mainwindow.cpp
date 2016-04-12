@@ -6,14 +6,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 	ui.mainToolBar->setVisible(false);
-
 	this->setWindowTitle("Fiber printing");
-
-	renderingwidget_ = new RenderingWidget(this);
-//	setCentralWidget(renderingwidget_);
-
 	setGeometry(200, 150, 1000, 700);
 	
+	renderingwidget_ = new RenderingWidget(this);
+	connect(renderingwidget_, SIGNAL(Error(QString)), this, SLOT(ShowError(QString)));
+	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
+
 	CreateActions();
 	CreateMenus();
 	CreateLabels();
@@ -26,9 +25,6 @@ MainWindow::MainWindow(QWidget *parent)
 	CreateToolButtons();
 	CreateGroups();
 	CreateDialogs();
-
-	connect(renderingwidget_, SIGNAL(Error(QString)), this, SLOT(ShowError(QString)));
-	connect(renderingwidget_, SIGNAL(Reset()), this, SLOT(Reset()));
 	
 	QVBoxLayout *layout_left = new QVBoxLayout;
 	layout_left->addWidget(groupbox_render_);
@@ -88,9 +84,9 @@ void MainWindow::CreateActions()
 	action_export_->setStatusTip(tr("Export to disk"));
 	connect(action_export_, SIGNAL(triggered()), renderingwidget_, SLOT(Export()));
 
-	action_export_maya_ = new QAction(tr("Export to Maya"), this);
-	action_export_maya_->setStatusTip(tr("Export vertex & line to disk"));
-	connect(action_export_maya_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
+	action_exportrender_ = new QAction(tr("Export to render"), this);
+	action_exportrender_->setStatusTip(tr("Export to render"));
+	connect(action_exportrender_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -111,7 +107,7 @@ void MainWindow::CreateMenus()
 	menu_file_->addSeparator();
 	menu_file_->addAction(action_import_);
 	menu_file_->addAction(action_export_);
-	menu_file_->addAction(action_export_maya_);
+	menu_file_->addAction(action_exportrender_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
@@ -247,6 +243,7 @@ void MainWindow::CreateLineEdits()
 {
 	lineedit_vertpath_ = new QLineEdit(this);
 	lineedit_linepath_ = new QLineEdit(this);
+	lineedit_renderpath_ = new QLineEdit(this);
 
 	lineedit_pwfpath_ = new QLineEdit(this);
 	lineedit_pwfpath_->setVisible(false);
@@ -370,8 +367,8 @@ void MainWindow::CreatePushButtons()
 
 	pushbutton_export_ = new QPushButton(tr("Export"), this);
 	connect(pushbutton_export_, SIGNAL(clicked()), this, SLOT(GetExportParas()));
-	connect(this, SIGNAL(SendExportParas(int, int, QString, QString)),
-		renderingwidget_, SLOT(Export(int, int, QString, QString)));
+	connect(this, SIGNAL(SendExportParas(int, int, QString, QString, QString)),
+		renderingwidget_, SLOT(Export(int, int, QString, QString, QString)));
 
 	pushbutton_exportvert_ = new QPushButton(tr("..."), this);
 	pushbutton_exportvert_->setFixedWidth(30);
@@ -380,6 +377,10 @@ void MainWindow::CreatePushButtons()
 	pushbutton_exportline_ = new QPushButton(tr("..."), this);
 	pushbutton_exportline_->setFixedWidth(30);
 	connect(pushbutton_exportline_, SIGNAL(clicked()), this, SLOT(GetPath()));
+
+	pushbutton_exportpath_ = new QPushButton(tr("..."), this);
+	pushbutton_exportpath_->setFixedWidth(30);
+	connect(pushbutton_exportpath_, SIGNAL(clicked()), this, SLOT(GetPath()));
 }
 
 
@@ -449,7 +450,6 @@ void MainWindow::CreateGroups()
 	// edit group
 	groupbox_edit_ = new QGroupBox(tr("Edit"), this);
 	groupbox_edit_->setFlat(true);
-
 	QVBoxLayout* edit_layout = new QVBoxLayout(groupbox_edit_);
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
@@ -463,7 +463,6 @@ void MainWindow::CreateGroups()
 	// fiber group
 	groupbox_fiber_ = new QGroupBox(tr("Fiber"), this);
 	groupbox_fiber_->setFlat(true);
-
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
 	fiber_layout->addWidget(toolbutton_choosebase_);
@@ -473,7 +472,6 @@ void MainWindow::CreateGroups()
 
 	groupbox_meshpara_ = new QGroupBox(tr("Mesh parameter"), this);
 	groupbox_meshpara_->setFlat(true);
-
 	QVBoxLayout *meshpara_layout = new QVBoxLayout(groupbox_meshpara_);
 	meshpara_layout->addWidget(label_scale_);
 	meshpara_layout->addWidget(spinbox_scale_);
@@ -483,7 +481,6 @@ void MainWindow::CreateGroups()
 	// seqpara group
 	groupbox_seqpara_ = new QGroupBox(tr("Seq parameter"), this);
 	groupbox_seqpara_->setFlat(true);
-
 	QVBoxLayout *seqpara_layout = new QVBoxLayout(groupbox_seqpara_);
 	seqpara_layout->addWidget(label_wl_);
 	seqpara_layout->addWidget(spinbox_wl_);
@@ -496,7 +493,6 @@ void MainWindow::CreateGroups()
 	// debug group
 	groupbox_debug_ = new QGroupBox(tr("Debug"), this);
 	groupbox_debug_->setFlat(true);
-
 	QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
 	debug_layout->addWidget(pushbutton_leftarrow_);
 
@@ -508,17 +504,21 @@ void MainWindow::CreateGroups()
 	// export group
 	groupbox_exportvert_ = new QGroupBox(tr("Export vert"), this);
 	groupbox_exportvert_->setCheckable(true);
-
 	QHBoxLayout *exportvert_layout = new QHBoxLayout(groupbox_exportvert_);
 	exportvert_layout->addWidget(lineedit_vertpath_);
 	exportvert_layout->addWidget(pushbutton_exportvert_);
 
 	groupbox_exportline_ = new QGroupBox(tr("Export line"), this);
 	groupbox_exportline_->setCheckable(true);
-
 	QHBoxLayout *exportline_layout = new QHBoxLayout(groupbox_exportline_);
 	exportline_layout->addWidget(lineedit_linepath_);
 	exportline_layout->addWidget(pushbutton_exportline_);
+
+	groupbox_exportpath_ = new QGroupBox(tr("Export rendering path"), this);
+	groupbox_exportpath_->setCheckable(true);
+	QHBoxLayout *exportpath_layout = new QHBoxLayout(groupbox_exportpath_);
+	exportpath_layout->addWidget(lineedit_renderpath_);
+	exportpath_layout->addWidget(pushbutton_exportpath_);
 
 	groupbox_exportlayer_ = new QGroupBox(tr("Export layer"), this);
 	QHBoxLayout *exportlayer_layout = new QHBoxLayout(groupbox_exportlayer_);
@@ -564,6 +564,7 @@ void MainWindow::CreateDialogs()
 	QVBoxLayout *layout_export = new QVBoxLayout;
 	layout_export->addWidget(groupbox_exportvert_);
 	layout_export->addWidget(groupbox_exportline_);
+	layout_export->addWidget(groupbox_exportpath_);
 	layout_export->addWidget(groupbox_exportlayer_);
 	layout_export->addWidget(pushbutton_export_);
 	dialog_export_->setLayout(layout_export);
@@ -651,7 +652,9 @@ void MainWindow::GetExportParas()
 		spinbox_minlayer2_->value(),
 		spinbox_maxlayer2_->value(),
 		lineedit_vertpath_->text(),
-		lineedit_linepath_->text()));
+		lineedit_linepath_->text(),
+		lineedit_renderpath_->text())
+	);
 }
 
 
@@ -671,6 +674,7 @@ void MainWindow::GetPath()
 		lineedit_vertpath_->setText(filename);
 	}
 	else
+	if (sender() == pushbutton_exportline_)
 	{
 		QString filename = QFileDialog::
 			getSaveFileName(this, tr("Export Line"),
@@ -682,6 +686,22 @@ void MainWindow::GetPath()
 		}
 
 		lineedit_linepath_->setText(filename);
+	}
+	else
+	{
+		QString dirname = QFileDialog::
+			getExistingDirectory(this,
+			tr("Export Directory"),
+			"/home",
+			QFileDialog::ShowDirsOnly
+			| QFileDialog::DontResolveSymlinks);
+
+		if (dirname.isEmpty())
+		{
+			return;
+		}
+
+		lineedit_renderpath_->setText(dirname);
 	}
 }
 
@@ -870,13 +890,13 @@ void MainWindow::ShowLayerInfo(int layer_id, int total_id)
 		else
 		{
 			label_layer_->setText(QString("Total layer: %1").arg(total_id));
-			label_capture_->setVisible(true);
+			label_layer_->setVisible(true);
 		}
 	}
 	else
 	{
 		label_layer_->setText(QString("Layer: %1 / %2").arg(layer_id).arg(total_id));
-		label_capture_->setVisible(true);
+		label_layer_->setVisible(true);
 	}
 }
 

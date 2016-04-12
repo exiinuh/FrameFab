@@ -29,6 +29,7 @@
 
 #pragma once
 #include <cmath>
+#include <cstring>
 
 #include "SeqAnalyzer.h"
 
@@ -43,8 +44,8 @@ public:
 
 public:
 	FFAnalyzer();
-	FFAnalyzer(GraphCut *ptr_graphcut)
-		:SeqAnalyzer(ptr_graphcut){}
+	FFAnalyzer(WireFrame *ptr_frame, char *ptr_path)
+		:SeqAnalyzer(ptr_frame, ptr_path){}
 	FFAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path)
 		:SeqAnalyzer(ptr_graphcut, ptr_parm, ptr_path){}
 	~FFAnalyzer();
@@ -56,11 +57,9 @@ private:
 	bool			GenerateSeq(int l, int h, int t);
 	double			GenerateCost(int l, int j, WF_edge *ei);
 
-	bool			GenerateSeq(int h, int t);
-
+public:
 	void			PrintOutTimer();
-	void			WriteLayerQueue();
-	void			WritePathRender();
+	void			WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 private:
 	double			min_z_;

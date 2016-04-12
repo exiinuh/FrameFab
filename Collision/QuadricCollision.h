@@ -27,7 +27,7 @@ public:
 	~QuadricCollision();
 
 public:
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); 
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
 	void	DetectCollision(WF_edge *target_e, vector<WF_edge*> exist_edge, vector<GeoV3> &output);
 
@@ -82,6 +82,10 @@ public:
 
 	int ColFreeAngle(vector<lld> &colli_map)
 	{
+		if (colli_map[0] == (lld)0 && colli_map[1] == (lld)0 && colli_map[2] == (lld)0)
+			return Divide();
+
+
 		int sum_angle = 0;
 		for (int j = 0; j < 62; j++)
 		{
@@ -117,5 +121,9 @@ private:
 	vector<Triangle>	bulk_;
 	int					divide_;
 
+	/* (Nd * Nd) * (3) */
+	/* (i, j): j's angle map & i printed */
+	vector<vector<lld>*>colli_map_;				
+	bool strict_;
 };
 

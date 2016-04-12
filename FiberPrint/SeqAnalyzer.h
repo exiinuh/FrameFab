@@ -49,13 +49,14 @@ public:
 
 public:
 	SeqAnalyzer();
-	SeqAnalyzer(GraphCut *ptr_graphcut);
+	SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path);
 	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~SeqAnalyzer();
 
 public:
 	virtual bool	SeqPrint();
 	virtual void	PrintOutTimer();
+	virtual void	WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 public:
 	void			Init();
@@ -89,7 +90,6 @@ protected:
 	VX					D0_;
 	vector<QueueInfo>	print_queue_;
 	vector<vector<lld>> angle_state_;
-	vector<vector<lld>*>colli_map_;
 	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 
 	/* parameters */

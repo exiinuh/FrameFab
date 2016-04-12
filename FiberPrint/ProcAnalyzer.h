@@ -23,11 +23,14 @@ public:
 
 public:
 	void		ProcPrint();
-
+	void     CollisionColorMap();
+	void      CollisionColorMap(int x);
 private:
 	void		ReadLayerQueue();
 	void		Write();
 	bool		IfPointInVector(point p);
+
+	
 
 private:
 	SeqAnalyzer			*ptr_seqanalyzer_;
@@ -44,5 +47,8 @@ private:
 
 	bool IfCoOrientation(GeoV3 a, vector<GeoV3> &b);
 	void CheckProcess(Process &a);
+
+
+
 };
 

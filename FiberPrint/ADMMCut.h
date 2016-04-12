@@ -42,6 +42,7 @@ using namespace std;
 using namespace Eigen;
 
 
+
 class ADMMCut : public GraphCut
 {
 	typedef Eigen::SparseMatrix<double> SpMat;
@@ -52,25 +53,21 @@ class ADMMCut : public GraphCut
 
 public:
 	ADMMCut();
-	ADMMCut(WireFrame *ptr_frame);
+	ADMMCut(WireFrame *ptr_frame, char *ptr_path)
+		:GraphCut(ptr_frame, ptr_path){}
 	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path);
 	~ADMMCut();
 
 public:
-	//Initialization
-	void		InitState();
+
+	void		InitState();						// Initialization
+	void		InitWeight();
+	void		MakeLayers();						// Main loop of cut
+
+private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();
-	void		CreateA();							// Construct edge-incidence matrix A
-	void		CreateC(int cut, int rew);
-	// Construct weight diagonal matrix C and H1
-
-	//Termination
-	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
-	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
-
-	//ADMM
-	void		MakeLayers();						// Main loop of cut
+	void		CreateL();							// Construct laplace matrix L and H1
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
@@ -78,15 +75,18 @@ public:
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev, int count);
 
+	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
+	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
+
 	void		PrintOutTimer();
 	void		WriteWeight();
 	void		WriteStiffness(string offset, string rotation);
 	void		Debug();
 
 private:
-	SpMat			A_;
-	SpMat			C_;
-	MX				r_;				// for updation of C
+	SpMat			L_;				// laplace matrix
+	SpMat			weight_;		// for weight, indexed by half of original id
+	MX				r_;				// for updation of C, indexed by half of dual id
 	VX				x_;
 	VX				D_;
 	VX				lambda_;
@@ -94,14 +94,17 @@ private:
 	vector<int>		cutting_edge_;
 
 	VX				d_;				// for setting boundary & QP x
-	SpMat			W_;
 
 	VX				dual_res_;		// dual residual for ADMM termination criteria
 	VX				primal_res_;	// dual residual for ADMM termination criteria
 
-	QP				*qp_;			// Solves the quadratic programming problem:
-	// min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub
+	/* 
+	Solves the quadratic programming problem:
+	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
+	*/
+	QP				*qp_;			
 	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
+	SpMat			W_;
 
 	int				N_;				// N :    Number of nodes in orig graph
 	int				M_;				// M :    Number of edges in orig graph 
@@ -119,8 +122,7 @@ private:
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	Timer			set_bound_;
-	Timer			create_a_;
-	Timer			create_c_;
+	Timer			create_l_;
 	Timer			cal_x_;
 	Timer			cal_q_;
 	Timer			cal_x_qp_;

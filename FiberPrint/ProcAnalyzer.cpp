@@ -23,7 +23,6 @@ ProcAnalyzer::ProcAnalyzer(SeqAnalyzer *seqanalyzer, char *path)
 
 void ProcAnalyzer::ProcPrint()
 {
-
 	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
 	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
 
@@ -115,7 +114,7 @@ void ProcAnalyzer::ProcPrint()
 				temp.end_ = down;
 				exist_point_.push_back(down);
 			}
-		} 
+		}
 		process_list_[i] = temp;
 	}
 
@@ -130,6 +129,7 @@ void ProcAnalyzer::ProcPrint()
 
 
 	Write();
+
 	delete ptr_collision;
 	ptr_collision = NULL;
 }
@@ -174,7 +174,7 @@ void ProcAnalyzer::Write()
 	FILE *start = fopen(istart_path.c_str(), "w+");
 	FILE *end = fopen(iend_path.c_str(), "w+");
 	FILE *support = fopen(isupport_path.c_str(), "w+");
-	fprintf(support, "%d", support_);
+	std::fprintf(support, "%d", support_);
 	std::fclose(support);
 
 
@@ -182,15 +182,15 @@ void ProcAnalyzer::Write()
 	{
 		Process temp = process_list_[i];
 		point p = temp.start_;
-		fprintf(start, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-		fprintf(start, "\n");
+		std::fprintf(start, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+		std::fprintf(start, "\n");
 
 		p = temp.end_;
-		fprintf(end, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
-		fprintf(end, "\n");
+		std::fprintf(end, "%lf ,%lf ,%lf", p.x(), p.y(), p.z());
+		std::fprintf(end, "\n");
 
-		fprintf(fans, "%d", temp.fan_state_);
-		fprintf(fans, "\n");
+		std::fprintf(fans, "%d", temp.fan_state_);
+		std::fprintf(fans, "\n");
 
 		stringstream ss;
 		string str;
@@ -206,10 +206,10 @@ void ProcAnalyzer::Write()
 		}
 		for (int j = 0; j < temp.normal_.size(); j++)
 		{
-		/*	if (temp.normal_[j].getZ() < 0)
+			if (temp.normal_[j].getZ() < 0)
 			{
 				continue;
-			}*/
+			}
 			fprintf(vector, "%lf ,%lf ,%lf", temp.normal_[j].getX(), temp.normal_[j].getY(), temp.normal_[j].getZ());
 			fprintf(vector, "\n");
 		}
@@ -220,7 +220,6 @@ void ProcAnalyzer::Write()
 	std::fclose(fans);
 
 }
-
 
 bool  ProcAnalyzer::IfCoOrientation(GeoV3 a, vector<GeoV3> &b)
 {
@@ -259,4 +258,184 @@ void ProcAnalyzer::CheckProcess(Process &a)
 		}
 	}	
 	a.normal_ = temp_normal;
+}
+
+void ProcAnalyzer::CollisionColorMap()
+{
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
+	QuadricCollision *ptr_collision = new QuadricCollision(ptr_frame);
+	int Nd = ptr_dualgraph->SizeOfVertList();
+
+	if (debug_)
+	{
+		ptr_dualgraph->Dualization();
+		ReadLayerQueue();
+	}
+	else
+	{
+		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+	}
+
+	for (int i = 0; i < layer_queue_.size(); i++)
+	{
+		int orig_e = layer_queue_[i];
+		WF_edge *target = ptr_frame->GetEdge(orig_e);
+		if (target->isPillar())
+			continue;
+		char id[10];
+		sprintf(id, "%d", i);
+		string path = path_;
+		string file = path + "/CollisionRender_" + id+ ".txt";
+		FILE *fp = fopen(file.c_str(), "w+");
+		for (int j = 0; j <layer_queue_.size(); j++)
+		{
+			WF_edge *e = ptr_frame->GetEdge(layer_queue_[j]);
+			double r;
+			double g;
+			double b;
+
+			if (i == j)
+			{
+				r=1;
+				g=0;
+				b=0;
+			}
+			else
+			{
+				vector<lld> colli_map;
+				ptr_collision->DetectCollision(target, e, colli_map);
+				double cost = 1 - (double)ptr_collision->ColFreeAngle(colli_map) / (double)ptr_collision->Divide();
+				if (cost< 0.25)
+							{
+								r = 0.0;
+								g = cost * 4.0;
+								b = 1.0;
+							}
+							else
+							if (cost < 0.5)
+								{
+									r = 0.0;
+									g = 1.0;
+									b = (0.5 - cost) * 4.0;
+								}
+								else
+								if (cost < 0.75)
+									{
+									r = (cost - 0.5) * 4.0;
+										g = 1.0;
+										b = 0.0;
+									}
+									else
+									{
+										r = 1.0;
+										g = (1.0 - cost) * 4.0;
+										b = 0.0;
+									}
+
+			}
+			point u = e->pvert_->RenderPos();
+			point v = e->ppair_->pvert_->RenderPos();
+			std::fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+				u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
+		}
+		fclose(fp);
+	}
+}
+
+
+void ProcAnalyzer::CollisionColorMap(int x)
+{
+	WireFrame *ptr_frame = ptr_seqanalyzer_->ptr_frame_;
+	DualGraph *ptr_dualgraph = ptr_seqanalyzer_->ptr_dualgraph_;
+	QuadricCollision *ptr_collision = new QuadricCollision(ptr_frame);
+	int Nd = (ptr_frame->GetEdgeList())->size();
+
+	if (debug_)
+	{
+		ptr_dualgraph->Dualization();
+		ReadLayerQueue();
+	}
+	else
+	{
+		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+	}
+	int count = 0;
+	for (int i = 0; i < Nd; i++)
+	{
+		int orig_e=i;
+		WF_edge *target = ptr_frame->GetEdge(orig_e);
+
+		if (target->ID() < target->ppair_->ID())
+			continue;
+
+		if (target->isPillar())
+			continue;
+
+		char id[10];
+		sprintf(id, "%d", count);
+		count++;
+		string path = path_;
+		string file = path + "/CollisionRender_" + id + ".txt";
+		FILE *fp = fopen(file.c_str(), "w+");
+
+		for (int j = 0; j <Nd; j++)
+		{
+			WF_edge *e = ptr_frame->GetEdge(j);
+			if (e->ID() < e->ppair_->ID())
+				continue;
+
+			double r;
+			double g;
+			double b;
+
+			if (i == j)
+			{
+				r = 1;
+				g = 0;
+				b = 0;
+			}
+			else
+			{
+				vector<lld> colli_map;
+				ptr_collision->DetectCollision(target, e, colli_map);
+				double cost = 1 - (double)ptr_collision->ColFreeAngle(colli_map) / (double)ptr_collision->Divide();
+				if (cost< 0.25)
+				{
+					r = 0.0;
+					g = cost * 4.0;
+					b = 1.0;
+				}
+				else
+				if (cost < 0.5)
+				{
+					r = 0.0;
+					g = 1.0;
+					b = (0.5 - cost) * 4.0;
+				}
+				else
+				if (cost < 0.75)
+				{
+					r = (cost - 0.5) * 4.0;
+					g = 1.0;
+					b = 0.0;
+				}
+				else
+				{
+					r = 1.0;
+					g = (1.0 - cost) * 4.0;
+					b = 0.0;
+				}
+
+			}
+			point u = e->pvert_->RenderPos();
+			point v = e->ppair_->pvert_->RenderPos();
+			std::fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+				u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
+		}
+		fclose(fp);
+	}
+
+
+
 }

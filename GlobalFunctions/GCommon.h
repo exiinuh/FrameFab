@@ -57,3 +57,10 @@
 
 #endif /* FIBERPRINT_COMMON_H */
 
+#ifndef STRICT
+#define STRICT 1
+#endif
+
+
+
+

@@ -35,23 +35,20 @@ class DualEdge
 {
 public:
 	DualEdge(){}
-	DualEdge(int u, int v, double w)
+	DualEdge(int u, int v)
 	{
 		u_ = u;
 		v_ = v;
-		w_ = w;
 	}
 	~DualEdge(){}
 
 public:
-	inline double	w()			const { return w_; }
 	inline int		u()			const { return u_; }
 	inline int		v()			const { return v_; }
 
 private:
 	int			u_;
 	int			v_;
-	double		w_;											// weight on edge in orig graph
 };
 
 
@@ -91,7 +88,7 @@ public:
 	int		RemoveUpdation(WF_edge *e);						// remove the trail edge
 
 	void	InsertVertex(WF_edge *e);
-	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w);
+	void	InsertEdge(WF_edge *e1, WF_edge *e2);
 	int		InsertFace(WF_vert *p);							// insert a dual face at the end of free face
 	void	DeleteVertex(WF_edge *e);
 	int		DeleteFace(WF_vert *p);							// delete a dual face by moving
@@ -112,7 +109,6 @@ public:
 	int		v_orig_id(int i)	{ return (*face_list_)[i]->orig_id(); }
 	int		v_dual_id(int i)	{ return (*face_list_)[i]->dual_id(); }
 
-	double	Weight(int ei)		{ return (*edge_list_)[ei]->w(); }
 	double	Height(int ei)		{ return (*vert_list_)[ei]->Height(); }
 	double	maxZ()				{ return maxz_; }
 	double	minZ()				{ return minz_; }

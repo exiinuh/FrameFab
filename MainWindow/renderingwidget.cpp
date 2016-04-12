@@ -14,6 +14,9 @@ is_draw_axes_(false), op_mode_(NORMAL), scale_(1.0)
 	eye_direction_[0] = eye_direction_[1] = 0.0;
 	eye_direction_[2] = 1.0;
 
+	last_file_dir_ = "/home";
+	last_result_dir_ = "/home";
+
 	setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -676,7 +679,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 					is_captured_edge_[i] = true;
 					is_captured_edge_[edges[i]->ppair_->ID()] = true;
 					emit(CapturedEdge(i + 1, edges[i]->Length()));
-					emit(layerInfo(edges[i]->Layer(), ptr_frame_->SizeOfLayer()));
+					emit(layerInfo(edges[i]->Layer() + 1, ptr_frame_->SizeOfLayer()));
 				}
 
 				return true;
@@ -787,6 +790,8 @@ void RenderingWidget::SwitchToNormal()
 			}
 
 	InitCapturedData();
+
+	updateGL();
 }
 
 
@@ -811,6 +816,8 @@ void RenderingWidget::SwitchToChooseBase()
 		emit(modeInfo(QString("Choosing base...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSEBASE;
 	}
+
+	updateGL();
 }
 
 
@@ -835,6 +842,8 @@ void RenderingWidget::SwitchToChooseCeiling()
 		emit(modeInfo(QString("Choosing ceiling...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSECEILING;
 	}
+
+	updateGL();
 }
 
 
@@ -859,6 +868,8 @@ void RenderingWidget::SwitchToChooseSubG()
 		emit(modeInfo(QString("Choosing subgraph...Press again or press ESC to exit.")));
 		op_mode_ = CHOOSESUBG;
 	}
+
+	updateGL();
 }
 
 
@@ -867,7 +878,7 @@ void RenderingWidget::ReadFrame()
 	QString filename = QFileDialog::getOpenFileName(
 		this, 
 		tr("Read Mesh"),
-		"..", 
+		last_file_dir_,
 		tr("Mesh files(*.obj *.pwf)")
 		);
 
@@ -876,6 +887,8 @@ void RenderingWidget::ReadFrame()
 		emit(operatorInfo(QString("Read Mesh Failed!")));
 		return;
 	}
+
+	last_file_dir_ = filename;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
@@ -963,7 +976,7 @@ void RenderingWidget::Import()
 	QString filename = QFileDialog::getOpenFileName(
 		this, 
 		tr("Import"),
-		"..", 
+		last_file_dir_,
 		tr("3DD files(*.3dd);;Sequence files(*.txt)"),
 		&selected_filter
 		);
@@ -973,6 +986,8 @@ void RenderingWidget::Import()
 		emit(operatorInfo(QString("Import Failed!")));
 		return;
 	}
+
+	last_file_dir_ = filename;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
@@ -997,7 +1012,7 @@ void RenderingWidget::Import()
 
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, byfilename.data());
 		}
 
 		M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
@@ -1051,7 +1066,7 @@ void RenderingWidget::Export()
 	{
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_);
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, NULL);
 		}
 		ptr_fiberprint_->ExportPrintOrder(byfilename.data());
 		emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));
@@ -1065,8 +1080,10 @@ void RenderingWidget::Export()
 }
 
 
-void RenderingWidget::Export(int min_layer, int max_layer,
-	QString vert_path, QString line_path)
+void RenderingWidget::Export(
+	int min_layer, int max_layer,
+	QString vert_path, QString line_path, QString render_path
+	)
 {	
 	if (ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0)
 	{
@@ -1096,7 +1113,20 @@ void RenderingWidget::Export(int min_layer, int max_layer,
 			line_path.toLocal8Bit().data());
 	}
 
-	emit(operatorInfo(QString("Export mesh done")));	
+	if (!render_path.isEmpty())
+	{
+		if (ptr_fiberprint_ == NULL)
+		{
+			emit(operatorInfo(QString("Export render path failed.")));
+			return;
+		}
+		ptr_fiberprint_->ExportRenderPath(
+			min_layer, max_layer, 
+			render_path.toLocal8Bit().data()
+		);
+	}
+
+	emit(operatorInfo(QString("Export mesh done.")));	
 }
 
 
@@ -1131,18 +1161,21 @@ void RenderingWidget::ScaleFrame(double scale)
 
 void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 {
-	QString dirname = QFileDialog::
-		getExistingDirectory(this, 
-							tr("Result Directory"),
-							"/home",
-							QFileDialog::ShowDirsOnly
-							| QFileDialog::DontResolveSymlinks);
+	QString dirname = QFileDialog::getExistingDirectory(
+		this, 
+		tr("Result Directory"),
+		last_result_dir_,
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks
+	);
 
 	if (dirname.isEmpty())
 	{
 		emit(operatorInfo(QString("Read Directory Failed!")));
 		return;
 	}
+
+	last_result_dir_ = dirname;
 
 	// compatible with paths in chinese
 	QTextCodec *code = QTextCodec::codecForName("gd18030");
@@ -1167,8 +1200,6 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 		ptr_frame_->SizeOfEdgeList() / 2,
 		-1, ptr_frame_->SizeOfLayer()
 	);
-
-	delete ptr_parm;
 }
 
 
@@ -1326,7 +1357,7 @@ void RenderingWidget::PrintLastLayer()
 		print_order_--;
 	}
 	int orig_e = print_queue[print_order_];
-	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 2);
+	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 1);
 
 	while (1)
 	{
@@ -1360,7 +1391,7 @@ void RenderingWidget::PrintNextLayer()
 		print_order_--;
 	}
 	int orig_e = print_queue[print_order_];
-	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 2;
+	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 1;
 
 	while (1)
 	{

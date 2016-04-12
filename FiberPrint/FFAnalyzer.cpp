@@ -114,39 +114,7 @@ bool FFAnalyzer::SeqPrint()
 			max_z_ = max(max_z_, (double)max(u.z(), v.z()));
 		}
 
-
-		/* set start edge for searching of current layer */
-		multimap<double, int> choice;
-
-		bool success = false;
-		for (int st_e = 0; st_e < Nl; st_e++)
-		{
-			double cost = GenerateCost(l, st_e, NULL);
-			if (cost != -1.0)
-			{
-				choice.insert(make_pair(cost, st_e));
-			}
-		}
-
-		for (it = choice.begin(); it != choice.end(); it++)
-		{
-			int dual_i = layers_[l][it->second];
-			QueueInfo start_edge = QueueInfo{ l, it->second, dual_i };
-			print_queue_.push_back(start_edge);
-
-			vector<vector<lld>> tmp_angle(3);
-			UpdateStateMap(dual_i, tmp_angle);
-
-			if (GenerateSeq(l, h, t))
-			{
-				success = true;
-				break;
-			}
-
-			RecoverStateMap(dual_i, tmp_angle);
-		}
-
-		if (!success)
+		if (!GenerateSeq(l, h, t))
 		{
 			if (debug_)
 			{
@@ -158,8 +126,8 @@ bool FFAnalyzer::SeqPrint()
 
 	if (fileout_)
 	{
-		WriteLayerQueue();
-		WritePathRender();
+		//WriteLayerQueue();
+		//WriteRenderPath();
 	}
 
 	GetPrintOrder();
@@ -176,20 +144,8 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 			print_queue_[h].layer_id_, l, h, t);
 	}
 
-	int Nl = layers_[l].size();
-	int M = ptr_frame_->SizeOfEdgeList();
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-
-	int i = print_queue_[h].layer_id_;
-	int dual_i = print_queue_[h].dual_id_;
-	int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-	WF_edge *ei = ptr_frame_->GetEdge(orig_i);
-
-	/* update printed subgraph */
-	UpdateStructure(ei);
-
 	/* exit */
-	if (h == t - 1)
+	if (h == t)
 	{
 		if (debug_)
 		{
@@ -199,11 +155,20 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		return true;
 	}
 
+	/* last edge */
+	WF_edge *ei = NULL;
+	if (h != 0)
+	{
+		ei = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id
+			(print_queue_[h - 1].dual_id_));
+	}
+
 	/* next choice */
 	multimap<double, int> choice;
 	multimap<double, int>::iterator it;
 
 	/* next edge in current layer */
+	int Nl = layers_[l].size();
 	for (int j = 0; j < Nl; j++)
 	{
 		/* cost weight */
@@ -214,92 +179,19 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		}
 	}
 
-
-	///* for rendering */
-	//char layer[10];
-	//char head[10];
-	//sprintf(layer, "%d", l);
-	//sprintf(head, "%d", h);
-	//
-	//
-	//string file = (string)ptr_path_ + "/PathRender_" + "_" + head + ".txt";
-	//FILE *fp = fopen(file.c_str(), "w+");
-
-	//double min_cost = choice.begin()->first;
-	//double max_cost;
-	//
-	//vector<double> tmp_cost(M);
-	//fill(tmp_cost.begin(), tmp_cost.end(), -1);
-	//for (it = choice.begin(); it != choice.end(); it++)
-	//{
-	//	max_cost = it->first;
-	//	int dual_j = layers_[l][it->second];
-	//	int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
-	//	tmp_cost[orig_j] = tmp_cost[ptr_frame_->GetEdge(orig_j)->ppair_->ID()] = it->first;
-	//}
-
-	//for (int j = 0; j < M; j++)
-	//{
-	//	double r;
-	//	double g;
-	//	double b;
-	//	WF_edge *e = ptr_frame_->GetEdge(j);
-	//	if (j < e->ppair_->ID())
-	//	{
-	//		if (ptr_subgraph_->isExistingEdge(j))
-	//		{
-	//			r = 0.5;
-	//			g = 0.5;
-	//			b = 0.5;
-	//		}
-	//		else
-	//		if (e->Layer() != l)
-	//		{
-	//			r = 1.0;
-	//			g = 1.0;
-	//			b = 1.0;
-	//		}
-	//		else
-	//		if (tmp_cost[j] == -1)
-	//		{
-	//			r = 0;
-	//			g = 0;
-	//			b = 0;
-	//		}
-	//		else
-	//		{
-	//			double cost_j;
-	//			if (max_cost == min_cost)
-	//			{
-	//				cost_j = 1.0;
-	//			}
-	//			else
-	//			{
-	//				cost_j = (tmp_cost[j] - min_cost) / (max_cost - min_cost);
-	//			}
-
-	//			r = 1.0;
-	//			g = cost_j;
-	//			b = 0.0;
-	//		}
-
-	//		point u = e->pvert_->RenderPos();
-	//		point v = e->ppair_->pvert_->RenderPos();
-	//		fprintf(fp, "%lf, %lf, %lf \n %lf, %lf, %lf \n%lf, %lf, %lf\n",
-	//			u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
-	//	}
-	//}
-	//fclose(fp);
-
-
-
 	/* ranked by weight */
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
 		int dual_j = layers_[l][it->second];
+		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		QueueInfo next_edge = QueueInfo{ l, it->second, dual_j };
 		print_queue_.push_back(next_edge);
 
+		/* update printed subgraph */
+		UpdateStructure(ej);
+
+		/* update collision */
 		vector<vector<lld>> tmp_angle(3);
 		UpdateStateMap(dual_j, tmp_angle);
 
@@ -315,10 +207,9 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		}
 
 		RecoverStateMap(dual_j, tmp_angle);
+		RecoverStructure(ej);
+		print_queue_.pop_back();
 	}
-
-	RecoverStructure(ei);
-	print_queue_.pop_back();
 
 	if (debug_)
 	{
@@ -455,132 +346,6 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 }
 
 
-bool FFAnalyzer::GenerateSeq(int h, int t)
-{
-	if (h == t)
-	{
-		return true;
-	}
-
-	printf("head :%d\n", h);
-
-	/* stiffness */
-	/* examinate stiffness on printing subgraph */
-	Stiffness *ptr_stiffness = new Stiffness(ptr_subgraph_);
-	int Ns = ptr_subgraph_->SizeOfFreeFace();
-	VX D(Ns * 6);
-	D.setZero();
-
-	bool stiff_success = true;
-	if (ptr_stiffness->CalculateD(D))
-	{
-		for (int k = 0; k < Ns; k++)
-		{
-			VX offset(3);
-			for (int l = 0; l < 3; l++)
-			{
-				offset[l] = D[k * 6 + l];
-			}
-
-			if (offset.norm() >= Dt_tol_)
-			{
-				stiff_success = false;
-				getchar();
-				break;
-			}
-		}
-	}
-	else
-	{
-		stiff_success = false;
-	}
-
-	delete ptr_stiffness;
-	ptr_stiffness = NULL;
-
-	if (!stiff_success)
-	{
-		return false;
-	}
-
-
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	for (int i = 0; i < Nd; i++)
-	{
-		int orig_i = ptr_dualgraph_->e_orig_id(i);
-		WF_edge *ei = ptr_frame_->GetEdge(orig_i);
-		if (!ei->isPillar() && !ptr_subgraph_->isExistingEdge(orig_i))
-		{
-			if (ptr_collision_->ColFreeAngle(angle_state_[i]) == 0)
-			{
-				return false;
-			}
-
-			if (h != ptr_frame_->SizeOfPillar())
-			{
-				int u = ei->pvert_->ID();
-				int v = ei->ppair_->pvert_->ID();
-				if (!ptr_subgraph_->isExistingVert(u)
-					&& !ptr_subgraph_->isExistingVert(v))
-				{
-					continue;
-				}
-			}
-
-			vector<vector<lld>> tmp_angle(3);
-			for (int j = 0; j < Nd; j++)
-			{
-				int orig_j = ptr_dualgraph_->e_orig_id(j);
-				if (i != j &&
-					!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
-				{
-					WF_edge *ej = ptr_frame_->GetEdge(orig_j);
-
-					int id = i*Nd + j;
-					if (colli_map_[id] == NULL)
-					{
-						colli_map_[id] = new vector < lld >;
-						ptr_collision_->DetectCollision(ej, ei, *colli_map_[id]);
-					}
-
-					for (int k = 0; k < 3; k++)
-					{
-						tmp_angle[k].push_back(angle_state_[j][k]);
-					}
-					ptr_collision_->ModifyAngle(angle_state_[j], *colli_map_[id]);
-				}
-			}
-
-			print_queue_.push_back(QueueInfo{ 0, 0, i });
-			ptr_subgraph_->UpdateDualization(ei);
-			if (GenerateSeq(h + 1, t))
-			{
-				return true;
-			}
-			ptr_subgraph_->RemoveUpdation(ei);
-			print_queue_.pop_back();
-
-			int k = 0;
-			for (int j = 0; j < Nd; j++)
-			{
-				int orig_j = ptr_dualgraph_->e_orig_id(j);
-				if (i != j &&
-					!ptr_subgraph_->isExistingEdge(orig_j) && !ei->isPillar())
-				{
-					for (int p = 0; p < 3; p++)
-					{
-						angle_state_[j][p] = tmp_angle[p][k];
-					}
-					k++;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-
 void FFAnalyzer::PrintOutTimer()
 {
 	printf("***Timer result:\n");
@@ -601,179 +366,179 @@ void FFAnalyzer::PrintOutTimer()
 }
 
 
-void FFAnalyzer::WriteLayerQueue()
+void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 {
-	//string path = ptr_path_;
-	//string queue_path = path + "/Queue.txt";
+	int layer_size = ptr_frame_->SizeOfLayer();
+	if (layer_size == 0)
+	{
+		return;
+	}
 
-	//FILE *fp = fopen(queue_path.c_str(), "w");
+	ptr_dualgraph_ = new DualGraph(ptr_frame_);
+	ptr_collision_ = new QuadricCollision(ptr_frame_);
 
-	//vector<int> layer_queue;
-	//GetQueue(layer_queue);
-	//int Nq = layer_queue.size();
-	//for (int i = 0; i < Nq; i++)
-	//{
-	//	fprintf(fp, "%d\n", layer_queue[i]);
-	//}
-	//fclose(fp);
-}
+	Init();
+	min_layer--;
+	max_layer--;
 
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	layers_.resize(layer_size);
+	for (int dual_i = 0; dual_i < Nd; dual_i++)
+	{
+		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
+		int layer = ptr_frame_->GetEdge(orig_i)->Layer();
+		layers_[layer].push_back(dual_i);
+	}
 
-void FFAnalyzer::WritePathRender()
-{
-	///* for rendering */
-	//ptr_dualgraph_->Dualization();
+	/* skip pillars */
+	int hi = 0;
+	for (; hi < Nd; hi++)
+	{
+		int orig_i = print_order_[hi];
+		WF_edge *e = ptr_frame_->GetEdge(orig_i);
+		if (!e->isPillar())
+		{
+			break;
+		}
+		UpdateStructure(e);
+	}
 
-	//int Nd = ptr_dualgraph_->SizeOfVertList();
-	//angle_state_.resize(Nd);
-	//fill(angle_state_.begin(), angle_state_.end(), 0);
+	/* skip printed structure */
+	for (; hi < Nd; hi++)
+	{
+		int orig_i = print_order_[hi];
+		WF_edge *e = ptr_frame_->GetEdge(orig_i);
+		if (e->Layer() >= min_layer)
+		{
+			break;
+		}
+		UpdateStructure(e);
+	}
 
-	//FILE *ifp = fopen("C:/Users/DELL/Desktop/Queue.txt", "r+");
-	//int max_layer = -1;
-	//for (int i = 0; i < Nd; i++)
-	//{
-	//	int orig_i;
-	//	fscanf(ifp, "%d", &orig_i);
+	/* angle state with printed structure */
+	for (int dual_i = 0; dual_i < Nd; dual_i++)
+	{
+		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
+		if (!ptr_subgraph_->isExistingEdge(orig_i))
+		{
+			WF_edge *e = ptr_frame_->GetEdge(orig_i);
+			ptr_collision_->DetectCollision(e, ptr_subgraph_, angle_state_[dual_i]);
+		}
+	}
 
-	//	int layer = ptr_frame_->GetEdge(orig_i)->Layer();
-	//	if (layer > max_layer)
-	//	{
-	//		max_layer = layer;
-	//	}
-	//	QueueInfo edge = QueueInfo{ layer, 0,
-	//		ptr_dualgraph_->e_dual_id(orig_i) };
-	//	print_queue_.push_back(edge);
-	//}
+	/* print starting from min_layer */
+	WF_edge *ei = NULL;
+	for (; hi < Nd - 1; hi++)
+	{
+		int orig_j = print_order_[hi];
+		int dual_j = ptr_dualgraph_->e_dual_id(orig_j);
+		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
+		int l = ej->Layer();
+		int Nl = layers_[l].size();
 
-	//fclose(ifp);
+		// init the next layer
+		if (ei == NULL || ei->Layer() != l)
+		{
+			/* max_z_ and min_z_ in current layer */
+			min_z_ = 1e20;
+			max_z_ = -min_z_;
+			for (int k = 0; k < Nl; k++)
+			{
+				int orig_k = ptr_dualgraph_->e_orig_id(layers_[l][k]);
+				point u = ptr_frame_->GetEdge(orig_k)->pvert_->Position();
+				point v = ptr_frame_->GetEdge(orig_k)->ppair_->pvert_->Position();
+				min_z_ = min(min_z_, (double)min(u.z(), v.z()));
+				max_z_ = max(max_z_, (double)max(u.z(), v.z()));
+			}
+		}
 
-	//max_layer++;
-	//layers_.resize(max_layer);
-	//for (int dual_i = 0; dual_i < Nd; dual_i++)
-	//{
-	//	int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-	//	int layer = ptr_frame_->GetEdge(orig_i)->Layer();
-	//	layers_[layer].push_back(dual_i);
-	//}
+		vector<double> cost(Nd);
+		double min_cost = 1e20;
+		double max_cost = -min_cost;
+		for (int k = 0; k < Nl; k++)
+		{
+			int dual_k = layers_[l][k];
+			cost[dual_k] = GenerateCost(l, k, ei);
+			if (cost[dual_k] != -1)
+			{
+				if (cost[dual_k] < min_cost)
+				{
+					min_cost = cost[dual_k];
+				}
+				if (cost[dual_k] > max_cost)
+				{
+					max_cost = cost[dual_k];
+				}
+			}
+		}
 
-	//for (int i = 0; i < Nd; i++)
-	//{
-	//	int l = print_queue_[i].layer_;
-	//	int Nl = layers_[l].size();
-	//	int dual_i = print_queue_[i].dual_id_;
-	//	int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-	//	WF_edge *ei = ptr_frame_->GetEdge(orig_i);
+		char id[10];
+		sprintf(id, "%d", hi);
 
-	//	ptr_subgraph_->UpdateDualization(ei);
+		string path = ptr_path;
+		string file = path + "/PathRender_" + id + ".txt";
+		FILE *fp = fopen(file.c_str(), "w+");
 
-	//	for (int dual_j = 0; dual_j < Nd; dual_j++)
-	//	{
-	//		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
-	//		if (dual_i != dual_j && !ptr_subgraph_->isExistingEdge(orig_j))
-	//		{
-	//			WF_edge *ej = ptr_frame_->GetEdge(orig_j);
-	//			ptr_collision_->DetectCollision(ej, ei);
-	//			angle_state_[dual_j] |= ptr_collision_->Angle();
-	//		}
-	//	}
+		for (int dual_k = 0; dual_k < Nd; dual_k++)
+		{
+			double r;
+			double g;
+			double b;
+			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
+			WF_edge *e = ptr_frame_->GetEdge(orig_k);
 
-	//	if (ei->isPillar())
-	//	{
-	//		continue;
-	//	}
+			if (ptr_subgraph_->isExistingEdge(orig_k))
+			{
+				r = 0.5;
+				g = 0.5;
+				b = 0.5;
+			}
+			else
+			if (e->Layer() != l)
+			{
+				r = 1.0;
+				g = 1.0;
+				b = 1.0;
+			}
+			else
+			if (cost[dual_k] == -1)
+			{
+				r = 0;
+				g = 0;
+				b = 0;
+			}
+			else
+			{
+				double cost_k;
+				if (max_cost == -1e20 || max_cost == min_cost)
+				{
+					cost_k = 0.0;
+				}
+				else
+				{
+					cost_k = (cost[dual_k] - min_cost) / (max_cost - min_cost);
+				}
 
-	//	min_z_ = 1e20;
-	//	max_z_ = -min_z_;
-	//	for (int j = 0; j < Nl; j++)
-	//	{
-	//		int orig_j = ptr_dualgraph_->e_orig_id(layers_[l][j]);
-	//		int u = ptr_frame_->GetEndu(orig_j);
-	//		int v = ptr_frame_->GetEndv(orig_j);
-	//		point pos_u = ptr_frame_->GetPosition(u);
-	//		point pos_v = ptr_frame_->GetPosition(v);
-	//		min_z_ = min(min_z_, (double)min(pos_u.z(), pos_v.z()));
-	//		max_z_ = max(max_z_, (double)max(pos_u.z(), pos_v.z()));
-	//	}
+				r = 1.0;
+				g = cost_k;
+				b = 0.0;
+			}
 
-	//	vector<double> cost(Nd);
-	//	double min_cost = 1e20;
-	//	double max_cost = -min_cost;
-	//	for (int j = 0; j < Nl; j++)
-	//	{
-	//		int dual_j = layers_[l][j];
-	//		cost[dual_j] = GenerateCost(l, j);
-	//		if (cost[dual_j] != -1)
-	//		{
-	//			if (cost[dual_j] < min_cost)
-	//			{
-	//				min_cost = cost[dual_j];
-	//			}
-	//			if (cost[dual_j] > max_cost)
-	//			{
-	//				max_cost = cost[dual_j];
-	//			}
-	//		}
-	//	}
+			point u = e->pvert_->RenderPos();
+			point v = e->ppair_->pvert_->RenderPos();
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+				u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
+		}
 
-	//	char id[10];
-	//	sprintf(id, "%d", i);
+		fclose(fp);
 
-	//	string path = path_;
-	//	string file = path + "/PathRender_" + id + ".txt";
-	//	FILE *fp = fopen(file.c_str(), "w+");
+		vector<vector<lld>> tmp_angle(3);
+		UpdateStateMap(dual_j, tmp_angle);
 
-	//	for (int dual_j = 0; dual_j < Nd; dual_j++)
-	//	{
-	//		double r;
-	//		double g;
-	//		double b;
-	//		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
-	//		WF_edge *e = ptr_frame_->GetEdge(orig_j);
+		UpdateStructure(ej);
+		ei = ej;
+	}
 
-	//		if (ptr_subgraph_->isExistingEdge(orig_j))
-	//		{
-	//			r = 0.5;
-	//			g = 0.5;
-	//			b = 0.5;
-	//		}
-	//		else
-	//			if (e->Layer() != l)
-	//			{
-	//				r = 1.0;
-	//				g = 1.0;
-	//				b = 1.0;
-	//			}
-	//			else
-	//				if (cost[dual_j] == -1)
-	//				{
-	//					r = 0;
-	//					g = 0;
-	//					b = 0;
-	//				}
-	//				else
-	//				{
-	//					double cost_j;
-	//					if (max_cost == -1e20)
-	//					{
-	//						cost_j = 0.0;
-	//					}
-	//					else
-	//					{
-	//						cost_j = (cost[dual_j] - min_cost) / (max_cost - min_cost);
-	//					}
-
-	//					r = 1.0;
-	//					g = cost_j;
-	//					b = 0.0;
-	//				}
-
-	//		point u = e->pvert_->RenderPos();
-	//		point v = e->ppair_->pvert_->RenderPos();
-	//		fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
-	//			u.x(), u.y(), u.z(), v.x(), v.y(), v.z(), r, g, b);
-	//		//printf("%lf %lf %lf\n", r, g, b);
-	//	}
-
-	//	fclose(fp);
-	//}
+	delete ptr_dualgraph_;
+	delete ptr_collision_;
 }

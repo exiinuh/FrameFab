@@ -70,7 +70,10 @@ signals:
 				bool, int, int, 
 				QString
 			);
-	void	SendExportParas(int, int, QString, QString);
+	void	SendExportParas(
+				int, int, 
+				QString, QString, QString
+			);
 
 public slots:
 	void	OpenFile();
@@ -123,7 +126,7 @@ private:
 	QAction				*action_save_;
 	QAction				*action_import_;
 	QAction				*action_export_;
-	QAction				*action_export_maya_;
+	QAction				*action_exportrender_;
 
 	QAction				*action_background_;
 
@@ -164,6 +167,7 @@ private:
 	// Lineedits
 	QLineEdit			*lineedit_vertpath_;
 	QLineEdit			*lineedit_linepath_;
+	QLineEdit			*lineedit_renderpath_;
 	QLineEdit			*lineedit_pwfpath_;
 
 	// Checkboxes
@@ -197,6 +201,7 @@ private:
 	QPushButton			*pushbutton_export_;
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
+	QPushButton			*pushbutton_exportpath_;
 	QPushButton			*pushbutton_deformation_;
 
 	// Toolbuttons
@@ -221,6 +226,7 @@ private:
 	QGroupBox			*groupbox_exportvert_;
 	QGroupBox			*groupbox_exportline_;
 	QGroupBox			*groupbox_exportlayer_;
+	QGroupBox			*groupbox_exportpath_;
 	QGroupBox			*groupbox_saveinfo_;
 	QGroupBox			*groupbox_savelayer_;
 
