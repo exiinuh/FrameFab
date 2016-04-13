@@ -33,7 +33,7 @@
 #include <Eigen/Core>
 
 #include "GraphCut.h"
-#include"Evaluate.h"
+#include "Evaluate.h"
 
 #include "QP\QPMosek.h"
 #include "QP\QPFactory.h"
@@ -42,7 +42,12 @@
 using namespace std;
 using namespace Eigen;
 
+<<<<<<< HEAD
 //#define	COLFREE_WEIGHT
+=======
+//#define	ADJACENT_WEIGHT
+
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 
 class ADMMCut : public GraphCut
 {
@@ -68,7 +73,7 @@ public:
 	SpMat GetSpMat(){ return weight_; };
 =======
 
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();

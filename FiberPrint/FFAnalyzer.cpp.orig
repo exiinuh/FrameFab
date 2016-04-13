@@ -347,6 +347,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 
 void FFAnalyzer::PrintOutTimer()
+<<<<<<< HEAD
 {
 	printf("***Timer result:\n");
 	printf("UpdateStructure: ");
@@ -368,6 +369,29 @@ void FFAnalyzer::PrintOutTimer()
 
 void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 {
+=======
+{
+	printf("***Timer result:\n");
+	printf("UpdateStructure: ");
+	upd_struct_.Print();
+	printf("RecoverStructure:");
+	rec_struct_.Print();
+	printf("UpdateStateMap:  ");
+	upd_map_.Print();
+	printf(">>>Collision:       ");
+	upd_map_collision_.Print();
+	printf("RecoverStateMap: ");
+	rec_map_.Print();
+	printf("TestifyStiffness:");
+	test_stiff_.Print();
+	printf(">>>CalculateD:      ");
+	test_stiff_cal_.Print();
+}
+
+
+void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
+{
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 	int layer_size = ptr_frame_->SizeOfLayer();
 	if (layer_size == 0)
 	{
@@ -376,7 +400,6 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 
 	ptr_dualgraph_ = new DualGraph(ptr_frame_);
 	ptr_collision_ = new QuadricCollision(ptr_frame_);
-<<<<<<< HEAD
 
 	Init();
 	min_layer--;
@@ -395,26 +418,6 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	int hi = 0;
 	for (; hi < Nd; hi++)
 	{
-=======
-
-	Init();
-	min_layer--;
-	max_layer--;
-
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	layers_.resize(layer_size);
-	for (int dual_i = 0; dual_i < Nd; dual_i++)
-	{
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-		int layer = ptr_frame_->GetEdge(orig_i)->Layer();
-		layers_[layer].push_back(dual_i);
-	}
-
-	/* skip pillars */
-	int hi = 0;
-	for (; hi < Nd; hi++)
-	{
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
 		int orig_i = print_order_[hi];
 		WF_edge *e = ptr_frame_->GetEdge(orig_i);
 		if (!e->isPillar())
@@ -505,7 +508,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		double cost_min = 1;*/
 =======
 
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 		for (int dual_k = 0; dual_k < Nd; dual_k++)
 		{
 			double r;
@@ -552,7 +555,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 				{
 					cost_k = (cost[dual_k] - min_cost) / (max_cost - min_cost);
 				}
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 
 				r = 1.0;
 				g = cost_k;
@@ -561,7 +564,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 <<<<<<< HEAD
 =======
 
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 			point u = e->pvert_->RenderPos();
 			point v = e->ppair_->pvert_->RenderPos();
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
@@ -594,7 +597,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 =======
 		}
 
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 		fclose(fp);
 
 		vector<vector<lld>> tmp_angle(3);

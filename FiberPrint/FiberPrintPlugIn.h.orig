@@ -10,11 +10,7 @@
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
 #include "ProcAnalyzer.h"
-<<<<<<< HEAD
-#include"Evaluate.h"
-=======
-
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
+#include "Evaluate.h"
 
 class FiberPrintPlugIn
 {
@@ -62,8 +58,11 @@ private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
 	ProcAnalyzer	*ptr_procanalyzer_;
+<<<<<<< HEAD
 
 	Timer			framefab_;
+=======
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 };
 
 #endif // FIBERPRINTPLUGIN_H

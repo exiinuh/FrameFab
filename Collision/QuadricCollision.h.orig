@@ -27,7 +27,17 @@ public:
 	~QuadricCollision();
 
 public:
+<<<<<<< HEAD
 	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
+=======
+<<<<<<< HEAD
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
+=======
+
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); 
+
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
 	void	DetectCollision(WF_edge *target_e, vector<WF_edge*> exist_edge, vector<GeoV3> &output);
 
@@ -52,13 +62,22 @@ private:
 	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
 
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
+<<<<<<< HEAD
 	void	GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+=======
 
-	
+	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
+
 
 	bool	Parallel(GeoV3 a, GeoV3 b);
+<<<<<<< HEAD
 	double	Distance(WF_edge* order_e);
 	bool DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
+=======
+
+	double	Distance(WF_edge* order_e);
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 
 	double	Distance(WF_edge* order_e);
 
@@ -125,4 +144,11 @@ private:
 	/* (Nd * Nd) * (3) */
 	/* (i, j): j's angle map & i printed */
 	vector<vector<lld>*>colli_map_;				
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+	bool strict_;
+=======
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 };

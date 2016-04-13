@@ -69,19 +69,8 @@ void FiberPrintPlugIn::FrameFabPrint()
 <<<<<<< HEAD
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
-=======
-	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 
-	ptr_graphcut_->MakeLayers();
-	cout << "Graph Cut completed." << endl;
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
 
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
-
-<<<<<<< HEAD
 	//ptr_procanalyzer_->CollisionColorMap(1);
 	ptr_graphcut_->MakeLayers();
 	//cout << "Graph Cut completed." << endl;
@@ -99,21 +88,34 @@ void FiberPrintPlugIn::FrameFabPrint()
 	//ptr_seqanalyzer_->PrintOutTimer();
 	//ptr_procanalyzer_->ProcPrint();
 	//ptr_procanalyzer_->CollisionColorMap();
-=======
-	//	return;
-	//}
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
 
 
-<<<<<<< HEAD
-=======
-	ptr_graphcut_->PrintOutTimer();
-	ptr_seqanalyzer_->PrintOutTimer();
-
->>>>>>> bf4966f7fddc8486a66e1189f5dc431d1acb0923
 	framefab_.Stop();
 	printf("Total time >>>>>>>>>\nFrameFab: ");
 	framefab_.Print();
+=======
+	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+
+	//ptr_procanalyzer_->CollisionColorMap(1);
+	ptr_graphcut_->MakeLayers();
+
+<<<<<<< HEAD
+	cout << "Graph Cut completed." << endl;
+=======
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
+>>>>>>> a11a85ba0639cf40e03412dad89f5cab97bae04c
+
+	//	return;
+	//}
+
+	printf("FrameFab print done.\n");
+	ptr_procanalyzer_->ProcPrint();
+	ptr_graphcut_->PrintOutTimer();
+	ptr_seqanalyzer_->PrintOutTimer();
+>>>>>>> 5b0e874949138bad9856ca53f5747f4a9696c395
 }
 
 
