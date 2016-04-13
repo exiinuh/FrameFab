@@ -13,8 +13,7 @@ ExtruderCone::ExtruderCone()
 	*				   cone solid
 	*/
 	normal_		= Vec3f(0, 0, 1);
-	angle_		= 2* F_PI / 9;
-	//angle_		= F_PI /4;
+	angle_		= 2.5* F_PI / 9;
 	height_		= 20;
 	wave_angle_ = F_PI / 18;
 	divide_		= 16;
@@ -22,7 +21,16 @@ ExtruderCone::ExtruderCone()
 	radii_ = tan(angle_)*height_;
 	cyclinder_height_= 100;//50mm for connection tools on the arm
 
+
+	//top_cylin
+	top_cylin_center_lenth_=89; //from start point
+	top_cylin_lenth_=68;
+	top_cylin_radii_=36;
+
+
 	GeneCone();
+
+
 }
 
 ExtruderCone::ExtruderCone(double height, point  base_point, Vec3f normal, double angle)
