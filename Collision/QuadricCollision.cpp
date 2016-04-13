@@ -1,7 +1,10 @@
 #include "QuadricCollision.h"
 
 
+QuadricCollision::QuadricCollision()
+{
 
+}
 
 
 QuadricCollision::QuadricCollision(WireFrame *ptr_frame)

@@ -33,7 +33,7 @@
 #include <Eigen/Core>
 
 #include "GraphCut.h"
-#include"Evaluate.h"
+#include "Evaluate.h"
 
 #include "QP\QPMosek.h"
 #include "QP\QPFactory.h"

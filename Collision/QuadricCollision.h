@@ -52,7 +52,7 @@ private:
 	bool	DetectTriangle(Triangle	 triangle, GeoV3 target_start, GeoV3 target_end);
 
 	void	GenerateVolume(GeoV3 start, GeoV3 end, GeoV3 target_start, GeoV3 target_end, GeoV3 normal);
-	void GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
+	void	GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order_s, GeoV3 normal);
 
 	
 
@@ -60,11 +60,12 @@ private:
 	double	Distance(WF_edge* order_e);
 	bool DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 
+	double	Distance(WF_edge* order_e);
+
 	gte::Segment<3, float>		Seg(point target_start, point target_end);
 	gte::Segment<3, float>		Seg(GeoV3 target_start, GeoV3 target_end);
 	gte::Triangle<3, float>		Tri(GeoV3 a, GeoV3 b, GeoV3 c);
 
-	double DistanceEdge(WF_edge* order_e);
 	GeoV3 Orientation(double ¦È, double ¦Õ)
 	{ 
 		return GeoV3(sin(¦È)*cos(¦Õ), sin(¦È)*sin(¦Õ), cos(¦È)); 
@@ -121,4 +122,3 @@ private:
 	/* (i, j): j's angle map & i printed */
 	vector<vector<lld>*>colli_map_;				
 };
-
