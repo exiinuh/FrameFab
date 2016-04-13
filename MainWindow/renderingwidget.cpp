@@ -677,6 +677,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 				{
 					captured_edges_.push_back(edges[i]);
 					is_captured_edge_[i] = true;
+				
 					is_captured_edge_[edges[i]->ppair_->ID()] = true;
 					emit(CapturedEdge(i + 1, edges[i]->Length()));
 					emit(layerInfo(edges[i]->Layer() + 1, ptr_frame_->SizeOfLayer()));
@@ -921,6 +922,10 @@ void RenderingWidget::ReadFrame()
 
 	
 	updateGL();
+
+
+
+
 }
 
 

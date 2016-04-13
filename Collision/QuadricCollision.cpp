@@ -1,10 +1,7 @@
 #include "QuadricCollision.h"
 
 
-QuadricCollision::QuadricCollision()
-{
 
-}
 
 
 QuadricCollision::QuadricCollision(WireFrame *ptr_frame)
@@ -320,6 +317,8 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 			return true;
 	}
 
+
+
 	return false;
 }
 
@@ -539,13 +538,6 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
 	bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
 
-		for (int i = 0; i < 15; i++)
-		{
-			bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
-			bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
-		}
-		bulk_.push_back(Triangle(start_circle_point[15], start_circle_point[0], end_circle_point[15]));
-		bulk_.push_back(Triangle(end_circle_point[15], end_circle_point[0], start_circle_point[0]));
 
 	//Top face
 
@@ -577,6 +569,8 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	bulk_.push_back(Triangle(start, start_back_cone, end_back_cone));
 	bulk_.push_back(Triangle(start_back_cone, end_back_cylinder, end_back_cone));
 	bulk_.push_back(Triangle(start_back_cone, start_back_cylinder, end_back_cylinder));
+
+
 }
 
 
@@ -674,6 +668,7 @@ double QuadricCollision::Distance(WF_edge* order_e)
 	auto result = distance(segment, segment_target);
 	return result.distance;
 }
+
 
 gte::Segment<3, float> QuadricCollision::Seg(point target_start, point target_end)
 {
