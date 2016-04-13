@@ -115,18 +115,6 @@ void QuadricCollision::Init(vector<lld> &colli_map)
 }
 
 
-double QuadricCollision::DistanceEdge(WF_edge* order_e)
-{
-
-	gte::Segment<3, float> segment,segment_target;
-	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
-	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
-	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
-	auto result = distance(segment, segment_target);
-	return result.distance;
-
-}
-
 void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 {
 	if (Distance(order_e) > (extruder_.CyclinderLenth() + extruder_.Height()))
@@ -491,6 +479,34 @@ bool QuadricCollision::DetectTriangle(Triangle triangle, GeoV3 target_start, Geo
 }
 
 
+bool QuadricCollision::DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end)
+{
+	gte::Cylinder3<float> cylinder;
+	cylinder.axis;
+	gte::Line3<float> cylinder_line;
+	std::array<float, 3>s;
+	GeoV3 cylin_center;
+	cylin_center = start + normal*extruder_.TopCenter();
+	s[0] = cylin_center.getX(); s[1] = cylin_center.getY(); s[2] = cylin_center.getZ();
+	cylinder_line.origin = s;
+	s[0] = normal.getX(); s[1] = normal.getY(); s[2] = normal.getZ();
+	cylinder_line.direction = s;
+	cylinder.axis = cylinder_line;
+
+	cylinder.height = extruder_.ToolLenth();
+	cylinder.radius = extruder_.TopRadii();
+
+
+	gte::Segment<3, float> segment;
+	segment = Seg(target_start, target_end);
+	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> intersection;
+	auto result = intersection(segment, cylinder);
+
+	return result.intersect;
+}
+
+
+
 void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end, 
 	GeoV3 target_start, GeoV3  target_end, GeoV3 normal)
 {
@@ -788,28 +804,3 @@ void QuadricCollision::Debug()
 }
 
 
-bool QuadricCollision::DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end)
-{
-	gte::Cylinder3<float> cylinder;
-	cylinder.axis;
-	gte::Line3<float> cylinder_line;
-	std::array<float, 3>s;
-	GeoV3 cylin_center;
-	cylin_center = start + normal*extruder_.TopCenter();
-	s[0] = cylin_center.getX(); s[1] = cylin_center.getY(); s[2] = cylin_center.getZ();
-	cylinder_line.origin = s;
-	s[0] = normal.getX(); s[1] = normal.getY(); s[2] = normal.getZ();
-	cylinder_line.direction = s;
-	cylinder.axis = cylinder_line;
-
-	cylinder.height = extruder_.ToolLenth();
-	cylinder.radius = extruder_.TopRadii();
-
-
-	gte::Segment<3, float> segment;
-	segment = Seg(target_start, target_end);
-	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> intersection;
-	auto result = intersection(segment, cylinder);
-
-	return result.intersect;
-}
