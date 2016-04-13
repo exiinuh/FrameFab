@@ -23,7 +23,8 @@ public:
 
 public:
 	void		ProcPrint();
-
+	void     CollisionColorMap();
+	void      CollisionColorMap(int x);
 private:
 	void		ReadLayerQueue();
 	void		Write();
@@ -42,7 +43,11 @@ private:
 	bool				debug_;
 	int					support_;
 
+	double  MaxEdgeAngle_;
+
 	bool IfCoOrientation(GeoV3 a, vector<GeoV3> &b);
 	void CheckProcess(Process &a);
+	void Fitler(Process &a);
+	void ColorMap(double cost,double &r,double &g,double &b);
 };
 

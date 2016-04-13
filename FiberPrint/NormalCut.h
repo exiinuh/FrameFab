@@ -28,7 +28,8 @@ class NormalCut : public GraphCut
 {
 public:
 	NormalCut();
-	NormalCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
+	NormalCut(WireFrame *ptr_frame, char *ptr_path)
+		:GraphCut(ptr_frame, ptr_path){}
 	~NormalCut();
 
 public:

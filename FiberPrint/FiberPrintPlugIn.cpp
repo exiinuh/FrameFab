@@ -3,25 +3,31 @@
 
 FiberPrintPlugIn::FiberPrintPlugIn()
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut();
+	ptr_seqanalyzer_ = new FFAnalyzer();
+
+	ptr_frame_ = NULL;
+	ptr_parm_ = NULL;
+	ptr_path_ = NULL;
 }
 
 
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame)
+FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path)
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_path);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_frame, ptr_path);
 
 	ptr_frame_ = ptr_frame;
+	ptr_parm_ = NULL;
+	ptr_path_ = ptr_path;
 }
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
 	FiberPrintPARM *ptr_parm, char *ptr_path)
 {
-	ptr_graphcut_ = new GraphCut();
-	ptr_seqanalyzer_ = new SeqAnalyzer();
+	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, ptr_path);
+	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, ptr_path);
 
 	ptr_frame_ = ptr_frame;
 	ptr_parm_ = ptr_parm;
@@ -36,6 +42,9 @@ FiberPrintPlugIn::~FiberPrintPlugIn()
 
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
+
+	delete ptr_parm_;
+	ptr_parm_ = NULL;
 }
 
 
@@ -51,29 +60,38 @@ void FiberPrintPlugIn::Init()
 
 void FiberPrintPlugIn::FrameFabPrint()
 {
+	framefab_.Start();
+
 	Init();
 
 	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+	
 
+
+	//ptr_procanalyzer_->CollisionColorMap(1);
 	ptr_graphcut_->MakeLayers();
-	cout << "Graph Cut completed." << endl;
+	//cout << "Graph Cut completed." << endl;
+	
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
+	//	return;
+	//}
+
+	//printf("FrameFab print done.\n");
+
+	//ptr_graphcut_->PrintOutTimer();
+	//ptr_seqanalyzer_->PrintOutTimer();
+	//ptr_procanalyzer_->ProcPrint();
+	//ptr_procanalyzer_->CollisionColorMap();
 
 
-	if (!ptr_seqanalyzer_->SeqPrint())
-	{
-		cout << "Model not printable!" << endl;
-		getchar();
-
-		return;
-	}
-
-	printf("FrameFab print done.\n");
-
-	ptr_graphcut_->PrintOutTimer();
-	ptr_seqanalyzer_->PrintOutTimer();
-	ptr_procanalyzer_->ProcPrint();
+	framefab_.Stop();
+	printf("Total time >>>>>>>>>\nFrameFab: ");
+	framefab_.Print();
 }
 
 
@@ -81,7 +99,7 @@ void FiberPrintPlugIn::BruteForcePrint()
 {
 	Init();
 
-	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new BFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
 	if (!ptr_seqanalyzer_->SeqPrint())
@@ -99,7 +117,7 @@ void FiberPrintPlugIn::SweepingPrint()
 {
 	Init();
 
-	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_parm_, ptr_path_);
+	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 
 	ptr_graphcut_->MakeLayers();
@@ -110,7 +128,7 @@ void FiberPrintPlugIn::SweepingPrint()
 	//	cout << "Model not printable!" << endl;
 	//	getchar();
 
-	//	return;f
+	//	return;
 	//}
 	printf("Sweeping print done.\n");
 }

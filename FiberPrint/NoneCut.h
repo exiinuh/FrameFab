@@ -23,7 +23,8 @@ class NoneCut : public GraphCut
 {
 public:
 	NoneCut();
-	NoneCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *path);
+	NoneCut(WireFrame *ptr_frame, char *ptr_path)
+		:GraphCut(ptr_frame, ptr_path){}
 	~NoneCut();
 };
 

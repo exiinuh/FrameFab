@@ -24,6 +24,7 @@
 
 #include "WireFrame\WireFrame.h"
 #include "Stiffness\Stiffness.h"
+#include "Collision\QuadricCollision.h"
 #include "FiberPrintPARM.h"
 
 using namespace std;
@@ -33,6 +34,7 @@ class GraphCut
 {
 public:
 	GraphCut();
+	GraphCut(WireFrame *ptr_frame, char *ptr_path);
 	~GraphCut();
 
 public:
@@ -46,14 +48,15 @@ public:
 
 public:
 //private:
-	WireFrame		*ptr_frame_;
-	DualGraph		*ptr_dualgraph_;
-	Stiffness		*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
-	char			*ptr_path_;
+	WireFrame			*ptr_frame_;
+	DualGraph			*ptr_dualgraph_;
+	Stiffness			*ptr_stiff_;	// Store 3*3 stiffness and caluculate weighted global stiffness matrix
+	QuadricCollision	*ptr_collision_;
+	char				*ptr_path_;
 
 protected:
 	/* for debuging */
-	bool			debug_;
+	bool				debug_;
 
 };
 

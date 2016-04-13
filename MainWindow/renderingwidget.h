@@ -113,7 +113,7 @@ public slots:
 	void	Export();
 	void	Export(
 				int min_layer, int max_layer, 
-				QString vert_path, QString line_path
+				QString vert_path, QString line_path, QString render_path
 			);
 	void	ScaleFrame(double scale);
 
@@ -160,6 +160,9 @@ public:
 	WireFrame		*ptr_frame_;
 
 private:
+	QString			last_file_dir_;
+	QString			last_result_dir_;
+
 	// eye
 	GLfloat			eye_distance_;
 	point			eye_goal_;

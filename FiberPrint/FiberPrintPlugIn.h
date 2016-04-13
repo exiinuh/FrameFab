@@ -10,7 +10,7 @@
 #include "FFAnalyzer.h"
 #include "BFAnalyzer.h"
 #include "ProcAnalyzer.h"
-
+#include"Evaluate.h"
 
 class FiberPrintPlugIn
 {
@@ -21,7 +21,7 @@ public:
 
 public:
 	FiberPrintPlugIn();
-	FiberPrintPlugIn(WireFrame *ptr_frame);
+	FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path);
 	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
 						char *path);
 	~FiberPrintPlugIn();
@@ -42,6 +42,10 @@ public:
 
 	void			InputPrintOrder(vector<int> &queue)		{ ptr_seqanalyzer_->InputPrintOrder(queue); }
 	void			OutputPrintOrder(vector<int> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
+	void			ExportRenderPath(int min_layer, int max_layer, char *ptr_path)
+	{
+		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);
+	}
 
 	void			Debug();		// return value: edge index in mesh, for cut rendering
 
@@ -53,7 +57,9 @@ public:
 private:
 	char			*ptr_path_;
 	FiberPrintPARM	*ptr_parm_;
-	ProcAnalyzer* ptr_procanalyzer_;
+	ProcAnalyzer	*ptr_procanalyzer_;
+
+	Timer			framefab_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

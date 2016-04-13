@@ -17,7 +17,7 @@ using namespace std;
 // ¦È=(0,180), ¦Õ=(0,360)
 
 
-
+//#define	Strict
 //target means printing edge, order menas existing edge
 class QuadricCollision
 {
@@ -27,7 +27,7 @@ public:
 	~QuadricCollision();
 
 public:
-	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &colli_map); 
+	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);
 	void	DetectCollision(WF_edge *target_e, WF_edge *order_e, vector<lld> &colli_map);
 	void	DetectCollision(WF_edge *target_e, vector<WF_edge*> exist_edge, vector<GeoV3> &output);
 
@@ -57,7 +57,7 @@ private:
 	
 
 	bool	Parallel(GeoV3 a, GeoV3 b);
-
+	double	Distance(WF_edge* order_e);
 	bool DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_start, GeoV3 target_end);
 
 	gte::Segment<3, float>		Seg(point target_start, point target_end);
@@ -117,5 +117,8 @@ private:
 	vector<Triangle>	bulk_;
 	int					divide_;
 
+	/* (Nd * Nd) * (3) */
+	/* (i, j): j's angle map & i printed */
+	vector<vector<lld>*>colli_map_;				
 };
 
