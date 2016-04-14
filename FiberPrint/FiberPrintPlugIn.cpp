@@ -68,11 +68,8 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
-
-
-	//ptr_procanalyzer_->CollisionColorMap(1);
 	ptr_graphcut_->MakeLayers();
-	//cout << "Graph Cut completed." << endl;
+	cout << "Graph Cut completed." << endl;
 	
 	//if (!ptr_seqanalyzer_->SeqPrint())
 	//{

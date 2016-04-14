@@ -72,11 +72,13 @@ void ADMMCut::InitState()
 }
 
 
-void ADMMCut::InitWeight()
+void ADMMCut::InitCollisionWeight()
 {
 	int halfM = M_ / 2;
+	vector<Triplet<double>> range_list;
 	vector<Triplet<double>> weight_list;
-	weight_.resize(halfM, halfM);
+	vector<Triplet<double>>::iterator it;
+	col_weight_.resize(halfM, halfM);
 
 #ifdef COLFREE_WEIGHT
 	for (int i = 0; i < halfM; i++)
@@ -97,7 +99,7 @@ void ADMMCut::InitWeight()
 			double tmp_weight;
 
 			ptr_collision_->DetectCollision(e1, e2, tmp);
-			tmp_weight = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			tmp_weight = exp(1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide());
 			if (tmp_weight > eps)
 			{
 				tmp_weight *= beta;
@@ -105,7 +107,7 @@ void ADMMCut::InitWeight()
 			}
 
 			ptr_collision_->DetectCollision(e2, e1, tmp);
-			tmp_weight = abs(log(ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
+			tmp_weight = exp(1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide());
 			if (tmp_weight > eps)
 			{
 				tmp_weight *= beta;
@@ -116,43 +118,58 @@ void ADMMCut::InitWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 #else
+	double min_range = 1.0;
+	double max_range = 0.0;
 	for (int i = 0; i < halfM; i++)
 	{
 		for (int j = 0; j < i; j++)
 		{
 			WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
 			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
-
-			double beta = 1.0;
-			if (e1->pvert_ == e2->pvert_ || e1->pvert_ == e2->ppair_->pvert_ ||
-				e1->ppair_->pvert_ == e2->pvert_ || e1->ppair_->pvert_ == e2->ppair_->pvert_)
-			{
-				beta = 100;
-			}
-
 			vector<lld> tmp(3);
-			double tmp_weight;
+			double tmp_range;
 
 			ptr_collision_->DetectCollision(e1, e2, tmp);
-			tmp_weight = abs(log(
-				1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-			if (tmp_weight > eps)
-			{
-				tmp_weight *= beta;
-				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
-			}
+			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+			min_range = min(tmp_range, min_range);
+			max_range = max(tmp_range, max_range);
+			range_list.push_back(Triplet<double>(i, j, tmp_range));
+
+			//tmp_weight = exp(-5 * tmp_range * tmp_range);
+			//if (tmp_weight > eps)
+			//{
+			//	tmp_weight *= beta;
+			//	weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+			//}
 
 			ptr_collision_->DetectCollision(e2, e1, tmp);
-			tmp_weight = abs(log(
-				1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide()));
-			if (tmp_weight > eps)
-			{
-				tmp_weight *= beta;
-				weight_list.push_back(Triplet<double>(j, i, tmp_weight));
-			}
+			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+			min_range = min(tmp_range, min_range);
+			max_range = max(tmp_range, max_range);
+			range_list.push_back(Triplet<double>(j, i, tmp_range));
+
+			//tmp_weight = exp(-5 * tmp_range * tmp_range);
+			//if (tmp_weight > eps)
+			//{
+			//	tmp_weight *= beta;
+			//	weight_list.push_back(Triplet<double>(j, i, tmp_weight));
+			//}
 		}
 	}
-	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+
+	for (it = range_list.begin(); it != range_list.end(); it++)
+	{
+		int i = it->col();
+		int j = it->row();
+		double tmp_range = 0.1 + (it->value() - min_range) / (max_range - min_range) / 2;
+		double tmp_weight = exp(-5 * tmp_range * tmp_range);
+		if (tmp_weight > eps)
+		{
+			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+		}
+	}
+
+	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 #endif
 }
 
@@ -161,10 +178,7 @@ void ADMMCut::MakeLayers()
 {
 	// Initial Cutting Edge Setting
 	InitState();
-	InitWeight();
-
-	Evaluate temp(ptr_frame_, weight_);
-	temp.ADMMTest();
+	InitCollisionWeight();
 
 	debug_ = false;
 	int cut_count = 0;
@@ -442,29 +456,31 @@ void ADMMCut::CreateL()
 {
 	create_l_.Start();
 
-	L_.resize(Nd_, Nd_);
 	vector<Triplet<double>> L_list;
-	for (int dual_i = 0; dual_i < Nd_; dual_i++)
+	L_.resize(Nd_, Nd_);
+	for (int i = 0; i < Md_; i++)
 	{
-		for (int dual_j = 0; dual_j < dual_i; dual_j++)
-		{
-			int u = ptr_dualgraph_->e_orig_id(dual_i) / 2;
-			int v = ptr_dualgraph_->e_orig_id(dual_j) / 2;
-			double Wuv = weight_.coeff(u, v) * r_(dual_i, dual_j);
-			double Wvu = weight_.coeff(v, u) * r_(dual_j, dual_i);
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+		double height_weight = pow(ptr_dualgraph_->Weight(i), 2);
 
-			if (Wuv > eps)
-			{
-				L_list.push_back(Triplet<double>(dual_i, dual_i, -Wuv));
-				L_list.push_back(Triplet<double>(dual_i, dual_j, Wuv));
-			}
-			if (Wvu > eps)
-			{
-				L_list.push_back(Triplet<double>(dual_j, dual_j, -Wvu));
-				L_list.push_back(Triplet<double>(dual_j, dual_i, Wvu));
-			}
+		double Wuv = col_weight_.coeff(u, v) * height_weight * r_(dual_u, dual_v);
+		double Wvu = col_weight_.coeff(v, u) * height_weight * r_(dual_v, dual_u);
+
+		if (Wuv > eps)
+		{
+			L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
+			L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
+		}
+		if (Wvu > eps)
+		{
+			L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
+			L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
 		}
 	}
+
 	L_.setFromTriplets(L_list.begin(), L_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
@@ -697,17 +713,15 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
-	for (int dual_i = 0; dual_i < Nd_; dual_i++)
+	for (int i = 0; i < Md_; i++)
 	{
-		for (int dual_j = 0; dual_j < Nd_; dual_j++)
-		{
-			int u = ptr_dualgraph_->e_orig_id(dual_i) / 2;
-			int v = ptr_dualgraph_->e_orig_id(dual_j) / 2;
-			r_(dual_i, dual_j) = sqrt(1.0 /
-				(1e-5 + weight_.coeff(u, v) * abs(x_[dual_i] - x_[dual_j])));
-			r_(dual_j, dual_i) = sqrt(1.0 /
-				(1e-5 + weight_.coeff(v, u) * abs(x_[dual_i] - x_[dual_j])));
-		}
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+
+		r_(u, v) = sqrt(1.0 /
+			(1e-5 + L_.coeff(u, v) / r_(u, v) * abs(x_[u] - x_[v])));
+		r_(v, u) = sqrt(1.0 /
+			(1e-5 + L_.coeff(v, u) / r_(v, u) * abs(x_[v] - x_[u])));
 	}
 
 	update_r_.Stop();

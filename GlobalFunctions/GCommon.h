@@ -13,6 +13,9 @@
 * ==========================================================================
 */
 
+#pragma once
+#include <cmath>
+
 #ifndef FIBERPRINT_COMMON_H
 #define FIBERPRINT_COMMON_H
 
@@ -56,5 +59,4 @@
 #define Zvert 1	
 
 #endif /* FIBERPRINT_COMMON_H */
-
 

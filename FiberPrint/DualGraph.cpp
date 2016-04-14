@@ -188,17 +188,18 @@ void DualGraph::Establish()
 		{
 			if (ptr_frame_->GetDegree(i) > 1)
 			{
+				double w = exp(-3 * pow((ptr_frame_->GetPosition(i).z() - minz_) / (maxz_ - minz_), 2));
 				WF_edge *edge = ptr_frame_->GetNeighborEdge(i);
 				while (edge->pnext_ != NULL)
 				{
 					WF_edge *next_edge = edge->pnext_;
-					InsertEdge(edge, next_edge);
+					InsertEdge(edge, next_edge, w);
 					edge = next_edge;
 				}
 
 				if (ptr_frame_->GetDegree(i) > 2)
 				{
-					InsertEdge(edge, ptr_frame_->GetNeighborEdge(i));
+					InsertEdge(edge, ptr_frame_->GetNeighborEdge(i), w);
 				}
 			}
 		}
@@ -280,14 +281,14 @@ void DualGraph::InsertVertex(WF_edge *e)
 }
 
 
-void DualGraph::InsertEdge(WF_edge *e1, WF_edge *e2)
+void DualGraph::InsertEdge(WF_edge *e1, WF_edge *e2, double w)
 {
 	int u = (*vert_list_)[e1->ID()]->dual_id();
 	int v = (*vert_list_)[e2->ID()]->dual_id();
 
 	if (u != -1 && v != -1)
 	{
-		edge_list_->push_back(new DualEdge(u, v));
+		edge_list_->push_back(new DualEdge(u, v, w));
 	}
 }
 

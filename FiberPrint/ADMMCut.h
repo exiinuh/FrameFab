@@ -33,6 +33,7 @@
 #include <Eigen/Core>
 
 #include "GraphCut.h"
+#include "GlobalFunctions\GCommon.h"
 
 #include "QP\QPMosek.h"
 #include "QP\QPFactory.h"
@@ -61,9 +62,9 @@ public:
 public:
 
 	void		InitState();						// Initialization
-	void		InitWeight();
+	void		InitCollisionWeight();
 	void		MakeLayers();						// Main loop of cut
-	SpMat GetSpMat(){ return weight_; };
+
 private:
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();
@@ -85,7 +86,7 @@ private:
 
 private:
 	SpMat			L_;				// laplace matrix
-	SpMat			weight_;		// for weight, indexed by half of original id
+	SpMat			col_weight_;	// for collision weight, indexed by half of original id
 	MX				r_;				// for updation of C, indexed by half of dual id
 	VX				x_;
 	VX				D_;
