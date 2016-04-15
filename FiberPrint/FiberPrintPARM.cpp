@@ -38,13 +38,13 @@ FiberPrintPARM::FiberPrintPARM()
 	pri_tol_ = 1e-3;
 	dual_tol_ = 1e-3;
 
-	Wl_ = 1.0;
 	Wp_ = 1.0;
 	Wa_ = 1.0;
+	Wi_ = 1.0;
 }
 
 
-FiberPrintPARM::FiberPrintPARM(double Wl, double Wp, double Wa)
+FiberPrintPARM::FiberPrintPARM(double Wp, double Wa, double Wi)
 {
 	radius_ = 0.6;
 	density_ = 1210 * 1e-12;
@@ -58,9 +58,9 @@ FiberPrintPARM::FiberPrintPARM(double Wl, double Wp, double Wa)
 	pri_tol_ = 1e-3;
 	dual_tol_ = 1e-3;
 
-	Wl_ = Wl;
 	Wp_ = Wp;
 	Wa_ = Wa;
+	Wi_ = Wi;
 }
 
 

@@ -230,8 +230,8 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 	if (!ptr_subgraph_->isExistingEdge(orig_j))
 	{
 		double	P;							// stabiliy weight
-		double	L;							// collision weight
 		double  A;							// adjacency weight
+		double	I;							// influence weight
 
 		if (debug_)
 		{
@@ -239,16 +239,13 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 				j, l, print_queue_.size());
 		}
 
-		/* collision weight */
+		/* collision test */
 		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
-		L = free_angle * 1.0 / ptr_collision_->Divide();
-
-		if (L < eps)
+		if (free_angle == 0)
 		{
 			printf("...collision examination failed.\n");
 			return -1;
 		}
-
 
 		/* stabiliy weight */
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
@@ -318,7 +315,8 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 			}
 		}
 
-		/* stiffness */
+
+		/* stiffness test */
 		/* insert a trail edge */
 		UpdateStructure(ej);
 
@@ -334,10 +332,31 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		RecoverStructure(ej);
 
 
-		double cost = Wl_*L + Wp_*P + Wa_*A;
+		/* influence weight */
+		int sum_angle = 0;
+		int Nd = ptr_dualgraph_->SizeOfVertList();
+		int remaining = Nd - ptr_subgraph_->SizeOfVertList();
+		for (int dual_k = 0; dual_k < Nd; dual_k++)
+		{
+			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
+			if (dual_j != dual_k && !ptr_subgraph_->isExistingEdge(orig_k))
+			{
+				vector<lld> tmp(3);
+				ptr_collision_->DetectCollision(ptr_frame_->GetEdge(orig_k), ej, tmp);
+				for (int o = 0; o < 3; o++)
+				{
+					tmp[o] |= angle_state_[dual_k][o];
+				}
+				sum_angle += ptr_collision_->ColFreeAngle(tmp);
+			}
+		}
+		I = (double)sum_angle / remaining / ptr_collision_->Divide();
+
+
+		double cost = Wp_*P + Wa_*A + Wi_ * I;
 		if (debug_)
 		{
-			printf("###L: %lf, P: %lf\ncost: %f\n", L, P, cost);
+			printf("###P: %lf, A: %lf, I: %lf\ncost: %f\n", P, A, I, cost);
 		}
 		return cost;
 	}

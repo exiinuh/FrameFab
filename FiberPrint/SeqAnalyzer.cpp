@@ -3,7 +3,7 @@
 
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
+	Wp_(1.0), Wa_(1.0), Wi_(1.0), debug_(false), fileout_(false)
 {
 	ptr_frame_		= NULL;
 	ptr_dualgraph_	= NULL;
@@ -16,7 +16,7 @@ SeqAnalyzer::SeqAnalyzer()
 
 SeqAnalyzer::SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wl_(1.0), Wp_(1.0), Wa_(1.0), debug_(false), fileout_(false)
+	Wp_(1.0), Wa_(1.0), Wi_(1.0), debug_(false), fileout_(false)
 {
 	ptr_frame_		= ptr_frame;
 	ptr_dualgraph_	= NULL;
@@ -42,9 +42,9 @@ SeqAnalyzer::SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char 
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
-	Wl_ = ptr_parm->Wl_;
 	Wp_ = ptr_parm->Wp_;
 	Wa_ = ptr_parm->Wa_;
+	Wi_ = ptr_parm->Wi_;
 }
 
 

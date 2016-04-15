@@ -28,8 +28,8 @@ public:
 	double		dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
 	// Sequence Analyzer
-	double		Wl_;
 	double		Wp_;
 	double		Wa_;
+	double		Wi_;
 };
 

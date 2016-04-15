@@ -135,25 +135,11 @@ void ADMMCut::InitCollisionWeight()
 			max_range = max(tmp_range, max_range);
 			range_list.push_back(Triplet<double>(i, j, tmp_range));
 
-			//tmp_weight = exp(-5 * tmp_range * tmp_range);
-			//if (tmp_weight > eps)
-			//{
-			//	tmp_weight *= beta;
-			//	weight_list.push_back(Triplet<double>(i, j, tmp_weight));
-			//}
-
 			ptr_collision_->DetectCollision(e2, e1, tmp);
 			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 			min_range = min(tmp_range, min_range);
 			max_range = max(tmp_range, max_range);
 			range_list.push_back(Triplet<double>(j, i, tmp_range));
-
-			//tmp_weight = exp(-5 * tmp_range * tmp_range);
-			//if (tmp_weight > eps)
-			//{
-			//	tmp_weight *= beta;
-			//	weight_list.push_back(Triplet<double>(j, i, tmp_weight));
-			//}
 		}
 	}
 

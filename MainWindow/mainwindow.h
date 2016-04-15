@@ -139,9 +139,9 @@ private:
 	QLabel				*label_capture_;
 	QLabel				*label_layer_;
 
-	QLabel				*label_wl_;
 	QLabel				*label_wp_;
 	QLabel				*label_wa_;
+	QLabel				*label_wi_;
 
 	QLabel				*label_scale_;
 	QLabel				*label_prolen_;
@@ -152,9 +152,9 @@ private:
 	QLabel				*label_to2_;
 
 	// Spinboxes
-	QDoubleSpinBox		*spinbox_wl_;
 	QDoubleSpinBox		*spinbox_wp_;
 	QDoubleSpinBox		*spinbox_wa_;
+	QDoubleSpinBox		*spinbox_wi_;
 
 	QDoubleSpinBox		*spinbox_scale_;
 	QDoubleSpinBox		*spinbox_prolen_;

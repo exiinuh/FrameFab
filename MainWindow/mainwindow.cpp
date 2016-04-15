@@ -150,10 +150,9 @@ void MainWindow::CreateLabels()
 	statusBar()->addWidget(label_operatorinfo_);
 	connect(renderingwidget_, SIGNAL(operatorInfo(QString)), label_operatorinfo_, SLOT(setText(QString)));
 
-
-	label_wl_		= new QLabel(QString("Seq Wl: "), this);
 	label_wp_		= new QLabel(QString("Seq Wp: "), this);
 	label_wa_		= new QLabel(QString("Seq Wa: "), this);
+	label_wi_		= new QLabel(QString("Seq Wi: "), this);
 
 	label_scale_	= new QLabel(QString("Scale: "), this);
 	label_prolen_	= new QLabel(QString("Pillar length: "), this);
@@ -167,13 +166,6 @@ void MainWindow::CreateLabels()
 
 void MainWindow::CreateSpinBoxes()
 {
-	spinbox_wl_ = new QDoubleSpinBox(this);
-	spinbox_wl_->setFixedWidth(140);
-	spinbox_wl_->setDecimals(2);
-	spinbox_wl_->setRange(0, 10000);
-	spinbox_wl_->setValue(1.0);
-	spinbox_wl_->setSingleStep(1);
-
 	spinbox_wp_ = new QDoubleSpinBox(this);
 	spinbox_wp_->setFixedWidth(140);
 	spinbox_wp_->setDecimals(2);
@@ -187,6 +179,13 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_wa_->setRange(0, 10000);
 	spinbox_wa_->setValue(1.0);
 	spinbox_wa_->setSingleStep(1);
+
+	spinbox_wi_ = new QDoubleSpinBox(this);
+	spinbox_wi_->setFixedWidth(140);
+	spinbox_wi_->setDecimals(2);
+	spinbox_wi_->setRange(0, 10000);
+	spinbox_wi_->setValue(1.0);
+	spinbox_wi_->setSingleStep(1);
 
 	spinbox_scale_ = new QDoubleSpinBox(this);
 	spinbox_scale_->setFixedWidth(140);
@@ -482,12 +481,12 @@ void MainWindow::CreateGroups()
 	groupbox_seqpara_ = new QGroupBox(tr("Seq parameter"), this);
 	groupbox_seqpara_->setFlat(true);
 	QVBoxLayout *seqpara_layout = new QVBoxLayout(groupbox_seqpara_);
-	seqpara_layout->addWidget(label_wl_);
-	seqpara_layout->addWidget(spinbox_wl_);
 	seqpara_layout->addWidget(label_wp_);
 	seqpara_layout->addWidget(spinbox_wp_);
 	seqpara_layout->addWidget(label_wa_);
 	seqpara_layout->addWidget(spinbox_wa_);
+	seqpara_layout->addWidget(label_wi_);
+	seqpara_layout->addWidget(spinbox_wi_);
 	seqpara_layout->addWidget(pushbutton_rightarrow_);
 
 	// debug group
@@ -610,18 +609,18 @@ void MainWindow::ChooseSubGClicked(bool down)
 void MainWindow::GetFiberParas()
 {
 	emit(SendFiberParas(
-		spinbox_wl_->value(),
 		spinbox_wp_->value(),
-		spinbox_wa_->value()));
+		spinbox_wa_->value(),
+		spinbox_wi_->value()));
 }
 
 
 void MainWindow::GetDeformParas()
 {
 	emit(SendDeformParas(
-		spinbox_wl_->value(),
 		spinbox_wp_->value(),
-		spinbox_wa_->value()));
+		spinbox_wa_->value(),
+		spinbox_wi_->value()));
 }
 
 
