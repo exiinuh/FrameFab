@@ -118,8 +118,6 @@ void ADMMCut::InitCollisionWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 #else
-	double min_range = 1.0;
-	double max_range = 0.0;
 	for (int i = 0; i < halfM; i++)
 	{
 		for (int j = 0; j < i; j++)
@@ -128,30 +126,23 @@ void ADMMCut::InitCollisionWeight()
 			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
 			vector<lld> tmp(3);
 			double tmp_range;
+			double tmp_weight;
 
 			ptr_collision_->DetectCollision(e1, e2, tmp);
 			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-			min_range = min(tmp_range, min_range);
-			max_range = max(tmp_range, max_range);
-			range_list.push_back(Triplet<double>(i, j, tmp_range));
+			tmp_weight = exp(-5 * tmp_range * tmp_range);
+			if (tmp_weight > eps)
+			{
+				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+			}
 
 			ptr_collision_->DetectCollision(e2, e1, tmp);
 			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-			min_range = min(tmp_range, min_range);
-			max_range = max(tmp_range, max_range);
-			range_list.push_back(Triplet<double>(j, i, tmp_range));
-		}
-	}
-
-	for (it = range_list.begin(); it != range_list.end(); it++)
-	{
-		int i = it->col();
-		int j = it->row();
-		double tmp_range = 0.1 + (it->value() - min_range) / (max_range - min_range) / 2;
-		double tmp_weight = exp(-5 * tmp_range * tmp_range);
-		if (tmp_weight > eps)
-		{
-			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+			tmp_weight = exp(-5 * tmp_range * tmp_range);
+			if (tmp_weight > eps)
+			{
+				weight_list.push_back(Triplet<double>(j, i, tmp_weight));
+			}
 		}
 	}
 
