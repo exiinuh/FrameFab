@@ -229,9 +229,9 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 	if (!ptr_subgraph_->isExistingEdge(orig_j))
 	{
-		double	P;							// stabiliy weight
-		double  A;							// adjacency weight
-		double	I;							// influence weight
+		double	P = 0;							// stabiliy weight
+		double  A = 0;							// adjacency weight
+		double	I = 0;							// influence weight
 
 		if (debug_)
 		{
@@ -333,7 +333,6 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 
 		/* influence weight */
-		int sum_angle = 0;
 		int Nd = ptr_dualgraph_->SizeOfVertList();
 		int remaining = Nd - ptr_subgraph_->SizeOfVertList();
 		for (int dual_k = 0; dual_k < Nd; dual_k++)
@@ -347,13 +346,15 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 				{
 					tmp[o] |= angle_state_[dual_k][o];
 				}
-				sum_angle += ptr_collision_->ColFreeAngle(tmp);
+
+				double tmp_range = ptr_collision_->ColFreeAngle(tmp) * 1.0 /
+					ptr_collision_->Divide();
+				I += exp(-5 * tmp_range * tmp_range);
 			}
 		}
-		I = (double)sum_angle / remaining / ptr_collision_->Divide();
+		I /= remaining;
 
-
-		double cost = Wp_*P + Wa_*A + Wi_ * I;
+		double cost = Wp_*P + Wa_*A + Wi_*I;
 		if (debug_)
 		{
 			printf("###P: %lf, A: %lf, I: %lf\ncost: %f\n", P, A, I, cost);

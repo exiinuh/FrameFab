@@ -3,7 +3,7 @@
 
 SeqAnalyzer::SeqAnalyzer()
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wp_(1.0), Wa_(1.0), Wi_(1.0), debug_(false), fileout_(false)
+	Wp_(1.0), Wa_(1.0), Wi_(5.0), debug_(false), fileout_(false)
 {
 	ptr_frame_		= NULL;
 	ptr_dualgraph_	= NULL;
@@ -16,7 +16,7 @@ SeqAnalyzer::SeqAnalyzer()
 
 SeqAnalyzer::SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path)
 	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wp_(1.0), Wa_(1.0), Wi_(1.0), debug_(false), fileout_(false)
+	Wp_(1.0), Wa_(1.0), Wi_(5.0), debug_(false), fileout_(false)
 {
 	ptr_frame_		= ptr_frame;
 	ptr_dualgraph_	= NULL;

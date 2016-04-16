@@ -40,7 +40,7 @@ FiberPrintPARM::FiberPrintPARM()
 
 	Wp_ = 1.0;
 	Wa_ = 1.0;
-	Wi_ = 1.0;
+	Wi_ = 5.0;
 }
 
 
