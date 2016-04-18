@@ -628,3 +628,11 @@ VectorXd Stiffness::Fe(int ei)
 	}
 	return tmpF;
 }
+
+
+void Stiffness::OutputTimer()
+{
+	printf("***Timer result:\n");
+	stiff_solver_.compute_k_.Print("ComputeK:");
+	stiff_solver_.solve_d_.Print("SolveD:");
+}

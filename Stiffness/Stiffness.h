@@ -56,7 +56,6 @@
 #include "FiberPrint\DualGraph.h"
 #include "FiberPrint\FiberPrintPARM.h"
 #include "CoordTrans.h"
-
 #include "GlobalFunctions\GCommon.h"
 #include "StiffnessIO.h"
 #include "StiffnessSolver.h"
@@ -112,6 +111,8 @@ public:
 	MX			eKe(int ei);			// ei: orig e id
 	MX			eKv(int ei);			// ei: orig e id
 	VX			Fe(int ei);				// ei: orig e id
+
+	void		OutputTimer();
 	
 private:
 	//private:

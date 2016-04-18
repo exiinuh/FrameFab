@@ -42,7 +42,6 @@
 using namespace std;
 using namespace Eigen;
 
-//#define	COLFREE_WEIGHT
 
 class ADMMCut : public GraphCut
 {
@@ -103,7 +102,7 @@ private:
 	Solves the quadratic programming problem:
 	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
 	*/
-	QP				*qp_;			
+	QP				*ptr_qp_;			
 	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
 	SpMat			W_;
 
@@ -126,10 +125,10 @@ private:
 	Timer			create_l_;
 	Timer			cal_x_;
 	Timer			cal_q_;
-	Timer			cal_x_qp_;
+	Timer			cal_x_ptr_qp_;
 	Timer			cal_d_;
 	Timer			cal_d_k_;
-	Timer			cal_d_qp_;
+	Timer			cal_d_ptr_qp_;
 	Timer			update_lambda_;
 	Timer			update_cut_;
 	Timer			update_r_;

@@ -18,6 +18,7 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
 	ptr_collision_ = new QuadricCollision(ptr_frame_);
 	ptr_path_ = ptr_path;
+	ptr_qp_ = NULL;
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
@@ -31,8 +32,8 @@ ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
 
 ADMMCut::~ADMMCut()
 {
-	delete qp_;
-	qp_ = NULL;
+	delete ptr_qp_;
+	ptr_qp_ = NULL;
 }
 
 
@@ -44,7 +45,7 @@ void ADMMCut::InitState()
 	// set termination tolerance 
 	stop_n_ = floor(N_ / 5);
 
-	qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
+	ptr_qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
 
 	// clear layer label
 	for (int i = 0; i < M_; i++)
@@ -80,44 +81,6 @@ void ADMMCut::InitCollisionWeight()
 	vector<Triplet<double>>::iterator it;
 	col_weight_.resize(halfM, halfM);
 
-#ifdef COLFREE_WEIGHT
-	for (int i = 0; i < halfM; i++)
-	{
-		for (int j = 0; j < i; j++)
-		{
-			WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
-			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
-
-			double beta = 1.0;
-			if (e1->pvert_ == e2->pvert_ || e1->pvert_ == e2->ppair_->pvert_ ||
-				e1->ppair_->pvert_ == e2->pvert_ || e1->ppair_->pvert_ == e2->ppair_->pvert_)
-			{
-				beta = 100;
-			}
-
-			vector<lld> tmp(3);
-			double tmp_weight;
-
-			ptr_collision_->DetectCollision(e1, e2, tmp);
-			tmp_weight = exp(1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide());
-			if (tmp_weight > eps)
-			{
-				tmp_weight *= beta;
-				weight_list.push_back(Triplet<double>(j, i, tmp_weight));
-			}
-
-			ptr_collision_->DetectCollision(e2, e1, tmp);
-			tmp_weight = exp(1 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide());
-			if (tmp_weight > eps)
-			{
-				tmp_weight *= beta;
-				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
-			}
-		}
-	}
-
-	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
-#else
 	for (int i = 0; i < halfM; i++)
 	{
 		for (int j = 0; j < i; j++)
@@ -125,19 +88,24 @@ void ADMMCut::InitCollisionWeight()
 			WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
 			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
 			vector<lld> tmp(3);
+			double Fij, Fji;
 			double tmp_range;
 			double tmp_weight;
 
 			ptr_collision_->DetectCollision(e1, e2, tmp);
-			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+			Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+			ptr_collision_->DetectCollision(e2, e1, tmp);
+			Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+			tmp_range = max(Fij - Fji, 0.0);
 			tmp_weight = exp(-5 * tmp_range * tmp_range);
 			if (tmp_weight > eps)
 			{
 				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
 			}
 
-			ptr_collision_->DetectCollision(e2, e1, tmp);
-			tmp_range = 1.0 - ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+			tmp_range = max(Fji - Fij, 0.0);
 			tmp_weight = exp(-5 * tmp_range * tmp_range);
 			if (tmp_weight > eps)
 			{
@@ -147,7 +115,6 @@ void ADMMCut::InitCollisionWeight()
 	}
 
 	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
-#endif
 }
 
 
@@ -492,9 +459,9 @@ void ADMMCut::CalculateX()
 	lb.setZero();
 	ub.setOnes();
 
-	cal_x_qp_.Start();
-	qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
-	cal_x_qp_.Stop();
+	cal_x_ptr_qp_.Start();
+	ptr_qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
+	cal_x_ptr_qp_.Stop();
 	cal_x_.Stop();
 }
 
@@ -591,9 +558,9 @@ void ADMMCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 
 	/* 10 degree rotation tolerance, from degree to radians */
-	cal_d_qp_.Start();
-	qp_->solve(Q, a, D_, Dt_tol_, debug_);
-	cal_d_qp_.Stop();
+	cal_d_ptr_qp_.Start();
+	ptr_qp_->solve(Q, a, D_, Dt_tol_, debug_);
+	cal_d_ptr_qp_.Stop();
 	cal_d_.Stop();
 }
 
@@ -784,28 +751,17 @@ bool ADMMCut::TerminationCriteria(int count)
 void ADMMCut::PrintOutTimer()
 {
 	printf("***Timer result:\n");
-	printf("SetBoundary:  ");
-	set_bound_.Print();
-	printf("CreateL:      ");
-	create_l_.Print();
-	printf("CalculateX:   ");
-	cal_x_.Print();
-	printf(">>>CalculateQ:   ");
-	cal_q_.Print();
-	printf(">>>qp:           ");
-	cal_x_qp_.Print();
-	printf("CalculateD:   ");
-	cal_d_.Print();
-	printf(">>>CreateGlobalK:");
-	cal_d_k_.Print();
-	printf(">>>qp:           ");
-	cal_d_qp_.Print();
-	printf("UpdateLambda: ");
-	update_lambda_.Print();
-	printf("UpdateCut:    ");
-	update_cut_.Print();
-	printf("UpdateR:      ");
-	update_r_.Print();
+	set_bound_.Print("SetBoundary:");
+	create_l_.Print("CreateL:");
+	cal_x_.Print("CalculateX:");
+	cal_q_.Print(">>>CalculateQ:");
+	cal_x_ptr_qp_.Print(">>>qp:");
+	cal_d_.Print("CalculateD:");
+	cal_d_k_.Print(">>>CreateGlobalK:");
+	cal_d_ptr_qp_.Print(">>>qp:");
+	update_lambda_.Print("UpdateLambda:");
+	update_cut_.Print("UpdateCut:");
+	update_r_.Print("UpdateR:");
 }
 
 

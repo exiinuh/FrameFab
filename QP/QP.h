@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef QP_H
-#define QP_H
+#ifndef ptr_qp_H
+#define ptr_qp_H
 
 #include <Eigen/Sparse>
 #include <ostream>
@@ -77,4 +77,4 @@
 	};
 
 
-#endif // QP_H
+#endif // ptr_qp_H

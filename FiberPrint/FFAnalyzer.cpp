@@ -369,20 +369,13 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 void FFAnalyzer::PrintOutTimer()
 {
 	printf("***Timer result:\n");
-	printf("UpdateStructure: ");
-	upd_struct_.Print();
-	printf("RecoverStructure:");
-	rec_struct_.Print();
-	printf("UpdateStateMap:  ");
-	upd_map_.Print();
-	printf(">>>Collision:       ");
-	upd_map_collision_.Print();
-	printf("RecoverStateMap: ");
-	rec_map_.Print();
-	printf("TestifyStiffness:");
-	test_stiff_.Print();
-	printf(">>>CalculateD:      ");
-	test_stiff_cal_.Print();
+	upd_struct_.Print("UpdateStructure:");
+	rec_struct_.Print("RecoverStructure:");
+	upd_map_.Print("UpdateStateMap:");
+	upd_map_collision_.Print(">>>Collision:");
+	rec_map_.Print("RecoverStateMap:");
+	test_stiff_.Print("TestifyStiffness:");
+	test_stiff_cal_.Print(">>>CalculateD:");
 }
 
 

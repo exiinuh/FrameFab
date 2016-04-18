@@ -20,7 +20,7 @@ public:
 	void	Start();
 	void	Stop();
 	void	Reset();
-	void	Print();
+	void	Print(char *item);
 	std::string ToString() const;
 
 private:

@@ -51,7 +51,7 @@ public:
 	SeqAnalyzer();
 	SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path);
 	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
-	~SeqAnalyzer();
+	virtual ~SeqAnalyzer();
 
 public:
 	virtual bool	SeqPrint();

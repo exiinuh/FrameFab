@@ -58,7 +58,11 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, int &info)
 {
 	Eigen::ConjugateGradient<SpMat> solver;
+
+	compute_k_.Start();
 	solver.compute(K);
+	compute_k_.Stop();
+
 	info = 0;
 	
 	if (solver.info() != Eigen::Success)
@@ -69,7 +73,10 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, i
 	
 	solver.setMaxIterations(3000);
 	//D = solver.solve(F);
+
+	solve_d_.Start();
 	D = solver.solveWithGuess(F, D0);
+	solve_d_.Stop();
 
 	if (solver.info() != Eigen::Success)
 	{

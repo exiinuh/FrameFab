@@ -71,24 +71,22 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 	
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
-	//	return;
-	//}
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
+		return;
+	}
 
-	//printf("FrameFab print done.\n");
-
-	//ptr_graphcut_->PrintOutTimer();
-	//ptr_seqanalyzer_->PrintOutTimer();
-	//ptr_procanalyzer_->ProcPrint();
-	//ptr_procanalyzer_->CollisionColorMap();
-
+	printf("FrameFab print done.\n");
 
 	framefab_.Stop();
-	printf("Total time >>>>>>>>>\nFrameFab: ");
-	framefab_.Print();
+
+	ptr_graphcut_->PrintOutTimer();
+	ptr_seqanalyzer_->PrintOutTimer();
+
+	//ptr_procanalyzer_->ProcPrint();
+	//ptr_procanalyzer_->CollisionColorMap();
 }
 
 
@@ -179,6 +177,13 @@ void FiberPrintPlugIn::ExportPrintOrder(char *fname)
 		fprintf(fp, "%d\n", queue[i] / 2);
 	}	
 	fclose(fp);
+}
+
+
+void FiberPrintPlugIn::OutputTimer()
+{
+	printf("Total time >>>>>>>>>\n: ");
+	framefab_.Print("FrameFab:");
 }
 
 

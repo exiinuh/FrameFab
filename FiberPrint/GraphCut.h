@@ -35,7 +35,7 @@ class GraphCut
 public:
 	GraphCut();
 	GraphCut(WireFrame *ptr_frame, char *ptr_path);
-	~GraphCut();
+	virtual ~GraphCut();
 
 public:
 	virtual void	MakeLayers();	

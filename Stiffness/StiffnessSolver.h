@@ -32,6 +32,8 @@
 #include <Eigen/SparseCholesky>
 #include <Eigen/LU>
 
+#include "GlobalFunctions\Timer.h"
+
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))
 
@@ -97,6 +99,10 @@ public:
 		VX &x,
 		VX &b
 		);
+
+public:
+	Timer	compute_k_;
+	Timer	solve_d_;
 };
 
 #endif
