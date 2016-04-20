@@ -200,9 +200,7 @@ bool SeqAnalyzer::TestifyStiffness()
 	VX D(Ns * 6);
 	D.setZero();
 
-	test_stiff_cal_.Start();
 	bool bSuccess = ptr_stiffness_->CalculateD(D, D0_);
-	test_stiff_cal_.Stop();
 
 	if (bSuccess)
 	{

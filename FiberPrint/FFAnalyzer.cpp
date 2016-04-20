@@ -13,6 +13,8 @@ FFAnalyzer::~FFAnalyzer()
 
 bool FFAnalyzer::SeqPrint()
 {
+	FF_analyzer_.Start();
+
 	Init();
 
 	int Nd = ptr_wholegraph_->SizeOfVertList();
@@ -72,6 +74,7 @@ bool FFAnalyzer::SeqPrint()
 	}
 
 	/* print starting from the first layer */
+	bool bSuccess = true;
 	for (int l = 0; l < layer_size; l++)
 	{
 		/*
@@ -120,7 +123,7 @@ bool FFAnalyzer::SeqPrint()
 			{
 				printf("...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", l);
 			}
-			return false;
+			bSuccess = false;
 		}
 	}
 
@@ -132,7 +135,9 @@ bool FFAnalyzer::SeqPrint()
 
 	GetPrintOrder();
 
-	return true;
+	FF_analyzer_.Stop();
+
+	return bSuccess;
 }
 
 
@@ -369,13 +374,13 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 void FFAnalyzer::PrintOutTimer()
 {
 	printf("***FFAnalyzer timer result:\n");
+	FF_analyzer_.Print("FFAnalyzer:");
 	upd_struct_.Print("UpdateStructure:");
 	rec_struct_.Print("RecoverStructure:");
 	upd_map_.Print("UpdateStateMap:");
-	upd_map_collision_.Print(">>>Collision:");
+	upd_map_collision_.Print("DetectCollision:");
 	rec_map_.Print("RecoverStateMap:");
 	test_stiff_.Print("TestifyStiffness:");
-	test_stiff_cal_.Print(">>>CalculateD:");
 }
 
 

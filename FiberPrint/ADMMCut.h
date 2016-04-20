@@ -125,14 +125,14 @@ private:
 	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
+	Timer			ADMM_cut_;
+	Timer			init_collision_;
 	Timer			set_bound_;
 	Timer			create_l_;
 	Timer			cal_x_;
 	Timer			cal_q_;
-	Timer			cal_x_ptr_qp_;
+	Timer			cal_qp_;
 	Timer			cal_d_;
-	Timer			cal_d_k_;
-	Timer			cal_d_ptr_qp_;
 	Timer			update_lambda_;
 	Timer			update_cut_;
 	Timer			update_r_;

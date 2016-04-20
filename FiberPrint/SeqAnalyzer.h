@@ -114,6 +114,5 @@ protected:
 	Timer				upd_map_collision_;
 	Timer				rec_map_;
 	Timer				test_stiff_;
-	Timer				test_stiff_cal_;
 };
 

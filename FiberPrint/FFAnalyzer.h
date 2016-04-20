@@ -70,5 +70,6 @@ private:
 	double			min_z_;
 	double			max_z_;
 
+	Timer			FF_analyzer_;
 };
 

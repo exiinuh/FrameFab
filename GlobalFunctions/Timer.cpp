@@ -35,7 +35,7 @@ void Timer::Reset()
 
 void Timer::Print(char *item)
 {
-	printf("%s total-time:%3.2lf   count:%4d   avg-time:%3.2lf\n", 
+	printf("%s total-time:%3.4lf   count:%4d   avg-time:%3.4lf\n", 
 		item, sum_time_, count_, sum_time_ / count_);
 }
 

@@ -82,6 +82,8 @@ void ADMMCut::InitState()
 
 void ADMMCut::InitCollisionWeight()
 {
+	init_collision_.Start();
+
 	int halfM = M_ / 2;
 	vector<Triplet<double>> range_list;
 	vector<Triplet<double>> weight_list;
@@ -122,11 +124,15 @@ void ADMMCut::InitCollisionWeight()
 	}
 
 	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+
+	init_collision_.Stop();
 }
 
 
 void ADMMCut::MakeLayers()
 {
+	ADMM_cut_.Start();
+
 	// Initial Cutting Edge Setting
 	InitState();
 	InitCollisionWeight();
@@ -273,22 +279,22 @@ void ADMMCut::MakeLayers()
 			//cut_energy.push_back(energy);
 			res_energy.push_back(res_tmp);
 
-			/* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
+			///* write x distribution to a file */
+			//string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+			//Statistics tmp_x(str_x, x_);
+			//tmp_x.GenerateVectorFile();
 
 			rew_count++;
 		} while (!UpdateR(x_prev, rew_count));
 
-		/* Output reweighting energy history for last cut process */
-		string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-		Statistics s_eC(str_eC, cut_energy);
-		s_eC.GenerateStdVecFile();
+		///* Output reweighting energy history for last cut process */
+		//string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
+		//Statistics s_eC(str_eC, cut_energy);
+		//s_eC.GenerateStdVecFile();
 
-		string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		//string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+		//Statistics s_eR(str_eR, res_energy);
+		//s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -302,6 +308,8 @@ void ADMMCut::MakeLayers()
 	ptr_frame_->Unify();
 
 	fprintf(stdout, "All done!\n");
+
+	ADMM_cut_.Stop();
 }
 
 
@@ -466,9 +474,9 @@ void ADMMCut::CalculateX()
 	lb.setZero();
 	ub.setOnes();
 
-	cal_x_ptr_qp_.Start();
+	cal_qp_.Start();
 	ptr_qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
-	cal_x_ptr_qp_.Stop();
+	cal_qp_.Stop();
 	cal_x_.Stop();
 }
 
@@ -552,9 +560,7 @@ void ADMMCut::CalculateD()
 
 	// Construct Hessian Matrix for D-Qp problem
 	// Here, K is continuous-x weighted
-	cal_d_k_.Start();
 	ptr_stiffness_->CreateGlobalK(x_);
-	cal_d_k_.Stop();
 	SpMat K = *(ptr_stiffness_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
@@ -565,9 +571,9 @@ void ADMMCut::CalculateD()
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 
 	/* 10 degree rotation tolerance, from degree to radians */
-	cal_d_ptr_qp_.Start();
+	cal_qp_.Start();
 	ptr_qp_->solve(Q, a, D_, Dt_tol_, debug_);
-	cal_d_ptr_qp_.Stop();
+	cal_qp_.Stop();
 	cal_d_.Stop();
 }
 
@@ -758,14 +764,14 @@ bool ADMMCut::TerminationCriteria(int count)
 void ADMMCut::PrintOutTimer()
 {
 	printf("***ADMMCut timer result:\n");
+	ADMM_cut_.Print("ADMMCut:");
+	init_collision_.Print("InitCollisionWeight:");
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");
-	cal_q_.Print(">>>CalculateQ:");
-	cal_x_ptr_qp_.Print(">>>qp:");
+	cal_q_.Print("CalculateQ:");
 	cal_d_.Print("CalculateD:");
-	cal_d_k_.Print(">>>CreateGlobalK:");
-	cal_d_ptr_qp_.Print(">>>qp:");
+	cal_qp_.Print("qp:");
 	update_lambda_.Print("UpdateLambda:");
 	update_cut_.Print("UpdateCut:");
 	update_r_.Print("UpdateR:");
