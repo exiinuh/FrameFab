@@ -44,10 +44,15 @@ public:
 
 public:
 	FFAnalyzer();
-	FFAnalyzer(WireFrame *ptr_frame, char *ptr_path)
-		:SeqAnalyzer(ptr_frame, ptr_path){}
-	FFAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path)
-		:SeqAnalyzer(ptr_graphcut, ptr_parm, ptr_path){}
+	FFAnalyzer(
+		DualGraph			*ptr_dualgraph,
+		QuadricCollision	*ptr_collision,
+		Stiffness			*ptr_stiffness,
+		FiberPrintPARM		*ptr_parm,
+		char				*ptr_path
+		)
+		:SeqAnalyzer(ptr_dualgraph, ptr_collision, ptr_stiffness,
+		ptr_parm, ptr_path){}
 	~FFAnalyzer();
 
 public:

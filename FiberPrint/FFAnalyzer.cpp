@@ -15,7 +15,7 @@ bool FFAnalyzer::SeqPrint()
 {
 	Init();
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Nd = ptr_wholegraph_->SizeOfVertList();
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
 
@@ -25,7 +25,7 @@ bool FFAnalyzer::SeqPrint()
 	layers_.resize(layer_size);
 	for (int i = 0; i < Nd; i++)
 	{
-		int orig_i = ptr_dualgraph_->e_orig_id(i);
+		int orig_i = ptr_wholegraph_->e_orig_id(i);
 		int label = ptr_frame_->GetEdge(orig_i)->Layer();
 		layers_[label].push_back(i);
 	}
@@ -39,7 +39,7 @@ bool FFAnalyzer::SeqPrint()
 	for (int i = 0; i < base_size; i++)
 	{
 		int dual_e = layers_[0][i];
-		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(dual_e));
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_e));
 		if (e->isPillar())
 		{
 			point center = e->CenterPos();
@@ -63,11 +63,11 @@ bool FFAnalyzer::SeqPrint()
 	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-		if (!ptr_subgraph_->isExistingEdge(orig_i))
+		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
+		if (!ptr_dualgraph_->isExistingEdge(orig_i))
 		{
 			WF_edge *e = ptr_frame_->GetEdge(orig_i);
-			ptr_collision_->DetectCollision(e, ptr_subgraph_, angle_state_[dual_i]);
+			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
 		}
 	}
 
@@ -107,7 +107,7 @@ bool FFAnalyzer::SeqPrint()
 		max_z_ = -min_z_;
 		for (int i = 0; i < Nl; i++)
 		{
-			int orig_i = ptr_dualgraph_->e_orig_id(layers_[l][i]);
+			int orig_i = ptr_wholegraph_->e_orig_id(layers_[l][i]);
 			point u = ptr_frame_->GetEdge(orig_i)->pvert_->Position();
 			point v = ptr_frame_->GetEdge(orig_i)->ppair_->pvert_->Position();
 			min_z_ = min(min_z_, (double)min(u.z(), v.z()));
@@ -159,7 +159,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	WF_edge *ei = NULL;
 	if (h != 0)
 	{
-		ei = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id
+		ei = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id
 			(print_queue_[h - 1].dual_id_));
 	}
 
@@ -183,7 +183,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
 		int dual_j = layers_[l][it->second];
-		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		QueueInfo next_edge = QueueInfo{ l, it->second, dual_j };
 		print_queue_.push_back(next_edge);
@@ -224,10 +224,10 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 {
 	int M = ptr_frame_->SizeOfEdgeList();
 	int dual_j = layers_[l][j];
-	int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+	int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
 	WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 
-	if (!ptr_subgraph_->isExistingEdge(orig_j))
+	if (!ptr_dualgraph_->isExistingEdge(orig_j))
 	{
 		double	P = 0;							// stabiliy weight
 		double  A = 0;							// adjacency weight
@@ -251,8 +251,8 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		int uj = ptr_frame_->GetEndu(orig_j);
 		int vj = ptr_frame_->GetEndv(orig_j);
-		bool exist_uj = ptr_subgraph_->isExistingVert(uj);
-		bool exist_vj = ptr_subgraph_->isExistingVert(vj);
+		bool exist_uj = ptr_dualgraph_->isExistingVert(uj);
+		bool exist_vj = ptr_dualgraph_->isExistingVert(vj);
 		double z = (ej->CenterPos().z() - min_z_) / (max_z_ - min_z_);
 
 		if (exist_uj && exist_vj)
@@ -333,12 +333,12 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 
 		/* influence weight */
-		int Nd = ptr_dualgraph_->SizeOfVertList();
-		int remaining = Nd - ptr_subgraph_->SizeOfVertList();
+		int Nd = ptr_wholegraph_->SizeOfVertList();
+		int remaining = Nd - ptr_dualgraph_->SizeOfVertList();
 		for (int dual_k = 0; dual_k < Nd; dual_k++)
 		{
-			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
-			if (dual_j != dual_k && !ptr_subgraph_->isExistingEdge(orig_k))
+			int orig_k = ptr_wholegraph_->e_orig_id(dual_k);
+			if (dual_j != dual_k && !ptr_dualgraph_->isExistingEdge(orig_k))
 			{
 				vector<lld> tmp(3);
 				ptr_collision_->DetectCollision(ptr_frame_->GetEdge(orig_k), ej, tmp);
@@ -368,7 +368,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 void FFAnalyzer::PrintOutTimer()
 {
-	printf("***Timer result:\n");
+	printf("***FFAnalyzer timer result:\n");
 	upd_struct_.Print("UpdateStructure:");
 	rec_struct_.Print("RecoverStructure:");
 	upd_map_.Print("UpdateStateMap:");
@@ -387,18 +387,15 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		return;
 	}
 
-	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_collision_ = new QuadricCollision(ptr_frame_);
-
 	Init();
 	min_layer--;
 	max_layer--;
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Nd = ptr_wholegraph_->SizeOfVertList();
 	layers_.resize(layer_size);
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
+		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
 		int layer = ptr_frame_->GetEdge(orig_i)->Layer();
 		layers_[layer].push_back(dual_i);
 	}
@@ -431,11 +428,11 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	/* angle state with printed structure */
 	for (int dual_i = 0; dual_i < Nd; dual_i++)
 	{
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-		if (!ptr_subgraph_->isExistingEdge(orig_i))
+		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
+		if (!ptr_dualgraph_->isExistingEdge(orig_i))
 		{
 			WF_edge *e = ptr_frame_->GetEdge(orig_i);
-			ptr_collision_->DetectCollision(e, ptr_subgraph_, angle_state_[dual_i]);
+			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
 		}
 	}
 
@@ -444,7 +441,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	for (; hi < Nd - 1; hi++)
 	{
 		int orig_j = print_order_[hi];
-		int dual_j = ptr_dualgraph_->e_dual_id(orig_j);
+		int dual_j = ptr_wholegraph_->e_dual_id(orig_j);
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		int l = ej->Layer();
 		int Nl = layers_[l].size();
@@ -457,7 +454,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			max_z_ = -min_z_;
 			for (int k = 0; k < Nl; k++)
 			{
-				int orig_k = ptr_dualgraph_->e_orig_id(layers_[l][k]);
+				int orig_k = ptr_wholegraph_->e_orig_id(layers_[l][k]);
 				point u = ptr_frame_->GetEdge(orig_k)->pvert_->Position();
 				point v = ptr_frame_->GetEdge(orig_k)->ppair_->pvert_->Position();
 				min_z_ = min(min_z_, (double)min(u.z(), v.z()));
@@ -499,10 +496,10 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			double r;
 			double g;
 			double b;
-			int orig_k = ptr_dualgraph_->e_orig_id(dual_k);
+			int orig_k = ptr_wholegraph_->e_orig_id(dual_k);
 			WF_edge *e = ptr_frame_->GetEdge(orig_k);
 
-			if (ptr_subgraph_->isExistingEdge(orig_k))
+			if (ptr_dualgraph_->isExistingEdge(orig_k))
 			{
 				r = 0.5;
 				g = 0.5;
@@ -575,6 +572,6 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		ei = ej;
 	}
 
-	delete ptr_dualgraph_;
+	delete ptr_wholegraph_;
 	delete ptr_collision_;
 }

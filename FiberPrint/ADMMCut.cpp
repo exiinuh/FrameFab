@@ -11,13 +11,20 @@ ADMMCut::ADMMCut()
 }
 
 
-ADMMCut::ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path)
+ADMMCut::ADMMCut(
+	DualGraph			*ptr_dualgraph,
+	QuadricCollision	*ptr_collision,
+	Stiffness			*ptr_stiffness,
+	FiberPrintPARM		*ptr_parm,
+	char				*ptr_path
+	)
 {
-	ptr_frame_ = ptr_frame;
-	ptr_dualgraph_ = new DualGraph(ptr_frame_);
-	ptr_stiff_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
-	ptr_collision_ = new QuadricCollision(ptr_frame_);
+	ptr_frame_ = ptr_dualgraph->ptr_frame_;
+	ptr_dualgraph_ = ptr_dualgraph;
+	ptr_stiffness_ = ptr_stiffness;
+	ptr_collision_ = ptr_collision;
 	ptr_path_ = ptr_path;
+
 	ptr_qp_ = NULL;
 
 	Dt_tol_ = ptr_parm->Dt_tol_;
@@ -133,7 +140,7 @@ void ADMMCut::MakeLayers()
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints(cut_count);
 
-		ptr_stiff_->CalculateD(D_, x_, cut_count, false, false, false);
+		ptr_stiffness_->CalculateD(D_, x_, cut_count, false, false, false);
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -161,10 +168,10 @@ void ADMMCut::MakeLayers()
 		* cut		 energy : | A * x |
 		* defomation energy : norm(K D - F)
 		*/
-		ptr_stiff_->CreateGlobalK(x_);
-		ptr_stiff_->CreateF(x_);
-		SpMat K_init = *(ptr_stiff_->WeightedK());
-		VX	  F_init = *(ptr_stiff_->WeightedF());
+		ptr_stiffness_->CreateGlobalK(x_);
+		ptr_stiffness_->CreateF(x_);
+		SpMat K_init = *(ptr_stiffness_->WeightedK());
+		VX	  F_init = *(ptr_stiffness_->WeightedF());
 
 
 		//double icut_energy = 0;
@@ -226,10 +233,10 @@ void ADMMCut::MakeLayers()
 				CalculateQ(D_, Q_new);
 
 				/* Update K reweighted by new x */
-				ptr_stiff_->CreateGlobalK(x_);
-				ptr_stiff_->CreateF(x_);
-				SpMat K_new = *(ptr_stiff_->WeightedK());
-				VX    F_new = *(ptr_stiff_->WeightedF());
+				ptr_stiffness_->CreateGlobalK(x_);
+				ptr_stiffness_->CreateF(x_);
+				SpMat K_new = *(ptr_stiffness_->WeightedK());
+				VX    F_new = *(ptr_stiffness_->WeightedF());
 
 				dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
 					+ lambda_.transpose() * (Q_prev - Q_new);
@@ -315,7 +322,7 @@ void ADMMCut::SetStartingPoints(int count)
 	Fd_ = ptr_dualgraph_->SizeOfFaceList();
 	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 
-	ptr_stiff_->Init();
+	ptr_stiffness_->Init();
 
 	/* Reweighting Paramter */
 	r_.resize(Nd_, Nd_);
@@ -329,7 +336,7 @@ void ADMMCut::SetStartingPoints(int count)
 	lambda_.setZero();
 	a_.setZero();
 
-	//ptr_stiff_->Debug();
+	//ptr_stiffness_->Debug();
 }
 
 
@@ -487,9 +494,9 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 				int v = edge->pvert_->ID();
 				int j = ptr_dualgraph_->v_dual_id(v);
 
-				MX eKuu = ptr_stiff_->eKv(edge->ID());
-				MX eKeu = ptr_stiff_->eKe(edge->ID());
-				VX Fe = ptr_stiff_->Fe(edge->ID());
+				MX eKuu = ptr_stiffness_->eKv(edge->ID());
+				MX eKeu = ptr_stiffness_->eKe(edge->ID());
+				VX Fe = ptr_stiffness_->Fe(edge->ID());
 				VX Di(6);
 				VX Dj(6);
 
@@ -546,14 +553,14 @@ void ADMMCut::CalculateD()
 	// Construct Hessian Matrix for D-Qp problem
 	// Here, K is continuous-x weighted
 	cal_d_k_.Start();
-	ptr_stiff_->CreateGlobalK(x_);
+	ptr_stiffness_->CreateGlobalK(x_);
 	cal_d_k_.Stop();
-	SpMat K = *(ptr_stiff_->WeightedK());
+	SpMat K = *(ptr_stiffness_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
 	// Construct Linear coefficient for D-Qp problem
-	ptr_stiff_->CreateF(x_);
-	VX F = *(ptr_stiff_->WeightedF());
+	ptr_stiffness_->CreateF(x_);
+	VX F = *(ptr_stiffness_->WeightedF());
 
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
 
@@ -570,11 +577,11 @@ void ADMMCut::UpdateLambda()
 	update_lambda_.Start();
 
 	// Recompute K(x_{k+1}) and F(x_{k+1})
-	ptr_stiff_->CreateGlobalK(x_);
-	SpMat K = *(ptr_stiff_->WeightedK());
+	ptr_stiffness_->CreateGlobalK(x_);
+	SpMat K = *(ptr_stiffness_->WeightedK());
 
-	ptr_stiff_->CreateF(x_);
-	VX F = *(ptr_stiff_->WeightedF());
+	ptr_stiffness_->CreateF(x_);
+	VX F = *(ptr_stiffness_->WeightedF());
 
 	lambda_ = lambda_ + penalty_ * (K * D_ - F);
 
@@ -750,7 +757,7 @@ bool ADMMCut::TerminationCriteria(int count)
 
 void ADMMCut::PrintOutTimer()
 {
-	printf("***Timer result:\n");
+	printf("***ADMMCut timer result:\n");
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");
@@ -934,7 +941,7 @@ void ADMMCut::Debug()
 {
 	int cut_count = 0;
 	SetStartingPoints(cut_count);
-	ptr_stiff_->CalculateD(D_, x_, 0, false, false, false);
+	ptr_stiffness_->CalculateD(D_, x_, 0, false, false, false);
 	int temp[24] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54, 8, 14 };
 	int temp_2[42] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54,
 		8, 84, 72, 74, 194, 68, 70, 90, 210, 180, 184, 102, 108, 188, 100, 178, 106, 186, 86, 14

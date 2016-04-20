@@ -112,7 +112,7 @@ public:
 	MX			eKv(int ei);			// ei: orig e id
 	VX			Fe(int ei);				// ei: orig e id
 
-	void		OutputTimer();
+	void		PrintOutTimer();
 	
 private:
 	//private:
@@ -141,5 +141,12 @@ private:
 	double			v_;						// possion ratio
 
 	bool			shear_;					// 1 : shear deformation taken into consideration; 0 : not
+
+	Timer			create_fe_;
+	Timer			create_f_;
+	Timer			create_ek_;
+	Timer			create_k_;
+	Timer			check_ill_;
+	Timer			check_error_;
 };
 #endif

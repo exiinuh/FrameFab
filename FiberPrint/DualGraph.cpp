@@ -12,6 +12,23 @@ DualGraph::DualGraph()
 DualGraph::DualGraph(WireFrame *ptr_frame)
 {
 	ptr_frame_ = ptr_frame;
+	vert_list_ = NULL;
+	edge_list_ = NULL;
+	face_list_ = NULL;
+
+	Init();
+}
+
+
+DualGraph::~DualGraph()
+{
+	Clear();
+}
+
+
+void DualGraph::Init()
+{
+	Clear();
 
 	int N = ptr_frame_->SizeOfVertList();
 	int M = ptr_frame_->SizeOfEdgeList();
@@ -44,7 +61,7 @@ DualGraph::DualGraph(WireFrame *ptr_frame)
 }
 
 
-DualGraph::~DualGraph()
+void DualGraph::Clear()
 {
 	if (vert_list_ != NULL)
 	{

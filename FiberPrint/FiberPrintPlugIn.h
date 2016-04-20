@@ -21,7 +21,6 @@ public:
 
 public:
 	FiberPrintPlugIn();
-	FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path);
 	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
 						char *path);
 	~FiberPrintPlugIn();
@@ -47,20 +46,24 @@ public:
 		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);
 	}
 
-	void			OutputTimer();
+	void			PrintOutTimer();
 	void			Debug();		// return value: edge index in mesh, for cut rendering
 
 public:
-	WireFrame		*ptr_frame_;
-	GraphCut		*ptr_graphcut_;
-	SeqAnalyzer		*ptr_seqanalyzer_;
+	WireFrame			*ptr_frame_;
+	DualGraph			*ptr_dualgraph_;
+	QuadricCollision	*ptr_collision_;
+	Stiffness			*ptr_stiffness_;
+
+	GraphCut			*ptr_graphcut_;
+	SeqAnalyzer			*ptr_seqanalyzer_;
+	ProcAnalyzer		*ptr_procanalyzer_;
+
+	char				*ptr_path_;
+	FiberPrintPARM		*ptr_parm_;
 
 private:
-	char			*ptr_path_;
-	FiberPrintPARM	*ptr_parm_;
-	ProcAnalyzer	*ptr_procanalyzer_;
-
-	Timer			framefab_;
+	Timer				framefab_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

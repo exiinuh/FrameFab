@@ -3,45 +3,56 @@
 
 FiberPrintPlugIn::FiberPrintPlugIn()
 {
-	ptr_graphcut_ = new ADMMCut();
-	ptr_seqanalyzer_ = new FFAnalyzer();
-
 	ptr_frame_ = NULL;
-	ptr_parm_ = NULL;
+	ptr_dualgraph_ = NULL;
+	ptr_collision_ = NULL;
+	ptr_stiffness_ = NULL;
+
+	ptr_graphcut_ = NULL;
+	ptr_seqanalyzer_ = NULL;
+	ptr_procanalyzer_ = NULL;
+
 	ptr_path_ = NULL;
-}
-
-
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, char *ptr_path)
-{
-	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_path);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_frame, ptr_path);
-
-	ptr_frame_ = ptr_frame;
 	ptr_parm_ = NULL;
-	ptr_path_ = ptr_path;
 }
 
 
 FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
 	FiberPrintPARM *ptr_parm, char *ptr_path)
 {
-	ptr_graphcut_ = new ADMMCut(ptr_frame, ptr_parm, ptr_path);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm, ptr_path);
-
 	ptr_frame_ = ptr_frame;
-	ptr_parm_ = ptr_parm;
+	ptr_dualgraph_ = new DualGraph(ptr_frame);
+	ptr_collision_ = new QuadricCollision(ptr_frame);
+	ptr_stiffness_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
+
+	ptr_graphcut_ = NULL;
+	ptr_seqanalyzer_ = NULL;
+	ptr_procanalyzer_ = NULL;
+
 	ptr_path_ = ptr_path;
+	ptr_parm_ = ptr_parm;
 }
 
 
 FiberPrintPlugIn::~FiberPrintPlugIn()
 {
+	delete ptr_dualgraph_;
+	ptr_dualgraph_ = NULL;
+
+	delete ptr_collision_;
+	ptr_collision_ = NULL;
+
+	delete ptr_stiffness_;
+	ptr_stiffness_ = NULL;
+
 	delete ptr_graphcut_;
 	ptr_graphcut_ = NULL;
 
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
+
+	delete ptr_procanalyzer_;
+	ptr_procanalyzer_ = NULL;
 
 	delete ptr_parm_;
 	ptr_parm_ = NULL;
@@ -55,6 +66,9 @@ void FiberPrintPlugIn::Init()
 
 	delete ptr_seqanalyzer_;
 	ptr_seqanalyzer_ = NULL;
+
+	delete ptr_procanalyzer_;
+	ptr_procanalyzer_ = NULL;
 }
 
 
@@ -64,8 +78,20 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	Init();
 
-	ptr_graphcut_ = new ADMMCut(ptr_frame_, ptr_parm_, ptr_path_);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+	ptr_graphcut_ = new ADMMCut(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
+	ptr_seqanalyzer_ = new FFAnalyzer(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
 	ptr_graphcut_->MakeLayers();
@@ -82,8 +108,7 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 	framefab_.Stop();
 
-	ptr_graphcut_->PrintOutTimer();
-	ptr_seqanalyzer_->PrintOutTimer();
+	PrintOutTimer();
 
 	//ptr_procanalyzer_->ProcPrint();
 	//ptr_procanalyzer_->CollisionColorMap();
@@ -95,7 +120,13 @@ void FiberPrintPlugIn::BruteForcePrint()
 	Init();
 
 	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_path_);
-	ptr_seqanalyzer_ = new BFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new BFAnalyzer(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
 
 	if (!ptr_seqanalyzer_->SeqPrint())
 	{
@@ -113,7 +144,13 @@ void FiberPrintPlugIn::SweepingPrint()
 	Init();
 
 	ptr_graphcut_ = new NormalCut(ptr_frame_, ptr_path_);
-	ptr_seqanalyzer_ = new FFAnalyzer(ptr_graphcut_, ptr_parm_, ptr_path_);
+	ptr_seqanalyzer_ = new FFAnalyzer(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
 
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
@@ -130,21 +167,18 @@ void FiberPrintPlugIn::SweepingPrint()
 
 void FiberPrintPlugIn::GetDeformation()
 {
-	DualGraph *ptr_dualgraph = new DualGraph(ptr_frame_);
-	Stiffness *ptr_stiff = new Stiffness(ptr_dualgraph, ptr_parm_, ptr_path_);
+	ptr_dualgraph_->Dualization();
+	ptr_stiffness_->Init();
 
-	ptr_dualgraph->Dualization();
-	ptr_stiff->Init();
-
-	int Ns = ptr_dualgraph->SizeOfFreeFace();
+	int Ns = ptr_dualgraph_->SizeOfFreeFace();
 	VX D(Ns);
 	D.setZero();
 
-	int Nd = ptr_dualgraph->SizeOfVertList();
+	int Nd = ptr_dualgraph_->SizeOfVertList();
 	VX x(Nd);
 	x.setOnes();
 
-	ptr_stiff->CalculateD(D, x, 0, true, true, true);
+	ptr_stiffness_->CalculateD(D, x, 0, true, true, true);
 }
 
 
@@ -180,10 +214,14 @@ void FiberPrintPlugIn::ExportPrintOrder(char *fname)
 }
 
 
-void FiberPrintPlugIn::OutputTimer()
+void FiberPrintPlugIn::PrintOutTimer()
 {
-	printf("Total time >>>>>>>>>\n: ");
+	printf("***Total timer result:\n");
 	framefab_.Print("FrameFab:");
+
+	ptr_graphcut_->PrintOutTimer();
+	ptr_seqanalyzer_->PrintOutTimer();
+	ptr_stiffness_->PrintOutTimer();
 }
 
 

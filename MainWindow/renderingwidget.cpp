@@ -1018,7 +1018,8 @@ void RenderingWidget::Import()
 
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, byfilename.data());
+			FiberPrintPARM *ptr_parm = new FiberPrintPARM();
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, byfilename.data());
 		}
 
 		M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
@@ -1072,7 +1073,8 @@ void RenderingWidget::Export()
 	{
 		if (ptr_fiberprint_ == NULL)
 		{
-			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, NULL);
+			FiberPrintPARM *ptr_parm = new FiberPrintPARM();
+			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, NULL);
 		}
 		ptr_fiberprint_->ExportPrintOrder(byfilename.data());
 		emit(operatorInfo(QString("Export sequence to ") + filename + QString(" Done")));

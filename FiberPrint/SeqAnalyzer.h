@@ -49,8 +49,13 @@ public:
 
 public:
 	SeqAnalyzer();
-	SeqAnalyzer(WireFrame *ptr_frame, char *ptr_path);
-	SeqAnalyzer(GraphCut *ptr_graphcut, FiberPrintPARM *ptr_parm, char *ptr_path);
+	SeqAnalyzer(
+		DualGraph			*ptr_dualgraph,
+		QuadricCollision	*ptr_collision,
+		Stiffness			*ptr_stiffness,
+		FiberPrintPARM		*ptr_parm,
+		char				*ptr_path
+		);
 	virtual ~SeqAnalyzer();
 
 public:
@@ -75,25 +80,24 @@ protected:
 	bool			TestifyStiffness();
 
 public:
-	DualGraph			*ptr_dualgraph_;
 	WireFrame			*ptr_frame_;
-
-protected:
+	DualGraph			*ptr_dualgraph_;
+	Stiffness			*ptr_stiffness_;
 	QuadricCollision	*ptr_collision_;
 	char				*ptr_path_;
 
+protected:
 	/* output */
 	vector<int>			print_order_; 
 
 	/* maintaining for sequence */
-	DualGraph			*ptr_subgraph_;
+	DualGraph			*ptr_wholegraph_;
 	VX					D0_;
 	vector<QueueInfo>	print_queue_;
 	vector<vector<lld>> angle_state_;
 	vector<vector<int>>	layers_;					// store dual_node's id for each layers
 
 	/* parameters */
-	FiberPrintPARM		*ptr_parm_;
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
 	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
 	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness

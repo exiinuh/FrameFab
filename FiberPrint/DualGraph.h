@@ -82,6 +82,9 @@ public:
 	~DualGraph();
 
 public:
+	void	Init();
+	void	Clear();
+
 	void	Dualization();									// dualization on the whole frame
 
 	void	UpdateDualization(VectorXd *ptr_x);				// update from graphcut

@@ -51,6 +51,8 @@ void Stiffness::Init()
 
 void Stiffness::CreateFe()
 {
+	create_fe_.Start();
+
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
@@ -93,13 +95,16 @@ void Stiffness::CreateFe()
 
 		Fe_[i] = Fei;
 	}
+
+	create_fe_.Stop();
 }
 
 
 void Stiffness::CreateF(const VectorXd &x)
 {
-	/* Run only after CreadFe is done! */
+	create_f_.Start();
 
+	/* Run only after CreadFe is done! */
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
@@ -127,11 +132,15 @@ void Stiffness::CreateF(const VectorXd &x)
             }
 		}
 	}
+
+	create_f_.Stop();
 }
 
 
 void Stiffness::CreateElasticK()
 {
+	create_ek_.Start();
+
 	WireFrame		  *ptr_frame   = ptr_dualgraph_->ptr_frame_;
 	vector<WF_edge *> wf_edge_list = *ptr_frame->GetEdgeList();
 	vector<WF_vert *> wf_vert_list = *ptr_frame->GetVertList();
@@ -262,11 +271,15 @@ void Stiffness::CreateElasticK()
 
 		eK_[i] = eKuv;
 	}
+
+	create_ek_.Stop();
 }
 
 
 void Stiffness::CreateGlobalK(const VectorXd &x)
 {
+	create_k_.Start();
+
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
@@ -348,6 +361,8 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 		}
 	}
 	K_.setFromTriplets(K_list.begin(), K_list.end());
+
+	create_k_.Stop();
 }
 
 
@@ -416,7 +431,7 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0)
 	VX x(Nd);
 	x.setOnes();
 
-	return CalculateD(D, D0, x, 0, false, true, false);
+	return CalculateD(D, D0, x, 0, false, false, false);
 }
 
 
@@ -428,11 +443,8 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
 	CreateGlobalK(x);
 	CreateF(x);
 
-	/* Parameter for StiffnessSolver */
-	int	info;
-	IllCondDetector	stiff_inspector(K_);
-
 	/* --- Check Stiffness Matrix Condition Number --- */
+	IllCondDetector	stiff_inspector(K_);
 	if (cond_num)
 	{
 		if (!CheckIllCondition(stiff_inspector, verbose))
@@ -447,6 +459,7 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
 		fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
 	}
 
+	int	info;
 	if (!stiff_solver_.SolveSystem(K_, D, F_, D0, verbose, info))
 	{
 		cout << "Stiffness Solver fail!\n" << endl;
@@ -471,6 +484,9 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
 
 bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
 {	
+	check_ill_.Start();
+
+	bool bSuccess = true;
 	double cond_num;
 	cond_num = stiff_inspector.ComputeCondNum();
 	printf("Condition Number = %9.3e\n", cond_num);
@@ -487,15 +503,20 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
 		printf(" > tol = %7.1e\n", MCOND_TOL);
 		printf(" * Ill Conditioned Stiffness Matrix! *\n");
 		printf("Press any key to exit...\n");
-		return false;
+		bSuccess = false;
 	}
 
-	return true;
+	check_ill_.Stop();
+
+	return bSuccess;
 }
 
 
 bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
-{	
+{
+	check_error_.Start();
+
+	bool bSuccess = true;
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
 	printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
 	if (error < STIFF_TOL)
@@ -511,10 +532,12 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
 		printf(" > tol = %7.1e\n", STIFF_TOL);
 		printf(" !! Not Converged !!\n");
 		printf("Press any key to exit...\n");
-		return false;
+		bSuccess = false;
 	}
 
-	return true;
+	check_error_.Stop();
+
+	return bSuccess;
 }
 
 
@@ -630,9 +653,15 @@ VectorXd Stiffness::Fe(int ei)
 }
 
 
-void Stiffness::OutputTimer()
+void Stiffness::PrintOutTimer()
 {
-	printf("***Timer result:\n");
+	printf("***Stiffness timer result:\n");
 	stiff_solver_.compute_k_.Print("ComputeK:");
 	stiff_solver_.solve_d_.Print("SolveD:");
+	create_fe_.Print("CreateFe:");
+	create_f_.Print("CreateF:");
+	create_ek_.Print("CreateElasticK:");
+	create_k_.Print("CreateGlobalK:");
+	check_ill_.Print("CheckIllCond:");
+	check_error_.Print("CheckError:");
 }

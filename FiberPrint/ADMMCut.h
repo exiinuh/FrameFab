@@ -53,9 +53,13 @@ class ADMMCut : public GraphCut
 
 public:
 	ADMMCut();
-	ADMMCut(WireFrame *ptr_frame, char *ptr_path)
-		:GraphCut(ptr_frame, ptr_path){}
-	ADMMCut(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path);
+	ADMMCut(
+		DualGraph			*ptr_dualgraph,
+		QuadricCollision	*ptr_collision,
+		Stiffness			*ptr_stiffnessness,
+		FiberPrintPARM		*ptr_parm,
+		char				*ptr_path
+		);
 	~ADMMCut();
 
 public:

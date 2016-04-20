@@ -15,7 +15,7 @@ bool BFAnalyzer::SeqPrint()
 {
 	Init();
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Nd = ptr_wholegraph_->SizeOfVertList();
 
 	inqueue_.resize(Nd);
 	fill(inqueue_.begin(), inqueue_.end(), false);
@@ -59,13 +59,10 @@ bool BFAnalyzer::TestifySeq()
 	printf("--------------------------------------\n");
 	printf("Test on sequence starts.\n");
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Nd = ptr_wholegraph_->SizeOfVertList();
 
 	D0_.resize(0);
 	D0_.setZero();
-
-	delete ptr_subgraph_;
-	ptr_subgraph_ = new DualGraph(ptr_frame_);
 
 	angle_state_.clear();
 	angle_state_.resize(Nd);
@@ -79,19 +76,19 @@ bool BFAnalyzer::TestifySeq()
 	for (int i = 0; i < Nd; i++)
 	{
 		int dual_i = print_queue_[i].dual_id_;
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
+		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
 		WF_edge *e = ptr_frame_->GetEdge(orig_i);
 
 		/* detect floating edge */
-		if (!e->isPillar() && !ptr_subgraph_->isExistingVert(e->pvert_->ID())
-			&& !ptr_subgraph_->isExistingVert(e->ppair_->pvert_->ID()))
+		if (!e->isPillar() && !ptr_dualgraph_->isExistingVert(e->pvert_->ID())
+			&& !ptr_dualgraph_->isExistingVert(e->ppair_->pvert_->ID()))
 		{
 			printf("Edge #%d: floating edge detected.\n", i);
 			return false;
 		}
 
 		/* update structure */
-		ptr_subgraph_->UpdateDualization(e);
+		ptr_dualgraph_->UpdateDualization(e);
 
 		/* testify collision */
 		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
@@ -131,7 +128,7 @@ void BFAnalyzer::PrintOutQueue(int N)
 	for (int i = 0; i < N; i++)
 	{
 		int dual_id = print_queue_[i].dual_id_;
-		fprintf(fp, "%d\n", ptr_dualgraph_->e_orig_id(dual_id) / 2);
+		fprintf(fp, "%d\n", ptr_wholegraph_->e_orig_id(dual_id) / 2);
 	}
 
 	fclose(fp);
