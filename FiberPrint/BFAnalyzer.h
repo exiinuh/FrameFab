@@ -42,11 +42,6 @@ public:
 
 private:
 	bool	GenerateSeq(int h, int t);
-	bool	TestifySeq();
-
-	void	PrintOutQueue(int N);
-
-private:
-	vector<bool>	inqueue_;
+	void	PrintOutQueue(int N);	
 };
 

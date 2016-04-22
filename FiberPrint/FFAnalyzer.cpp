@@ -17,15 +17,11 @@ bool FFAnalyzer::SeqPrint()
 
 	Init();
 
-	int Nd = ptr_wholegraph_->SizeOfVertList();
-	int N = ptr_frame_->SizeOfVertList();
-	int M = ptr_frame_->SizeOfEdgeList();
-
 	/* split layers */
 	/* label stores layer index of each dual node */
 	int layer_size = ptr_frame_->SizeOfLayer();
 	layers_.resize(layer_size);
-	for (int i = 0; i < Nd; i++)
+	for (int i = 0; i < Nd_; i++)
 	{
 		int orig_i = ptr_wholegraph_->e_orig_id(i);
 		int label = ptr_frame_->GetEdge(orig_i)->Layer();
@@ -34,44 +30,7 @@ bool FFAnalyzer::SeqPrint()
 
 	/* printing */
 	/* set pillars as starting edges */
-	/* ranked by x */
-	int base_size = layers_[0].size();
-	multimap<double, int>base_queue;
-	multimap<double, int>::iterator it;
-	for (int i = 0; i < base_size; i++)
-	{
-		int dual_e = layers_[0][i];
-		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_e));
-		if (e->isPillar())
-		{
-			point center = e->CenterPos();
-			base_queue.insert(make_pair(center.x(), i));
-			UpdateStructure(e);
-		}
-	}
-
-	for (it = base_queue.begin(); it != base_queue.end(); it++)
-	{
-		QueueInfo base_edge = QueueInfo{ 0, it->second, layers_[0][it->second] };
-		print_queue_.push_back(base_edge);
-	}
-
-	printf("Size of base queue: %d\n", base_queue.size());
-	for (int l = 0; l < layer_size; l++)
-	{
-		printf("Size of layer %d is %d\n", l, layers_[l].size());
-	}
-
-	/* angle state with pillars */
-	for (int dual_i = 0; dual_i < Nd; dual_i++)
-	{
-		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
-		if (!ptr_dualgraph_->isExistingEdge(orig_i))
-		{
-			WF_edge *e = ptr_frame_->GetEdge(orig_i);
-			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
-		}
-	}
+	PrintPillars();
 
 	/* print starting from the first layer */
 	bool bSuccess = true;
@@ -133,8 +92,6 @@ bool FFAnalyzer::SeqPrint()
 		//WriteRenderPath();
 	}
 
-	GetPrintOrder();
-
 	FF_analyzer_.Stop();
 
 	return bSuccess;
@@ -146,7 +103,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	if (debug_)
 	{
 		printf("---searching edge #%d in layer %d, head %d, (tail %d)\n",
-			print_queue_[h].layer_id_, l, h, t);
+			print_queue_[h - 1]->ID(), l, h, t);
 	}
 
 	/* exit */
@@ -164,8 +121,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	WF_edge *ei = NULL;
 	if (h != 0)
 	{
-		ei = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id
-			(print_queue_[h - 1].dual_id_));
+		ei = print_queue_[h - 1];
 	}
 
 	/* next choice */
@@ -190,8 +146,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		int dual_j = layers_[l][it->second];
 		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
-		QueueInfo next_edge = QueueInfo{ l, it->second, dual_j };
-		print_queue_.push_back(next_edge);
+		print_queue_.push_back(ej);
 
 		/* update printed subgraph */
 		UpdateStructure(ej);
@@ -227,7 +182,6 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 {
-	int M = ptr_frame_->SizeOfEdgeList();
 	int dual_j = layers_[l][j];
 	int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
 	WF_edge *ej = ptr_frame_->GetEdge(orig_j);
@@ -338,9 +292,8 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 
 		/* influence weight */
-		int Nd = ptr_wholegraph_->SizeOfVertList();
-		int remaining = Nd - ptr_dualgraph_->SizeOfVertList();
-		for (int dual_k = 0; dual_k < Nd; dual_k++)
+		int remaining = Nd_ - ptr_dualgraph_->SizeOfVertList();
+		for (int dual_k = 0; dual_k < Nd_; dual_k++)
 		{
 			int orig_k = ptr_wholegraph_->e_orig_id(dual_k);
 			if (dual_j != dual_k && !ptr_dualgraph_->isExistingEdge(orig_k))
@@ -396,9 +349,8 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	min_layer--;
 	max_layer--;
 
-	int Nd = ptr_wholegraph_->SizeOfVertList();
 	layers_.resize(layer_size);
-	for (int dual_i = 0; dual_i < Nd; dual_i++)
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
 		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
 		int layer = ptr_frame_->GetEdge(orig_i)->Layer();
@@ -407,10 +359,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 
 	/* skip pillars */
 	int hi = 0;
-	for (; hi < Nd; hi++)
+	for (; hi < Nd_; hi++)
 	{
-		int orig_i = print_order_[hi];
-		WF_edge *e = ptr_frame_->GetEdge(orig_i);
+		WF_edge *e = print_queue_[hi];
 		if (!e->isPillar())
 		{
 			break;
@@ -419,10 +370,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	}
 
 	/* skip printed structure */
-	for (; hi < Nd; hi++)
+	for (; hi < Nd_; hi++)
 	{
-		int orig_i = print_order_[hi];
-		WF_edge *e = ptr_frame_->GetEdge(orig_i);
+		WF_edge *e = print_queue_[hi];
 		if (e->Layer() >= min_layer)
 		{
 			break;
@@ -431,7 +381,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	}
 
 	/* angle state with printed structure */
-	for (int dual_i = 0; dual_i < Nd; dual_i++)
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
 		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
 		if (!ptr_dualgraph_->isExistingEdge(orig_i))
@@ -443,11 +393,10 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 
 	/* print starting from min_layer */
 	WF_edge *ei = NULL;
-	for (; hi < Nd - 1; hi++)
+	for (; hi < Nd_ - 1; hi++)
 	{
-		int orig_j = print_order_[hi];
-		int dual_j = ptr_wholegraph_->e_dual_id(orig_j);
-		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
+		WF_edge *ej = print_queue_[hi];
+		int dual_j = ptr_wholegraph_->e_dual_id(ej->ID());
 		int l = ej->Layer();
 		int Nl = layers_[l].size();
 
@@ -467,7 +416,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			}
 		}
 
-		vector<double> cost(Nd);
+		vector<double> cost(Nd_);
 		double min_cost = 1e20;
 		double max_cost = -min_cost;
 		for (int k = 0; k < Nl; k++)
@@ -496,7 +445,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		//vector<vector<double>> writer;
 	/*	double cost_max = 0;
 		double cost_min = 1;*/
-		for (int dual_k = 0; dual_k < Nd; dual_k++)
+		for (int dual_k = 0; dual_k < Nd_; dual_k++)
 		{
 			double r;
 			double g;
@@ -576,7 +525,4 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		UpdateStructure(ej);
 		ei = ej;
 	}
-
-	delete ptr_wholegraph_;
-	delete ptr_collision_;
 }

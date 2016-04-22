@@ -15,106 +15,65 @@ bool BFAnalyzer::SeqPrint()
 {
 	Init();
 
-	int Nd = ptr_wholegraph_->SizeOfVertList();
+	/* set pillars as starting edges */
+	PrintPillars();
 
-	inqueue_.resize(Nd);
-	fill(inqueue_.begin(), inqueue_.end(), false);
-
-	return GenerateSeq(1, Nd);
+	return GenerateSeq(print_queue_.size(), Nd_);
 }
 
 
 bool BFAnalyzer::GenerateSeq(int h, int t)
 {
-	if (h > t)
+	if (h == t)
 	{
-		if (TestifySeq())
-		{
-			GetPrintOrder();
-			return true;
-		}
+		return true;
+	}
+
+	if (!TestifyStiffness())
+	{
+		printf("...Stiffness examination failed.\n");
 		return false;
 	}
-	for (int i = 0; i < t; i++)
+
+	WF_edge *ei = print_queue_[h - 1];
+	for (int dual_j = 0; dual_j < Nd_; dual_j++)
 	{
-		if (!inqueue_[i])
+		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
+		if (!ptr_dualgraph_->isExistingEdge(orig_j))
 		{
-			print_queue_.push_back({ 0, 0, i });
-			inqueue_[i] = true;
-			if (GenerateSeq(h + 1, t))
+			if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_
+				|| ei->pvert_ == ej->ppair_->pvert_ || ei->ppair_->pvert_ == ej->ppair_->pvert_)
 			{
-				return true;
+				int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
+				if (free_angle == 0)
+				{
+					printf("...collision examination failed.\n");
+					return false;
+				}
+
+				print_queue_.push_back(ej);
+				UpdateStructure(ej);
+				vector<vector<lld>> tmp_angle(3);
+				UpdateStateMap(dual_j, tmp_angle);
+
+				if (GenerateSeq(h + 1, t))
+				{
+					return true;
+				}
+
+				RecoverStateMap(dual_j, tmp_angle);
+				RecoverStructure(ej);
+				print_queue_.pop_back();
 			}
-			print_queue_.pop_back();
-			inqueue_[i] = false;
+			else
+			{
+				printf("...it floats, skip\n");
+			}
 		}
 	}
 
 	return false;
-}
-
-
-bool BFAnalyzer::TestifySeq()
-{
-	printf("--------------------------------------\n");
-	printf("Test on sequence starts.\n");
-
-	int Nd = ptr_wholegraph_->SizeOfVertList();
-
-	D0_.resize(0);
-	D0_.setZero();
-
-	angle_state_.clear();
-	angle_state_.resize(Nd);
-	for (int i = 0; i < Nd; i++)
-	{
-		angle_state_[i].push_back(0);
-		angle_state_[i].push_back(0);
-		angle_state_[i].push_back(0);
-	}
-
-	for (int i = 0; i < Nd; i++)
-	{
-		int dual_i = print_queue_[i].dual_id_;
-		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
-		WF_edge *e = ptr_frame_->GetEdge(orig_i);
-
-		/* detect floating edge */
-		if (!e->isPillar() && !ptr_dualgraph_->isExistingVert(e->pvert_->ID())
-			&& !ptr_dualgraph_->isExistingVert(e->ppair_->pvert_->ID()))
-		{
-			printf("Edge #%d: floating edge detected.\n", i);
-			return false;
-		}
-
-		/* update structure */
-		ptr_dualgraph_->UpdateDualization(e);
-
-		/* testify collision */
-		if ((~(angle_state_[dual_i][0] & angle_state_[dual_i][1]
-			& angle_state_[dual_i][2])) == 0)
-		{
-			printf("Edge #%d: test on collision falied.\n", i);
-			return false;
-		}
-
-		/* testify stiffness */
-		if (!TestifyStiffness())
-		{
-			//if (i == Nd / 2 - 1)
-			//{
-			//	PrintOutQueue(Nd / 2);
-			//	getchar();
-			//}
-			printf("Edge #%d: test on stiffness falied.\n", i);
-			return false;
-		}
-
-		/* update collision */
-		UpdateStateMap(dual_i, angle_state_);
-	}
-
-	return true;
 }
 
 
@@ -127,8 +86,7 @@ void BFAnalyzer::PrintOutQueue(int N)
 
 	for (int i = 0; i < N; i++)
 	{
-		int dual_id = print_queue_[i].dual_id_;
-		fprintf(fp, "%d\n", ptr_wholegraph_->e_orig_id(dual_id) / 2);
+		fprintf(fp, "%d\n", print_queue_[i]->ID() / 2);
 	}
 
 	fclose(fp);

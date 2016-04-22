@@ -26,18 +26,6 @@
 #include "Collision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
-typedef struct Set
-{
-	double min;
-	double max;
-};
-
-typedef struct QueueInfo
-{
-	int		layer_;
-	int		layer_id_;
-	int		dual_id_;
-};
 
 class SeqAnalyzer
 {
@@ -64,19 +52,17 @@ public:
 	virtual void	WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 public:
-	void			Init();
-
-	void			GetPrintOrder();
 	void			InputPrintOrder(vector<int> &print_queue);
-	void			OutputPrintOrder(vector<int> &print_queue);
+	void			OutputPrintOrder(vector<WF_edge*> &print_queue);
 
 protected:
+	void			Init();
+
+	void			PrintPillars();
 	void			UpdateStructure(WF_edge *e);
 	void			RecoverStructure(WF_edge *e);
-
 	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
 	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
-
 	bool			TestifyStiffness();
 
 public:
@@ -87,15 +73,13 @@ public:
 	char				*ptr_path_;
 
 protected:
-	/* output */
-	vector<int>			print_order_; 
-
 	/* maintaining for sequence */
+	int					Nd_;
 	DualGraph			*ptr_wholegraph_;
-	VX					D0_;
-	vector<QueueInfo>	print_queue_;
+	vector<WF_edge*>	print_queue_;
 	vector<vector<lld>> angle_state_;
 	vector<vector<int>>	layers_;					// store dual_node's id for each layers
+	VX					D0_;
 
 	/* parameters */
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost

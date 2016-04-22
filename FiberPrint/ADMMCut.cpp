@@ -44,91 +44,6 @@ ADMMCut::~ADMMCut()
 }
 
 
-void ADMMCut::InitState()
-{
-	N_ = ptr_frame_->SizeOfVertList();
-	M_ = ptr_frame_->SizeOfEdgeList();
-
-	// set termination tolerance 
-	stop_n_ = floor(N_ / 5);
-
-	ptr_qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
-
-	// clear layer label
-	for (int i = 0; i < M_; i++)
-	{
-		ptr_frame_->GetEdge(i)->SetLayer(0);
-	}
-
-	// upper dual id 
-	for (int i = 0; i < M_; i++)
-	{
-		WF_edge *e = ptr_frame_->GetEdge(i);
-		if (e->isCeiling())
-		{
-			cutting_edge_.push_back(i);
-			//e->SetLayer(1);
-			//e->ppair_->SetLayer(1);
-		}
-	}
-
-	cout << "penalty : " << penalty_ << endl;
-	cout << "primal tolerance : " << pri_tol_ << endl;
-	cout << "dual tolerance : " << dual_tol_ << endl;
-	cout << "ADMMCut Start" << endl;
-	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
-}
-
-
-void ADMMCut::InitCollisionWeight()
-{
-	init_collision_.Start();
-
-	int halfM = M_ / 2;
-	vector<Triplet<double>> range_list;
-	vector<Triplet<double>> weight_list;
-	vector<Triplet<double>>::iterator it;
-	col_weight_.resize(halfM, halfM);
-
-	for (int i = 0; i < halfM; i++)
-	{
-		for (int j = 0; j < i; j++)
-		{
-			WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
-			WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
-			vector<lld> tmp(3);
-			double Fij, Fji;
-			double tmp_range;
-			double tmp_weight;
-
-			ptr_collision_->DetectCollision(e1, e2, tmp);
-			Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-
-			ptr_collision_->DetectCollision(e2, e1, tmp);
-			Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-
-			tmp_range = max(Fij - Fji, 0.0);
-			tmp_weight = exp(-5 * tmp_range * tmp_range);
-			if (tmp_weight > eps)
-			{
-				weight_list.push_back(Triplet<double>(i, j, tmp_weight));
-			}
-
-			tmp_range = max(Fji - Fij, 0.0);
-			tmp_weight = exp(-5 * tmp_range * tmp_range);
-			if (tmp_weight > eps)
-			{
-				weight_list.push_back(Triplet<double>(j, i, tmp_weight));
-			}
-		}
-	}
-
-	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
-
-	init_collision_.Stop();
-}
-
-
 void ADMMCut::MakeLayers()
 {
 	ADMM_cut_.Start();
@@ -136,6 +51,7 @@ void ADMMCut::MakeLayers()
 	// Initial Cutting Edge Setting
 	InitState();
 	InitCollisionWeight();
+	InitSeed();
 
 	debug_ = false;
 	int cut_count = 0;
@@ -313,22 +229,209 @@ void ADMMCut::MakeLayers()
 }
 
 
+void ADMMCut::InitState()
+{
+	ptr_dualgraph_->Dualization();
+	Nd_ = ptr_dualgraph_->SizeOfVertList();
+	Md_ = ptr_dualgraph_->SizeOfEdgeList();
+	Fd_ = ptr_dualgraph_->SizeOfFaceList();
+	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
+	N_ = ptr_frame_->SizeOfVertList();
+	M_ = ptr_frame_->SizeOfEdgeList();
+
+	// set termination tolerance 
+	stop_n_ = floor(N_ / 5);
+
+	ptr_qp_ = QPFactory::make(static_cast<QPFactory::QPType>(1));
+
+	// clear layer label
+	for (int i = 0; i < M_; i++)
+	{
+		ptr_frame_->GetEdge(i)->SetLayer(0);
+	}
+
+	// upper dual id 
+	for (int i = 0; i < M_; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(i);
+		if (e->isCeiling())
+		{
+			cutting_edge_.push_back(i);
+			//e->SetLayer(1);
+			//e->ppair_->SetLayer(1);
+		}
+	}
+
+	cout << "penalty : " << penalty_ << endl;
+	cout << "primal tolerance : " << pri_tol_ << endl;
+	cout << "dual tolerance : " << dual_tol_ << endl;
+	cout << "ADMMCut Start" << endl;
+	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
+}
+
+
+void ADMMCut::InitCollisionWeight()
+{
+	init_collision_.Start();
+
+	int halfM = M_ / 2;
+	vector<Triplet<double>> range_list;
+	vector<Triplet<double>> weight_list;
+	vector<Triplet<double>>::iterator it;
+	col_weight_.resize(halfM, halfM);
+
+	for (int i = 0; i < Md_; i++)
+	{
+		int orig_u = ptr_dualgraph_->e_orig_id(ptr_dualgraph_->u(i));
+		int orig_v = ptr_dualgraph_->e_orig_id(ptr_dualgraph_->v(i));
+		WF_edge *e1 = ptr_frame_->GetEdge(orig_u);
+		WF_edge *e2 = ptr_frame_->GetEdge(orig_v);
+		vector<lld> tmp(3);
+		double Fij, Fji;
+		double tmp_range;
+		double tmp_weight;
+
+		ptr_collision_->DetectCollision(e1, e2, tmp);
+		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+		ptr_collision_->DetectCollision(e2, e1, tmp);
+		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+		tmp_range = max(Fij - Fji, 0.0);
+		tmp_weight = exp(-5 * tmp_range * tmp_range);
+		if (tmp_weight > eps)
+		{
+			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
+		}
+
+		tmp_range = max(Fji - Fij, 0.0);
+		tmp_weight = exp(-5 * tmp_range * tmp_range);
+		if (tmp_weight > eps)
+		{
+			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
+		}
+	}
+	//for (int i = 0; i < halfM; i++)
+	//{
+	//	for (int j = 0; j < i; j++)
+	//	{
+	//		WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
+	//		WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
+	//		vector<lld> tmp(3);
+	//		double Fij, Fji;
+	//		double tmp_range;
+	//		double tmp_weight;
+
+	//		ptr_collision_->DetectCollision(e1, e2, tmp);
+	//		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+	//		ptr_collision_->DetectCollision(e2, e1, tmp);
+	//		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+	//		tmp_range = max(Fij - Fji, 0.0);
+	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
+	//		if (tmp_weight > eps)
+	//		{
+	//			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+	//		}
+
+	//		tmp_range = max(Fji - Fij, 0.0);
+	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
+	//		if (tmp_weight > eps)
+	//		{
+	//			weight_list.push_back(Triplet<double>(j, i, tmp_weight));
+	//		}
+	//	}
+	//}
+
+	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+
+	init_collision_.Stop();
+}
+
+
+void ADMMCut::InitSeed()
+{
+	int N = ptr_frame_->SizeOfVertList();
+	int halfM = ptr_frame_->SizeOfEdgeList() / 2;
+	vector<WF_vert*> queue;
+
+	vert_depth_.resize(N);
+	fill(vert_depth_.begin(), vert_depth_.end(), -1);
+	edge_depth_.resize(halfM);
+	fill(edge_depth_.begin(), edge_depth_.end(), -1);
+
+#ifdef DEPTH_FROM_TOP
+	for (int i = 0; i < halfM; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(i * 2);
+		if (e->isCeiling())
+		{
+			WF_vert *u = e->ppair_->pvert_;
+			WF_vert *v = e->pvert_;
+			if (vert_depth_[u->ID()] == -1)
+			{
+				vert_depth_[u->ID()] = 0;
+				queue.push_back(u);
+			}
+			if (vert_depth_[v->ID()] == -1)
+			{
+				vert_depth_[v->ID()] = 0;
+				queue.push_back(v);
+			}
+		}
+	}
+#endif
+#ifdef DEPTH_FROM_BASE
+	for (int i = 0; i < N; i++)
+	{
+		WF_vert *u = ptr_frame_->GetVert(i);
+		if (u->isFixed())
+		{
+			vert_depth_[u->ID()] = 0;
+			queue.push_back(u);
+		}
+	}
+#endif
+
+	int head = 0;
+	int tail = queue.size();
+	while (head < tail)
+	{
+		WF_vert *u = queue[head];
+		WF_edge *e = u->pedge_;
+		while (e != NULL)
+		{
+			WF_vert *v = e->pvert_;
+			int e_id = e->ID() / 2;
+			if (vert_depth_[v->ID()] == -1)
+			{
+				edge_depth_[e_id] = vert_depth_[u->ID()];
+				vert_depth_[v->ID()] = edge_depth_[e_id] + 1;
+				queue.push_back(e->pvert_);
+				tail++;
+			}
+			e = e->pnext_;
+		}
+		head++;
+	}
+}
+
+
 void ADMMCut::SetStartingPoints(int count)
 {
 	if (count == 0)
 	{
-		ptr_dualgraph_->Dualization();
 		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
 	}
 	else
 	{
 		ptr_dualgraph_->UpdateDualization(&x_);
+		Nd_ = ptr_dualgraph_->SizeOfVertList();
+		Md_ = ptr_dualgraph_->SizeOfEdgeList();
+		Fd_ = ptr_dualgraph_->SizeOfFaceList();
+		Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 	}
-
-	Nd_ = ptr_dualgraph_->SizeOfVertList();
-	Md_ = ptr_dualgraph_->SizeOfEdgeList();
-	Fd_ = ptr_dualgraph_->SizeOfFaceList();
-	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 
 	ptr_stiffness_->Init();
 
@@ -366,12 +469,25 @@ void ADMMCut::SetBoundary()
 	bound.setZero();
 
 	// upper dual
+	max_vert_dep_ = 0;
 	int cuts = cutting_edge_.size();
 	for (int i = 0; i < cuts; i++)
 	{
 		int e_id = ptr_dualgraph_->e_dual_id(cutting_edge_[i]);
 		bound[e_id] = 2;
 		x_[e_id] = 0;
+
+		WF_edge *e = ptr_frame_->GetEdge(cutting_edge_[i]);
+		int u = e->pvert_->ID();
+		int v = e->ppair_->pvert_->ID();
+		if (vert_depth_[u] > max_vert_dep_)
+		{
+			max_vert_dep_ = vert_depth_[u];
+		}
+		if (vert_depth_[v] > max_vert_dep_)
+		{
+			max_vert_dep_ = vert_depth_[v];
+		}
 	}
 
 	// base dual 
@@ -423,10 +539,22 @@ void ADMMCut::CreateL()
 		int dual_v = ptr_dualgraph_->v(i);
 		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
-		double height_weight = pow(ptr_dualgraph_->Weight(i), 2);
 
-		double Wuv = col_weight_.coeff(u, v) * height_weight * r_(dual_u, dual_v);
-		double Wvu = col_weight_.coeff(v, u) * height_weight * r_(dual_v, dual_u);
+#ifdef DEPTH_FROM_TOP
+		double tmp_range = 1 - vert_depth_[ptr_dualgraph_->CentralVert(i)->ID()] * 1.0 / max_vert_dep_;
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
+#endif
+#ifdef DEPTH_FROM_BASE
+		double tmp_range = vert_depth_[ptr_dualgraph_->CentralVert(i)->ID()] * 1.0 / max_vert_dep_;
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
+#endif
+#ifdef HEIGHT_AS_WEIGHT
+		double tmp_range = ptr_dualgraph_->Weight(i);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
+#endif
+
+		double Wuv = col_weight_.coeff(u, v) * tmp_height * r_(dual_u, dual_v);
+		double Wvu = col_weight_.coeff(v, u) * tmp_height * r_(dual_v, dual_u);
 
 		if (Wuv > eps)
 		{
@@ -623,6 +751,48 @@ void ADMMCut::UpdateCut()
 		}
 	}
 
+
+#ifdef FLOODFILL_SEED
+	int max_dep = 0;
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		if (x_[dual_u] != x_[dual_v])
+		{
+			if (x_[dual_u] == 0)
+			{
+				// u is always the lower dual vertex of cutting-edge 
+				swap(dual_u, dual_v);
+			}
+
+			int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+			if (seed_depth_[u] > max_dep)
+			{
+				max_dep = seed_depth_[u];
+			}
+		}
+	}
+
+	cutting_edge_.clear();
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
+	{
+		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
+#ifdef PRECUT_SEED
+		if (x_[dual_i] == 1 && seed_depth_[orig_i / 2] == max_dep)
+		{
+			cutting_edge_.push_back(orig_i);
+		}
+#else
+		if (seed_depth_[orig_i / 2] == max_dep)
+		{
+			cutting_edge_.push_back(orig_i);
+		}
+#endif
+	}
+
+
+#else
 	// Update cut
 	cutting_edge_.clear();
 	for (int i = 0; i < Md_; i++)
@@ -645,6 +815,7 @@ void ADMMCut::UpdateCut()
 			}
 		}
 	}
+#endif
 
 	update_cut_.Stop();
 }

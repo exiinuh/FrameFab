@@ -428,6 +428,53 @@ void RenderingWidget::DrawPoints(bool bv)
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnd();
+
+	//if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0 || ptr_fiberprint_ == NULL)
+	//{
+	//	return;
+	//}
+
+	//const std::vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
+	//int N = ptr_frame_->SizeOfVertList();
+
+	//glPointSize(5.0f);
+	//glBegin(GL_POINTS);
+
+	//for (size_t i = 0; i <N; i++)
+	//{
+	//	glColor3f(1.0, 1.0, 1.0);
+
+	//	int tag = ptr_fiberprint_->ptr_graphcut_->vert_depth_[i] % 6;
+	//	switch (tag)
+	//	{
+	//	case 0:
+	//		glColor3f(1.0, 0.0, 0.0);
+	//		break;
+	//	case 1:
+	//		glColor3f(0.0, 1.0, 0.0);
+	//		break;
+	//	case 2:
+	//		glColor3f(0.0, 0.0, 1.0);
+	//		break;
+	//	case 3:
+	//		glColor3f(1.0, 1.0, 0.0);
+	//		break;
+	//	case 4:
+	//		glColor3f(1.0, 0.0, 1.0);
+	//		break;
+	//	case 5:
+	//		glColor3f(1.0, 1.0, 1.0);
+	//		break;
+
+	//	default:
+	//		break;
+	//	}
+
+	//	glVertex3fv(verts[i]->RenderPos().data());
+	//}
+
+	//glColor3f(1.0, 1.0, 1.0);
+	//glEnd();
 }
 
 
@@ -545,11 +592,11 @@ void RenderingWidget::DrawOrder(bool bv)
 
 	if (op_mode_ == NORMAL)
 	{
-		vector<int> print_queue;
+		vector<WF_edge*> print_queue;
 		ptr_fiberprint_->OutputPrintOrder(print_queue);
 		for (int i = 0; i < print_order_; i++)
 		{
-			WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
+			WF_edge *e = print_queue[i];
 			glBegin(GL_LINE_LOOP);
 			glColor3f(1.0, 1.0, 1.0);
 			glVertex3fv(e->pvert_->RenderPos().data());
@@ -972,6 +1019,9 @@ void RenderingWidget::WriteFrame(
 		filename.toLatin1().data()
 	);
 
+	delete ptr_fiberprint_;
+	ptr_fiberprint_ = NULL;
+
 	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
 }
 
@@ -1356,7 +1406,7 @@ void RenderingWidget::PrintNextStep()
 
 void RenderingWidget::PrintLastLayer()
 {
-	vector<int> print_queue;
+	vector<WF_edge*> print_queue;
 	ptr_fiberprint_->OutputPrintOrder(print_queue);
 
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
@@ -1364,8 +1414,7 @@ void RenderingWidget::PrintLastLayer()
 	{
 		print_order_--;
 	}
-	int orig_e = print_queue[print_order_];
-	int last_layer = max(0, ptr_frame_->GetEdge(orig_e)->Layer() - 1);
+	int last_layer = max(0, print_queue[print_order_]->Layer() - 1);
 
 	while (1)
 	{
@@ -1374,8 +1423,7 @@ void RenderingWidget::PrintLastLayer()
 			break;
 		}
 
-		int orig_e = print_queue[print_order_];
-		if (ptr_frame_->GetEdge(orig_e)->Layer() == last_layer)
+		if (print_queue[print_order_]->Layer() == last_layer)
 		{
 			break;
 		}
@@ -1390,7 +1438,7 @@ void RenderingWidget::PrintLastLayer()
 
 void RenderingWidget::PrintNextLayer()
 {
-	vector<int> print_queue;
+	vector<WF_edge*> print_queue;
 	ptr_fiberprint_->OutputPrintOrder(print_queue);
 
 	int M = ptr_frame_->SizeOfEdgeList() / 2;
@@ -1398,8 +1446,7 @@ void RenderingWidget::PrintNextLayer()
 	{
 		print_order_--;
 	}
-	int orig_e = print_queue[print_order_];
-	int next_layer = ptr_frame_->GetEdge(orig_e)->Layer() + 1;
+	int next_layer = print_queue[print_order_]->Layer() + 1;
 
 	while (1)
 	{
@@ -1408,8 +1455,7 @@ void RenderingWidget::PrintNextLayer()
 			break;
 		}
 
-		int orig_e = print_queue[print_order_];
-		if (ptr_frame_->GetEdge(orig_e)->Layer() == next_layer)
+		if (print_queue[print_order_]->Layer() == next_layer)
 		{
 			break;
 		}

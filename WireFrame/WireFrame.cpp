@@ -358,11 +358,12 @@ void WireFrame::WriteToPWF(
 	bool bCut, int min_layer, int max_layer, 
 	const char *path)
 {
-	if ((*pedge_list_)[0]->Layer() == -1)
+	if ((*pedge_list_)[0]->Layer() == -1 || !bCut)
 	{
 		min_layer = -(1 << 20);
 		max_layer = (1 << 20);
 	}
+
 
 	FILE *fp = fopen(path, "wb+");
 	int N = SizeOfVertList();

@@ -15,13 +15,13 @@ public:
 	~DualVertex(){}
 
 public:
-	void		SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
-	void		SetDualId(int dual_id)	{ dual_id_ = dual_id; }
-	void		SetHeight(double height){ height_ = height; }
+	void	SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
+	void	SetDualId(int dual_id)	{ dual_id_ = dual_id; }
+	void	SetHeight(double height){ height_ = height; }
 
-	inline int		orig_id()	const { return orig_id_; }
-	inline int		dual_id()	const { return dual_id_; }
-	inline double	Height()	const { return height_; }
+	int		orig_id()	const { return orig_id_; }
+	int		dual_id()	const { return dual_id_; }
+	double	Height()	const { return height_; }
 
 private:
 	int		orig_id_;										// indexed by dual edge id
@@ -35,23 +35,26 @@ class DualEdge
 {
 public:
 	DualEdge(){}
-	DualEdge(int u, int v, double w)
+	DualEdge(int u, int v, double w, WF_vert* vert)
 	{
 		u_ = u;
 		v_ = v;
 		w_ = w;
+		pvert_ = vert;
 	}
 	~DualEdge(){}
 
 public:
-	inline int		u()			const { return u_; }
-	inline int		v()			const { return v_; }
-	inline double	w()			const { return w_; }
+	int			u()				const { return u_; }
+	int			v()				const { return v_; }
+	double		w()				const { return w_; }
+	WF_vert*	CentralVert()	const { return pvert_; }
 
 private:
 	int			u_;
 	int			v_;
 	double		w_;
+	WF_vert*	pvert_;
 };
 
 
@@ -62,11 +65,11 @@ public:
 	~DualFace(){}
 
 public:
-	void		SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
-	void		SetDualId(int dual_id)	{ dual_id_ = dual_id; }
+	void	SetOrigId(int orig_id)	{ orig_id_ = orig_id; }
+	void	SetDualId(int dual_id)	{ dual_id_ = dual_id; }
 
-	inline int	orig_id()				const { return orig_id_; }
-	inline int	dual_id()				const { return dual_id_; }
+	int		orig_id()				const { return orig_id_; }
+	int		dual_id()				const { return dual_id_; }
 
 private:
 	int		orig_id_;										// indexed by dual vertex id
@@ -94,7 +97,7 @@ public:
 	int		RemoveUpdation(WF_edge *e);						// remove the trail edge
 
 	void	InsertVertex(WF_edge *e);
-	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w);
+	void	InsertEdge(WF_edge *e1, WF_edge *e2, double w, WF_vert *vert);
 	int		InsertFace(WF_vert *p);							// insert a dual face at the end of free face
 	void	DeleteVertex(WF_edge *e);
 	int		DeleteFace(WF_vert *p);							// delete a dual face by moving
@@ -116,6 +119,7 @@ public:
 	int		v_dual_id(int i)	{ return (*face_list_)[i]->dual_id(); }
 
 	double	Weight(int ei)		{ return (*edge_list_)[ei]->w(); }
+	WF_vert*CentralVert(int ei)	{ return (*edge_list_)[ei]->CentralVert(); }
 	double	Height(int ei)		{ return (*vert_list_)[ei]->Height(); }
 	double	maxZ()				{ return maxz_; }
 	double	minZ()				{ return minz_; }

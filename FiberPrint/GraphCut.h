@@ -53,6 +53,13 @@ public:
 	QuadricCollision	*ptr_collision_;
 	char				*ptr_path_;
 
+
+	vector<int>		cutting_edge_;
+	vector<int>		vert_depth_;
+	vector<int>		edge_depth_;
+	int				max_vert_dep_;
+
+
 protected:
 	/* for debuging */
 	bool				debug_;

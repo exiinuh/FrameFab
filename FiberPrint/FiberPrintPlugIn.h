@@ -39,8 +39,8 @@ public:
 	int				ImportPrintOrder(char *fname);
 	void			ExportPrintOrder(char *fname);
 
-	void			InputPrintOrder(vector<int> &queue)		{ ptr_seqanalyzer_->InputPrintOrder(queue); }
-	void			OutputPrintOrder(vector<int> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
+	void			InputPrintOrder(vector<int> &queue)			{ ptr_seqanalyzer_->InputPrintOrder(queue); }
+	void			OutputPrintOrder(vector<WF_edge*> &queue)	{ ptr_seqanalyzer_->OutputPrintOrder(queue); }
 	void			ExportRenderPath(int min_layer, int max_layer, char *ptr_path)
 	{
 		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);

@@ -39,7 +39,7 @@ void ProcAnalyzer::ProcPrint()
 	}
 	else
 	{
-		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+		//ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
 	}
 
 
@@ -306,7 +306,7 @@ void ProcAnalyzer::CollisionColorMap()
 	}
 	else
 	{
-		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+		//ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
 	}
 
 	for (int i = 0; i < layer_queue_.size(); i++)
@@ -421,7 +421,7 @@ void ProcAnalyzer::CollisionColorMap(int x)
 	}
 	else
 	{
-		ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+		//ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
 	}
 	int cout_txt = 0;
 	for (int i = 0; i < Nd; i++)

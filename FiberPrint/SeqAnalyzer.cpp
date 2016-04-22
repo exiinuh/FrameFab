@@ -2,14 +2,23 @@
 
 
 SeqAnalyzer::SeqAnalyzer()
-	:gamma_(100), Dt_tol_(0.1), Dr_tol_(10 * F_PI / 180),
-	Wp_(1.0), Wa_(1.0), Wi_(5.0), debug_(false), fileout_(false)
 {
 	ptr_frame_		= NULL;
 	ptr_wholegraph_	= NULL;
 	ptr_dualgraph_	= NULL;
 	ptr_collision_	= NULL;
 	ptr_path_		= NULL;
+
+	Dt_tol_ = 0.1;
+	Dr_tol_ = 10 * F_PI / 180;
+	Wp_ = 1.0;
+	Wa_ = 1.0;
+	Wi_ = 5.0;
+
+	Nd_ = 0;
+
+	debug_ = false;
+	fileout_ = false;
 }
 
 
@@ -29,14 +38,16 @@ SeqAnalyzer::SeqAnalyzer(
 
 	ptr_wholegraph_ = new DualGraph(ptr_frame_);
 
-	debug_ = true;
-	fileout_ = false;
-
 	Dt_tol_ = ptr_parm->Dt_tol_;
 	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wp_ = ptr_parm->Wp_;
 	Wa_ = ptr_parm->Wa_;
 	Wi_ = ptr_parm->Wi_;
+
+	Nd_ = 0;
+
+	debug_ = true;
+	fileout_ = false;
 }
 
 
@@ -60,6 +71,65 @@ void SeqAnalyzer::PrintOutTimer()
 
 void SeqAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 {
+}
+
+
+void SeqAnalyzer::Init()
+{
+	ptr_wholegraph_->Dualization();
+	Nd_ = ptr_wholegraph_->SizeOfVertList();
+
+	D0_.resize(0);
+	D0_.setZero();
+
+	print_queue_.clear();
+
+	angle_state_.clear();
+	angle_state_.resize(Nd_);
+
+	ptr_dualgraph_->Init();
+}
+
+
+void SeqAnalyzer::PrintPillars()
+{	
+	int layer_size = ptr_frame_->SizeOfLayer();
+
+	/* ranked by x */
+	multimap<double, WF_edge*>base_queue;
+	multimap<double, WF_edge*>::iterator it;
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_i));
+		if (e->isPillar())
+		{
+			point center = e->CenterPos();
+			base_queue.insert(make_pair(center.x(), e));
+			UpdateStructure(e);
+		}
+	}
+
+	for (it = base_queue.begin(); it != base_queue.end(); it++)
+	{
+		print_queue_.push_back(it->second);
+	}
+
+	printf("Size of base queue: %d\n", base_queue.size());
+	for (int l = 0; l < layer_size; l++)
+	{
+		printf("Size of layer %d is %d\n", l, layers_[l].size());
+	}
+
+	/* angle state with pillars */
+	for (int dual_i = 0; dual_i < Nd_; dual_i++)
+	{
+		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
+		if (!ptr_dualgraph_->isExistingEdge(orig_i))
+		{
+			WF_edge *e = ptr_frame_->GetEdge(orig_i);
+			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
+		}
+	}
 }
 
 
@@ -229,56 +299,27 @@ bool SeqAnalyzer::TestifyStiffness()
 }
 
 
-void SeqAnalyzer::Init()
-{
-	ptr_wholegraph_->Dualization();
-	int Nd = ptr_wholegraph_->SizeOfVertList();
-
-	D0_.resize(0);
-	D0_.setZero();
-
-	print_queue_.clear();
-
-	angle_state_.clear();
-	angle_state_.resize(Nd);
-
-	ptr_dualgraph_->Init();
-}
-
-
-void SeqAnalyzer::GetPrintOrder()
-{
-	print_order_.clear();
-
-	int Nq = print_queue_.size();
-	for (int i = 0; i < Nq; i++)
-	{
-		int dual_e = print_queue_[i].dual_id_;
-		print_order_.push_back(ptr_wholegraph_->e_orig_id(dual_e));
-	}
-}
-
-
 void SeqAnalyzer::InputPrintOrder(vector<int> &print_queue)
 {
-	print_order_.clear();
+	print_queue_.clear();
 
 	int Nq = print_queue.size();
 	for (int i = 0; i < Nq; i++)
 	{
-		print_order_.push_back(print_queue[i]);
+		WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
+		print_queue_.push_back(e);
 	}
 }
 
 
-void SeqAnalyzer::OutputPrintOrder(vector<int> &print_queue)
+void SeqAnalyzer::OutputPrintOrder(vector<WF_edge*> &print_queue)
 {
 	print_queue.clear();
 
-	int Nq = print_order_.size();
+	int Nq = print_queue_.size();
 	for (int i = 0; i < Nq; i++)
 	{
-		print_queue.push_back(print_order_[i]);
+		print_queue.push_back(print_queue_[i]);
 	}
 }
 

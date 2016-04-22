@@ -42,6 +42,11 @@
 using namespace std;
 using namespace Eigen;
 
+//#define PRECUT_SEED
+//#define FLOODFILL_SEED
+//#define DEPTH_FROM_TOP
+#define HEIGHT_AS_WEIGHT
+
 
 class ADMMCut : public GraphCut
 {
@@ -56,19 +61,20 @@ public:
 	ADMMCut(
 		DualGraph			*ptr_dualgraph,
 		QuadricCollision	*ptr_collision,
-		Stiffness			*ptr_stiffnessness,
+		Stiffness			*ptr_stiffness,
 		FiberPrintPARM		*ptr_parm,
 		char				*ptr_path
 		);
 	~ADMMCut();
 
 public:
-
-	void		InitState();						// Initialization
-	void		InitCollisionWeight();
 	void		MakeLayers();						// Main loop of cut
 
 private:
+	void		InitState();						// Initialization
+	void		InitCollisionWeight();
+	void		InitSeed();
+
 	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
 	void		SetBoundary();
 	void		CreateL();							// Construct laplace matrix L and H1
@@ -95,8 +101,6 @@ private:
 	VX				D_;
 	VX				lambda_;
 	VX				a_;				// linear coefficient used in x_Qp
-	vector<int>		cutting_edge_;
-
 	VX				d_;				// for setting boundary & QP x
 
 	VX				dual_res_;		// dual residual for ADMM termination criteria
