@@ -26,12 +26,12 @@ FiberPrintPARM::FiberPrintPARM()
 	* Gravity acceleration along Z axis:   gZ = -9806.33 mm/s^2
 	*/
 
-	radius_ = 0.6;
+	radius_ = 0.75;
 	density_ = 1210 * 1e-12;
 	g_ = -9806.33;
-	youngs_modulus_ = 1100;
-	shear_modulus_ = 1032;
-	poisson_ratio_ = 0.39;
+	youngs_modulus_ = 3665;
+	shear_modulus_ = 1375;
+	poisson_ratio_ = 0.333;
 	Dt_tol_ = 5.0;
 	Dr_tol_ = 10 * F_PI / 180;
 	penalty_ = 1e3;
@@ -46,12 +46,12 @@ FiberPrintPARM::FiberPrintPARM()
 
 FiberPrintPARM::FiberPrintPARM(double Wp, double Wa, double Wi)
 {
-	radius_ = 0.6;
+	radius_ = 0.75;
 	density_ = 1210 * 1e-12;
 	g_ = -9806.33;
-	youngs_modulus_ = 1100;
-	shear_modulus_ = 1032;
-	poisson_ratio_ = 0.39;
+	youngs_modulus_ = 3665;
+	shear_modulus_ = 1375;
+	poisson_ratio_ = 0.333;
 	Dt_tol_ = 5.0;
 	Dr_tol_ = 10 * F_PI / 180;
 	penalty_ = 1e3;
