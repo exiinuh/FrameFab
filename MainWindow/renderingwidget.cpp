@@ -428,53 +428,6 @@ void RenderingWidget::DrawPoints(bool bv)
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnd();
-
-	//if (!bv || ptr_frame_ == NULL || ptr_frame_->SizeOfVertList() == 0 || ptr_fiberprint_ == NULL)
-	//{
-	//	return;
-	//}
-
-	//const std::vector<WF_vert*>& verts = *(ptr_frame_->GetVertList());
-	//int N = ptr_frame_->SizeOfVertList();
-
-	//glPointSize(5.0f);
-	//glBegin(GL_POINTS);
-
-	//for (size_t i = 0; i <N; i++)
-	//{
-	//	glColor3f(1.0, 1.0, 1.0);
-
-	//	int tag = ptr_fiberprint_->ptr_graphcut_->vert_depth_[i] % 6;
-	//	switch (tag)
-	//	{
-	//	case 0:
-	//		glColor3f(1.0, 0.0, 0.0);
-	//		break;
-	//	case 1:
-	//		glColor3f(0.0, 1.0, 0.0);
-	//		break;
-	//	case 2:
-	//		glColor3f(0.0, 0.0, 1.0);
-	//		break;
-	//	case 3:
-	//		glColor3f(1.0, 1.0, 0.0);
-	//		break;
-	//	case 4:
-	//		glColor3f(1.0, 0.0, 1.0);
-	//		break;
-	//	case 5:
-	//		glColor3f(1.0, 1.0, 1.0);
-	//		break;
-
-	//	default:
-	//		break;
-	//	}
-
-	//	glVertex3fv(verts[i]->RenderPos().data());
-	//}
-
-	//glColor3f(1.0, 1.0, 1.0);
-	//glEnd();
 }
 
 
@@ -726,7 +679,7 @@ bool RenderingWidget::CaptureEdge(QPoint mouse)
 					is_captured_edge_[i] = true;
 				
 					is_captured_edge_[edges[i]->ppair_->ID()] = true;
-					emit(CapturedEdge(i + 1, edges[i]->Length()));
+					emit(CapturedEdge(i / 2, edges[i]->Length()));
 					emit(layerInfo(edges[i]->Layer() + 1, ptr_frame_->SizeOfLayer()));
 				}
 
@@ -960,10 +913,10 @@ void RenderingWidget::ReadFrame()
 	InitCapturedData();
 	InitFiberData();
 	InitInfoData(
-		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
 		QString(""),
 		QString("Choose base (B) | Choose ceiling (C)"),
-		0,
+		ptr_frame_->SizeOfEdgeList() / 2,
 		-1, ptr_frame_->SizeOfLayer()
 	);
 
@@ -1080,10 +1033,10 @@ void RenderingWidget::Import()
 	InitCapturedData();
 	InitFiberData();
 	InitInfoData(
-		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList(),
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
 		QString(""),
 		QString("Choose base (B) | Choose ceiling (C)"),
-		M,
+		M / 2,
 		-1, ptr_frame_->SizeOfLayer()
 	);
 
@@ -1246,8 +1199,8 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 
-	ptr_fiberprint_->FrameFabPrint();
-	//ptr_fiberprint_->BruteForcePrint();
+	//ptr_fiberprint_->FrameFabPrint();
+	ptr_fiberprint_->BruteForcePrint();
 	//ptr_fiberprint_->SweepingPrint();
 	//ptr_fiberprint_->GetDeformation();
 

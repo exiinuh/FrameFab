@@ -32,7 +32,7 @@ FiberPrintPARM::FiberPrintPARM()
 	youngs_modulus_ = 3665;
 	shear_modulus_ = 1375;
 	poisson_ratio_ = 0.333;
-	Dt_tol_ = 5.0;
+	Dt_tol_ = 0.15;
 	Dr_tol_ = 10 * F_PI / 180;
 	penalty_ = 1e3;
 	pri_tol_ = 1e-3;
@@ -52,7 +52,7 @@ FiberPrintPARM::FiberPrintPARM(double Wp, double Wa, double Wi)
 	youngs_modulus_ = 3665;
 	shear_modulus_ = 1375;
 	poisson_ratio_ = 0.333;
-	Dt_tol_ = 5.0;
+	Dt_tol_ = 0.15;
 	Dr_tol_ = 10 * F_PI / 180;
 	penalty_ = 1e3;
 	pri_tol_ = 1e-3;

@@ -270,7 +270,7 @@ bool SeqAnalyzer::TestifyStiffness()
 	VX D(Ns * 6);
 	D.setZero();
 
-	bool bSuccess = ptr_stiffness_->CalculateD(D, D0_);
+	bool bSuccess = ptr_stiffness_->CalculateD(D);
 
 	if (bSuccess)
 	{

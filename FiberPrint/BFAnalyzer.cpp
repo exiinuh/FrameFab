@@ -29,16 +29,22 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		return true;
 	}
 
+	if (debug_)
+	{
+		printf("---searching at edge %d, head %d, (tail %d).\n", 
+			print_queue_[h - 1]->ID() / 2, h, t);
+	}
+
 	if (!TestifyStiffness())
 	{
-		printf("...Stiffness examination failed.\n");
+		printf("...edge %d: Stiffness examination failed.\n", print_queue_[h - 1]->ID() / 2);
 		return false;
 	}
 
 	WF_edge *ei = print_queue_[h - 1];
 	for (int dual_j = 0; dual_j < Nd_; dual_j++)
 	{
-		int orig_j = ptr_dualgraph_->e_orig_id(dual_j);
+		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		if (!ptr_dualgraph_->isExistingEdge(orig_j))
 		{
@@ -48,7 +54,7 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 				int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 				if (free_angle == 0)
 				{
-					printf("...collision examination failed.\n");
+					printf("...edge %d: collision examination failed.\n", orig_j / 2);
 					return false;
 				}
 
@@ -65,10 +71,6 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 				RecoverStateMap(dual_j, tmp_angle);
 				RecoverStructure(ej);
 				print_queue_.pop_back();
-			}
-			else
-			{
-				printf("...it floats, skip\n");
 			}
 		}
 	}

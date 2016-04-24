@@ -8,6 +8,10 @@ ADMMCut::ADMMCut()
 {
 	// This default construction function should never be run
 	// We need a mesh to begin with
+
+	ptr_dualgraph_ = NULL;
+	ptr_stiffness_ = NULL;
+	ptr_collision_ = NULL;
 }
 
 

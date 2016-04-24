@@ -103,7 +103,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	if (debug_)
 	{
 		printf("---searching edge #%d in layer %d, head %d, (tail %d)\n",
-			print_queue_[h - 1]->ID(), l, h, t);
+			print_queue_[h - 1]->ID() / 2, l, h, t);
 	}
 
 	/* exit */
@@ -195,7 +195,7 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		if (debug_)
 		{
 			printf("###Attempting edge #%d, layer %d, head %d\n",
-				j, l, print_queue_.size());
+				orig_j / 2, l, print_queue_.size());
 		}
 
 		/* collision test */

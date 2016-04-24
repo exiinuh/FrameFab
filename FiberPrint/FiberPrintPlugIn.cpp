@@ -101,7 +101,6 @@ void FiberPrintPlugIn::FrameFabPrint()
 	{
 		cout << "Model not printable!" << endl;
 		getchar();
-		return;
 	}
 
 	printf("FrameFab print done.\n");
@@ -117,9 +116,10 @@ void FiberPrintPlugIn::FrameFabPrint()
 
 void FiberPrintPlugIn::BruteForcePrint()
 {
+	framefab_.Start();
+
 	Init();
 
-	ptr_graphcut_ = new NoneCut(ptr_frame_, ptr_path_);
 	ptr_seqanalyzer_ = new BFAnalyzer(
 		ptr_dualgraph_,
 		ptr_collision_,
@@ -132,10 +132,12 @@ void FiberPrintPlugIn::BruteForcePrint()
 	{
 		cout << "Model not printable!" << endl;
 		getchar();
-
-		return;
 	}
+
 	printf("BruteForce print done.\n");
+
+	framefab_.Stop();
+	framefab_.Print("BruteForce:");
 }
 
 

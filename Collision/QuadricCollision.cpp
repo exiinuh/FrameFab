@@ -290,13 +290,13 @@ bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
 	if (DetectCylinder(target_end, normal, order_start, order_end))
 		return true;
 
-#ifdef Strict
+#ifdef STRICT_COLLISION
 	//Top
 	if (DetectTopCylinder(target_start, normal, order_start, order_end))
 		return true;
 	if (DetectTopCylinder(target_end, normal, order_start, order_end))
 		return true;
-#endif // Strict
+#endif // STRICT_COLLISION
 
 
 
@@ -326,7 +326,7 @@ bool QuadricCollision::SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s,
 
 	if (DetectCylinder(target_s, normal, connect, order_s))
 		return true;
-#ifdef Strict
+#ifdef STRICT_COLLISION
 	//Top
 	if (DetectTopCylinder(connect, normal, connect, order_s))
 		return true;
@@ -400,7 +400,7 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 
 	if (DetectCylinder(target_end, normal, order_start, order_end))
 		return true;
-#ifdef Strict
+#ifdef STRICT_COLLISION
 	//Top
 	if (DetectTopCylinder(target_start, normal, order_start, order_end))
 		return true;
@@ -534,7 +534,7 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 	GeoV3 end_back_cylinder = end_back_cone + normal*extruder_.CyclinderLenth();
 
 	bulk_.clear();
-#ifdef  Strict
+#ifdef  STRICT_COLLISION
 	//Circle 
 	GeoV3 q = cross(normal, p);
 	q.normalize();
@@ -628,7 +628,7 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 
 
 
-#ifdef  Strict
+#ifdef  STRICT_COLLISION
 	//Circle 
 	start = connect;
 	GeoV3 end = target_s;

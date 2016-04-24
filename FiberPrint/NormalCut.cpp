@@ -6,6 +6,13 @@ NormalCut::NormalCut()
 }
 
 
+NormalCut::NormalCut(WireFrame *ptr_frame, char *ptr_path)
+{
+	ptr_frame_ = ptr_frame;
+	ptr_path_ = ptr_path;
+}
+
+
 NormalCut::~NormalCut()
 {
 }

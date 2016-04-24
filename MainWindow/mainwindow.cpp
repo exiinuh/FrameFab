@@ -840,7 +840,7 @@ void MainWindow::OpenExportDialog()
 
 void MainWindow::ShowMeshInfo(int npoint, int nedge)
 {
-	label_meshinfo_->setText(QString("MeshInfo: p: %1 e: %2").arg(npoint).arg(nedge / 2));
+	label_meshinfo_->setText(QString("MeshInfo: p: %1 e: %2").arg(npoint).arg(nedge));
 }
 
 
@@ -862,7 +862,7 @@ void MainWindow::ShowCapturedEdge(int id, double len)
 {
 	if (id != -1)
 	{
-		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id / 2).arg(len));
+		label_capture_->setText(QString("Captured edge: %1  Length: %2").arg(id).arg(len));
 		label_capture_->setVisible(true);
 	}
 	else

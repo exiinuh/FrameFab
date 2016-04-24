@@ -93,52 +93,57 @@ private:
 	void		WriteStiffness(string offset, string rotation);
 	void		Debug();
 
-private:
-	SpMat			L_;				// laplace matrix
-	SpMat			col_weight_;	// for collision weight, indexed by half of original id
-	MX				r_;				// for updation of C, indexed by half of dual id
-	VX				x_;
-	VX				D_;
-	VX				lambda_;
-	VX				a_;				// linear coefficient used in x_Qp
-	VX				d_;				// for setting boundary & QP x
+public:
+	DualGraph			*ptr_dualgraph_;
+	Stiffness			*ptr_stiffness_;
+	QuadricCollision	*ptr_collision_;
 
-	VX				dual_res_;		// dual residual for ADMM termination criteria
-	VX				primal_res_;	// dual residual for ADMM termination criteria
+private:
+	SpMat				L_;				// laplace matrix
+	SpMat				col_weight_;	// for collision weight, indexed by half of original id
+	MX					r_;				// for updation of C, indexed by half of dual id
+	VX					x_;
+	VX					D_;
+	VX					lambda_;
+	VX					a_;				// linear coefficient used in x_Qp
+	VX					d_;				// for setting boundary & QP x
+
+	VX					dual_res_;		// dual residual for ADMM termination criteria
+	VX					primal_res_;	// dual residual for ADMM termination criteria
 
 	/* 
 	Solves the quadratic programming problem:
 	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
 	*/
-	QP				*ptr_qp_;			
-	SpMat			H1_;			// Part 1 of hessian matrix for x-Qp problem
-	SpMat			W_;
+	QP					*ptr_qp_;			
+	SpMat				H1_;			// Part 1 of hessian matrix for x-Qp problem
+	SpMat				W_;
 
-	int				N_;				// N :    Number of nodes in orig graph
-	int				M_;				// M :    Number of edges in orig graph 
-	int				Nd_;			// Nd :   Number of node in dual graph
-	int				Md_;			// Md :   Number of edges in dual graph
-	int				Fd_;			// Fd :   Number of faces in dual graph
-	int             Ns_;
-	int				Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
+	int					N_;				// N :    Number of nodes in orig graph
+	int					M_;				// M :    Number of edges in orig graph 
+	int					Nd_;			// Nd :   Number of node in dual graph
+	int					Md_;			// Md :   Number of edges in dual graph
+	int					Fd_;			// Fd :   Number of faces in dual graph
+	int					Ns_;
+	int					Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
-	int				stop_n_;		// stop_n   : termination criteria for ADMMCut process, number of dual nodes in LowerSet
-	double			Dt_tol_;		// Dt_tol   : tolerance of offset in stiffness
-	double			Dr_tol_;		// Dr_tol   : tolerance of rotation in stiffness
-	double			penalty_;		// penalty  : penalty factor used in ADMM  
-	double			pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
-	double			dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
+	int					stop_n_;		// stop_n   : termination criteria for ADMMCut process, number of dual nodes in LowerSet
+	double				Dt_tol_;		// Dt_tol   : tolerance of offset in stiffness
+	double				Dr_tol_;		// Dr_tol   : tolerance of rotation in stiffness
+	double				penalty_;		// penalty  : penalty factor used in ADMM  
+	double				pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
+	double				dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
 
-	Timer			ADMM_cut_;
-	Timer			init_collision_;
-	Timer			set_bound_;
-	Timer			create_l_;
-	Timer			cal_x_;
-	Timer			cal_q_;
-	Timer			cal_qp_;
-	Timer			cal_d_;
-	Timer			update_lambda_;
-	Timer			update_cut_;
-	Timer			update_r_;
+	Timer				ADMM_cut_;
+	Timer				init_collision_;
+	Timer				set_bound_;
+	Timer				create_l_;
+	Timer				cal_x_;
+	Timer				cal_q_;
+	Timer				cal_qp_;
+	Timer				cal_d_;
+	Timer				update_lambda_;
+	Timer				update_cut_;
+	Timer				update_r_;
 };
 

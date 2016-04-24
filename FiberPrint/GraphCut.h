@@ -34,7 +34,6 @@ class GraphCut
 {
 public:
 	GraphCut();
-	GraphCut(WireFrame *ptr_frame, char *ptr_path);
 	virtual ~GraphCut();
 
 public:
@@ -42,15 +41,7 @@ public:
 	virtual void	PrintOutTimer();
 
 public:
-	vector<DualVertex*>		*GetDualVertList()		{ return ptr_dualgraph_->GetVertList(); }
-	vector<DualEdge*>		*GetDualEdgeList()		{ return ptr_dualgraph_->GetEdgeList(); }
-	vector<DualFace*>		*GetDualFaceList()		{ return ptr_dualgraph_->GetFaceList(); }
-
-public:
 	WireFrame			*ptr_frame_;
-	DualGraph			*ptr_dualgraph_;
-	Stiffness			*ptr_stiffness_;	
-	QuadricCollision	*ptr_collision_;
 	char				*ptr_path_;
 
 
