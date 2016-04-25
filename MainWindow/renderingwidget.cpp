@@ -1244,8 +1244,6 @@ void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 
 	emit(SetOrderSlider(0));
 	emit(SetMaxOrderSlider(0));
-
-	delete ptr_parm;
 }
 
 
