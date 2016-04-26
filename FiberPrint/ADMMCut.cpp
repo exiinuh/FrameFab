@@ -66,7 +66,7 @@ void ADMMCut::MakeLayers()
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints(cut_count);
 
-		ptr_stiffness_->CalculateD(D_, x_, cut_count, false, false, false);
+		ptr_stiffness_->CalculateD(D_, &x_);
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -94,8 +94,8 @@ void ADMMCut::MakeLayers()
 		* cut		 energy : | A * x |
 		* defomation energy : norm(K D - F)
 		*/
-		ptr_stiffness_->CreateGlobalK(x_);
-		ptr_stiffness_->CreateF(x_);
+		ptr_stiffness_->CreateGlobalK(&x_);
+		ptr_stiffness_->CreateF(&x_);
 		SpMat K_init = *(ptr_stiffness_->WeightedK());
 		VX	  F_init = *(ptr_stiffness_->WeightedF());
 
@@ -159,8 +159,8 @@ void ADMMCut::MakeLayers()
 				CalculateQ(D_, Q_new);
 
 				/* Update K reweighted by new x */
-				ptr_stiffness_->CreateGlobalK(x_);
-				ptr_stiffness_->CreateF(x_);
+				ptr_stiffness_->CreateGlobalK(&x_);
+				ptr_stiffness_->CreateF(&x_);
 				SpMat K_new = *(ptr_stiffness_->WeightedK());
 				VX    F_new = *(ptr_stiffness_->WeightedF());
 
@@ -692,12 +692,12 @@ void ADMMCut::CalculateD()
 
 	// Construct Hessian Matrix for D-Qp problem
 	// Here, K is continuous-x weighted
-	ptr_stiffness_->CreateGlobalK(x_);
+	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
 	// Construct Linear coefficient for D-Qp problem
-	ptr_stiffness_->CreateF(x_);
+	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());
 
 	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
@@ -715,10 +715,10 @@ void ADMMCut::UpdateLambda()
 	update_lambda_.Start();
 
 	// Recompute K(x_{k+1}) and F(x_{k+1})
-	ptr_stiffness_->CreateGlobalK(x_);
+	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
 
-	ptr_stiffness_->CreateF(x_);
+	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());
 
 	lambda_ = lambda_ + penalty_ * (K * D_ - F);

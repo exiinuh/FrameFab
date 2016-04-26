@@ -1,10 +1,15 @@
 #include "StiffnessSolver.h"
 
+
 /* Eigen solver */
 bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
 {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(K);
+
+	compute_k_.Start();
+	solver.compute(K);
+	compute_k_.Stop();
+
     info = 0;
     
     if (solver.info() != Eigen::Success)
@@ -44,7 +49,10 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 		return false;
     }
 
+	solve_d_.Start();
     D = solver.solve(F);
+	solve_d_.Stop();
+
     if (solver.info() != Eigen::Success)
     {
         fprintf(stderr, "SolverSystem(LDLT): Error in Solving!\n");

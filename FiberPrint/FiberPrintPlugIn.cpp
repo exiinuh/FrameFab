@@ -170,17 +170,71 @@ void FiberPrintPlugIn::SweepingPrint()
 void FiberPrintPlugIn::GetDeformation()
 {
 	ptr_dualgraph_->Dualization();
+
+	VX D;
 	ptr_stiffness_->Init();
+	ptr_stiffness_->CalculateD(D, NULL, true, false, true, 0, "FiberTest");
 
-	int Ns = ptr_dualgraph_->SizeOfFreeFace();
-	VX D(Ns);
-	D.setZero();
 
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	VX x(Nd);
-	x.setOnes();
+	//FILE *fp = fopen("C:/Users/DELL/Desktop/result/Ku.txt", "r");
+	//int N = ptr_dualgraph_->SizeOfFaceList();
+	//int Ns = ptr_dualgraph_->SizeOfFreeFace();
+	//MX tmpK(6 * N, 6 * N);
+	//tmpK.setZero();
+	//for (int i = 0; i < 6 * N; i++)
+	//{
+	//	for (int j = 0; j < 6 * N; j++)
+	//	{
+	//		fscanf(fp, "%lf", &tmpK(i, j));
+	//	}
+	//}
 
-	ptr_stiffness_->CalculateD(D, x, 0, true, true, true);
+	//MX K(6 * Ns, 6 * Ns);
+	//K.setZero();
+	//for (int i = 0; i < N; i++)
+	//{
+	//	if (!ptr_frame_->isFixed(i))
+	//	{
+	//		int u = ptr_dualgraph_->v_dual_id(i);
+	//		for (int j = 0; j < N; j++)
+	//		{
+	//			if (!ptr_frame_->isFixed(j))
+	//			{
+	//				int v = ptr_dualgraph_->v_dual_id(j);
+	//				for (int h = 0; h < 6; h++)
+	//				{
+	//					for (int l = 0; l < 6; l++)
+	//					{
+	//						K(6 * u + h, 6 * v + l) = tmpK(6 * i + h, 6 * j + l);
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+	//fclose(fp);
+
+	//fp = fopen("C:/Users/DELL/Desktop/result/Ku1.txt", "w");
+	//for (int i = 0; i < 6 * Ns; i++)
+	//{
+	//	for (int j = 0; j < 6 * Ns; j++)
+	//	{
+	//		fprintf(fp, "%lf ", K(i, j));
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+	//fclose(fp);
+
+	//fp = fopen("C:/Users/DELL/Desktop/result/Ku2.txt", "w");
+	//for (int i = 0; i < 6 * Ns; i++)
+	//{
+	//	for (int j = 0; j < 6 * Ns; j++)
+	//	{
+	//		fprintf(fp, "%lf ", ptr_stiffness_->K_.coeff(i, j));
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+	//fclose(fp);
 }
 
 

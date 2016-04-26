@@ -43,7 +43,7 @@
 #endif
 
 #ifndef  eps
-#define eps  0.0001
+#define eps  0.000001
 #endif
 
 #ifndef STIFF_TOL

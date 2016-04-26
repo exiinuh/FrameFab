@@ -100,7 +100,7 @@ void Stiffness::CreateFe()
 }
 
 
-void Stiffness::CreateF(const VectorXd &x)
+void Stiffness::CreateF(VX *ptr_x)
 {
 	create_f_.Start();
 
@@ -108,6 +108,14 @@ void Stiffness::CreateF(const VectorXd &x)
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
+
+	VX x;
+	if (ptr_x == NULL)
+	{
+		ptr_x = &x;
+		ptr_x->resize(Nd);
+		ptr_x->setOnes();
+	}
 
 	F_.resize(6 * Ns_);
 	F_.setZero();
@@ -124,11 +132,11 @@ void Stiffness::CreateF(const VectorXd &x)
             // only unrestrained node is added into stiffness equation
             if (dual_u < Ns_)
             {
-                F_[dual_u * 6 + j] += x[i] * Fe_[i][j];
+                F_[dual_u * 6 + j] += (*ptr_x)[i] * Fe_[i][j];
             }
             if (dual_v < Ns_)
             {
-                F_[dual_v * 6 + j] += x[i] * Fe_[i][j + 6];
+				F_[dual_v * 6 + j] += (*ptr_x)[i] * Fe_[i][j + 6];
             }
 		}
 	}
@@ -178,8 +186,8 @@ void Stiffness::CreateElasticK()
 		//WF_edge *ei = ptr_frame->GetNeighborEdge(ptr_dualgraph_->v_orig_id(i));
 		WF_edge *ei = wf_edge_list[ptr_dualgraph_->e_orig_id(i)];
 
-		int u = ei->pvert_->ID();
-		int v = ei->ppair_->pvert_->ID();
+		int u = ei->ppair_->pvert_->ID();
+		int v = ei->pvert_->ID();
 		double L = ei->Length();
 		double Le = L - 2 * nr_;
 
@@ -195,8 +203,8 @@ void Stiffness::CreateElasticK()
 		{
 			/* for circular cross-sections, the shape factor for shear(fs) = 1.2 (ref. Aslam's book) */
 			double fs = 1.2;
-			Ksy = 12. * E_ * Iyy * fs / (G_ * Asy * Le * Le);
-			Ksz = 12. * E_ * Izz * fs / (G_ * Asz * Le * Le);
+			Ksy = 12. * E_ * Izz * fs / (G_ * Asy * Le * Le);
+			Ksz = 12. * E_ * Iyy * fs / (G_ * Asz * Le * Le);
 		}
 		else
 		{
@@ -249,7 +257,7 @@ void Stiffness::CreateElasticK()
 
 		for (int k = 0; k < 12; k++)
 		{
-			for (int l = 0; l < 12; l++)
+			for (int l = k + 1; l < 12; l++)
 			{
 				if (eKuv(k, l) != eKuv(l, k))
 				{
@@ -276,13 +284,21 @@ void Stiffness::CreateElasticK()
 }
 
 
-void Stiffness::CreateGlobalK(const VectorXd &x)
+void Stiffness::CreateGlobalK(VX *ptr_x)
 {
 	create_k_.Start();
 
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Fd = ptr_dualgraph_->SizeOfFaceList();
+
+	VX x;
+	if (ptr_x == NULL)
+	{
+		ptr_x = &x;
+		ptr_x->resize(Nd);
+		ptr_x->setOnes();
+	}
 
 	vector<Triplet<double>> K_list;
 
@@ -291,8 +307,8 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 	{
 		WF_edge *ei = ptr_frame->GetEdge(ptr_dualgraph_->e_orig_id(i));
 		WF_edge *ej = ei->ppair_;
-		int u = ei->pvert_->ID();
-		int v = ej->pvert_->ID();
+		int u = ej->pvert_->ID();
+		int v = ei->pvert_->ID();
 		int dual_u = ptr_dualgraph_->v_dual_id(u);
 		int dual_v = ptr_dualgraph_->v_dual_id(v);
 
@@ -305,26 +321,26 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 				{
 					double tmp;
 
-					tmp = x[i] * eK_[i](k, l);
-					if (tmp > eps)
+					tmp = (*ptr_x)[i] * eK_[i](k, l);
+					if (fabs(tmp) > eps)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l, tmp));
 					}
 
-					tmp = x[i] * eK_[i](k + 6, l + 6);
-					if (tmp > eps)
+					tmp = (*ptr_x)[i] * eK_[i](k + 6, l + 6);
+					if (fabs(tmp) > eps)
 					{
 						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l, tmp));
 					}
 
-					tmp = x[i] * eK_[i](k, l + 6);
-					if (tmp > eps)
+					tmp = (*ptr_x)[i] * eK_[i](k, l + 6);
+					if (fabs(tmp) > eps)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_v * 6 + l, tmp));
 					}
 
-					tmp = x[i] * eK_[i](k + 6, l);
-					if (tmp > eps)
+					tmp = (*ptr_x)[i] * eK_[i](k + 6, l);
+					if (fabs(tmp) > eps)
 					{
 						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_u * 6 + l, tmp));
 					}
@@ -339,8 +355,8 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 			{
 				for (int l = 0; l < 6; l++)
 				{
-					double tmp = x[i] * eK_[i](k, l);
-					if (tmp > eps)
+					double tmp = (*ptr_x)[i] * eK_[i](k, l);
+					if (fabs(tmp) > eps)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l, tmp));
 					}
@@ -354,8 +370,11 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 			{
 				for (int l = 0; l < 6; l++)
 				{
-					double tmp = x[i] * eK_[i](k + 6, l + 6);
-					K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l, tmp));
+					double tmp = (*ptr_x)[i] * eK_[i](k + 6, l + 6);
+					if (fabs(tmp) > eps)
+					{
+						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l, tmp));
+					}
 				}
 			}
 		}
@@ -366,23 +385,17 @@ void Stiffness::CreateGlobalK(const VectorXd &x)
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D)
-{
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	VX x(Nd); 
-	x.setOnes();
-
-	return CalculateD(D, x, 0, false, true, false);
-}
-
-
-bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x,
-	int cut_count, bool verbose, bool cond_num, bool write_3dd)
+bool Stiffness::CalculateD(
+	VX &D, VX *ptr_x, 
+	bool verbose, bool cond_num, bool write_3dd,
+	int file_id, string file_name
+	)
 {
 	D.resize(6 * Ns_);
+	D.setZero();
 
-	CreateGlobalK(x);
-	CreateF(x);
+	CreateGlobalK(ptr_x);
+	CreateF(ptr_x);
 
 	/* Parameter for StiffnessSolver */
 	int	info;
@@ -418,30 +431,24 @@ bool Stiffness::CalculateD(VectorXd &D, const VectorXd &x,
 	/* --- Output Process --- */
 	if (write_3dd)
 	{
-		WriteData(D, verbose, cut_count, "FiberTest_cut");
+		WriteData(D, verbose, file_id, file_name);
 	}
 
 	return true;
 }
 
 
-bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0)
-{
-	int Nd = ptr_dualgraph_->SizeOfVertList();
-	VX x(Nd);
-	x.setOnes();
-
-	return CalculateD(D, D0, x, 0, false, false, false);
-}
-
-
-bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
-	int seq_id, bool verbose, bool cond_num, bool write_3dd)
+bool Stiffness::CalculateD(
+	VX &D, VX &D0, VX *ptr_x,
+	bool verbose, bool cond_num, bool write_3dd,
+	int file_id, string file_name
+	)
 {
 	D.resize(6 * Ns_);
+	D.setZero();
 
-	CreateGlobalK(x);
-	CreateF(x);
+	CreateGlobalK(ptr_x);
+	CreateF(ptr_x);
 
 	/* --- Check Stiffness Matrix Condition Number --- */
 	IllCondDetector	stiff_inspector(K_);
@@ -475,7 +482,7 @@ bool Stiffness::CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x,
 	/* --- Output Process --- */
 	if (write_3dd)
 	{
-		WriteData(D, verbose, seq_id, "FiberTest_seq");
+		WriteData(D, verbose, file_id, file_name);
 	}
 
 	return true;
@@ -541,8 +548,13 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
 }
 
 
-void Stiffness::WriteData(VectorXd &D, int verbose, int id, char *fname)
+void Stiffness::WriteData(VectorXd &D, int verbose, int id, string fname)
 {	
+	if (fname == "")
+	{
+		return;
+	}
+
 	VX D_joined(ptr_dualgraph_->SizeOfFaceList() * 6);
 	D_joined.setZero();
 

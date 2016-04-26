@@ -13,7 +13,7 @@
 *
 *	 Version:  1.2
 *	 Created:  Oct/15/2015 by Xin Hu
-*	 Updated:  Mar/31/2016 by Xin Hu
+*	 Updated:  Apr/26/2016 by Xin Hu
 *
 *	 Author:   Xin Hu,  Yijiang Huang, Guoxian Song
 *	 Company:  GCL@USTC
@@ -83,27 +83,36 @@ public:
 public:
 	void		Init();
 	void		CreateFe();
-	void		CreateF(const VectorXd &x);
+	void		CreateF(VX *ptr_x = NULL);
 	void		CreateElasticK();
-	void		CreateGlobalK(const VectorXd &x);
+	void		CreateGlobalK(VX *ptr_x = NULL);
 
-	/* Socket to GraphCut */
-	bool		CalculateD(VectorXd &D);
-	bool		CalculateD(VectorXd &D, const VectorXd &x, 
-							int cut_count, bool verbose, bool cond_num, bool write_3dd);
+	/* calculate D using LDLT */
+	bool CalculateD(
+		VX &D,
+		VX *ptr_x = NULL,
+		bool verbose = true, bool cond_num = false, bool write_3dd = false,
+		int file_id = 0, string file_name = ""
+		);
 
-	/* Socket to SeqAnalyzer */
-	bool		CalculateD(VectorXd &D, VectorXd &D0);
-	bool		CalculateD(VectorXd &D, VectorXd &D0, const VectorXd &x, 
-							int seq_id, bool verbose, bool cond_num, bool write_3dd);
+	/* calculate D using ConjugateGradient by Eigen */
+	bool CalculateD(
+		VX &D, 
+		VX &D0,						// D0 is the last result
+		VX *ptr_x = NULL,
+		bool verbose = true, bool cond_num = false, bool write_3dd = false,
+		int file_id = 0, string file_name = ""
+		);
 
+private:
 	/* Check condition number */
 	bool		CheckIllCondition(IllCondDetector &stiff_inspector, int verbose);
 	bool		CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose);
 
 	/* Debug */
-	void		WriteData(VectorXd &D, int verbose, int id, char *fname);
+	void		WriteData(VectorXd &D, int verbose, int id, string fname);
 
+public:
 	/* Data I/O */
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
 	VX			*WeightedF(){ assert(&F_); return &F_; }
@@ -114,8 +123,7 @@ public:
 
 	void		PrintOutTimer();
 	
-private:
-	//private:
+public:
 	DualGraph		*ptr_dualgraph_;
 	FiberPrintPARM	*ptr_parm_;
 	char			*ptr_path_;
