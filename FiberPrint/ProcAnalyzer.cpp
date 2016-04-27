@@ -160,7 +160,7 @@ bool  ProcAnalyzer::IfPointInVector(point p)
 {
 	for (int i = 0; i <exist_point_.size(); i++)
 	{
-		if ((exist_point_[i] - p).length()<eps)
+		if ((exist_point_[i] - p).length() < GEO_EPS)
 			return true;
 	}
 	return false;

@@ -27,23 +27,19 @@
 #define FILENMAX 128
 
 #ifndef VERSION
-#define VERSION "20151125+"
+#define VERSION "20160427+"
 #endif
 
 #ifndef F_PI
 #define F_PI 3.14159265358979323846264338327950288419716939937510
 #endif
 
-#ifndef  Threshold_angle
-#define Threshold_angle  3*F_PI/4
+#ifndef  SPT_EPS
+#define SPT_EPS  0.000001		// sparse matrix eps
 #endif
 
-#ifndef  threhold
-#define threhold  30
-#endif
-
-#ifndef  eps
-#define eps  0.000001
+#ifndef  GEO_EPS			// geometry eps
+#define GEO_EPS  0.001
 #endif
 
 #ifndef STIFF_TOL

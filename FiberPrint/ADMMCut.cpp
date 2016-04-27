@@ -303,14 +303,14 @@ void ADMMCut::InitCollisionWeight()
 
 		tmp_range = max(Fij - Fji, 0.0);
 		tmp_weight = exp(-5 * tmp_range * tmp_range);
-		if (tmp_weight > eps)
+		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
 		}
 
 		tmp_range = max(Fji - Fij, 0.0);
 		tmp_weight = exp(-5 * tmp_range * tmp_range);
-		if (tmp_weight > eps)
+		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
@@ -334,14 +334,14 @@ void ADMMCut::InitCollisionWeight()
 
 	//		tmp_range = max(Fij - Fji, 0.0);
 	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
-	//		if (tmp_weight > eps)
+	//		if (tmp_weight > SPT_EPS)
 	//		{
 	//			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
 	//		}
 
 	//		tmp_range = max(Fji - Fij, 0.0);
 	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
-	//		if (tmp_weight > eps)
+	//		if (tmp_weight > SPT_EPS)
 	//		{
 	//			weight_list.push_back(Triplet<double>(j, i, tmp_weight));
 	//		}
@@ -560,12 +560,12 @@ void ADMMCut::CreateL()
 		double Wuv = col_weight_.coeff(u, v) * tmp_height * r_(dual_u, dual_v);
 		double Wvu = col_weight_.coeff(v, u) * tmp_height * r_(dual_v, dual_u);
 
-		if (Wuv > eps)
+		if (Wuv > SPT_EPS)
 		{
 			L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
 			L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
 		}
-		if (Wvu > eps)
+		if (Wvu > SPT_EPS)
 		{
 			L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
 			L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));

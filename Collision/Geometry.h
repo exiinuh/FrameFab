@@ -89,7 +89,7 @@ namespace Geometry
 		void normalize()
 		{
 			double length = norm();
-			if (length > eps)
+			if (length > GEO_EPS)
 			{
 				for (int i = 0; i < 3; i++)
 					data_[i] /= length;
@@ -124,9 +124,9 @@ namespace Geometry
 		double temp = 0;
 		temp = dot(vec1, vec2) / (vec1.norm()*vec2.norm());
 		//--------------------------
-		if (abs(temp - 1) < eps)
+		if (abs(temp - 1) < GEO_EPS)
 			return 0;
-		if (abs(temp + 1) < eps)
+		if (abs(temp + 1) < GEO_EPS)
 			return 3.1415;
 
 		return acos(temp);

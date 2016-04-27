@@ -14,11 +14,10 @@ typedef unsigned long long lld;
 using namespace Geometry;
 using namespace std;
 
-// ¦È=(0,180), ¦Õ=(0,360)
-
-
 //#define	STRICT_COLLISION
-//target means printing edge, order menas existing edge
+
+// ¦È=(0,180), ¦Õ=(0,360)
+// target means printing edge, order menas existing edge
 class QuadricCollision
 {
 public:

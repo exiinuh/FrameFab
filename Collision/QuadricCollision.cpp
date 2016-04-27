@@ -217,7 +217,7 @@ bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
 	}
 
 	//1
-	if ((target_start - order_end).norm() < eps)
+	if ((target_start - order_end).norm() < GEO_EPS)
 	{
 		if ( SpecialCase(target_start,target_end,order_start,normal ))
 		{
@@ -226,7 +226,7 @@ bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
 		return false;
 	}
 
-	if ((target_start - order_start).norm() < eps)
+	if ((target_start - order_start).norm() < GEO_EPS)
 	{
 		if (SpecialCase(target_start, target_end, order_end, normal))
 		{
@@ -235,7 +235,7 @@ bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
 		return false;
 	}
 
-	if ((target_end - order_end).norm() < eps)
+	if ((target_end - order_end).norm() < GEO_EPS)
 	{
 		if (SpecialCase(target_end, target_start, order_start, normal))
 		{
@@ -244,7 +244,7 @@ bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
 		return false;
 	}
 
-	if ((target_end - order_start).norm() < eps)
+	if ((target_end - order_start).norm() < GEO_EPS)
 	{
 		if (SpecialCase(target_end, target_start, order_end, normal))
 		{
@@ -354,14 +354,14 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 {
 
 	//Exception situation
-	if ((target_start - order_end).norm() < eps)
+	if ((target_start - order_end).norm() < GEO_EPS)
 	{
 		if (DetectAngle(target_start, target_end, order_start, normal))
 		{
 			return true;
 		}
 	}
-	if ((target_start - order_start).norm() < eps)
+	if ((target_start - order_start).norm() < GEO_EPS)
 	{
 		if (DetectAngle(target_start, target_end, order_end, normal))
 		{
@@ -369,7 +369,7 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 			return true;
 		}
 	}
-	if ((target_end - order_end).norm() < eps)
+	if ((target_end - order_end).norm() < GEO_EPS)
 	{
 		if (DetectAngle(target_end, target_start, order_start, normal))
 		{
@@ -377,7 +377,7 @@ bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
 			return true;
 		}
 	}
-	if ((target_end - order_start).norm() < eps)
+	if ((target_end - order_start).norm() < GEO_EPS)
 	{
 		if (DetectAngle(target_end, target_start, order_end, normal))
 		{
@@ -675,7 +675,7 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 
 bool QuadricCollision::Parallel(GeoV3 a, GeoV3 b)
 {
-	if (abs(angle(a, b)) < eps || abs(angle(a, b) - F_PI) < eps)
+	if (abs(angle(a, b)) < GEO_EPS || abs(angle(a, b) - F_PI) < GEO_EPS)
 		return true;
 	return false;
 }

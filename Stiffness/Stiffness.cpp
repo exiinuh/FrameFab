@@ -322,25 +322,25 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 					double tmp;
 
 					tmp = (*ptr_x)[i] * eK_[i](k, l);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l, tmp));
 					}
 
 					tmp = (*ptr_x)[i] * eK_[i](k + 6, l + 6);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l, tmp));
 					}
 
 					tmp = (*ptr_x)[i] * eK_[i](k, l + 6);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_v * 6 + l, tmp));
 					}
 
 					tmp = (*ptr_x)[i] * eK_[i](k + 6, l);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_u * 6 + l, tmp));
 					}
@@ -356,7 +356,7 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 				for (int l = 0; l < 6; l++)
 				{
 					double tmp = (*ptr_x)[i] * eK_[i](k, l);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_u * 6 + k, dual_u * 6 + l, tmp));
 					}
@@ -371,7 +371,7 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 				for (int l = 0; l < 6; l++)
 				{
 					double tmp = (*ptr_x)[i] * eK_[i](k + 6, l + 6);
-					if (fabs(tmp) > eps)
+					if (fabs(tmp) > SPT_EPS)
 					{
 						K_list.push_back(Triplet<double>(dual_v * 6 + k, dual_v * 6 + l, tmp));
 					}

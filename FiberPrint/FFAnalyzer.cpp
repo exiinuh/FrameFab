@@ -20,6 +20,7 @@ bool FFAnalyzer::SeqPrint()
 	/* split layers */
 	/* label stores layer index of each dual node */
 	int layer_size = ptr_frame_->SizeOfLayer();
+	layers_.clear();
 	layers_.resize(layer_size);
 	for (int i = 0; i < Nd_; i++)
 	{
