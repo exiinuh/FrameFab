@@ -128,8 +128,7 @@ private:
 	int					Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
 	int					stop_n_;		// stop_n   : termination criteria for ADMMCut process, number of dual nodes in LowerSet
-	double				Dt_tol_;		// Dt_tol   : tolerance of offset in stiffness
-	double				Dr_tol_;		// Dr_tol   : tolerance of rotation in stiffness
+	double				D_tol_;		// Dt_tol   : tolerance of offset in stiffness
 	double				penalty_;		// penalty  : penalty factor used in ADMM  
 	double				pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double				dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion

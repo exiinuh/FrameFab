@@ -83,8 +83,7 @@ protected:
 
 	/* parameters */
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double				Dt_tol_;					// Dt_tol	: tolerance of offset in stiffness
-	double				Dr_tol_;					// Dr_tol   : tolerance of rotation in stiffness
+	double				D_tol_;					// Dt_tol	: tolerance of offset in stiffness
 	double				Wp_;						// Wp_		: stablity weight for printing cost
 	double				Wa_;						// Wa_		: adjacent weight for printing cost
 	double				Wi_;						// Wl_		: influence weight for printing cost

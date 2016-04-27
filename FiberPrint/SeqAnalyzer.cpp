@@ -9,11 +9,10 @@ SeqAnalyzer::SeqAnalyzer()
 	ptr_collision_	= NULL;
 	ptr_path_		= NULL;
 
-	Dt_tol_ = 0.1;
-	Dr_tol_ = 10 * F_PI / 180;
-	Wp_ = 1.0;
-	Wa_ = 1.0;
-	Wi_ = 5.0;
+	Wp_ = 0;
+	Wa_ = 0;
+	Wi_ = 0;
+	D_tol_ = 0;
 
 	Nd_ = 0;
 
@@ -38,11 +37,10 @@ SeqAnalyzer::SeqAnalyzer(
 
 	ptr_wholegraph_ = new DualGraph(ptr_frame_);
 
-	Dt_tol_ = ptr_parm->Dt_tol_;
-	Dr_tol_ = ptr_parm->Dr_tol_;
 	Wp_ = ptr_parm->Wp_;
 	Wa_ = ptr_parm->Wa_;
 	Wi_ = ptr_parm->Wi_;
+	D_tol_ = ptr_parm->seq_D_tol_;
 
 	Nd_ = 0;
 
@@ -277,14 +275,12 @@ bool SeqAnalyzer::TestifyStiffness()
 		for (int k = 0; k < Ns; k++)
 		{
 			VX offset(3);
-			VX distortion(3);
 			for (int t = 0; t < 3; t++)
 			{
 				offset[t] = D[k * 6 + t];
-				distortion[t] = D[k * 6 + t + 3];
 			}
 
-			if (offset.norm() >= Dt_tol_ || distortion.norm() >= Dr_tol_)
+			if (offset.norm() >= D_tol_)
 			{
 				bSuccess = false;
 				break;

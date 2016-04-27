@@ -332,9 +332,23 @@ void WireFrame::WriteToOBJ(const char *path)
 	int N = SizeOfVertList();
 	int M = SizeOfEdgeList();
 
+	vector<int> export_vert;
+	vector<int> hash(N);
+	fill(hash.begin(), hash.end(), -1);
+
 	for (int i = 0; i < N; i++)
 	{
-		point p = (*pvert_list_)[i]->Position();
+		if (!isFixed(i))
+		{
+			export_vert.push_back(i);
+			hash[i] = export_vert.size();
+		}
+	}
+
+	int Ne = export_vert.size();
+	for (int i = 0; i < Ne; i++)
+	{
+		point p = (*pvert_list_)[export_vert[i]]->Position();
 		fprintf(fp, "v %lf %lf %lf\n", p.x(), p.y(), p.z());
 	}
 
@@ -342,9 +356,11 @@ void WireFrame::WriteToOBJ(const char *path)
 	{
 		WF_edge *e1 = (*pedge_list_)[i];
 		WF_edge *e2 = e1->ppair_;
-		if (i < e2->ID())
+		if (i < e2->ID() && !e1->isPillar())
 		{
-			fprintf(fp, "l %d %d\n", e1->pvert_->ID() + 1, e2->pvert_->ID() + 1);
+			int u = e2->pvert_->ID();
+			int v = e1->pvert_->ID();
+			fprintf(fp, "l %d %d\n", hash[u], hash[v]);
 		}
 	}
 

@@ -2,9 +2,7 @@
 
 
 ADMMCut::ADMMCut()
-	:penalty_(0),
-	Dt_tol_(0), Dr_tol_(0),
-	pri_tol_(0), dual_tol_(0)
+	:penalty_(0), D_tol_(0), pri_tol_(0), dual_tol_(0)
 {
 	// This default construction function should never be run
 	// We need a mesh to begin with
@@ -31,8 +29,7 @@ ADMMCut::ADMMCut(
 
 	ptr_qp_ = NULL;
 
-	Dt_tol_ = ptr_parm->Dt_tol_;
-	Dr_tol_ = ptr_parm->Dr_tol_;
+	D_tol_ = ptr_parm->ADMM_D_tol_;
 	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
@@ -704,7 +701,7 @@ void ADMMCut::CalculateD()
 
 	/* 10 degree rotation tolerance, from degree to radians */
 	cal_qp_.Start();
-	ptr_qp_->solve(Q, a, D_, Dt_tol_, debug_);
+	ptr_qp_->solve(Q, a, D_, D_tol_, debug_);
 	cal_qp_.Stop();
 	cal_d_.Stop();
 }

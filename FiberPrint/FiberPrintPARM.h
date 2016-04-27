@@ -5,8 +5,23 @@
 class FiberPrintPARM
 {
 public:
-	FiberPrintPARM();
-	FiberPrintPARM(double Wl, double Wp, double Wa);
+	FiberPrintPARM(
+		double Wp = 1.0,
+		double Wa = 1.0,
+		double Wi = 5.0,
+		double seq_D_tol = 3.25,
+		double ADMM_D_tol = 1.5,
+		double penalty = 1e3,
+		double pri_tol = 1e-3,
+		double dual_tol = 1e-3,
+		double radius = 0.75,
+		double density = 1210 * 1e-12,
+		double g = -9806.3,
+		double youngs_modulus = 3665,
+		double shear_modulus = 1375,
+		double poisson_ratio = 0.333
+		);
+
 	~FiberPrintPARM();
 
 public:
@@ -18,18 +33,16 @@ public:
 	double		shear_modulus_;
 	double		poisson_ratio_;
 
-	// stiffness
-	double		Dt_tol_;		// Dt_tol   : tolerance of offset in stiffness
-	double		Dr_tol_;		// Dr_tol   : tolerance of rotation in stiffness
-
 	// ADMM
-	double		penalty_;		// penalty  : penalty factor used in ADMM  
-	double		pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
-	double		dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
+	double		ADMM_D_tol_;	// ADMM_D_tol_	: tolerance of offset in stiffness for ADMMCut 
+	double		penalty_;		// penalty		: penalty factor used in ADMM  
+	double		pri_tol_;		// pri_tol		: primal residual tolerance for ADMM termination criterion
+	double		dual_tol_;		// dual_tol		: dual   residual tolerance for ADMM termination criterion
 
 	// Sequence Analyzer
 	double		Wp_;
 	double		Wa_;
 	double		Wi_;
+	double		seq_D_tol_;		// seq_D_tol_   : tolerance of offset in stiffness for SeqAnalyzer 
 };
 

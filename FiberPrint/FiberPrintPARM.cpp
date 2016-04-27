@@ -1,7 +1,12 @@
 #include "FiberPrintPARM.h"
 
 
-FiberPrintPARM::FiberPrintPARM()
+FiberPrintPARM::FiberPrintPARM(
+	double Wp, double Wa, double Wi, double seq_D_tol,
+	double ADMM_D_tol , double penalty, double pri_tol, double dual_tol,
+	double radius, double density, double g, 
+	double youngs_modulus, double shear_modulus, double poisson_ratio
+	)
 {
 	/*
 	*	For Your Inference; Unit Transfer
@@ -26,41 +31,22 @@ FiberPrintPARM::FiberPrintPARM()
 	* Gravity acceleration along Z axis:   gZ = -9806.33 mm/s^2
 	*/
 
-	radius_ = 0.75;
-	density_ = 1210 * 1e-12;
-	g_ = -9806.33;
-	youngs_modulus_ = 3665;
-	shear_modulus_ = 1375;
-	poisson_ratio_ = 0.333;
-	Dt_tol_ = 1.5;
-	Dr_tol_ = 10 * F_PI / 180;
-	penalty_ = 1e3;
-	pri_tol_ = 1e-3;
-	dual_tol_ = 1e-3;
+	radius_ = radius;
+	density_ = density;
+	g_ = g;
+	youngs_modulus_ = youngs_modulus;
+	shear_modulus_ = shear_modulus;
+	poisson_ratio_ = poisson_ratio;
 
-	Wp_ = 1.0;
-	Wa_ = 1.0;
-	Wi_ = 5.0;
-}
-
-
-FiberPrintPARM::FiberPrintPARM(double Wp, double Wa, double Wi)
-{
-	radius_ = 0.75;
-	density_ = 1210 * 1e-12;
-	g_ = -9806.33;
-	youngs_modulus_ = 3665;
-	shear_modulus_ = 1375;
-	poisson_ratio_ = 0.333;
-	Dt_tol_ = 1.5;
-	Dr_tol_ = 10 * F_PI / 180;
-	penalty_ = 1e3;
-	pri_tol_ = 1e-3;
-	dual_tol_ = 1e-3;
+	ADMM_D_tol_ = ADMM_D_tol;
+	penalty_ = penalty;
+	pri_tol_ = pri_tol;
+	dual_tol_ = dual_tol;
 
 	Wp_ = Wp;
 	Wa_ = Wa;
 	Wi_ = Wi;
+	seq_D_tol_ = seq_D_tol;
 }
 
 
