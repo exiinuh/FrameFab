@@ -9,7 +9,7 @@ public:
 		double Wp = 1.0,
 		double Wa = 1.0,
 		double Wi = 5.0,
-		double seq_D_tol = 3.25,
+		double seq_D_tol = 5,
 		double ADMM_D_tol = 1.5,
 		double penalty = 1e3,
 		double pri_tol = 1e-3,

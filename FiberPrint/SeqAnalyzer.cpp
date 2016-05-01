@@ -115,16 +115,15 @@ void SeqAnalyzer::PrintPillars()
 	printf("Size of base queue: %d\n", base_queue.size());
 	for (int l = 0; l < layer_size; l++)
 	{
-		printf("Size of layer %d is %d\n", l, layers_[l].size());
+		printf("Size of layer %d is %d\n", l + 1, layers_[l].size());
 	}
 
 	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
-		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
-		if (!ptr_dualgraph_->isExistingEdge(orig_i))
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_i));
+		if (!ptr_dualgraph_->isExistingEdge(e))
 		{
-			WF_edge *e = ptr_frame_->GetEdge(orig_i);
 			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
 		}
 	}
@@ -204,19 +203,17 @@ void SeqAnalyzer::RecoverStructure(WF_edge *e)
 }
 
 
-void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
+void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
 	upd_map_.Start();
 
-	WF_edge *order_e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_i));
+	int dual_i = ptr_wholegraph_->e_dual_id(order_e->ID());
 	int Nd = ptr_wholegraph_->SizeOfVertList();
 	for (int dual_j = 0; dual_j< Nd; dual_j++)
 	{
-		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
-		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(orig_j))
+		WF_edge * target_e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_j));
+		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(target_e))
 		{
-			WF_edge *target_e = ptr_frame_->GetEdge(orig_j);
-
 			upd_map_collision_.Start();
 			vector<lld> tmp(3);
 			ptr_collision_->DetectCollision(target_e, order_e, tmp);
@@ -234,16 +231,17 @@ void SeqAnalyzer::UpdateStateMap(int dual_i, vector<vector<lld>> &state_map)
 }
 
 
-void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
+void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
 	rec_map_.Start();
 
+	int dual_i = ptr_wholegraph_->e_dual_id(order_e->ID());
 	int Nd = ptr_wholegraph_->SizeOfVertList();
 	int p = 0;
 	for (int dual_j = 0; dual_j < Nd; dual_j++)
 	{
-		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
-		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(orig_j))
+		WF_edge * target_e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_j));
+		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(target_e))
 		{
 			for (int k = 0; k < 3; k++)
 			{
@@ -257,9 +255,12 @@ void SeqAnalyzer::RecoverStateMap(int dual_i, vector<vector<lld>> &state_map)
 }
 
 
-bool SeqAnalyzer::TestifyStiffness()
+bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 {
 	test_stiff_.Start();
+
+	/* insert a trail edge */
+	UpdateStructure(e);
 
 	/* examinate stiffness on printing subgraph */
 	ptr_stiffness_->Init();
@@ -282,6 +283,8 @@ bool SeqAnalyzer::TestifyStiffness()
 
 			if (offset.norm() >= D_tol_)
 			{
+				//printf("$$$Stiffness offset: %lf\n", offset.norm());
+				//ptr_stiffness_->WriteData(D, ptr_dualgraph_->e_orig_id(k) / 2);
 				bSuccess = false;
 				break;
 			}
@@ -289,6 +292,9 @@ bool SeqAnalyzer::TestifyStiffness()
 	}
 
 	D0_ = D;
+
+	/* remove the trail edge */
+	RecoverStructure(e);
 
 	test_stiff_.Stop();
 	return bSuccess;

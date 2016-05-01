@@ -24,9 +24,8 @@ bool FFAnalyzer::SeqPrint()
 	layers_.resize(layer_size);
 	for (int i = 0; i < Nd_; i++)
 	{
-		int orig_i = ptr_wholegraph_->e_orig_id(i);
-		int label = ptr_frame_->GetEdge(orig_i)->Layer();
-		layers_[label].push_back(i);
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(i));
+		layers_[e->Layer()].push_back(e);
 	}
 
 	/* printing */
@@ -56,7 +55,8 @@ bool FFAnalyzer::SeqPrint()
 
 		if (debug_)
 		{
-			printf(">>>layer %d is in processing, intial head index %d, tail index %d\n", l, h, t);
+			printf(">>>layer %d is in processing, intial head index %d, tail index %d\n", 
+				l + 1, h, t);
 		}
 
 		if (h == t)
@@ -70,9 +70,9 @@ bool FFAnalyzer::SeqPrint()
 		max_z_ = -min_z_;
 		for (int i = 0; i < Nl; i++)
 		{
-			int orig_i = ptr_wholegraph_->e_orig_id(layers_[l][i]);
-			point u = ptr_frame_->GetEdge(orig_i)->pvert_->Position();
-			point v = ptr_frame_->GetEdge(orig_i)->ppair_->pvert_->Position();
+			WF_edge *e = layers_[l][i];
+			point u = e->pvert_->Position();
+			point v = e->ppair_->pvert_->Position();
 			min_z_ = min(min_z_, (double)min(u.z(), v.z()));
 			max_z_ = max(max_z_, (double)max(u.z(), v.z()));
 		}
@@ -81,9 +81,11 @@ bool FFAnalyzer::SeqPrint()
 		{
 			if (debug_)
 			{
-				printf("...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", l);
+				printf("...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", 
+					l + 1);
 			}
 			bSuccess = false;
+			break;
 		}
 	}
 
@@ -101,10 +103,14 @@ bool FFAnalyzer::SeqPrint()
 
 bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 {
+	/* last edge */
+	assert(h != 0);						// there must be pillars
+	WF_edge *ei = print_queue_[h - 1];
+
 	if (debug_)
 	{
 		printf("---searching edge #%d in layer %d, head %d, (tail %d)\n",
-			print_queue_[h - 1]->ID() / 2, l, h, t);
+			ei->ID() / 2, l + 1, h, t);
 	}
 
 	/* exit */
@@ -112,41 +118,33 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	{
 		if (debug_)
 		{
-			printf("***searching at layer %d finishes.\n", l);
+			printf("***searching at layer %d finishes.\n", l + 1);
 		}
 
 		return true;
 	}
 
-	/* last edge */
-	WF_edge *ei = NULL;
-	if (h != 0)
-	{
-		ei = print_queue_[h - 1];
-	}
-
 	/* next choice */
-	multimap<double, int> choice;
-	multimap<double, int>::iterator it;
+	multimap<double, WF_edge*> choice;
+	multimap<double, WF_edge*>::iterator it;
 
 	/* next edge in current layer */
 	int Nl = layers_[l].size();
 	for (int j = 0; j < Nl; j++)
 	{
+		WF_edge *ej = layers_[l][j];
 		/* cost weight */
-		double cost = GenerateCost(l, j, ei);
+		double cost = GenerateCost(ei, ej);
 		if (cost != -1)
 		{
-			choice.insert(pair<double, int>(cost, j));
+			choice.insert(pair<double, WF_edge*>(cost, ej));
 		}
 	}
 
 	/* ranked by weight */
 	for (it = choice.begin(); it != choice.end(); it++)
 	{
-		int dual_j = layers_[l][it->second];
-		int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
-		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
+		WF_edge *ej = it->second;
 		print_queue_.push_back(ej);
 
 		/* update printed subgraph */
@@ -154,11 +152,12 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 		/* update collision */
 		vector<vector<lld>> tmp_angle(3);
-		UpdateStateMap(dual_j, tmp_angle);
+		UpdateStateMap(ej, tmp_angle);
 
 		if (debug_)
 		{
-			printf("^^^choose edge #%d in layer %d with cost %lf\n", it->second, l, it->first);
+			printf("^^^choose edge #%d in layer %d with cost %lf\n",
+				ej->ID() / 2, l + 1, it->first);
 			printf("^^^entering next searching state.\n");
 		}
 
@@ -167,27 +166,25 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 			return true;
 		}
 
-		RecoverStateMap(dual_j, tmp_angle);
+		RecoverStateMap(ej, tmp_angle);
 		RecoverStructure(ej);
 		print_queue_.pop_back();
 	}
 
 	if (debug_)
 	{
-		printf("---searching at layer %d, head %d, (tail %d) ended.\n", l, h, t);
+		printf("---searching at layer %d, head %d, (tail %d) ended.\n", l + 1, h, t);
 	}
 
 	return false;
 }
 
 
-double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
+double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 {
-	int dual_j = layers_[l][j];
-	int orig_j = ptr_wholegraph_->e_orig_id(dual_j);
-	WF_edge *ej = ptr_frame_->GetEdge(orig_j);
-
-	if (!ptr_dualgraph_->isExistingEdge(orig_j))
+	int orig_j = ej->ID();
+	int dual_j = ptr_wholegraph_->e_dual_id(orig_j);
+	if (!ptr_dualgraph_->isExistingEdge(ej))
 	{
 		double	P = 0;							// stabiliy weight
 		double  A = 0;							// adjacency weight
@@ -196,19 +193,18 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 		if (debug_)
 		{
 			printf("###Attempting edge #%d, layer %d, head %d\n",
-				orig_j / 2, l, print_queue_.size());
+				orig_j / 2, ej->Layer() + 1, print_queue_.size());
 		}
 
 		/* collision test */
 		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 		if (free_angle == 0)
 		{
-			printf("...collision examination failed.\n");
+			printf("...collision examination failed at edge #%d.\n", ej->ID() / 2);
 			return -1;
 		}
 
 		/* stabiliy weight */
-		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		int uj = ptr_frame_->GetEndu(orig_j);
 		int vj = ptr_frame_->GetEndv(orig_j);
 		bool exist_uj = ptr_dualgraph_->isExistingVert(uj);
@@ -277,30 +273,23 @@ double FFAnalyzer::GenerateCost(int l, int j, WF_edge *ei)
 
 
 		/* stiffness test */
-		/* insert a trail edge */
-		UpdateStructure(ej);
-
-		/* examinate stiffness on printing subgraph */
-		if (!TestifyStiffness())
-		{
+		if (!TestifyStiffness(ej))
+		{	
 			/* examination failed */
-			printf("...Stiffness examination failed.\n");
+			printf("...Stiffness examination failed at edge #%d.\n", ej->ID() / 2);
 			return -1;
 		}
-
-		/* remove the trail edge */
-		RecoverStructure(ej);
 
 
 		/* influence weight */
 		int remaining = Nd_ - ptr_dualgraph_->SizeOfVertList();
 		for (int dual_k = 0; dual_k < Nd_; dual_k++)
 		{
-			int orig_k = ptr_wholegraph_->e_orig_id(dual_k);
-			if (dual_j != dual_k && !ptr_dualgraph_->isExistingEdge(orig_k))
+			WF_edge *ek = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_k));
+			if (dual_j != dual_k && !ptr_dualgraph_->isExistingEdge(ek))
 			{
 				vector<lld> tmp(3);
-				ptr_collision_->DetectCollision(ptr_frame_->GetEdge(orig_k), ej, tmp);
+				ptr_collision_->DetectCollision(ek, ej, tmp);
 				for (int o = 0; o < 3; o++)
 				{
 					tmp[o] |= angle_state_[dual_k][o];
@@ -353,9 +342,8 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	layers_.resize(layer_size);
 	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
-		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
-		int layer = ptr_frame_->GetEdge(orig_i)->Layer();
-		layers_[layer].push_back(dual_i);
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_i));
+		layers_[e->Layer()].push_back(e);
 	}
 
 	/* skip pillars */
@@ -384,10 +372,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 	/* angle state with printed structure */
 	for (int dual_i = 0; dual_i < Nd_; dual_i++)
 	{
-		int orig_i = ptr_wholegraph_->e_orig_id(dual_i);
-		if (!ptr_dualgraph_->isExistingEdge(orig_i))
+		WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_i));
+		if (!ptr_dualgraph_->isExistingEdge(e))
 		{
-			WF_edge *e = ptr_frame_->GetEdge(orig_i);
 			ptr_collision_->DetectCollision(e, ptr_dualgraph_, angle_state_[dual_i]);
 		}
 	}
@@ -409,9 +396,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			max_z_ = -min_z_;
 			for (int k = 0; k < Nl; k++)
 			{
-				int orig_k = ptr_wholegraph_->e_orig_id(layers_[l][k]);
-				point u = ptr_frame_->GetEdge(orig_k)->pvert_->Position();
-				point v = ptr_frame_->GetEdge(orig_k)->ppair_->pvert_->Position();
+				WF_edge *ek = layers_[l][k];
+				point u = ek->pvert_->Position();
+				point v = ek->ppair_->pvert_->Position();
 				min_z_ = min(min_z_, (double)min(u.z(), v.z()));
 				max_z_ = max(max_z_, (double)max(u.z(), v.z()));
 			}
@@ -422,8 +409,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		double max_cost = -min_cost;
 		for (int k = 0; k < Nl; k++)
 		{
-			int dual_k = layers_[l][k];
-			cost[dual_k] = GenerateCost(l, k, ei);
+			WF_edge *ek = layers_[l][k];
+			int dual_k = ptr_wholegraph_->e_dual_id(ek->ID());
+			cost[dual_k] = GenerateCost(ei, ek);
 			if (cost[dual_k] != -1)
 			{
 				if (cost[dual_k] < min_cost)
@@ -451,10 +439,9 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 			double r;
 			double g;
 			double b;
-			int orig_k = ptr_wholegraph_->e_orig_id(dual_k);
-			WF_edge *e = ptr_frame_->GetEdge(orig_k);
+			WF_edge *e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_k));
 
-			if (ptr_dualgraph_->isExistingEdge(orig_k))
+			if (ptr_dualgraph_->isExistingEdge(e))
 			{
 				r = 0.5;
 				g = 0.5;
@@ -521,7 +508,7 @@ void FFAnalyzer::WriteRenderPath(int min_layer, int max_layer, char *ptr_path)
 		fclose(fp);
 
 		vector<vector<lld>> tmp_angle(3);
-		UpdateStateMap(dual_j, tmp_angle);
+		UpdateStateMap(ej, tmp_angle);
 
 		UpdateStructure(ej);
 		ei = ej;

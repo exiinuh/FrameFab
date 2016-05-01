@@ -431,7 +431,7 @@ bool Stiffness::CalculateD(
 	/* --- Output Process --- */
 	if (write_3dd)
 	{
-		WriteData(D, verbose, file_id, file_name);
+		WriteData(D, file_id, file_name, verbose);
 	}
 
 	return true;
@@ -482,14 +482,14 @@ bool Stiffness::CalculateD(
 	/* --- Output Process --- */
 	if (write_3dd)
 	{
-		WriteData(D, verbose, file_id, file_name);
+		WriteData(D, file_id, file_name, verbose);
 	}
 
 	return true;
 }
 
 
-bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
+bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose)
 {	
 	check_ill_.Start();
 
@@ -519,7 +519,7 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, int verbose)
 }
 
 
-bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
+bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose)
 {
 	check_error_.Start();
 
@@ -548,7 +548,7 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose)
 }
 
 
-void Stiffness::WriteData(VectorXd &D, int verbose, int id, string fname)
+void Stiffness::WriteData(VectorXd &D, int id, string fname, bool verbose)
 {	
 	if (fname == "")
 	{
@@ -565,10 +565,13 @@ void Stiffness::WriteData(VectorXd &D, int verbose, int id, string fname)
 
 
 	/* --- Gnuplot File Generation --- */
+	char iname[10];
+	sprintf(iname, "%d", id);
+
 	string path = ptr_path_;
-	string fpath = path + '/' + fname + ".3dd";
-	string meshpath = path + '/' + fname + "-msh";
-	string plotpath = path + '/' + fname + ".plt";
+	string fpath = path + '/' + fname + iname + ".3dd";
+	string meshpath = path + '/' + fname + iname + "-msh";
+	string plotpath = path + '/' + fname + iname + ".plt";
 
 	double  exagg_static = 1;
 	float	scale = 1;

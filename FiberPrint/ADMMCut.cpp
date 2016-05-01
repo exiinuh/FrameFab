@@ -693,6 +693,12 @@ void ADMMCut::CalculateD()
 	SpMat K = *(ptr_stiffness_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
+	//printf("&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
+	//IllCondDetector	stiff_inspector(K);
+	//double cond_num = stiff_inspector.ComputeCondNum();
+	//printf("Condition Number = %9.3e\n", cond_num);
+	//printf("&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
+
 	// Construct Linear coefficient for D-Qp problem
 	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());

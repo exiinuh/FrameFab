@@ -94,8 +94,8 @@ void FiberPrintPlugIn::FrameFabPrint()
 		);
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
-	ptr_graphcut_->MakeLayers();
-	cout << "Graph Cut completed." << endl;
+	//ptr_graphcut_->MakeLayers();
+	//cout << "Graph Cut completed." << endl;
 	
 	if (!ptr_seqanalyzer_->SeqPrint())
 	{
@@ -161,9 +161,8 @@ void FiberPrintPlugIn::SweepingPrint()
 	//{
 	//	cout << "Model not printable!" << endl;
 	//	getchar();
-
-	//	return;
 	//}
+
 	printf("Sweeping print done.\n");
 }
 

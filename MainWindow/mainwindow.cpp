@@ -190,9 +190,9 @@ void MainWindow::CreateSpinBoxes()
 	spinbox_scale_ = new QDoubleSpinBox(this);
 	spinbox_scale_->setFixedWidth(140);
 	spinbox_scale_->setDecimals(1);
-	spinbox_scale_->setRange(0, 1000);
+	spinbox_scale_->setRange(0.1, 100);
 	spinbox_scale_->setValue(1.0);
-	spinbox_scale_->setSingleStep(1);
+	spinbox_scale_->setSingleStep(0.5);
 	connect(spinbox_scale_, SIGNAL(valueChanged(double)), this, SLOT(ShowScale(double)));
 	connect(spinbox_scale_, SIGNAL(valueChanged(double)), renderingwidget_, SLOT(ScaleFrame(double)));
 

@@ -104,15 +104,25 @@ public:
 		int file_id = 0, string file_name = ""
 		);
 
-private:
 	/* Check condition number */
-	bool		CheckIllCondition(IllCondDetector &stiff_inspector, int verbose);
-	bool		CheckError(IllCondDetector &stiff_inspector, VX &D, int verbose);
+	bool CheckIllCondition(
+		IllCondDetector &stiff_inspector, 
+		bool verbose = true
+		);
+	bool CheckError(
+		IllCondDetector &stiff_inspector,
+		VX &D, 
+		bool verbose = true
+		);
 
-	/* Debug */
-	void		WriteData(VectorXd &D, int verbose, int id, string fname);
+	/* Write to file */
+	void WriteData(
+		VectorXd &D, 
+		int id = 0, 
+		string fname = "stiff_data",
+		bool verbose = true
+		);
 
-public:
 	/* Data I/O */
 	SpMat		*WeightedK(){ assert(&K_); return &K_; }
 	VX			*WeightedF(){ assert(&F_); return &F_; }

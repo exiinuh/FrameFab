@@ -124,8 +124,8 @@ public:
 	double	maxZ()				{ return maxz_; }
 	double	minZ()				{ return minz_; }
 
-	bool isExistingVert(int u)	{ return (exist_vert_[u] > 0); }
-	bool isExistingEdge(int ei)	{ return exist_edge_[ei]; }
+	bool isExistingVert(int u)		{ return (exist_vert_[u] > 0); }
+	bool isExistingEdge(WF_edge *e)	{ return exist_edge_[e->ID()]; }
 
 	bool isAdjacent(int i, int j)
 	{

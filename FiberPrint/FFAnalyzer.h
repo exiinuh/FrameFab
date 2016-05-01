@@ -60,7 +60,7 @@ public:
 
 private:
 	bool			GenerateSeq(int l, int h, int t);
-	double			GenerateCost(int l, int j, WF_edge *ei);
+	double			GenerateCost(WF_edge *ei, WF_edge *ej);
 
 public:
 	void			PrintOutTimer();

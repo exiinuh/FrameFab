@@ -61,9 +61,9 @@ protected:
 	void			PrintPillars();
 	void			UpdateStructure(WF_edge *e);
 	void			RecoverStructure(WF_edge *e);
-	void			UpdateStateMap(int dual_i, vector<vector<lld>> &state_map);
-	void			RecoverStateMap(int dual_i, vector<vector<lld>> &state_map);
-	bool			TestifyStiffness();
+	void			UpdateStateMap(WF_edge *e, vector<vector<lld>> &state_map);
+	void			RecoverStateMap(WF_edge *e, vector<vector<lld>> &state_map);
+	bool			TestifyStiffness(WF_edge *e);
 
 public:
 	WireFrame			*ptr_frame_;
@@ -74,16 +74,16 @@ public:
 
 protected:
 	/* maintaining for sequence */
-	int					Nd_;
-	DualGraph			*ptr_wholegraph_;
-	vector<WF_edge*>	print_queue_;
-	vector<vector<lld>> angle_state_;
-	vector<vector<int>>	layers_;					// store dual_node's id for each layers
-	VX					D0_;
+	int							Nd_;
+	DualGraph					*ptr_wholegraph_;
+	vector<WF_edge*>			print_queue_;
+	vector<vector<lld>>			angle_state_;
+	VX							D0_;
+	vector<vector<WF_edge*>>	layers_;			// store dual_node's id for each layers
 
 	/* parameters */
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double				D_tol_;					// Dt_tol	: tolerance of offset in stiffness
+	double				D_tol_;						// Dt_tol	: tolerance of offset in stiffness
 	double				Wp_;						// Wp_		: stablity weight for printing cost
 	double				Wa_;						// Wa_		: adjacent weight for printing cost
 	double				Wi_;						// Wl_		: influence weight for printing cost
