@@ -94,8 +94,8 @@ void FiberPrintPlugIn::FrameFabPrint()
 		);
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
-	//ptr_graphcut_->MakeLayers();
-	//cout << "Graph Cut completed." << endl;
+	ptr_graphcut_->MakeLayers();
+	cout << "Graph Cut completed." << endl;
 	
 	if (!ptr_seqanalyzer_->SeqPrint())
 	{
@@ -260,7 +260,7 @@ void FiberPrintPlugIn::ExportPrintOrder(char *fname)
 	ptr_seqanalyzer_->OutputPrintOrder(queue);
 
 	int N = queue.size();
-	FILE *fp = fopen(fname, "w");
+	FILE *fp = fopen(fname, "wb+");
 	for (int i = 0; i < N; i++)
 	{
 		fprintf(fp, "%d\n", queue[i]->ID() / 2);

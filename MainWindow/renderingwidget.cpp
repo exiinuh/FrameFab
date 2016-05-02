@@ -922,10 +922,6 @@ void RenderingWidget::ReadFrame()
 
 	
 	updateGL();
-
-
-
-
 }
 
 
@@ -971,9 +967,6 @@ void RenderingWidget::WriteFrame(
 		bCut, min_layer, max_layer, 
 		filename.toLatin1().data()
 	);
-
-	delete ptr_fiberprint_;
-	ptr_fiberprint_ = NULL;
 
 	emit(operatorInfo(QString("Write mesh to ") + filename + QString(" Done")));
 }
