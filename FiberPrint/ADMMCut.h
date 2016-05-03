@@ -99,7 +99,8 @@ public:
 	QuadricCollision	*ptr_collision_;
 
 private:
-	SpMat				L_;				// laplace matrix
+	SpMat				L_;				// laplace matrix, reweighting factor plugged in
+	SpMat				Lo_;			// laplace matrix, without reweighting factor
 	SpMat				col_weight_;	// for collision weight, indexed by half of original id
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;
