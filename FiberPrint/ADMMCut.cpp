@@ -197,9 +197,9 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			///* write x distribution to a file */
-			//string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
-			//Statistics tmp_x(str_x, x_);
-			//tmp_x.GenerateVectorFile();
+			string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+			Statistics tmp_x(str_x, x_);
+			tmp_x.GenerateVectorFile();
 
 			rew_count++;
 		} while (!UpdateR(x_prev, rew_count));
@@ -209,9 +209,9 @@ void ADMMCut::MakeLayers()
 		//Statistics s_eC(str_eC, cut_energy);
 		//s_eC.GenerateStdVecFile();
 
-		//string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
-		//Statistics s_eR(str_eR, res_energy);
-		//s_eR.GenerateStdVecFile();
+		string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+		Statistics s_eR(str_eR, res_energy);
+		s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -532,8 +532,12 @@ void ADMMCut::CreateL()
 {
 	create_l_.Start();
 
+	vector<Triplet<double>> Lo_list;
 	vector<Triplet<double>> L_list;
+
+	Lo_.resize(Nd_, Nd_);
 	L_.resize(Nd_, Nd_);
+
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
@@ -554,22 +558,29 @@ void ADMMCut::CreateL()
 		double tmp_height = exp(-6 * tmp_range * tmp_range);
 #endif
 
-		double Wuv = col_weight_.coeff(u, v) * tmp_height * r_(dual_u, dual_v);
-		double Wvu = col_weight_.coeff(v, u) * tmp_height * r_(dual_v, dual_u);
+		double Wuv = col_weight_.coeff(u, v) * tmp_height;
+		double Wvu = col_weight_.coeff(v, u) * tmp_height;
 
 		if (Wuv > SPT_EPS)
 		{
-			L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
-			L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
+			L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv  * r_(dual_u, dual_v)));
+			L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv  * r_(dual_u, dual_v)));
+
+			//Lo_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
+			Lo_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
 		}
 		if (Wvu > SPT_EPS)
 		{
-			L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
-			L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
+			L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu * r_(dual_v, dual_u)));
+			L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu * r_(dual_v, dual_u)));
+
+			//Lo_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
+			Lo_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
 		}
 	}
 
 	L_.setFromTriplets(L_list.begin(), L_list.end());
+	Lo_.setFromTriplets(Lo_list.begin(), Lo_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = L_.transpose() * L_;
@@ -853,10 +864,15 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 		int u = ptr_dualgraph_->u(i);
 		int v = ptr_dualgraph_->v(i);
 
+		//r_(u, v) = sqrt(1.0 /
+		//	(1e-5 + L_.coeff(u, v) / r_(u, v) * abs(x_[u] - x_[v])));
+		//r_(v, u) = sqrt(1.0 /
+		//	(1e-5 + L_.coeff(v, u) / r_(v, u) * abs(x_[v] - x_[u])));
+
 		r_(u, v) = sqrt(1.0 /
-			(1e-5 + L_.coeff(u, v) / r_(u, v) * abs(x_[u] - x_[v])));
+			(1e-5 + Lo_.coeff(u, v) * abs(x_[u] - x_[v])));
 		r_(v, u) = sqrt(1.0 /
-			(1e-5 + L_.coeff(v, u) / r_(v, u) * abs(x_[v] - x_[u])));
+			(1e-5 + Lo_.coeff(v, u) * abs(x_[v] - x_[u])));
 	}
 
 	update_r_.Stop();

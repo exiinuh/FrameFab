@@ -97,11 +97,11 @@ void FiberPrintPlugIn::FrameFabPrint()
 	//ptr_graphcut_->MakeLayers();
 	//cout << "Graph Cut completed." << endl;
 	
-	if (!ptr_seqanalyzer_->SeqPrint())
-	{
-		cout << "Model not printable!" << endl;
-		getchar();
-	}
+	//if (!ptr_seqanalyzer_->SeqPrint())
+	//{
+	//	cout << "Model not printable!" << endl;
+	//	getchar();
+	//}
 
 	printf("FrameFab print done.\n");
 
@@ -161,8 +161,9 @@ void FiberPrintPlugIn::SweepingPrint()
 	//{
 	//	cout << "Model not printable!" << endl;
 	//	getchar();
-	//}
 
+	//	return;
+	//}
 	printf("Sweeping print done.\n");
 }
 
@@ -223,7 +224,7 @@ void FiberPrintPlugIn::ExportPrintOrder(char *fname)
 	ptr_seqanalyzer_->OutputPrintOrder(queue);
 
 	int N = queue.size();
-	FILE *fp = fopen(fname, "wb+");
+	FILE *fp = fopen(fname, "w");
 	for (int i = 0; i < N; i++)
 	{
 		fprintf(fp, "%d\n", queue[i]->ID() / 2);
