@@ -31,6 +31,7 @@ public:
 	void			FrameFabPrint();
 	void			BruteForcePrint();
 	void			SweepingPrint();
+	void			OneLayerPrint();
 
 	/* apply stiffness computation directly to the input frame shape */
 	void			GetDeformation();
@@ -62,7 +63,7 @@ public:
 	FiberPrintPARM		*ptr_parm_;
 
 private:
-	Timer				framefab_;
+	Timer				fiber_print_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

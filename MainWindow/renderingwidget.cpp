@@ -1195,6 +1195,7 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	ptr_fiberprint_->FrameFabPrint();
 	//ptr_fiberprint_->BruteForcePrint();
 	//ptr_fiberprint_->SweepingPrint();
+	//ptr_fiberprint_->OneLayerPrint();
 	//ptr_fiberprint_->GetDeformation();
 
 	InitInfoData(

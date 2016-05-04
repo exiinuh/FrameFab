@@ -42,11 +42,6 @@
 using namespace std;
 using namespace Eigen;
 
-//#define PRECUT_SEED
-//#define FLOODFILL_SEED
-//#define DEPTH_FROM_TOP
-#define HEIGHT_AS_WEIGHT
-
 
 class ADMMCut : public GraphCut
 {
@@ -73,20 +68,21 @@ public:
 private:
 	void		InitState();						// Initialization
 	void		InitCollisionWeight();
-	void		InitSeed();
 
-	void		SetStartingPoints(int count);		// Set D and lambda variable's starting value
+	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary();
+	void		CreateA();							// Construct edge-incidence matrix A
+	void		CreateC();
 	void		CreateL();							// Construct laplace matrix L and H1
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
-	bool		UpdateR(VX &x_prev, int count);
+	bool		UpdateR(VX &x_prev);
 
 	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
-	bool		TerminationCriteria(int count);		// Termination Criteria for ADMM process of a single cut using a threshold node number
+	bool		TerminationCriteria();				// Termination Criteria for ADMM process of a single cut using a threshold node number
 
 	void		PrintOutTimer();
 	void		WriteWeight();
@@ -99,8 +95,9 @@ public:
 	QuadricCollision	*ptr_collision_;
 
 private:
-	SpMat				L_;				// laplace matrix, reweighting factor plugged in
-	SpMat				Lo_;			// laplace matrix, without reweighting factor
+	SpMat				A_;
+	SpMat				C_;
+	SpMat				Co_;			// laplace matrix, without reweighting factor
 	SpMat				col_weight_;	// for collision weight, indexed by half of original id
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;
@@ -120,6 +117,10 @@ private:
 	SpMat				H1_;			// Part 1 of hessian matrix for x-Qp problem
 	SpMat				W_;
 
+	int					cut_round_;
+	int					reweight_round_;
+	int					ADMM_round_;
+
 	int					N_;				// N :    Number of nodes in orig graph
 	int					M_;				// M :    Number of edges in orig graph 
 	int					Nd_;			// Nd :   Number of node in dual graph
@@ -136,6 +137,8 @@ private:
 
 	Timer				ADMM_cut_;
 	Timer				init_collision_;
+	Timer				create_a_;
+	Timer				create_c_;
 	Timer				set_bound_;
 	Timer				create_l_;
 	Timer				cal_x_;

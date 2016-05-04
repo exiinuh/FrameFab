@@ -35,7 +35,7 @@
 #endif
 
 #ifndef  SPT_EPS
-#define SPT_EPS  0.000001		// sparse matrix eps
+#define SPT_EPS  0.00001		// sparse matrix eps
 #endif
 
 #ifndef  GEO_EPS			// geometry eps
