@@ -42,6 +42,7 @@
 using namespace std;
 using namespace Eigen;
 
+//#define WEIGHT_WITHOUT_COLLISION
 
 class ADMMCut : public GraphCut
 {
