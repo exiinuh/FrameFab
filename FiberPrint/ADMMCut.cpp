@@ -52,18 +52,15 @@ void ADMMCut::MakeLayers()
 	// Initial Cutting Edge Setting
 	InitState();
 	InitCollisionWeight();
-	InitSeed();
 
-	debug_ = false;
-	int cut_count = 0;
 	vector<double> cut_energy;
 	vector<double> res_energy;
 	do
 	{
 		/* Recreate dual graph at the beginning of each cut */
-		SetStartingPoints(cut_count);
+		SetStartingPoints();
 
-		ptr_stiffness_->CalculateD(D_, &x_);
+		CreateA();
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -97,21 +94,10 @@ void ADMMCut::MakeLayers()
 		VX	  F_init = *(ptr_stiffness_->WeightedF());
 
 
-		//double icut_energy = 0;
-		//VX V_Cut = A_ * x_;
-		//for (int i = 0; i < Md_; i++)
-		//{
-		//	icut_energy += abs(V_Cut[i]);
-		//}
-		//double ideform_energy = (K_init * D_ - F_init).norm();
-
 		cout << "****************************************" << endl;
-		cout << "ADMMCut Round : " << cut_count << endl;
-		//cout << "Initial cut energy before entering ADMM: " << icut_energy << endl;
-		//cout << "Initial Lagrangian energy before entering ADMM: " << ideform_energy << endl;
+		cout << "ADMMCut Round : " << cut_round_ << endl;
 		cout << "---------------------------------" << endl;
 
-		int rew_count = 0;
 		VX x_prev;
 		VX D_prev;
 
@@ -122,24 +108,19 @@ void ADMMCut::MakeLayers()
 		res energy = (K(x)D - F(x)).norm()
 		*/
 
-		//cut_energy.clear();
-		//res_energy.clear();
-
-		//cut_energy.push_back(icut_energy);
-		//res_energy.push_back(ideform_energy);
-
 		do
 		{
-			/* Reweighting loop for cut */
+			penalty_ = 1000;
 
-			int ADMM_count = 0;
+			/* Reweighting loop for cut */
 			x_prev = x_;
-			CreateL();
+
+			CreateC();
 
 			do
 			{
-				cout << "ADMMCut Round: " << cut_count << ", reweight iteration:" << rew_count
-					<< ", ADMM " << ADMM_count << " iteration." << endl;
+				cout << "ADMMCut Round: " << cut_round_ << ", reweight iteration:" << reweight_round_
+					<< ", ADMM " << ADMM_round_ << " iteration." << endl;
 
 				/*-------------------ADMM loop-------------------*/
 				CalculateX();
@@ -173,22 +154,15 @@ void ADMMCut::MakeLayers()
 				cout << "primal_residual(KD-F) : " << primal_res_.norm() << endl;
 
 				cout << "---------------------" << endl;
-				ADMM_count++;
-			} while (!TerminationCriteria(ADMM_count));
+				ADMM_round_++;
+			} while (!TerminationCriteria());
 
 			/* One reweighting process ended! */
 			/* Output energy and residual */
 
-			//double energy = 0;
-			//VX V_Cut = A_ * x_;
-			//for (int i = 0; i < Md_; i++)
-			//{
-			//	energy += ptr_dualgraph_->Weight(i) * abs(V_Cut[i]);
-			//}
-
 			/*-------------------Screenplay-------------------*/
 			double res_tmp = primal_res_.norm();
-			cout << "Cut " << cut_count << " Reweight " << rew_count << " completed." << endl;
+			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
 			//cout << "Cut Energy :" << energy << endl;
 			cout << "Res Energy :" << res_tmp << endl;
 			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
@@ -197,19 +171,14 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			///* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_count) + "_Rew_" + to_string(rew_count) + "_x";
+			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
 			Statistics tmp_x(str_x, x_);
 			tmp_x.GenerateVectorFile();
 
-			rew_count++;
-		} while (!UpdateR(x_prev, rew_count));
+			reweight_round_++;
+		} while (!UpdateR(x_prev));
 
-		///* Output reweighting energy history for last cut process */
-		//string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-		//Statistics s_eC(str_eC, cut_energy);
-		//s_eC.GenerateStdVecFile();
-
-		string str_eR = "Cut_" + to_string(cut_count) + "_Res_Energy";
+		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
 		Statistics s_eR(str_eR, res_energy);
 		s_eR.GenerateStdVecFile();
 
@@ -217,10 +186,10 @@ void ADMMCut::MakeLayers()
 
 		UpdateCut();
 
-		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_count);
-		cut_count++;
+		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_round_);
+		cut_round_++;
 
-	} while (!CheckLabel(cut_count));
+	} while (!CheckLabel(cut_round_));
 
 	ptr_frame_->Unify();
 
@@ -239,6 +208,8 @@ void ADMMCut::InitState()
 	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 	N_ = ptr_frame_->SizeOfVertList();
 	M_ = ptr_frame_->SizeOfEdgeList();
+
+	cut_round_ = 0;
 
 	// set termination tolerance 
 	stop_n_ = floor(N_ / 5);
@@ -299,51 +270,19 @@ void ADMMCut::InitCollisionWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-		tmp_weight = exp(-5 * tmp_range * tmp_range);
+		tmp_weight = exp(-3 * tmp_range * tmp_range);
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
 		}
 
 		tmp_range = max(Fji - Fij, 0.0);
-		tmp_weight = exp(-5 * tmp_range * tmp_range);
+		tmp_weight = exp(-3 * tmp_range * tmp_range);
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
 	}
-	//for (int i = 0; i < halfM; i++)
-	//{
-	//	for (int j = 0; j < i; j++)
-	//	{
-	//		WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
-	//		WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
-	//		vector<lld> tmp(3);
-	//		double Fij, Fji;
-	//		double tmp_range;
-	//		double tmp_weight;
-
-	//		ptr_collision_->DetectCollision(e1, e2, tmp);
-	//		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-
-	//		ptr_collision_->DetectCollision(e2, e1, tmp);
-	//		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
-
-	//		tmp_range = max(Fij - Fji, 0.0);
-	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
-	//		if (tmp_weight > SPT_EPS)
-	//		{
-	//			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
-	//		}
-
-	//		tmp_range = max(Fji - Fij, 0.0);
-	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
-	//		if (tmp_weight > SPT_EPS)
-	//		{
-	//			weight_list.push_back(Triplet<double>(j, i, tmp_weight));
-	//		}
-	//	}
-	//}
 
 	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
@@ -351,77 +290,9 @@ void ADMMCut::InitCollisionWeight()
 }
 
 
-void ADMMCut::InitSeed()
+void ADMMCut::SetStartingPoints()
 {
-	int N = ptr_frame_->SizeOfVertList();
-	int halfM = ptr_frame_->SizeOfEdgeList() / 2;
-	vector<WF_vert*> queue;
-
-	vert_depth_.resize(N);
-	fill(vert_depth_.begin(), vert_depth_.end(), -1);
-	edge_depth_.resize(halfM);
-	fill(edge_depth_.begin(), edge_depth_.end(), -1);
-
-#ifdef DEPTH_FROM_TOP
-	for (int i = 0; i < halfM; i++)
-	{
-		WF_edge *e = ptr_frame_->GetEdge(i * 2);
-		if (e->isCeiling())
-		{
-			WF_vert *u = e->ppair_->pvert_;
-			WF_vert *v = e->pvert_;
-			if (vert_depth_[u->ID()] == -1)
-			{
-				vert_depth_[u->ID()] = 0;
-				queue.push_back(u);
-			}
-			if (vert_depth_[v->ID()] == -1)
-			{
-				vert_depth_[v->ID()] = 0;
-				queue.push_back(v);
-			}
-		}
-	}
-#endif
-#ifdef DEPTH_FROM_BASE
-	for (int i = 0; i < N; i++)
-	{
-		WF_vert *u = ptr_frame_->GetVert(i);
-		if (u->isFixed())
-		{
-			vert_depth_[u->ID()] = 0;
-			queue.push_back(u);
-		}
-	}
-#endif
-
-	int head = 0;
-	int tail = queue.size();
-	while (head < tail)
-	{
-		WF_vert *u = queue[head];
-		WF_edge *e = u->pedge_;
-		while (e != NULL)
-		{
-			WF_vert *v = e->pvert_;
-			int e_id = e->ID() / 2;
-			if (vert_depth_[v->ID()] == -1)
-			{
-				edge_depth_[e_id] = vert_depth_[u->ID()];
-				vert_depth_[v->ID()] = edge_depth_[e_id] + 1;
-				queue.push_back(e->pvert_);
-				tail++;
-			}
-			e = e->pnext_;
-		}
-		head++;
-	}
-}
-
-
-void ADMMCut::SetStartingPoints(int count)
-{
-	if (count == 0)
+	if (cut_round_ == 0)
 	{
 		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
 	}
@@ -433,6 +304,8 @@ void ADMMCut::SetStartingPoints(int count)
 		Fd_ = ptr_dualgraph_->SizeOfFaceList();
 		Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 	}
+
+	reweight_round_ = 0;
 
 	ptr_stiffness_->Init();
 
@@ -456,6 +329,8 @@ void ADMMCut::SetBoundary()
 {
 	set_bound_.Start();
 
+	ptr_stiffness_->CalculateD(D_, &x_);
+
 	// Set lower boundary and upper boundary
 	// equality constraints W*x = d
 	// Identify Base nodes(1) and Upper Nodes(2)
@@ -470,7 +345,6 @@ void ADMMCut::SetBoundary()
 	bound.setZero();
 
 	// upper dual
-	max_vert_dep_ = 0;
 	int cuts = cutting_edge_.size();
 	for (int i = 0; i < cuts; i++)
 	{
@@ -481,14 +355,6 @@ void ADMMCut::SetBoundary()
 		WF_edge *e = ptr_frame_->GetEdge(cutting_edge_[i]);
 		int u = e->pvert_->ID();
 		int v = e->ppair_->pvert_->ID();
-		if (vert_depth_[u] > max_vert_dep_)
-		{
-			max_vert_dep_ = vert_depth_[u];
-		}
-		if (vert_depth_[v] > max_vert_dep_)
-		{
-			max_vert_dep_ = vert_depth_[v];
-		}
 	}
 
 	// base dual 
@@ -528,15 +394,37 @@ void ADMMCut::SetBoundary()
 }
 
 
-void ADMMCut::CreateL()
+void ADMMCut::CreateA()
 {
-	create_l_.Start();
+	create_a_.Start();
 
-	vector<Triplet<double>> Lo_list;
-	vector<Triplet<double>> L_list;
+	A_.resize(2 * Md_, Nd_);
+	vector<Triplet<double>> A_list;
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		A_list.push_back(Triplet<double>(i, dual_u, 1));
+		A_list.push_back(Triplet<double>(i, dual_v, -1));
+		A_list.push_back(Triplet<double>(i + Md_, dual_v, 1));
+		A_list.push_back(Triplet<double>(i + Md_, dual_u, -1));
+	}
 
-	Lo_.resize(Nd_, Nd_);
-	L_.resize(Nd_, Nd_);
+	A_.setFromTriplets(A_list.begin(), A_list.end());
+
+	create_a_.Stop();
+}
+
+
+void ADMMCut::CreateC()
+{
+	create_c_.Start();
+
+	C_.resize(2 * Md_, 2 * Md_);
+	vector<Triplet<double>> C_list;
+
+	Co_.resize(2 * Md_, 2 * Md_);
+	vector<Triplet<double>> Co_list;
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -545,47 +433,57 @@ void ADMMCut::CreateL()
 		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
-#ifdef DEPTH_FROM_TOP
-		double tmp_range = 1 - vert_depth_[ptr_dualgraph_->CentralVert(i)->ID()] * 1.0 / max_vert_dep_;
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-#endif
-#ifdef DEPTH_FROM_BASE
-		double tmp_range = vert_depth_[ptr_dualgraph_->CentralVert(i)->ID()] * 1.0 / max_vert_dep_;
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-#endif
-#ifdef HEIGHT_AS_WEIGHT
 		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-#endif
+		double tmp_height = exp(-3 * tmp_range * tmp_range);
 
 		double Wuv = col_weight_.coeff(u, v) * tmp_height;
 		double Wvu = col_weight_.coeff(v, u) * tmp_height;
 
-		if (Wuv > SPT_EPS)
-		{
-			L_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv  * r_(dual_u, dual_v)));
-			L_list.push_back(Triplet<double>(dual_u, dual_v, Wuv  * r_(dual_u, dual_v)));
+		Co_list.push_back(Triplet<double>(i, i, pow(Wuv, 2)));
+		Co_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2)));
 
-			//Lo_list.push_back(Triplet<double>(dual_u, dual_u, -Wuv));
-			Lo_list.push_back(Triplet<double>(dual_u, dual_v, Wuv));
-		}
-		if (Wvu > SPT_EPS)
-		{
-			L_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu * r_(dual_v, dual_u)));
-			L_list.push_back(Triplet<double>(dual_v, dual_u, Wvu * r_(dual_v, dual_u)));
-
-			//Lo_list.push_back(Triplet<double>(dual_v, dual_v, -Wvu));
-			Lo_list.push_back(Triplet<double>(dual_v, dual_u, Wvu));
-		}
+		C_list.push_back(Triplet<double>(i, i, pow(Wuv, 2) * r_(dual_u, dual_v)));
+		C_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2) * r_(dual_v, dual_u)));
 	}
 
-	L_.setFromTriplets(L_list.begin(), L_list.end());
-	Lo_.setFromTriplets(Lo_list.begin(), Lo_list.end());
+	C_.setFromTriplets(C_list.begin(), C_list.end());
+	Co_.setFromTriplets(C_list.begin(), C_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
-	H1_ = L_.transpose() * L_;
+	H1_ = A_.transpose() * C_ * A_;
 
-	create_l_.Stop();
+	create_c_.Stop();
+
+	//string path = "C:/Users/DELL/Desktop/result";
+	//char cut_id[30];
+	//sprintf(cut_id, "%d", cut_round_);
+	//char reweight[30];
+	//sprintf(reweight, "%d", reweight_round_);
+
+	//string file = path + "/" + "H1_Cnew_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp = fopen(file.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp, "%lf ", H1_.coeff(i, j));
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+	//fclose(fp);
+
+	//string file2 = path + "/" + "H1_Cnew_r_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp1 = fopen(file2.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp1, "%lf ", r_(i, j));
+	//	}
+	//	fprintf(fp1, "\n");
+	//}
+
+	//fclose(fp1);
 }
 
 
@@ -704,12 +602,6 @@ void ADMMCut::CalculateD()
 	SpMat K = *(ptr_stiffness_->WeightedK());
 	SpMat Q = penalty_ * K.transpose() * K;
 
-	//printf("&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
-	//IllCondDetector	stiff_inspector(K);
-	//double cond_num = stiff_inspector.ComputeCondNum();
-	//printf("Condition Number = %9.3e\n", cond_num);
-	//printf("&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
-
 	// Construct Linear coefficient for D-Qp problem
 	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());
@@ -769,48 +661,6 @@ void ADMMCut::UpdateCut()
 		}
 	}
 
-
-#ifdef FLOODFILL_SEED
-	int max_dep = 0;
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
-		if (x_[dual_u] != x_[dual_v])
-		{
-			if (x_[dual_u] == 0)
-			{
-				// u is always the lower dual vertex of cutting-edge 
-				swap(dual_u, dual_v);
-			}
-
-			int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
-			if (seed_depth_[u] > max_dep)
-			{
-				max_dep = seed_depth_[u];
-			}
-		}
-	}
-
-	cutting_edge_.clear();
-	for (int dual_i = 0; dual_i < Nd_; dual_i++)
-	{
-		int orig_i = ptr_dualgraph_->e_orig_id(dual_i);
-#ifdef PRECUT_SEED
-		if (x_[dual_i] == 1 && seed_depth_[orig_i / 2] == max_dep)
-		{
-			cutting_edge_.push_back(orig_i);
-		}
-#else
-		if (seed_depth_[orig_i / 2] == max_dep)
-		{
-			cutting_edge_.push_back(orig_i);
-		}
-#endif
-	}
-
-
-#else
 	// Update cut
 	cutting_edge_.clear();
 	for (int i = 0; i < Md_; i++)
@@ -833,13 +683,12 @@ void ADMMCut::UpdateCut()
 			}
 		}
 	}
-#endif
 
 	update_cut_.Stop();
 }
 
 
-bool ADMMCut::UpdateR(VX &x_prev, int count)
+bool ADMMCut::UpdateR(VX &x_prev)
 {
 	update_r_.Start();
 
@@ -855,29 +704,24 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 	}
 
 	cout << "---UpdateR Rew Check---" << endl;
-	cout << "Reweighting Process No." << count - 1 << endl;
+	cout << "Reweighting Process No." << reweight_round_ - 1 << endl;
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
 	for (int i = 0; i < Md_; i++)
 	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
 
-		//r_(u, v) = sqrt(1.0 /
-		//	(1e-5 + L_.coeff(u, v) / r_(u, v) * abs(x_[u] - x_[v])));
-		//r_(v, u) = sqrt(1.0 /
-		//	(1e-5 + L_.coeff(v, u) / r_(v, u) * abs(x_[v] - x_[u])));
-
-		r_(u, v) = sqrt(1.0 /
-			(1e-5 + Lo_.coeff(u, v) * abs(x_[u] - x_[v])));
-		r_(v, u) = sqrt(1.0 /
-			(1e-5 + Lo_.coeff(v, u) * abs(x_[v] - x_[u])));
+		r_(dual_u, dual_v) = 1.0 / 
+			(1e-5 + Co_.coeff(i, i) * abs(x_[dual_u] - x_[dual_v]));
+		r_(dual_v, dual_u) = 1.0 / 
+			(1e-5 + Co_.coeff(i + Md_, i + Md_) * abs(x_[dual_u] - x_[dual_v]));
 	}
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-2 || count > 20)
+	if (max_improv < 1e-2 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -924,9 +768,9 @@ bool ADMMCut::CheckLabel(int count)
 }
 
 
-bool ADMMCut::TerminationCriteria(int count)
+bool ADMMCut::TerminationCriteria()
 {
-	if (count >= 20)
+	if (ADMM_round_ >= 20)
 	{
 		return true;
 	}
@@ -1140,7 +984,7 @@ void ADMMCut::WriteStiffness(string offset, string rotation)
 void ADMMCut::Debug()
 {
 	int cut_count = 0;
-	SetStartingPoints(cut_count);
+	SetStartingPoints();
 	ptr_stiffness_->CalculateD(D_, x_, 0, false, false, false);
 	int temp[24] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54, 8, 14 };
 	int temp_2[42] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54,

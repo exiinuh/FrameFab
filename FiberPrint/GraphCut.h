@@ -41,19 +41,16 @@ public:
 	virtual void	PrintOutTimer();
 
 public:
-	WireFrame			*ptr_frame_;
-	char				*ptr_path_;
+	WireFrame		*ptr_frame_;
+	char			*ptr_path_;
 
 
 	vector<int>		cutting_edge_;
-	vector<int>		vert_depth_;
-	vector<int>		edge_depth_;
-	int				max_vert_dep_;
 
 
 protected:
 	/* for debuging */
-	bool				debug_;
+	bool			debug_;
 
 };
 
