@@ -34,7 +34,7 @@ ADMMCut::ADMMCut(
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	debug_ = true;
+	debug_ = false;
 }
 
 
@@ -112,15 +112,7 @@ void ADMMCut::MakeLayers()
 		{
 			penalty_ = 1000;
 
-<<<<<<< HEAD
-			int ADMM_count = 0;
-
-			// reset penalty
-			penalty_ = 1000;
-			
-=======
 			/* Reweighting loop for cut */
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 			x_prev = x_;
 
 			CreateC();
@@ -183,20 +175,8 @@ void ADMMCut::MakeLayers()
 			Statistics tmp_x(str_x, x_);
 			tmp_x.GenerateVectorFile();
 
-<<<<<<< HEAD
-			rew_count++;
-			cout << "energy before:" << x_prev.dot(H1_ * x_prev) << endl;
-			cout << "energy after:" << x_.dot(H1_ * x_) << endl;
-		} while (!UpdateR(x_prev, rew_count));
-
-		///* Output reweighting energy history for last cut process */
-		//string str_eC = "Cut_" + to_string(cut_count) + "_Cut_Energy";
-		//Statistics s_eC(str_eC, cut_energy);
-		//s_eC.GenerateStdVecFile();
-=======
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 
 		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
 		Statistics s_eR(str_eR, res_energy);
@@ -209,12 +189,7 @@ void ADMMCut::MakeLayers()
 		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_round_);
 		cut_round_++;
 
-<<<<<<< HEAD
-		break;
-	} while (!CheckLabel(cut_count));
-=======
 	} while (!CheckLabel(cut_round_));
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 
 	ptr_frame_->Unify();
 
@@ -295,12 +270,8 @@ void ADMMCut::InitCollisionWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-<<<<<<< HEAD
-		tmp_weight = exp(-5 * tmp_range * tmp_range);
-
-=======
 		tmp_weight = exp(-3 * tmp_range * tmp_range);
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
+
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
@@ -313,7 +284,6 @@ void ADMMCut::InitCollisionWeight()
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
 	}
-<<<<<<< HEAD
 
 	//for (int i = 0; i < halfM; i++)
 	//{
@@ -347,8 +317,6 @@ void ADMMCut::InitCollisionWeight()
 	//		}
 	//	}
 	//}
-=======
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 
 	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
@@ -511,12 +479,6 @@ void ADMMCut::CreateC()
 		double Wuv = tmp_height;
 		double Wvu = tmp_height;
 
-		st1.push_back(Wuv * r_(dual_u, dual_v));
-		st1.push_back(Wvu * r_(dual_v, dual_u));
-
-		st2.push_back(r_(dual_u, dual_v));
-		st2.push_back(r_(dual_v, dual_u));
-
 		Co_list.push_back(Triplet<double>(i, i, pow(Wuv, 2)));
 		Co_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2)));
 
@@ -530,14 +492,6 @@ void ADMMCut::CreateC()
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
 
-	Statistics sp("L_", L_);
-	sp.GenerateSpFile();
-
-	Statistics s("H1", H1_);
-	s.GenerateSpFile();
-
-	create_l_.Stop();
-=======
 	create_c_.Stop();
 
 	//string path = "C:/Users/DELL/Desktop/result";
@@ -570,7 +524,6 @@ void ADMMCut::CreateC()
 	//}
 
 	//fclose(fp1);
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 }
 
 
@@ -808,11 +761,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-<<<<<<< HEAD
-	if (max_improv < 1e-3 || count > 90)
-=======
 	if (max_improv < 1e-2 || reweight_round_ > 20)
->>>>>>> bdbf8fe342971c7894aece09e114e27cc80759d1
 	{
 		/* Exit Reweighting */
 		return true;
