@@ -133,6 +133,10 @@ void ADMMCut::MakeLayers()
 			/* Reweighting loop for cut */
 
 			int ADMM_count = 0;
+
+			// reset penalty
+			penalty_ = 1000;
+			
 			x_prev = x_;
 			CreateL();
 
@@ -202,6 +206,8 @@ void ADMMCut::MakeLayers()
 			tmp_x.GenerateVectorFile();
 
 			rew_count++;
+			cout << "energy before:" << x_prev.dot(H1_ * x_prev) << endl;
+			cout << "energy after:" << x_.dot(H1_ * x_) << endl;
 		} while (!UpdateR(x_prev, rew_count));
 
 		///* Output reweighting energy history for last cut process */
@@ -220,6 +226,7 @@ void ADMMCut::MakeLayers()
 		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_count);
 		cut_count++;
 
+		break;
 	} while (!CheckLabel(cut_count));
 
 	ptr_frame_->Unify();
@@ -300,6 +307,7 @@ void ADMMCut::InitCollisionWeight()
 
 		tmp_range = max(Fij - Fji, 0.0);
 		tmp_weight = exp(-5 * tmp_range * tmp_range);
+
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
@@ -312,6 +320,7 @@ void ADMMCut::InitCollisionWeight()
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
 	}
+
 	//for (int i = 0; i < halfM; i++)
 	//{
 	//	for (int j = 0; j < i; j++)
@@ -538,6 +547,9 @@ void ADMMCut::CreateL()
 	Lo_.resize(Nd_, Nd_);
 	L_.resize(Nd_, Nd_);
 
+	vector<double> st1;
+	vector<double> st2;
+
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
@@ -558,8 +570,17 @@ void ADMMCut::CreateL()
 		double tmp_height = exp(-6 * tmp_range * tmp_range);
 #endif
 
-		double Wuv = col_weight_.coeff(u, v) * tmp_height;
-		double Wvu = col_weight_.coeff(v, u) * tmp_height;
+		/*double Wuv = col_weight_.coeff(u, v) * tmp_height;
+		double Wvu = col_weight_.coeff(v, u) * tmp_height;*/
+
+		double Wuv = tmp_height;
+		double Wvu = tmp_height;
+
+		st1.push_back(Wuv * r_(dual_u, dual_v));
+		st1.push_back(Wvu * r_(dual_v, dual_u));
+
+		st2.push_back(r_(dual_u, dual_v));
+		st2.push_back(r_(dual_v, dual_u));
 
 		if (Wuv > SPT_EPS)
 		{
@@ -579,11 +600,29 @@ void ADMMCut::CreateL()
 		}
 	}
 
+	cout << "size of vert in dual(Nd_): " << Nd_ << endl;
+	cout << "size of edge in dual(Md_): " << Md_ << endl;
+	cout << "size of edge in orig(half M): " << M_ / 2 << endl;
+	cout << "penalty: " << penalty_ << endl;
+
+	Statistics st("range", st1);
+	st.GenerateStdVecFile();
+
+	Statistics stamp("amp", st2);
+	stamp.GenerateStdVecFile();
+
 	L_.setFromTriplets(L_list.begin(), L_list.end());
 	Lo_.setFromTriplets(Lo_list.begin(), Lo_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = L_.transpose() * L_;
+
+
+	Statistics sp("L_", L_);
+	sp.GenerateSpFile();
+
+	Statistics s("H1", H1_);
+	s.GenerateSpFile();
 
 	create_l_.Stop();
 }
@@ -877,7 +916,7 @@ bool ADMMCut::UpdateR(VX &x_prev, int count)
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-2 || count > 20)
+	if (max_improv < 1e-3 || count > 90)
 	{
 		/* Exit Reweighting */
 		return true;
