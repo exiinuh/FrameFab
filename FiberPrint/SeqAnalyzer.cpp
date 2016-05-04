@@ -113,10 +113,6 @@ void SeqAnalyzer::PrintPillars()
 	}
 
 	printf("Size of base queue: %d\n", base_queue.size());
-	for (int l = 0; l < layer_size; l++)
-	{
-		printf("Size of layer %d is %d\n", l + 1, layers_[l].size());
-	}
 
 	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd_; dual_i++)

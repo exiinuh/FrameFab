@@ -30,7 +30,12 @@ class ExtruderCone
 {
 public:
 	ExtruderCone();
-	ExtruderCone(double height, point  base_point, Vec3f normal, double angle);
+	ExtruderCone(
+		double height, 
+		point base_point, 
+		Vec3f normal, 
+		double angle
+	);
 	~ExtruderCone();
 
 public:

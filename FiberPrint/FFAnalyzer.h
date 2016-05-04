@@ -67,8 +67,11 @@ public:
 	void			WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 private:
+	vector<vector<WF_edge*>>	layers_;			// store dual_node's id for each layers
+
 	double			min_z_;
 	double			max_z_;
+
 
 	Timer			FF_analyzer_;
 };

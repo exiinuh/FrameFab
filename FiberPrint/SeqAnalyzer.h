@@ -79,7 +79,6 @@ protected:
 	vector<WF_edge*>			print_queue_;
 	vector<vector<lld>>			angle_state_;
 	VX							D0_;
-	vector<vector<WF_edge*>>	layers_;			// store dual_node's id for each layers
 
 	/* parameters */
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost

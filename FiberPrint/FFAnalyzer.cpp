@@ -17,6 +17,10 @@ bool FFAnalyzer::SeqPrint()
 
 	Init();
 
+	/* printing */
+	/* set pillars as starting edges */
+	PrintPillars();
+
 	/* split layers */
 	/* label stores layer index of each dual node */
 	int layer_size = ptr_frame_->SizeOfLayer();
@@ -28,9 +32,10 @@ bool FFAnalyzer::SeqPrint()
 		layers_[e->Layer()].push_back(e);
 	}
 
-	/* printing */
-	/* set pillars as starting edges */
-	PrintPillars();
+	for (int l = 0; l < layer_size; l++)
+	{
+		printf("Size of layer %d is %d\n", l + 1, layers_[l].size());
+	}
 
 	/* print starting from the first layer */
 	bool bSuccess = true;

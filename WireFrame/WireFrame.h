@@ -81,7 +81,7 @@ class WF_edge
 public:
 	WF_edge()
 		:pvert_(NULL), pnext_(NULL), ppair_(NULL), 
-		id_(0), layer_(-1), b_pillar_(false), b_ceiling_(false), b_subg_(false)
+		id_(0), layer_(0), b_pillar_(false), b_ceiling_(false), b_subg_(false)
 	{}
 	~WF_edge(){}
 

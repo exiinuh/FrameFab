@@ -759,7 +759,7 @@ void WireFrame::Unify()
 	base_vert_ = 0;
 	pillar_size_ = 0;
 	ceiling_size_ = 0;
-	layer_size_ = -1;
+	layer_size_ = 0;
 
 	int N = SizeOfVertList();
 	for (int i = 0; i < N; i++)
