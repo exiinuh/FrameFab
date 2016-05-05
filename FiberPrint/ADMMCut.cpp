@@ -34,7 +34,7 @@ ADMMCut::ADMMCut(
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	debug_ = true;
+	debug_ = false;
 }
 
 
@@ -101,6 +101,7 @@ void ADMMCut::MakeLayers()
 		VX x_prev;
 		VX D_prev;
 
+		res_energy.clear();
 		/* Output energy list for reweighting process in a single
 		graph cut problem, energy.size() = number of reweighting
 		process performed.
@@ -271,6 +272,7 @@ void ADMMCut::InitCollisionWeight()
 
 		tmp_range = max(Fij - Fji, 0.0);
 		tmp_weight = exp(-3 * tmp_range * tmp_range);
+
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
@@ -283,6 +285,39 @@ void ADMMCut::InitCollisionWeight()
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
 	}
+
+	//for (int i = 0; i < halfM; i++)
+	//{
+	//	for (int j = 0; j < i; j++)
+	//	{
+	//		WF_edge *e1 = ptr_frame_->GetEdge(i * 2);
+	//		WF_edge *e2 = ptr_frame_->GetEdge(j * 2);
+	//		vector<lld> tmp(3);
+	//		double Fij, Fji;
+	//		double tmp_range;
+	//		double tmp_weight;
+
+	//		ptr_collision_->DetectCollision(e1, e2, tmp);
+	//		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+	//		ptr_collision_->DetectCollision(e2, e1, tmp);
+	//		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
+
+	//		tmp_range = max(Fij - Fji, 0.0);
+	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
+	//		if (tmp_weight > SPT_EPS)
+	//		{
+	//			weight_list.push_back(Triplet<double>(i, j, tmp_weight));
+	//		}
+
+	//		tmp_range = max(Fji - Fij, 0.0);
+	//		tmp_weight = exp(-5 * tmp_range * tmp_range);
+	//		if (tmp_weight > SPT_EPS)
+	//		{
+	//			weight_list.push_back(Triplet<double>(j, i, tmp_weight));
+	//		}
+	//	}
+	//}
 
 	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
@@ -440,7 +475,7 @@ void ADMMCut::CreateC()
 		int dual_v = ptr_dualgraph_->v(i);
 
 		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-3 * tmp_range * tmp_range);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
 
 		C_list.push_back(Triplet<double>(i, i, pow(tmp_height, 2) * r_(dual_u, dual_v)));
 	}
@@ -450,42 +485,45 @@ void ADMMCut::CreateC()
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
 
-	string path = "C:/Users/DELL/Desktop/result";
-	char cut_id[30];
-	sprintf(cut_id, "%d", cut_round_);
-	char reweight[30];
-	sprintf(reweight, "%d", reweight_round_);
+	//string path = "C:/Users/DELL/Desktop/result";
+	//char cut_id[30];
+	//sprintf(cut_id, "%d", cut_round_);
+	//char reweight[30];
+	//sprintf(reweight, "%d", reweight_round_);
 
-	string file = path + "/" + "H1_C_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp = fopen(file.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp, "%lf ", H1_.coeff(i, j));
-		}
-		fprintf(fp, "\n");
-	}
-	fclose(fp);
+	//string file = path + "/" + "H1_C_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp = fopen(file.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp, "%lf ", H1_.coeff(i, j));
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+	//fclose(fp);
 
-	string file2 = path + "/" + "H1_C_r_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp1 = fopen(file2.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp1, "%lf ", r_(i, j));
-		}
-		fprintf(fp1, "\n");
-	}
+	//string file2 = path + "/" + "H1_C_r_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp1 = fopen(file2.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp1, "%lf ", r_(i, j));
+	//	}
+	//	fprintf(fp1, "\n");
+	//}
 
-	fclose(fp1);
+	//fclose(fp1);
 #else
 	C_.resize(2 * Md_, 2 * Md_);
 	vector<Triplet<double>> C_list;
 
 	Co_.resize(2 * Md_, 2 * Md_);
 	vector<Triplet<double>> Co_list;
+
+	vector<double> st1;
+	vector<double> st2;
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -495,10 +533,13 @@ void ADMMCut::CreateC()
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
 		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-3 * tmp_range * tmp_range);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
 
-		double Wuv = col_weight_.coeff(u, v) * tmp_height;
-		double Wvu = col_weight_.coeff(v, u) * tmp_height;
+		/*double Wuv = col_weight_.coeff(u, v) * tmp_height;
+		double Wvu = col_weight_.coeff(v, u) * tmp_height;*/
+
+		double Wuv = tmp_height;
+		double Wvu = tmp_height;
 
 		Co_list.push_back(Triplet<double>(i, i, pow(Wuv, 2)));
 		Co_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2)));
