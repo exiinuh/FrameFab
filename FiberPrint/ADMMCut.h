@@ -82,7 +82,7 @@ private:
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev);
 
-	bool		CheckLabel(int count);				// Stopping Criterion for iteratively apply ADMM to find several cuts
+	bool		CheckLabel();						// Stopping Criterion for iteratively apply ADMM to find several cuts
 	bool		TerminationCriteria();				// Termination Criteria for ADMM process of a single cut using a threshold node number
 
 	void		PrintOutTimer();
@@ -98,7 +98,7 @@ public:
 private:
 	SpMat				A_;
 	SpMat				C_;
-	SpMat				Co_;			// laplace matrix, without reweighting factor
+	VX					weight_;
 	SpMat				col_weight_;	// for collision weight, indexed by half of original id
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;

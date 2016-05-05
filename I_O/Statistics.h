@@ -14,7 +14,7 @@
 using namespace std;
 using namespace Eigen;
 
-#define PATH "F:\\FiberPrintProject\\ResultData\\Lp_data\\"
+#define PATH "C:/Users/DELL/Desktop/result/"
 
 class Statistics{
 public:

@@ -34,7 +34,7 @@ ADMMCut::ADMMCut(
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
 
-	debug_ = true;
+	debug_ = false;
 }
 
 
@@ -49,6 +49,8 @@ void ADMMCut::MakeLayers()
 {
 	ADMM_cut_.Start();
 
+	cut_round_ = 0;
+
 	// Initial Cutting Edge Setting
 	InitState();
 	InitCollisionWeight();
@@ -57,6 +59,8 @@ void ADMMCut::MakeLayers()
 	vector<double> res_energy;
 	do
 	{
+		reweight_round_ = 0;
+
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints();
 
@@ -189,7 +193,7 @@ void ADMMCut::MakeLayers()
 		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_round_);
 		cut_round_++;
 
-	} while (!CheckLabel(cut_round_));
+	} while (!CheckLabel());
 
 	ptr_frame_->Unify();
 
@@ -208,8 +212,6 @@ void ADMMCut::InitState()
 	Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 	N_ = ptr_frame_->SizeOfVertList();
 	M_ = ptr_frame_->SizeOfEdgeList();
-
-	cut_round_ = 0;
 
 	// set termination tolerance 
 	stop_n_ = floor(N_ / 5);
@@ -304,8 +306,6 @@ void ADMMCut::SetStartingPoints()
 		Fd_ = ptr_dualgraph_->SizeOfFaceList();
 		Ns_ = ptr_dualgraph_->SizeOfFreeFace();
 	}
-
-	reweight_round_ = 0;
 
 	ptr_stiffness_->Init();
 
@@ -402,8 +402,6 @@ void ADMMCut::CreateA()
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
 	{
-		int u = ptr_dualgraph_->u(i);
-		int v = ptr_dualgraph_->v(i);
 		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
 		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
 	}
@@ -433,14 +431,13 @@ void ADMMCut::CreateC()
 #ifdef WEIGHT_WITHOUT_COLLISION
 	C_.resize(Md_, Md_);
 	vector<Triplet<double>> C_list;
-
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
 
 		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-3 * tmp_range * tmp_range);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
 
 		C_list.push_back(Triplet<double>(i, i, pow(tmp_height, 2) * r_(dual_u, dual_v)));
 	}
@@ -484,8 +481,7 @@ void ADMMCut::CreateC()
 	C_.resize(2 * Md_, 2 * Md_);
 	vector<Triplet<double>> C_list;
 
-	Co_.resize(2 * Md_, 2 * Md_);
-	vector<Triplet<double>> Co_list;
+	weight_.resize(2 * Md_);
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -495,20 +491,17 @@ void ADMMCut::CreateC()
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
 		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-3 * tmp_range * tmp_range);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
 
-		double Wuv = col_weight_.coeff(u, v) * tmp_height;
-		double Wvu = col_weight_.coeff(v, u) * tmp_height;
+		weight_[i]		= col_weight_.coeff(u, v) * tmp_height;
+		weight_[i + Md_]= col_weight_.coeff(v, u) * tmp_height;
 
-		Co_list.push_back(Triplet<double>(i, i, pow(Wuv, 2)));
-		Co_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2)));
-
-		C_list.push_back(Triplet<double>(i, i, pow(Wuv, 2) * r_(dual_u, dual_v)));
-		C_list.push_back(Triplet<double>(i + Md_, i + Md_, pow(Wvu, 2) * r_(dual_v, dual_u)));
+		C_list.push_back(Triplet<double>(i, i, pow(weight_[i], 2) * r_(dual_u, dual_v)));
+		C_list.push_back(Triplet<double>(i + Md_, i + Md_, 
+			pow(weight_[i + Md_], 2) * r_(dual_v, dual_u)));
 	}
 
 	C_.setFromTriplets(C_list.begin(), C_list.end());
-	Co_.setFromTriplets(Co_list.begin(), Co_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
@@ -774,9 +767,10 @@ bool ADMMCut::UpdateR(VX &x_prev)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
-
+		double tmp_range = ptr_dualgraph_->Weight(i);
+		double tmp_height = exp(-6 * tmp_range * tmp_range);
 		r_(dual_u, dual_v) = 1.0 /
-			(1e-5 + ptr_dualgraph_->Weight(i) * abs(x_[dual_u] - x_[dual_v]));
+			(1e-5 + tmp_height * abs(x_[dual_u] - x_[dual_v]));
 	}
 #else
 	for (int i = 0; i < Md_; i++)
@@ -785,9 +779,9 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		int dual_v = ptr_dualgraph_->v(i);
 
 		r_(dual_u, dual_v) = 1.0 / 
-			(1e-5 + Co_.coeff(i, i) * abs(x_[dual_u] - x_[dual_v]));
+			(1e-5 + weight_[i] * abs(x_[dual_u] - x_[dual_v]));
 		r_(dual_v, dual_u) = 1.0 / 
-			(1e-5 + Co_.coeff(i + Md_, i + Md_) * abs(x_[dual_u] - x_[dual_v]));
+			(1e-5 + weight_[i + Md_] * abs(x_[dual_u] - x_[dual_v]));
 	}
 #endif
 	update_r_.Stop();
@@ -804,7 +798,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 }
 
 
-bool ADMMCut::CheckLabel(int count)
+bool ADMMCut::CheckLabel()
 {
 	int l = 0;													// Number of dual vertex in lower set
 	int u = 0;													// Number of dual vertex in upper set
@@ -823,7 +817,7 @@ bool ADMMCut::CheckLabel(int count)
 
 	cout << "--------------------------------------------" << endl;
 	cout << "ADMMCut REPORT" << endl;
-	cout << "ADMMCut Round : " << count << endl;
+	cout << "ADMMCut Round : " << cut_round_ << endl;
 	cout << "Lower Set edge number : " << l << "\\ " << Nd_w_ << " (Whole dual graph Nd)" << endl;
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
