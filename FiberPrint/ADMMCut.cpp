@@ -431,6 +431,7 @@ void ADMMCut::CreateC()
 #ifdef WEIGHT_WITHOUT_COLLISION
 	C_.resize(Md_, Md_);
 	vector<Triplet<double>> C_list;
+
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
