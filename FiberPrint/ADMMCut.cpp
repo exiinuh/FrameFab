@@ -111,7 +111,7 @@ void ADMMCut::MakeLayers()
 		do
 		{
 			penalty_ = 1000;
-
+			ADMM_round_ = 0;
 			/* Reweighting loop for cut */
 			x_prev = x_;
 
@@ -431,7 +431,18 @@ void ADMMCut::SetBoundary()
 void ADMMCut::CreateA()
 {
 	create_a_.Start();
-
+#ifdef WEIGHT_WITHOUT_COLLISION
+	A_.resize(Md_, Nd_);
+	vector<Triplet<double>> A_list;
+	for (int i = 0; i < Md_; i++)
+	{
+		int u = ptr_dualgraph_->u(i);
+		int v = ptr_dualgraph_->v(i);
+		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
+		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
+	}
+	A_.setFromTriplets(A_list.begin(), A_list.end());
+#else
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -445,7 +456,7 @@ void ADMMCut::CreateA()
 	}
 
 	A_.setFromTriplets(A_list.begin(), A_list.end());
-
+#endif
 	create_a_.Stop();
 }
 
@@ -453,7 +464,57 @@ void ADMMCut::CreateA()
 void ADMMCut::CreateC()
 {
 	create_c_.Start();
+#ifdef WEIGHT_WITHOUT_COLLISION
+	C_.resize(Md_, Md_);
+	vector<Triplet<double>> C_list;
 
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+
+		double tmp_range = ptr_dualgraph_->Weight(i);
+		double tmp_height = exp(-3 * tmp_range * tmp_range);
+
+		C_list.push_back(Triplet<double>(i, i, pow(tmp_height, 2) * r_(dual_u, dual_v)));
+	}
+
+	C_.setFromTriplets(C_list.begin(), C_list.end());
+
+	H1_ = SpMat(Nd_, Nd_);
+	H1_ = A_.transpose() * C_ * A_;
+
+	string path = "C:/Users/DELL/Desktop/result";
+	char cut_id[30];
+	sprintf(cut_id, "%d", cut_round_);
+	char reweight[30];
+	sprintf(reweight, "%d", reweight_round_);
+
+	string file = path + "/" + "H1_C_" + cut_id + "_" + reweight + ".txt";
+	FILE *fp = fopen(file.c_str(), "w");
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < Nd_; j++)
+		{
+			fprintf(fp, "%lf ", H1_.coeff(i, j));
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+
+	string file2 = path + "/" + "H1_C_r_" + cut_id + "_" + reweight + ".txt";
+	FILE *fp1 = fopen(file2.c_str(), "w");
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < Nd_; j++)
+		{
+			fprintf(fp1, "%lf ", r_(i, j));
+		}
+		fprintf(fp1, "\n");
+	}
+
+	fclose(fp1);
+#else
 	C_.resize(2 * Md_, 2 * Md_);
 	vector<Triplet<double>> C_list;
 
@@ -487,12 +548,10 @@ void ADMMCut::CreateC()
 	}
 
 	C_.setFromTriplets(C_list.begin(), C_list.end());
-	Co_.setFromTriplets(C_list.begin(), C_list.end());
+	Co_.setFromTriplets(Co_list.begin(), Co_list.end());
 
 	H1_ = SpMat(Nd_, Nd_);
 	H1_ = A_.transpose() * C_ * A_;
-
-	create_c_.Stop();
 
 	//string path = "C:/Users/DELL/Desktop/result";
 	//char cut_id[30];
@@ -524,6 +583,8 @@ void ADMMCut::CreateC()
 	//}
 
 	//fclose(fp1);
+#endif
+	create_c_.Stop();
 }
 
 
@@ -748,6 +809,16 @@ bool ADMMCut::UpdateR(VX &x_prev)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
+#ifdef WEIGHT_WITHOUT_COLLISION
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+
+		r_(dual_u, dual_v) = 1.0 /
+			(1e-5 + ptr_dualgraph_->Weight(i) * abs(x_[dual_u] - x_[dual_v]));
+	}
+#else
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
@@ -758,7 +829,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		r_(dual_v, dual_u) = 1.0 / 
 			(1e-5 + Co_.coeff(i + Md_, i + Md_) * abs(x_[dual_u] - x_[dual_v]));
 	}
-
+#endif
 	update_r_.Stop();
 
 	if (max_improv < 1e-2 || reweight_round_ > 20)
