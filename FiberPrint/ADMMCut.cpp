@@ -64,7 +64,10 @@ void ADMMCut::MakeLayers()
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints();
 
+#ifdef ZHANG_SAID_L
+#else
 		CreateA();
+#endif
 
 		///* for rendering */
 		//if (cut_count == 0)
@@ -119,7 +122,12 @@ void ADMMCut::MakeLayers()
 			/* Reweighting loop for cut */
 			x_prev = x_;
 
+#ifdef ZHANG_SAID_L
+			CreateL();
+#else
 			CreateC();
+#endif
+
 
 			do
 			{
@@ -151,7 +159,7 @@ void ADMMCut::MakeLayers()
 				primal_res_ = K_new * D_ - F_new;
 
 				/*-------------------Screenplay-------------------*/
-				double new_cut_energy = x_.dot(H1_ * x_);
+				double new_cut_energy = x_.dot(L_ * x_);
 
 				cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
@@ -249,10 +257,8 @@ void ADMMCut::InitCollisionWeight()
 	init_collision_.Start();
 
 	int halfM = M_ / 2;
-	vector<Triplet<double>> range_list;
+	weight_.resize(halfM, halfM);
 	vector<Triplet<double>> weight_list;
-	vector<Triplet<double>>::iterator it;
-	col_weight_.resize(halfM, halfM);
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -264,6 +270,10 @@ void ADMMCut::InitCollisionWeight()
 		double Fij, Fji;
 		double tmp_range;
 		double tmp_weight;
+		double tmp_height;
+
+		tmp_range = ptr_dualgraph_->Weight(i);
+		tmp_height = exp(-6 * tmp_range * tmp_range);
 
 		ptr_collision_->DetectCollision(e1, e2, tmp);
 		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
@@ -272,21 +282,21 @@ void ADMMCut::InitCollisionWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-		tmp_weight = exp(-3 * tmp_range * tmp_range);
+		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
 		}
 
 		tmp_range = max(Fji - Fij, 0.0);
-		tmp_weight = exp(-3 * tmp_range * tmp_range);
+		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
 		}
 	}
 
-	col_weight_.setFromTriplets(weight_list.begin(), weight_list.end());
+	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
 	init_collision_.Stop();
 }
@@ -397,16 +407,7 @@ void ADMMCut::SetBoundary()
 void ADMMCut::CreateA()
 {
 	create_a_.Start();
-#ifdef WEIGHT_WITHOUT_COLLISION
-	A_.resize(Md_, Nd_);
-	vector<Triplet<double>> A_list;
-	for (int i = 0; i < Md_; i++)
-	{
-		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->u(i), 1));
-		A_list.push_back(Triplet<double>(i, ptr_dualgraph_->v(i), -1));
-	}
-	A_.setFromTriplets(A_list.begin(), A_list.end());
-#else
+
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -420,7 +421,7 @@ void ADMMCut::CreateA()
 	}
 
 	A_.setFromTriplets(A_list.begin(), A_list.end());
-#endif
+
 	create_a_.Stop();
 }
 
@@ -428,25 +429,26 @@ void ADMMCut::CreateA()
 void ADMMCut::CreateC()
 {
 	create_c_.Start();
-#ifdef WEIGHT_WITHOUT_COLLISION
-	C_.resize(Md_, Md_);
+
+	C_.resize(2 * Md_, 2 * Md_);
 	vector<Triplet<double>> C_list;
 
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
+		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
-		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-
-		C_list.push_back(Triplet<double>(i, i, pow(tmp_height, 2) * r_(dual_u, dual_v)));
+		C_list.push_back(Triplet<double>(i, i, 
+			pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
+		C_list.push_back(Triplet<double>(i + Md_, i + Md_, 
+			pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
 	}
 
 	C_.setFromTriplets(C_list.begin(), C_list.end());
 
-	H1_ = SpMat(Nd_, Nd_);
-	H1_ = A_.transpose() * C_ * A_;
+	L_ = A_.transpose() * C_ * A_ / 2;
 
 	string path = "C:/Users/DELL/Desktop/result";
 	char cut_id[30];
@@ -454,19 +456,19 @@ void ADMMCut::CreateC()
 	char reweight[30];
 	sprintf(reweight, "%d", reweight_round_);
 
-	string file = path + "/" + "H1_C_" + cut_id + "_" + reweight + ".txt";
+	string file = path + "/" + "L_AC_" + cut_id + "_" + reweight + ".txt";
 	FILE *fp = fopen(file.c_str(), "w");
 	for (int i = 0; i < Nd_; i++)
 	{
 		for (int j = 0; j < Nd_; j++)
 		{
-			fprintf(fp, "%lf ", H1_.coeff(i, j));
+			fprintf(fp, "%lf ", L_.coeff(i, j));
 		}
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
 
-	string file2 = path + "/" + "H1_C_r_" + cut_id + "_" + reweight + ".txt";
+	string file2 = path + "/" + "L_AC_r_" + cut_id + "_" + reweight + ".txt";
 	FILE *fp1 = fopen(file2.c_str(), "w");
 	for (int i = 0; i < Nd_; i++)
 	{
@@ -478,67 +480,66 @@ void ADMMCut::CreateC()
 	}
 
 	fclose(fp1);
-#else
-	C_.resize(2 * Md_, 2 * Md_);
-	vector<Triplet<double>> C_list;
 
-	weight_.resize(2 * Md_);
+	create_c_.Stop();
+}
+
+
+void ADMMCut::CreateL()
+{
+	L_.resize(Nd_, Nd_);
+	vector<Triplet<double>> L_list;
 
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
+
 		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
-		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-
-		weight_[i]		= col_weight_.coeff(u, v) * tmp_height;
-		weight_[i + Md_]= col_weight_.coeff(v, u) * tmp_height;
-
-		C_list.push_back(Triplet<double>(i, i, pow(weight_[i], 2) * r_(dual_u, dual_v)));
-		C_list.push_back(Triplet<double>(i + Md_, i + Md_, 
-			pow(weight_[i + Md_], 2) * r_(dual_v, dual_u)));
+		L_list.push_back(Triplet<double>(dual_u, dual_u, 
+			pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
+		L_list.push_back(Triplet<double>(dual_v, dual_v, 
+			pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
+		L_list.push_back(Triplet<double>(dual_u, dual_v, 
+			-pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
+		L_list.push_back(Triplet<double>(dual_v, dual_u, 
+			-pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
 	}
 
-	C_.setFromTriplets(C_list.begin(), C_list.end());
+	L_.setFromTriplets(L_list.begin(), L_list.end());
 
-	H1_ = SpMat(Nd_, Nd_);
-	H1_ = A_.transpose() * C_ * A_;
+	string path = "C:/Users/DELL/Desktop/result";
+	char cut_id[30];
+	sprintf(cut_id, "%d", cut_round_);
+	char reweight[30];
+	sprintf(reweight, "%d", reweight_round_);
 
-	//string path = "C:/Users/DELL/Desktop/result";
-	//char cut_id[30];
-	//sprintf(cut_id, "%d", cut_round_);
-	//char reweight[30];
-	//sprintf(reweight, "%d", reweight_round_);
+	string file = path + "/" + "L_" + cut_id + "_" + reweight + ".txt";
+	FILE *fp = fopen(file.c_str(), "w");
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < Nd_; j++)
+		{
+			fprintf(fp, "%lf ", L_.coeff(i, j));
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
 
-	//string file = path + "/" + "H1_Cnew_" + cut_id + "_" + reweight + ".txt";
-	//FILE *fp = fopen(file.c_str(), "w");
-	//for (int i = 0; i < Nd_; i++)
-	//{
-	//	for (int j = 0; j < Nd_; j++)
-	//	{
-	//		fprintf(fp, "%lf ", H1_.coeff(i, j));
-	//	}
-	//	fprintf(fp, "\n");
-	//}
-	//fclose(fp);
+	string file2 = path + "/" + "L_r_" + cut_id + "_" + reweight + ".txt";
+	FILE *fp1 = fopen(file2.c_str(), "w");
+	for (int i = 0; i < Nd_; i++)
+	{
+		for (int j = 0; j < Nd_; j++)
+		{
+			fprintf(fp1, "%lf ", r_(i, j));
+		}
+		fprintf(fp1, "\n");
+	}
 
-	//string file2 = path + "/" + "H1_Cnew_r_" + cut_id + "_" + reweight + ".txt";
-	//FILE *fp1 = fopen(file2.c_str(), "w");
-	//for (int i = 0; i < Nd_; i++)
-	//{
-	//	for (int j = 0; j < Nd_; j++)
-	//	{
-	//		fprintf(fp1, "%lf ", r_(i, j));
-	//	}
-	//	fprintf(fp1, "\n");
-	//}
-
-	//fclose(fp1);
-#endif
-	create_c_.Stop();
+	fclose(fp1);
 }
 
 
@@ -551,7 +552,7 @@ void ADMMCut::CalculateX()
 	CalculateQ(D_, Q);
 
 	SpMat H2 = Q.transpose() * Q;
-	SpMat H = 2 * H1_ + penalty_ * H2;
+	SpMat H = 2 * L_ + penalty_ * H2;
 
 	// Construct Linear coefficient for x-Qp problem
 	a_ = Q.transpose() * lambda_;
@@ -763,28 +764,19 @@ bool ADMMCut::UpdateR(VX &x_prev)
 	cout << "Max Relative Improvement = " << max_improv << endl;
 	cout << "---" << endl;
 
-#ifdef WEIGHT_WITHOUT_COLLISION
 	for (int i = 0; i < Md_; i++)
 	{
 		int dual_u = ptr_dualgraph_->u(i);
 		int dual_v = ptr_dualgraph_->v(i);
-		double tmp_range = ptr_dualgraph_->Weight(i);
-		double tmp_height = exp(-6 * tmp_range * tmp_range);
-		r_(dual_u, dual_v) = 1.0 /
-			(1e-5 + tmp_height * abs(x_[dual_u] - x_[dual_v]));
-	}
-#else
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
+		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
 		r_(dual_u, dual_v) = 1.0 / 
-			(1e-5 + weight_[i] * abs(x_[dual_u] - x_[dual_v]));
+			(1e-5 + weight_.coeff(u, v) * abs(x_[dual_u] - x_[dual_v]));
 		r_(dual_v, dual_u) = 1.0 / 
-			(1e-5 + weight_[i + Md_] * abs(x_[dual_u] - x_[dual_v]));
+			(1e-5 + weight_.coeff(v, u) * abs(x_[dual_u] - x_[dual_v]));
 	}
-#endif
+
 	update_r_.Stop();
 
 	if (max_improv < 1e-2 || reweight_round_ > 20)

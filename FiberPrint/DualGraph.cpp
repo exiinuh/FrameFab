@@ -106,6 +106,23 @@ void DualGraph::Dualization()
 	maxz_ = ptr_frame_->maxZ();
 	minz_ = ptr_frame_->minZ();
 
+	//maxz_ = -1e20;
+	//minz_ = 1e20;
+
+	//int M = ptr_frame_->SizeOfEdgeList();
+	//for (int i = 0; i < M; i++)
+	//{
+	//	double z = ptr_frame_->GetCenterPos(i).z();
+	//	if (z > maxz_)
+	//	{
+	//		maxz_ = z;
+	//	}
+	//	if (z < minz_)
+	//	{
+	//		minz_ = z;
+	//	}
+	//}
+
 	// first time & all exsits
 	fill(exist_vert_.begin(), exist_vert_.end(), 1);
 	fill(exist_edge_.begin(), exist_edge_.end(), true);
@@ -130,6 +147,11 @@ void DualGraph::UpdateDualization(VectorXd *ptr_x)
 			WF_edge *ej = ei->ppair_;
 			WF_vert *u = ej->pvert_;
 			WF_vert *v = ei->pvert_;
+
+			//if (ei->CenterPos().z() > maxz_)
+			//{
+			//	maxz_ = ei->CenterPos().z();
+			//}
 
 			if (u->Position().z() > maxz_)
 			{
@@ -211,13 +233,18 @@ void DualGraph::Establish()
 				while (edge->pnext_ != NULL)
 				{
 					WF_edge *next_edge = edge->pnext_;
+					//double w = ((edge->CenterPos().z() + next_edge->CenterPos().z()) / 2 - minz_)
+					//	/ (maxz_ - minz_);
 					InsertEdge(edge, next_edge, w, vert);
 					edge = next_edge;
 				}
 
 				if (ptr_frame_->GetDegree(i) > 2)
 				{
-					InsertEdge(edge, ptr_frame_->GetNeighborEdge(i), w, vert);
+					WF_edge *next_edge = ptr_frame_->GetNeighborEdge(i);
+					//double w = ((edge->CenterPos().z() + next_edge->CenterPos().z()) / 2 - minz_)
+					//	/ (maxz_ - minz_);
+					InsertEdge(edge, next_edge, w, vert);
 				}
 			}
 		}

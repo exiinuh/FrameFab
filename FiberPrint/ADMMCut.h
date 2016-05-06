@@ -42,7 +42,7 @@
 using namespace std;
 using namespace Eigen;
 
-//#define WEIGHT_WITHOUT_COLLISION
+#define ZHANG_SAID_L
 
 class ADMMCut : public GraphCut
 {
@@ -96,10 +96,7 @@ public:
 	QuadricCollision	*ptr_collision_;
 
 private:
-	SpMat				A_;
-	SpMat				C_;
-	VX					weight_;
-	SpMat				col_weight_;	// for collision weight, indexed by half of original id
+	SpMat				weight_;		// for weight, indexed by half of original id
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;
 	VX					D_;
@@ -114,8 +111,10 @@ private:
 	Solves the quadratic programming problem:
 	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
 	*/
-	QP					*ptr_qp_;			
-	SpMat				H1_;			// Part 1 of hessian matrix for x-Qp problem
+	QP					*ptr_qp_;	
+	SpMat				A_;
+	SpMat				C_;
+	SpMat				L_;			// Part 1 of hessian matrix for x-Qp problem
 	SpMat				W_;
 
 	int					cut_round_;

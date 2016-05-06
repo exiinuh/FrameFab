@@ -413,7 +413,7 @@ void MainWindow::CreateGroups()
 
 	groupbox_render_ = new QGroupBox(tr("Render"), this);
 	groupbox_render_->setFlat(true);
-
+	groupbox_render_->setCheckable(true);
 	QVBoxLayout* render_layout = new QVBoxLayout(groupbox_render_);
 	render_layout->addWidget(checkbox_point_);
 	render_layout->addWidget(checkbox_light_);
