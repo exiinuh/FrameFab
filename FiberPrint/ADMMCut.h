@@ -101,7 +101,9 @@ private:
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;
 	VX					D_;
-	VX					lambda_;
+	VX					y_;
+	VX					lambda_stf_;	// dimension 6 * Ns_, corresponding to equation constraints Kd = F
+	VX					lambda_y_;		// dimension 2 * Md_, corresponding to equation constraints yij = xi - xj
 	VX					a_;				// linear coefficient used in x_Qp
 	VX					d_;				// for setting boundary & QP x
 

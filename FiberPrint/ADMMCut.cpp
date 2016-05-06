@@ -90,17 +90,6 @@ void ADMMCut::MakeLayers()
 		/* set x for intial cut setting */
 		SetBoundary();
 
-		/*
-		* energy specify:
-		* cut		 energy : | A * x |
-		* defomation energy : norm(K D - F)
-		*/
-		ptr_stiffness_->CreateGlobalK(&x_);
-		ptr_stiffness_->CreateF(&x_);
-		SpMat K_init = *(ptr_stiffness_->WeightedK());
-		VX	  F_init = *(ptr_stiffness_->WeightedF());
-
-
 		cout << "****************************************" << endl;
 		cout << "ADMMCut Round : " << cut_round_ << endl;
 		cout << "---------------------------------" << endl;
@@ -108,17 +97,11 @@ void ADMMCut::MakeLayers()
 		VX x_prev;
 		VX D_prev;
 
-		/* Output energy list for reweighting process in a single
-		graph cut problem, energy.size() = number of reweighting
-		process performed.
-		cut energy = |A_ * x_| = sum_{e_ij} w_ij * |x_i - x_j|
-		res energy = (K(x)D - F(x)).norm()
-		*/
-
 		do
 		{
 			penalty_ = 1000;
 			ADMM_round_ = 0;
+
 			/* Reweighting loop for cut */
 			x_prev = x_;
 
@@ -127,7 +110,6 @@ void ADMMCut::MakeLayers()
 #else
 			CreateC();
 #endif
-
 
 			do
 			{
@@ -139,6 +121,8 @@ void ADMMCut::MakeLayers()
 
 				D_prev = D_;
 				CalculateD();
+
+				CalculateY();
 
 				UpdateLambda();
 
@@ -155,7 +139,7 @@ void ADMMCut::MakeLayers()
 				VX    F_new = *(ptr_stiffness_->WeightedF());
 
 				dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-					+ lambda_.transpose() * (Q_prev - Q_new);
+					+ lambda_stf_.transpose() * (Q_prev - Q_new);
 				primal_res_ = K_new * D_ - F_new;
 
 				/*-------------------Screenplay-------------------*/
@@ -322,13 +306,17 @@ void ADMMCut::SetStartingPoints()
 	/* Reweighting Paramter */
 	r_.resize(Nd_, Nd_);
 	x_.resize(Nd_);
-	lambda_.resize(6 * Ns_);
+	y_.resize(2 * Md_);
+	lambda_stf_.resize(6 * Ns_);
+	lambda_y_.resize(2 * Md_);
 	a_.resize(Nd_);
 
 	// Set all label x = 1 and calculate KD = F to obtain inital D_0
 	r_.setOnes();
 	x_.setOnes();
-	lambda_.setZero();
+	y_.setZero();
+	lambda_stf_.setZero();
+	lambda_y_.setZero();
 	a_.setZero();
 
 	//ptr_stiffness_->Debug();
@@ -552,10 +540,10 @@ void ADMMCut::CalculateX()
 	CalculateQ(D_, Q);
 
 	SpMat H2 = Q.transpose() * Q;
-	SpMat H = 2 * L_ + penalty_ * H2;
+	SpMat H = penalty_ * H2;
 
 	// Construct Linear coefficient for x-Qp problem
-	a_ = Q.transpose() * lambda_;
+	a_ = Q.transpose() * lambda_stf_;
 
 	// Inequality constraints A*x <= b
 	SpMat A(6 * Fd_, 6 * Fd_);
@@ -662,15 +650,116 @@ void ADMMCut::CalculateD()
 	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());
 
-	VX a = K.transpose() * lambda_ - penalty_ * K.transpose() * F;
+	VX a = K.transpose() * lambda_stf_ - penalty_ * K.transpose() * F;
 
-	/* 10 degree rotation tolerance, from degree to radians */
 	cal_qp_.Start();
 	ptr_qp_->solve(Q, a, D_, D_tol_, debug_);
 	cal_qp_.Stop();
 	cal_d_.Stop();
 }
 
+void ADMMCut :: CalculateY()
+{
+	y_.resize(2 * Md_);
+
+	// y_uv = xu - xv (have direction!)
+	// seperately minimize each y_uv
+
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+		
+		double diffuv = x_[dual_u] - x_[dual_v];
+		double diffvu = x_[dual_v] - x_[dual_u];
+		
+		double opt_y1, opt_y2, of_c1, of_c2;
+		// case #1 y_uv < 0
+		// obj func: lamba_ij * y_ij + (mu/2) * (y_ij - (x_i - x_j))^2
+		opt_y1 = -lambda_y_[i] / penalty_ + diffuv;
+		if (opt_y1 < 0)
+		{
+			of_c1 = lambda_y_[i] * opt_y1 + (penalty_ / 2) * pow((opt_y1 - diffuv), 2);
+		}
+		else
+		{
+			of_c1 = (penalty_/2) * diffuv;
+		}
+
+
+		// case #2 y_uv > 0
+		// obj func: 
+		double opt_y2 = (penalty_ * diffuv - lambda_y_[i]) / (penalty_
+			+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+		if (opt_y2 > 0)
+		{
+			double of_c2 = (penalty_ / 2) * pow(diffuv, 2)
+				- 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) / (penalty_
+				+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+		}
+		else
+		{
+			double of_c2 = 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) /
+				(penalty_
+				+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+		}
+
+		if (of_c1 > of_c2)
+		{
+			y_[i] = opt_y2;
+		}
+		else
+		{
+			y_[i] = opt_y1;
+		}
+
+		/* ------------------------------------- */
+
+		double opt_y1_r, opt_y2_r, of_c1_r, of_c2_r;
+
+		// case #1 y_uv < 0
+		// obj func: lamba_ij * y_ij + (mu/2) * (y_ij - (x_i - x_j))^2
+		opt_y1_r = -lambda_y_[Md_ + i] / penalty_ + diffvu;
+		
+		if (opt_y1_r < 0)
+		{
+			of_c1_r = lambda_y_[Md_ + i] * opt_y1_r + (penalty_ / 2) * pow((opt_y1_r - diffvu), 2);
+		}
+		else
+		{
+			of_c1_r = (penalty_ / 2) * diffvu;
+		}
+
+
+		// case #2 y_uv > 0
+		// obj func: 
+		double opt_y2_r = (penalty_ * diffvu - lambda_y_[Md_ + i]) / (penalty_
+			+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+		if (opt_y2_r > 0)
+		{
+			double of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
+				- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
+				+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+		}
+		else
+		{
+			double of_c2_r = 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) /
+				(penalty_
+				+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+		}
+
+		if (of_c1_r > of_c2_r)
+		{
+			y_[Md_ + i] = opt_y2_r;
+		}
+		else
+		{
+			y_[Md_ + i] = opt_y1_r;
+		}
+	}
+}
 
 void ADMMCut::UpdateLambda()
 {
@@ -683,7 +772,16 @@ void ADMMCut::UpdateLambda()
 	ptr_stiffness_->CreateF(&x_);
 	VX F = *(ptr_stiffness_->WeightedF());
 
-	lambda_ = lambda_ + penalty_ * (K * D_ - F);
+	lambda_stf_ = lambda_stf_ + penalty_ * (K * D_ - F);
+	
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+
+		lambda_y_[i]		+= penalty_ * (y_[i]	   - (x_[dual_u] - x_[dual_v]));
+		lambda_y_[Md_ + i]  += penalty_ * (y_[Md_ + i] - (x_[dual_v] - x_[dual_u]));
+	}
 
 	update_lambda_.Stop();
 }
