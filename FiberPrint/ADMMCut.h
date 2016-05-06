@@ -78,6 +78,7 @@ private:
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
+	void		CalculateY();						// Direct quadratic optimization for Y at every iteration
 	void		UpdateLambda();						// Dual variable update at every iteration
 	void		UpdateCut();
 	bool		UpdateR(VX &x_prev);

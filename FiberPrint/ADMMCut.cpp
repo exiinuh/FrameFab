@@ -510,36 +510,36 @@ void ADMMCut::CreateL()
 
 	L_.setFromTriplets(L_list.begin(), L_list.end());
 
-	string path = "C:/Users/DELL/Desktop/result";
-	char cut_id[30];
-	sprintf(cut_id, "%d", cut_round_);
-	char reweight[30];
-	sprintf(reweight, "%d", reweight_round_);
+	//string path = "C:/Users/DELL/Desktop/result";
+	//char cut_id[30];
+	//sprintf(cut_id, "%d", cut_round_);
+	//char reweight[30];
+	//sprintf(reweight, "%d", reweight_round_);
 
-	string file = path + "/" + "L_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp = fopen(file.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp, "%lf ", L_.coeff(i, j));
-		}
-		fprintf(fp, "\n");
-	}
-	fclose(fp);
+	//string file = path + "/" + "L_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp = fopen(file.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp, "%lf ", L_.coeff(i, j));
+	//	}
+	//	fprintf(fp, "\n");
+	//}
+	//fclose(fp);
 
-	string file2 = path + "/" + "L_r_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp1 = fopen(file2.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp1, "%lf ", r_(i, j));
-		}
-		fprintf(fp1, "\n");
-	}
+	//string file2 = path + "/" + "L_r_" + cut_id + "_" + reweight + ".txt";
+	//FILE *fp1 = fopen(file2.c_str(), "w");
+	//for (int i = 0; i < Nd_; i++)
+	//{
+	//	for (int j = 0; j < Nd_; j++)
+	//	{
+	//		fprintf(fp1, "%lf ", r_(i, j));
+	//	}
+	//	fprintf(fp1, "\n");
+	//}
 
-	fclose(fp1);
+	//fclose(fp1);
 }
 
 
