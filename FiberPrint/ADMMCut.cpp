@@ -64,29 +64,6 @@ void ADMMCut::MakeLayers()
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints();
 
-#ifdef ZHANG_SAID_L
-#else
-		CreateA();
-#endif
-
-		///* for rendering */
-		//if (cut_count == 0)
-		//{
-		//	WriteWeight();
-		//	WriteStiffness("offset1.txt", "rotation1.txt");
-		//	getchar();
-		//}
-		//if (cut_count == 4)
-		//{
-		//	WriteStiffness("offset2.txt", "rotation2.txt");
-		//	getchar();
-		//}
-		//if (cut_count == 6)
-		//{
-		//	WriteStiffness("offset3.txt", "rotation3.txt");
-		//	getchar();
-		//}
-
 		/* set x for intial cut setting */
 		SetBoundary();
 
@@ -104,12 +81,6 @@ void ADMMCut::MakeLayers()
 
 			/* Reweighting loop for cut */
 			x_prev = x_;
-
-#ifdef ZHANG_SAID_L
-			CreateL();
-#else
-			CreateC();
-#endif
 
 			do
 			{
@@ -143,9 +114,9 @@ void ADMMCut::MakeLayers()
 				primal_res_ = K_new * D_ - F_new;
 
 				/*-------------------Screenplay-------------------*/
-				double new_cut_energy = x_.dot(L_ * x_);
+				//double new_cut_energy = x_.dot(L_ * x_);
 
-				cout << "new quadratic func value record: " << new_cut_energy << endl;
+				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
 				cout << "primal_residual(KD-F) : " << primal_res_.norm() << endl;
 
@@ -159,24 +130,23 @@ void ADMMCut::MakeLayers()
 			/*-------------------Screenplay-------------------*/
 			double res_tmp = primal_res_.norm();
 			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-			//cout << "Cut Energy :" << energy << endl;
 			cout << "Res Energy :" << res_tmp << endl;
 			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 
 			//cut_energy.push_back(energy);
 			res_energy.push_back(res_tmp);
 
-			///* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
+			/* write x distribution to a file */
+			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			//Statistics tmp_x(str_x, x_);
+			//tmp_x.GenerateVectorFile();
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		//Statistics s_eR(str_eR, res_energy);
+		//s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -392,145 +362,6 @@ void ADMMCut::SetBoundary()
 }
 
 
-void ADMMCut::CreateA()
-{
-	create_a_.Start();
-
-	A_.resize(2 * Md_, Nd_);
-	vector<Triplet<double>> A_list;
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
-		A_list.push_back(Triplet<double>(i, dual_u, 1));
-		A_list.push_back(Triplet<double>(i, dual_v, -1));
-		A_list.push_back(Triplet<double>(i + Md_, dual_v, 1));
-		A_list.push_back(Triplet<double>(i + Md_, dual_u, -1));
-	}
-
-	A_.setFromTriplets(A_list.begin(), A_list.end());
-
-	create_a_.Stop();
-}
-
-
-void ADMMCut::CreateC()
-{
-	create_c_.Start();
-
-	C_.resize(2 * Md_, 2 * Md_);
-	vector<Triplet<double>> C_list;
-
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
-		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
-		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
-
-		C_list.push_back(Triplet<double>(i, i, 
-			pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
-		C_list.push_back(Triplet<double>(i + Md_, i + Md_, 
-			pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
-	}
-
-	C_.setFromTriplets(C_list.begin(), C_list.end());
-
-	L_ = A_.transpose() * C_ * A_ / 2;
-
-	string path = "C:/Users/DELL/Desktop/result";
-	char cut_id[30];
-	sprintf(cut_id, "%d", cut_round_);
-	char reweight[30];
-	sprintf(reweight, "%d", reweight_round_);
-
-	string file = path + "/" + "L_AC_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp = fopen(file.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp, "%lf ", L_.coeff(i, j));
-		}
-		fprintf(fp, "\n");
-	}
-	fclose(fp);
-
-	string file2 = path + "/" + "L_AC_r_" + cut_id + "_" + reweight + ".txt";
-	FILE *fp1 = fopen(file2.c_str(), "w");
-	for (int i = 0; i < Nd_; i++)
-	{
-		for (int j = 0; j < Nd_; j++)
-		{
-			fprintf(fp1, "%lf ", r_(i, j));
-		}
-		fprintf(fp1, "\n");
-	}
-
-	fclose(fp1);
-
-	create_c_.Stop();
-}
-
-
-void ADMMCut::CreateL()
-{
-	L_.resize(Nd_, Nd_);
-	vector<Triplet<double>> L_list;
-
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
-
-		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
-		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
-
-		L_list.push_back(Triplet<double>(dual_u, dual_u, 
-			pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
-		L_list.push_back(Triplet<double>(dual_v, dual_v, 
-			pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
-		L_list.push_back(Triplet<double>(dual_u, dual_v, 
-			-pow(weight_.coeff(u, v), 2) * r_(dual_u, dual_v)));
-		L_list.push_back(Triplet<double>(dual_v, dual_u, 
-			-pow(weight_.coeff(v, u), 2) * r_(dual_v, dual_u)));
-	}
-
-	L_.setFromTriplets(L_list.begin(), L_list.end());
-
-	//string path = "C:/Users/DELL/Desktop/result";
-	//char cut_id[30];
-	//sprintf(cut_id, "%d", cut_round_);
-	//char reweight[30];
-	//sprintf(reweight, "%d", reweight_round_);
-
-	//string file = path + "/" + "L_" + cut_id + "_" + reweight + ".txt";
-	//FILE *fp = fopen(file.c_str(), "w");
-	//for (int i = 0; i < Nd_; i++)
-	//{
-	//	for (int j = 0; j < Nd_; j++)
-	//	{
-	//		fprintf(fp, "%lf ", L_.coeff(i, j));
-	//	}
-	//	fprintf(fp, "\n");
-	//}
-	//fclose(fp);
-
-	//string file2 = path + "/" + "L_r_" + cut_id + "_" + reweight + ".txt";
-	//FILE *fp1 = fopen(file2.c_str(), "w");
-	//for (int i = 0; i < Nd_; i++)
-	//{
-	//	for (int j = 0; j < Nd_; j++)
-	//	{
-	//		fprintf(fp1, "%lf ", r_(i, j));
-	//	}
-	//	fprintf(fp1, "\n");
-	//}
-
-	//fclose(fp1);
-}
-
-
 void ADMMCut::CalculateX()
 {
 	cal_x_.Start();
@@ -658,7 +489,8 @@ void ADMMCut::CalculateD()
 	cal_d_.Stop();
 }
 
-void ADMMCut :: CalculateY()
+
+void ADMMCut::CalculateY()
 {
 	y_.resize(2 * Md_);
 
@@ -685,25 +517,25 @@ void ADMMCut :: CalculateY()
 		}
 		else
 		{
-			of_c1 = (penalty_/2) * diffuv;
+			of_c1 = (penalty_ / 2) * pow(diffuv, 2);
 		}
 
 
 		// case #2 y_uv > 0
 		// obj func: 
-		double opt_y2 = (penalty_ * diffuv - lambda_y_[i]) / (penalty_
-			+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+		opt_y2 = (penalty_ * diffuv - lambda_y_[i]) / (penalty_
+			+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
 		if (opt_y2 > 0)
 		{
-			double of_c2 = (penalty_ / 2) * pow(diffuv, 2)
+			of_c2 = (penalty_ / 2) * pow(diffuv, 2)
 				- 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) / (penalty_
-				+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+				+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
 		}
 		else
 		{
-			double of_c2 = 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) /
+			of_c2 = 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) /
 				(penalty_
-				+ 2 * pow(weight_.coeff(u, v), 2) / r_[dual_u, dual_v]);
+				+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
 		}
 
 		if (of_c1 > of_c2)
@@ -729,25 +561,25 @@ void ADMMCut :: CalculateY()
 		}
 		else
 		{
-			of_c1_r = (penalty_ / 2) * diffvu;
+			of_c1_r = (penalty_ / 2) * pow(diffuv, 2);
 		}
 
 
 		// case #2 y_uv > 0
 		// obj func: 
-		double opt_y2_r = (penalty_ * diffvu - lambda_y_[Md_ + i]) / (penalty_
-			+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+		opt_y2_r = (penalty_ * diffvu - lambda_y_[Md_ + i]) / (penalty_
+			+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
 		if (opt_y2_r > 0)
 		{
-			double of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
+			of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
 				- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
-				+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
 		}
 		else
 		{
-			double of_c2_r = 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) /
+			of_c2_r = 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) /
 				(penalty_
-				+ 2 * pow(weight_.coeff(v, u), 2) / r_[dual_v, dual_u]);
+				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
 		}
 
 		if (of_c1_r > of_c2_r)
@@ -760,6 +592,7 @@ void ADMMCut :: CalculateY()
 		}
 	}
 }
+
 
 void ADMMCut::UpdateLambda()
 {
@@ -913,14 +746,16 @@ bool ADMMCut::CheckLabel()
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
-	if (l < 20 || l < ptr_frame_->SizeOfPillar())
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	//if (l < 20 || l < ptr_frame_->SizeOfPillar())
+	//{
+	//	return true;
+	//}
+	//else
+	//{
+	//	return false;
+	//}
+
+	return true;
 }
 
 
@@ -931,27 +766,29 @@ bool ADMMCut::TerminationCriteria()
 		return true;
 	}
 
-	if (primal_res_.norm() <= pri_tol_ && dual_res_.norm() <= dual_tol_)
-	{
-		return true;
-	}
-	else
-	{
-		double p_r = primal_res_.norm();
-		double d_r = dual_res_.norm();
+	//if (primal_res_.norm() <= pri_tol_ /*&& dual_res_.norm() <= dual_tol_*/)
+	//{
+	//	return true;
+	//}
+	//else
+	//{
+	//	double p_r = primal_res_.norm();
+	//	double d_r = dual_res_.norm();
 
-		if (p_r > d_r)
-		{
-			penalty_ *= 2;
-		}
+	//	if (p_r > d_r)
+	//	{
+	//		penalty_ *= 2;
+	//	}
 
-		if (p_r < d_r)
-		{
-			penalty_ /= 2;
-		}
+	//	if (p_r < d_r)
+	//	{
+	//		penalty_ /= 2;
+	//	}
 
-		return false;
-	}
+	//	return false;
+	//}
+
+	return false;
 }
 
 

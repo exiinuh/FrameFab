@@ -42,7 +42,6 @@
 using namespace std;
 using namespace Eigen;
 
-#define ZHANG_SAID_L
 
 class ADMMCut : public GraphCut
 {
@@ -72,9 +71,6 @@ private:
 
 	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary();
-	void		CreateA();							// Construct edge-incidence matrix A
-	void		CreateC();
-	void		CreateL();							// Construct laplace matrix L and H1
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
@@ -115,9 +111,6 @@ private:
 	min 0.5* xt*H*x + ft*x subject to A*x <= b, C*x = d, x >= lb, x <= ub 
 	*/
 	QP					*ptr_qp_;	
-	SpMat				A_;
-	SpMat				C_;
-	SpMat				L_;			// Part 1 of hessian matrix for x-Qp problem
 	SpMat				W_;
 
 	int					cut_round_;
