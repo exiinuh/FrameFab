@@ -63,6 +63,7 @@ void ADMMCut::MakeLayers()
 
 		/* Recreate dual graph at the beginning of each cut */
 		SetStartingPoints();
+		CreateA();
 
 		/* set x for intial cut setting */
 		SetBoundary();
@@ -361,6 +362,25 @@ void ADMMCut::SetBoundary()
 	set_bound_.Stop();
 }
 
+void ADMMCut::CreateA()
+{
+	vector<Triplet<double>> Lo_list;
+	vector<Triplet<double>> L_list;
+	
+	A_.resize(2 * Md_, Nd_);
+	vector<Triplet<double>> A_list;
+	for (int i = 0; i < Md_; i++)
+	{
+		int dual_u = ptr_dualgraph_->u(i);
+		int dual_v = ptr_dualgraph_->v(i);
+		A_list.push_back(Triplet<double>(i, dual_u, 1));
+		A_list.push_back(Triplet<double>(i, dual_v, -1));
+		A_list.push_back(Triplet<double>(i + Md_, dual_v, 1));
+		A_list.push_back(Triplet<double>(i + Md_, dual_u, -1));
+	}
+	
+	A_.setFromTriplets(A_list.begin(), A_list.end());
+}
 
 void ADMMCut::CalculateX()
 {
@@ -370,11 +390,15 @@ void ADMMCut::CalculateX()
 	SpMat Q;
 	CalculateQ(D_, Q);
 
+	SpMat H1 = A_.transpose() * A_;
 	SpMat H2 = Q.transpose() * Q;
-	SpMat H = penalty_ * H2;
+	SpMat H = penalty_ * (H1 + H2);
 
 	// Construct Linear coefficient for x-Qp problem
-	a_ = Q.transpose() * lambda_stf_;
+	// Modified @Mar/9/2016, y = Ax constraints came into play.
+	a_ = -penalty_	* A_.transpose() * y_
+					- A_.transpose() * lambda_y_  
+					+ Q.transpose()	 * lambda_stf_;
 
 	// Inequality constraints A*x <= b
 	SpMat A(6 * Fd_, 6 * Fd_);
@@ -494,8 +518,8 @@ void ADMMCut::CalculateY()
 {
 	y_.resize(2 * Md_);
 
-	// y_uv = xu - xv (have direction!)
-	// seperately minimize each y_uv
+	// y_ij = xi - xj (have direction!)
+	// seperately minimize each y_ij
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -507,8 +531,10 @@ void ADMMCut::CalculateY()
 		double diffuv = x_[dual_u] - x_[dual_v];
 		double diffvu = x_[dual_v] - x_[dual_u];
 		
-		double opt_y1, opt_y2, of_c1, of_c2;
-		// case #1 y_uv < 0
+		double opt_y1, opt_y2;  // optimal y value, y1 = xi - xj, y2 = xj - xi
+		double of_c1, of_c2;	// objective function @ optimal y value
+		
+		// case #1 y_ij < 0
 		// obj func: lamba_ij * y_ij + (mu/2) * (y_ij - (x_i - x_j))^2
 		opt_y1 = -lambda_y_[i] / penalty_ + diffuv;
 		if (opt_y1 < 0)
@@ -521,8 +547,9 @@ void ADMMCut::CalculateY()
 		}
 
 
-		// case #2 y_uv > 0
-		// obj func: 
+		// case #2 y_ij > 0
+		// obj func: (1/r_ij) * w_ij^2 * y_ij^2 + lambda_y_ij * y_ij
+		// + (penalty/2) * (y_ij - x_i + x_j)^2 
 		opt_y2 = (penalty_ * diffuv - lambda_y_[i]) / (penalty_
 			+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
 		if (opt_y2 > 0)
@@ -533,9 +560,7 @@ void ADMMCut::CalculateY()
 		}
 		else
 		{
-			of_c2 = 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) /
-				(penalty_
-				+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
+			of_c2 = (penalty_ / 2) * pow(diffuv, 2);
 		}
 
 		if (of_c1 > of_c2)
@@ -548,12 +573,12 @@ void ADMMCut::CalculateY()
 		}
 
 		/* ------------------------------------- */
-
+		// reverse case: yji = xj - xi
 		double opt_y1_r, opt_y2_r, of_c1_r, of_c2_r;
 
-		// case #1 y_uv < 0
-		// obj func: lamba_ij * y_ij + (mu/2) * (y_ij - (x_i - x_j))^2
-		opt_y1_r = -lambda_y_[Md_ + i] / penalty_ + diffvu;
+		// case #1 y_ji < 0
+		// obj func: lamba_ji * y_ji + (mu/2) * (y_ji - (x_j - x_i))^2
+		opt_y1_r = - lambda_y_[Md_ + i] / penalty_ + diffvu;
 		
 		if (opt_y1_r < 0)
 		{
@@ -561,25 +586,23 @@ void ADMMCut::CalculateY()
 		}
 		else
 		{
-			of_c1_r = (penalty_ / 2) * pow(diffuv, 2);
+			of_c1_r = (penalty_ / 2) * pow(diffvu, 2);
 		}
 
 
-		// case #2 y_uv > 0
+		// case #2 y_ji > 0
 		// obj func: 
 		opt_y2_r = (penalty_ * diffvu - lambda_y_[Md_ + i]) / (penalty_
-			+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
+			+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
 		if (opt_y2_r > 0)
 		{
 			of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
 				- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
-				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
+				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
 		}
 		else
 		{
-			of_c2_r = 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) /
-				(penalty_
-				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_u, dual_v));
+			of_c2_r = (penalty_ / 2) * pow(diffvu, 2);
 		}
 
 		if (of_c1_r > of_c2_r)
@@ -746,16 +769,16 @@ bool ADMMCut::CheckLabel()
 	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
 	cout << "--------------------------------------------" << endl;
 
-	//if (l < 20 || l < ptr_frame_->SizeOfPillar())
-	//{
-	//	return true;
-	//}
-	//else
-	//{
-	//	return false;
-	//}
+	if (l < 20 || l < ptr_frame_->SizeOfPillar())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 
-	return true;
+	//return true;
 }
 
 

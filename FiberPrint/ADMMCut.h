@@ -71,6 +71,7 @@ private:
 
 	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary();
+	void		CreateA();
 	void		CalculateX();						// QP optimization for x at every iteration
 	void 		CalculateQ(const VX _D, SpMat &Q);	// Calculate Q for x_Qp problem
 	void		CalculateD();						// QP optimization for D at every iteration
@@ -93,6 +94,7 @@ public:
 	QuadricCollision	*ptr_collision_;
 
 private:
+	SpMat				A_;				// incidence matrix for constraints Y = E * X
 	SpMat				weight_;		// for weight, indexed by half of original id
 	MX					r_;				// for updation of C, indexed by half of dual id
 	VX					x_;
