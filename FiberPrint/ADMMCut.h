@@ -105,8 +105,8 @@ private:
 	VX					a_;				// linear coefficient used in x_Qp
 	VX					d_;				// for setting boundary & QP x
 
-	VX					dual_res_;		// dual residual for ADMM termination criteria
-	VX					primal_res_;	// dual residual for ADMM termination criteria
+	VX						dual_res_;		// dual residual for ADMM termination criteria
+	double					primal_res_;	// dual residual for ADMM termination criteria
 
 	/* 
 	Solves the quadratic programming problem:
