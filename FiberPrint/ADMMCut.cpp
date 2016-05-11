@@ -122,14 +122,16 @@ void ADMMCut::MakeLayers()
 					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
 
 				primal_res_ = (K_new * D_ - F_new).norm() + (y_ - A_ * x_).norm();
-
+				double KD_res = (K_new * D_ - F_new).norm();
+				double AX_res = (y_ - A_ * x_).norm();
 				/*-------------------Screenplay-------------------*/
 				//double new_cut_energy = x_.dot(L_ * x_);
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
-				cout << "primal_residual(KD-F) : " << primal_res_ << endl;
-
+				cout << "primal_residual : " << primal_res_ << endl;
+				cout << "primal_residual(KD-F) : " << KD_res << endl;
+				cout << "primal_residual(Y-AX) : " << AX_res << endl;
 				cout << "---------------------" << endl;
 				ADMM_round_++;
 			} while (!TerminationCriteria());
@@ -147,16 +149,16 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			//Statistics tmp_x(str_x, x_);
-			//tmp_x.GenerateVectorFile();
+			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			Statistics tmp_x(str_x, x_);
+			tmp_x.GenerateVectorFile();
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		//Statistics s_eR(str_eR, res_energy);
-		//s_eR.GenerateStdVecFile();
+		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		Statistics s_eR(str_eR, res_energy);
+		s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -373,9 +375,6 @@ void ADMMCut::SetBoundary()
 
 void ADMMCut::CreateA()
 {
-	vector<Triplet<double>> Lo_list;
-	vector<Triplet<double>> L_list;
-	
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -510,9 +509,7 @@ void ADMMCut::CalculateD()
 	SpMat K = *(ptr_stiffness_->WeightedK());
 
 	// Ensure that Q is PSD
-	int Nk = K.rows();
-	double K_eps = K.diagonal().sum() / Nk * 1e-5;
-	SpMat Q = penalty_ * (K.transpose() * K + (MX::Identity(Nk, Nk) * K_eps).sparseView());
+	SpMat Q = penalty_ * (K.transpose() * K);
 
 	// Construct Linear coefficient for D-Qp problem
 	ptr_stiffness_->CreateF(&x_);
