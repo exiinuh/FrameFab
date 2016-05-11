@@ -67,7 +67,7 @@ public:
 
 private:
 	void		InitState();						// Initialization
-	void		InitCollisionWeight();
+	void		InitWeight();
 
 	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary();
@@ -136,7 +136,7 @@ private:
 	double				K_eps_;
 
 	Timer				ADMM_cut_;
-	Timer				init_collision_;
+	Timer				init_weight_;
 	Timer				create_a_;
 	Timer				create_c_;
 	Timer				set_bound_;

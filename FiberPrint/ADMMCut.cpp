@@ -53,7 +53,7 @@ void ADMMCut::MakeLayers()
 
 	// Initial Cutting Edge Setting
 	InitState();
-	InitCollisionWeight();
+	InitWeight();
 
 	vector<double> cut_energy;
 	vector<double> res_energy;
@@ -259,9 +259,9 @@ void ADMMCut::InitState()
 }
 
 
-void ADMMCut::InitCollisionWeight()
+void ADMMCut::InitWeight()
 {
-	init_collision_.Start();
+	init_weight_.Start();
 
 	int halfM = M_ / 2;
 	weight_.resize(halfM, halfM);
@@ -280,7 +280,7 @@ void ADMMCut::InitCollisionWeight()
 		double tmp_height;
 
 		tmp_range = ptr_dualgraph_->Weight(i);
-		tmp_height = exp(-6 * tmp_range * tmp_range);
+		tmp_height = exp(-3 * tmp_range * tmp_range);
 
 		ptr_collision_->DetectCollision(e1, e2, tmp);
 		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
@@ -289,14 +289,14 @@ void ADMMCut::InitCollisionWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
+		tmp_weight = exp(-0.5 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
 		}
 
 		tmp_range = max(Fji - Fij, 0.0);
-		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
+		tmp_weight = exp(-0.5 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
@@ -305,7 +305,7 @@ void ADMMCut::InitCollisionWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
-	init_collision_.Stop();
+	init_weight_.Stop();
 }
 
 
@@ -839,8 +839,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1 || reweight_round_ > 20)
-	//if (int_diff < 1e-2 || reweight_round_ > 20)
+	if (max_improv < 0.2 || reweight_round_ > 10)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -891,7 +890,7 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 40)
+	if (ADMM_round_ >= 15)
 	{
 		return true;
 	}
@@ -928,7 +927,7 @@ void ADMMCut::PrintOutTimer()
 {
 	printf("***ADMMCut timer result:\n");
 	ADMM_cut_.Print("ADMMCut:");
-	init_collision_.Print("InitCollisionWeight:");
+	init_weight_.Print("InitWeight:");
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");

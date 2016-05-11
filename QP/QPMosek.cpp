@@ -452,8 +452,8 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 					// the structure have (numvar/6) nodes
 					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
-					//double	  qval[] = { 2 * x_w[i], 2 * x_w[i], 2 * x_w[i]};
-					double	  qval[] = { 2, 2, 2};
+					double	  qval[] = { 2 * x_w[i], 2 * x_w[i], 2 * x_w[i]};
+					//double	  qval[] = { 2, 2, 2};
 
 					// Replaces all the quadratic entries in one constraint k
 					// In our program, this specifies the deformation constrains:
