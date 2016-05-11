@@ -68,6 +68,9 @@ void ADMMCut::MakeLayers()
 		/* set x for intial cut setting */
 		SetBoundary();
 
+		cut_energy.clear();
+		res_energy.clear();
+
 		cout << "****************************************" << endl;
 		cout << "ADMMCut Round : " << cut_round_ << endl;
 		cout << "---------------------------------" << endl;
@@ -128,7 +131,7 @@ void ADMMCut::MakeLayers()
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
-				cout << "primal_residual(KD-F) : " << primal_res_ << endl;
+				cout << "primal_residual : " << primal_res_ << endl;
 
 				cout << "---------------------" << endl;
 				ADMM_round_++;
@@ -139,11 +142,6 @@ void ADMMCut::MakeLayers()
 
 			/*-------------------Screenplay-------------------*/
 			double res_tmp = primal_res_;
-			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-			cout << "Res Energy :" << res_tmp << endl;
-			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
-
-			//cut_energy.push_back(energy);
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
@@ -151,12 +149,57 @@ void ADMMCut::MakeLayers()
 			Statistics tmp_x(str_x, x_);
 			tmp_x.GenerateVectorFile();
 
+			/* calculate original objective function value */
+			double cut_tmp = 0;
+			for (int i = 0; i < Md_; i++)
+			{
+				int dual_u = ptr_dualgraph_->u(i);
+				int dual_v = ptr_dualgraph_->v(i);
+				int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+				int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+
+				double diffuv;
+				double diffvu;
+
+				if (x_[dual_u] - x_[dual_v] > 0)
+				{
+					diffuv = x_[dual_u] - x_[dual_v];
+				}
+				else
+				{
+					diffuv = 0;
+				}
+
+				if (x_[dual_v] - x_[dual_u] > 0)
+				{
+					diffvu = x_[dual_v] - x_[dual_u];
+				}
+				else
+				{
+					diffvu = 0;
+				}
+
+				cut_tmp += weight_.coeff(u, v) * diffuv;
+				cut_tmp += weight_.coeff(v, u) * diffvu;
+			}
+
+			cut_energy.push_back(cut_tmp);
+
+			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
+			cout << "Primal Res :" << res_tmp << endl;
+			cout << "Objective Function :" << cut_tmp << endl;
+			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
+
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
 		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
 		Statistics s_eR(str_eR, res_energy);
 		s_eR.GenerateStdVecFile();
+
+		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+		Statistics s_eC(str_eC, cut_energy);
+		s_eC.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -766,7 +809,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-2 || reweight_round_ > 30)
+	if (max_improv < 1e-1 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;

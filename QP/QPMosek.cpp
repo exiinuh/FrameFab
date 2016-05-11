@@ -359,6 +359,10 @@ bool QPMosek::solve(const S& H, const V& f,
 					symname,
 					desc);
 				printf("Error %s - '%s'\n", symname, desc);
+
+				printf("Qp solver failed while compute CalculateX.\n");
+				printf("Press <Enter> to continue.\n");
+				getchar();
 			}
 		}
 		MSK_deletetask(&task);
@@ -636,9 +640,14 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 				if (_debug) { MYOUT << "Q: " << std::endl; }
 				for (int i = 0; i < numvar/6; i++)
 				{
+					// the structure have (numvar/6) nodes
 					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					double	  qval[] = { 2, 2, 2 };
+					
+					// Replaces all the quadratic entries in one constraint k
+					// In our program, this specifies the deformation constrains:
+					// d_{i}_t.norm < tol
 					r = MSK_putqconk(task, i, 3, qsubi, qsubj, qval);
 				}
 				
@@ -649,13 +658,16 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 			{
 
 				/* Set the linear term c_j in the objective.*/
-				if (f.size()>0){
+				if (f.size()>0)
+				{
 					if (r == MSK_RES_OK)
 						r = MSK_putcj(task, j, f[j]);
 				}
+				
 				/* Set the bounds on variable j.
 				blx[j] <= x_j <= bux[j] */
-				if (r == MSK_RES_OK){
+				if (r == MSK_RES_OK)
+				{
 
 					r = MSK_putvarbound(task,
 						j,           /* Index of variable.*/
@@ -794,6 +806,10 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 					symname,
 					desc);
 				printf("Error %s - '%s'\n", symname, desc);
+
+				printf("Qp solver failed while compute CalculateD.\n");
+				printf("Press <Enter> to continue.\n");
+				getchar();
 			}
 		}
 		MSK_deletetask(&task);
