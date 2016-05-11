@@ -386,198 +386,7 @@ std::string QPMosek::report() const
 	return ss.str();
 }
 
-bool QPMosek::test() const
-{
-#ifdef MOSEK_EXISTS
-	const MSKint32t numvar = 4,
-		numcon = 3;
-
-	double       c[] = { 3.0, 1.0, 5.0, 1.0 };	// the linear part in objective function
-	/* Below is the sparse representation of the A
-	matrix stored by column. */
-	MSKint32t    aptrb[] = { 0, 2, 5, 7 },
-		aptre[] = { 2, 5, 7, 9 },
-		asub[] = { 0, 1,
-		0, 1, 2,
-		0, 1,
-		1, 2 };
-	double       aval[] = { 3.0, 2.0,
-		1.0, 1.0, 2.0,
-		2.0, 3.0,
-		1.0, 3.0 };
-
-	/* Bounds on constraints. */
-	MSKboundkeye bkc[] = { MSK_BK_FX, MSK_BK_LO, MSK_BK_UP };
-	double       blc[] = { 30.0, 15.0, -MSK_INFINITY };
-	double       buc[] = { 30.0, +MSK_INFINITY, 25.0 };
-	/* Bounds on variables. */
-	MSKboundkeye bkx[] = { MSK_BK_LO, MSK_BK_RA, MSK_BK_LO, MSK_BK_LO };
-	double       blx[] = { 0.0, 0.0, 0.0, 0.0 };
-	double       bux[] = { +MSK_INFINITY, 10.0, +MSK_INFINITY, +MSK_INFINITY };
-	MSKenv_t     env = NULL;
-	MSKtask_t    task = NULL;
-	MSKrescodee  r;
-	MSKint32t    i, j;
-
-	/* Create the mosek environment. */
-	r = MSK_makeenv(&env, NULL);
-
-	if (r == MSK_RES_OK)
-	{
-		/* Create the optimization task. */
-		r = MSK_maketask(env, numcon, numvar, &task);
-
-		/* Directs the log task stream to the 'printstr' function. */
-		if (r == MSK_RES_OK)
-			//  r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
-
-			/* Append 'numcon' empty constraints.
-			The constraints will initially have no bounds. */
-		if (r == MSK_RES_OK)
-			r = MSK_appendcons(task, numcon);
-
-		/* Append 'numvar' variables.
-		The variables will initially be b_fixed at zero (x=0). */
-		if (r == MSK_RES_OK)
-			r = MSK_appendvars(task, numvar);
-
-		for (j = 0; j<numvar && r == MSK_RES_OK; ++j)
-		{
-			/* Set the linear term c_j in the objective.*/
-			if (r == MSK_RES_OK)
-				r = MSK_putcj(task, j, c[j]);
-
-			/* Set the bounds on variable j.
-			blx[j] <= x_j <= bux[j] */
-			if (r == MSK_RES_OK)
-				r = MSK_putvarbound(task,
-				j,           /* Index of variable.*/
-				bkx[j],      /* Bound key.*/
-				blx[j],      /* Numerical value of lower bound.*/
-				bux[j]);     /* Numerical value of upper bound.*/
-
-			/* Input column j of A */
-			if (r == MSK_RES_OK)
-				r = MSK_putacol(task,
-				j,                 /* Variable (column) index.*/
-				aptre[j] - aptrb[j], /* Number of non-zeros in column j.*/
-				asub + aptrb[j],     /* Pointer to row indexes of column j.*/
-				aval + aptrb[j]);    /* Pointer to Values of column j.*/
-		}
-
-		/* Set the bounds on constraints.
-		for i=1, ...,numcon : blc[i] <= constraint i <= buc[i] */
-		for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
-			r = MSK_putconbound(task,
-			i,           /* Index of constraint.*/
-			bkc[i],      /* Bound key.*/
-			blc[i],      /* Numerical value of lower bound.*/
-			buc[i]);     /* Numerical value of upper bound.*/
-
-		/* Maximize objective function. */
-		if (r == MSK_RES_OK)
-			r = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MAXIMIZE);
-
-		if (r == MSK_RES_OK)
-		{
-			MSKrescodee trmcode;
-
-			/* Run optimizer */
-			r = MSK_optimizetrm(task, &trmcode);
-
-			/* Print a summary containing information
-			about the solution for debugging purposes. */
-			MSK_solutionsummary(task, MSK_STREAM_LOG);
-
-			if (r == MSK_RES_OK)
-			{
-
-				if (r == MSK_RES_OK){
-					MSKsolstae solsta;
-					r = MSK_getsolsta(task,
-						MSK_SOL_BAS,
-						&solsta);
-					switch (solsta)
-					{
-					case MSK_SOL_STA_OPTIMAL:
-					case MSK_SOL_STA_NEAR_OPTIMAL:
-					{
-														double *xx = (double*)calloc(numvar, sizeof(double));
-														if (xx)
-														{
-															MSK_getxx(task,
-																MSK_SOL_BAS,    /* Request the basic solution. */
-																xx);
-
-															printf("Optimal primal solution\n");
-															for (j = 0; j<numvar; ++j)
-																printf("x[%d]: %e\n", j, xx[j]);
-
-															free(xx);
-														}
-														else
-															r = MSK_RES_ERR_SPACE;
-
-														break;
-					}
-					case MSK_SOL_STA_DUAL_INFEAS_CER:
-					case MSK_SOL_STA_PRIM_INFEAS_CER:
-					case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
-					case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
-						printf("Primal or dual infeasibility certificate found.\n");
-						break;
-					case MSK_SOL_STA_UNKNOWN:
-					{
-												char symname[MSK_MAX_STR_LEN];
-												char desc[MSK_MAX_STR_LEN];
-
-												/* If the solutions status is unknown, print the termination code
-												indicating why the optimizer terminated prematurely. */
-
-												MSK_getcodedesc(trmcode,
-													symname,
-													desc);
-
-												printf("The solution status is unknown.\n");
-												printf("The optimizer terminitated with code: %s\n", symname);
-												break;
-					}
-					default:
-						printf("Other solution status.\n");
-						break;
-					}
-				}
-			}
-		}
-
-		if (r != MSK_RES_OK)
-		{
-			/* In case of an error print error code and description. */
-			char symname[MSK_MAX_STR_LEN];
-			char desc[MSK_MAX_STR_LEN];
-
-			printf("An error occurred while optimizing.\n");
-			MSK_getcodedesc(r,
-				symname,
-				desc);
-			printf("Error %s - '%s'\n", symname, desc);
-		}
-
-		/* Delete the task and the associated data. */
-		MSK_deletetask(&task);
-	}
-
-	/* Delete the environment and the associated data. */
-	//MSK_deleteenv(&env);
-
-	return (r == MSK_RES_OK);
-
-#else
-	return false;
-#endif
-}
-
-bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _debug)
+bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & d_tol, bool _debug)
 {
 	bool success = false;
 
@@ -586,8 +395,8 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 	bool linprog = (numvar == 0);
 	if (linprog){ numvar = f.size(); }
 
-	//number of constraints
-	MSKint32t numcon = numvar / 3;
+	//number of constraints (number of nodes)
+	MSKint32t numcon = numvar / 6;
 
 	MSKint32t     i, j;
 
@@ -643,8 +452,9 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 					// the structure have (numvar/6) nodes
 					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
 					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
-					double	  qval[] = { 2, 2, 2 };
-					
+					//double	  qval[] = { 2 * x_w[i], 2 * x_w[i], 2 * x_w[i]};
+					double	  qval[] = { 2, 2, 2};
+
 					// Replaces all the quadratic entries in one constraint k
 					// In our program, this specifies the deformation constrains:
 					// d_{i}_t.norm < tol
@@ -685,7 +495,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 						i,							/* Index of constraint.*/
 						MSK_BK_UP,	/* Bound key.*/
 						-MYINF,			/* Numerical value of lower bound.*/
-						d_tol);			/* Numerical value of upper bound.*/
+						pow(d_tol,2));			/* Numerical value of upper bound.*/
 			}
 
 			if (r == MSK_RES_OK && !linprog)
@@ -817,6 +627,196 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const double& d_tol, bool _de
 	return success;
 }
 
+bool QPMosek::test() const
+{
+#ifdef MOSEK_EXISTS
+	const MSKint32t numvar = 4,
+		numcon = 3;
+
+	double       c[] = { 3.0, 1.0, 5.0, 1.0 };	// the linear part in objective function
+	/* Below is the sparse representation of the A
+	matrix stored by column. */
+	MSKint32t    aptrb[] = { 0, 2, 5, 7 },
+		aptre[] = { 2, 5, 7, 9 },
+		asub[] = { 0, 1,
+		0, 1, 2,
+		0, 1,
+		1, 2 };
+	double       aval[] = { 3.0, 2.0,
+		1.0, 1.0, 2.0,
+		2.0, 3.0,
+		1.0, 3.0 };
+
+	/* Bounds on constraints. */
+	MSKboundkeye bkc[] = { MSK_BK_FX, MSK_BK_LO, MSK_BK_UP };
+	double       blc[] = { 30.0, 15.0, -MSK_INFINITY };
+	double       buc[] = { 30.0, +MSK_INFINITY, 25.0 };
+	/* Bounds on variables. */
+	MSKboundkeye bkx[] = { MSK_BK_LO, MSK_BK_RA, MSK_BK_LO, MSK_BK_LO };
+	double       blx[] = { 0.0, 0.0, 0.0, 0.0 };
+	double       bux[] = { +MSK_INFINITY, 10.0, +MSK_INFINITY, +MSK_INFINITY };
+	MSKenv_t     env = NULL;
+	MSKtask_t    task = NULL;
+	MSKrescodee  r;
+	MSKint32t    i, j;
+
+	/* Create the mosek environment. */
+	r = MSK_makeenv(&env, NULL);
+
+	if (r == MSK_RES_OK)
+	{
+		/* Create the optimization task. */
+		r = MSK_maketask(env, numcon, numvar, &task);
+
+		/* Directs the log task stream to the 'printstr' function. */
+		if (r == MSK_RES_OK)
+			//  r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+
+			/* Append 'numcon' empty constraints.
+			The constraints will initially have no bounds. */
+		if (r == MSK_RES_OK)
+			r = MSK_appendcons(task, numcon);
+
+		/* Append 'numvar' variables.
+		The variables will initially be b_fixed at zero (x=0). */
+		if (r == MSK_RES_OK)
+			r = MSK_appendvars(task, numvar);
+
+		for (j = 0; j<numvar && r == MSK_RES_OK; ++j)
+		{
+			/* Set the linear term c_j in the objective.*/
+			if (r == MSK_RES_OK)
+				r = MSK_putcj(task, j, c[j]);
+
+			/* Set the bounds on variable j.
+			blx[j] <= x_j <= bux[j] */
+			if (r == MSK_RES_OK)
+				r = MSK_putvarbound(task,
+				j,           /* Index of variable.*/
+				bkx[j],      /* Bound key.*/
+				blx[j],      /* Numerical value of lower bound.*/
+				bux[j]);     /* Numerical value of upper bound.*/
+
+			/* Input column j of A */
+			if (r == MSK_RES_OK)
+				r = MSK_putacol(task,
+				j,                 /* Variable (column) index.*/
+				aptre[j] - aptrb[j], /* Number of non-zeros in column j.*/
+				asub + aptrb[j],     /* Pointer to row indexes of column j.*/
+				aval + aptrb[j]);    /* Pointer to Values of column j.*/
+		}
+
+		/* Set the bounds on constraints.
+		for i=1, ...,numcon : blc[i] <= constraint i <= buc[i] */
+		for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
+			r = MSK_putconbound(task,
+			i,           /* Index of constraint.*/
+			bkc[i],      /* Bound key.*/
+			blc[i],      /* Numerical value of lower bound.*/
+			buc[i]);     /* Numerical value of upper bound.*/
+
+		/* Maximize objective function. */
+		if (r == MSK_RES_OK)
+			r = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MAXIMIZE);
+
+		if (r == MSK_RES_OK)
+		{
+			MSKrescodee trmcode;
+
+			/* Run optimizer */
+			r = MSK_optimizetrm(task, &trmcode);
+
+			/* Print a summary containing information
+			about the solution for debugging purposes. */
+			MSK_solutionsummary(task, MSK_STREAM_LOG);
+
+			if (r == MSK_RES_OK)
+			{
+
+				if (r == MSK_RES_OK){
+					MSKsolstae solsta;
+					r = MSK_getsolsta(task,
+						MSK_SOL_BAS,
+						&solsta);
+					switch (solsta)
+					{
+					case MSK_SOL_STA_OPTIMAL:
+					case MSK_SOL_STA_NEAR_OPTIMAL:
+					{
+													 double *xx = (double*)calloc(numvar, sizeof(double));
+													 if (xx)
+													 {
+														 MSK_getxx(task,
+															 MSK_SOL_BAS,    /* Request the basic solution. */
+															 xx);
+
+														 printf("Optimal primal solution\n");
+														 for (j = 0; j<numvar; ++j)
+															 printf("x[%d]: %e\n", j, xx[j]);
+
+														 free(xx);
+													 }
+													 else
+														 r = MSK_RES_ERR_SPACE;
+
+													 break;
+					}
+					case MSK_SOL_STA_DUAL_INFEAS_CER:
+					case MSK_SOL_STA_PRIM_INFEAS_CER:
+					case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
+					case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
+						printf("Primal or dual infeasibility certificate found.\n");
+						break;
+					case MSK_SOL_STA_UNKNOWN:
+					{
+												char symname[MSK_MAX_STR_LEN];
+												char desc[MSK_MAX_STR_LEN];
+
+												/* If the solutions status is unknown, print the termination code
+												indicating why the optimizer terminated prematurely. */
+
+												MSK_getcodedesc(trmcode,
+													symname,
+													desc);
+
+												printf("The solution status is unknown.\n");
+												printf("The optimizer terminitated with code: %s\n", symname);
+												break;
+					}
+					default:
+						printf("Other solution status.\n");
+						break;
+					}
+				}
+			}
+		}
+
+		if (r != MSK_RES_OK)
+		{
+			/* In case of an error print error code and description. */
+			char symname[MSK_MAX_STR_LEN];
+			char desc[MSK_MAX_STR_LEN];
+
+			printf("An error occurred while optimizing.\n");
+			MSK_getcodedesc(r,
+				symname,
+				desc);
+			printf("Error %s - '%s'\n", symname, desc);
+		}
+
+		/* Delete the task and the associated data. */
+		MSK_deletetask(&task);
+	}
+
+	/* Delete the environment and the associated data. */
+	//MSK_deleteenv(&env);
+
+	return (r == MSK_RES_OK);
+
+#else
+	return false;
+#endif
+}
 
 std::string QPMosek::exitFlagToString(int _xflag) const
 {
