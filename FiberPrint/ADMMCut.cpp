@@ -74,6 +74,8 @@ void ADMMCut::MakeLayers()
 
 		VX x_prev;
 		VX D_prev;
+		VX y_prev;
+		VX lambda_y_prev;
 
 		do
 		{
@@ -91,11 +93,13 @@ void ADMMCut::MakeLayers()
 				/*-------------------ADMM loop-------------------*/
 				CalculateX();
 
+				y_prev = y_;
+				CalculateY();
+
 				D_prev = D_;
 				CalculateD();
 
-				CalculateY();
-
+				lambda_y_prev = lambda_y_;
 				UpdateLambda();
 
 				/*-------------------Residual Calculation-------------------*/
@@ -110,16 +114,21 @@ void ADMMCut::MakeLayers()
 				SpMat K_new = *(ptr_stiffness_->WeightedK());
 				VX    F_new = *(ptr_stiffness_->WeightedF());
 
-				dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-					+ lambda_stf_.transpose() * (Q_prev - Q_new);
-				primal_res_ = K_new * D_ - F_new;
+				//dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
+				//	+ lambda_stf_.transpose() * (Q_prev - Q_new);
+				dual_res_ = - lambda_stf_.transpose() * (Q_prev - Q_new)
+					- penalty_ * (y_ - y_prev).transpose() * A_
+					- (lambda_y_ - lambda_y_prev).transpose() * A_
+					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
+
+				primal_res_ = (K_new * D_ - F_new).norm() + (y_ - A_ * x_).norm();
 
 				/*-------------------Screenplay-------------------*/
 				//double new_cut_energy = x_.dot(L_ * x_);
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
-				cout << "primal_residual(KD-F) : " << primal_res_.norm() << endl;
+				cout << "primal_residual(KD-F) : " << primal_res_ << endl;
 
 				cout << "---------------------" << endl;
 				ADMM_round_++;
@@ -129,7 +138,7 @@ void ADMMCut::MakeLayers()
 			/* Output energy and residual */
 
 			/*-------------------Screenplay-------------------*/
-			double res_tmp = primal_res_.norm();
+			double res_tmp = primal_res_;
 			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
 			cout << "Res Energy :" << res_tmp << endl;
 			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
@@ -138,16 +147,16 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			//Statistics tmp_x(str_x, x_);
-			//tmp_x.GenerateVectorFile();
+			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			Statistics tmp_x(str_x, x_);
+			tmp_x.GenerateVectorFile();
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		//Statistics s_eR(str_eR, res_energy);
-		//s_eR.GenerateStdVecFile();
+		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		Statistics s_eR(str_eR, res_energy);
+		s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -596,9 +605,11 @@ void ADMMCut::CalculateY()
 			+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
 		if (opt_y2_r > 0)
 		{
-			of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
-				- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
-				+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
+			//of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
+			//	- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
+			//	+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
+			of_c2_r = (1 / r_(dual_v, dual_u)) * pow(weight_.coeff(v, u) * opt_y2_r, 2)
+				+ lambda_y_[Md_ + i] * opt_y2_r + (penalty_ / 2) * pow(opt_y2_r - diffvu, 2);
 		}
 		else
 		{
@@ -725,15 +736,34 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
 
-		r_(dual_u, dual_v) = 1.0 / 
-			(1e-5 + weight_.coeff(u, v) * abs(x_[dual_u] - x_[dual_v]));
-		r_(dual_v, dual_u) = 1.0 / 
-			(1e-5 + weight_.coeff(v, u) * abs(x_[dual_u] - x_[dual_v]));
+		double diffuv;
+		double diffvu;
+
+		if (x_[dual_u] - x_[dual_v] > 0)
+		{
+			diffuv = x_[dual_u] - x_[dual_v];
+		}
+		else
+		{
+			diffuv = 0;
+		}
+
+		if (x_[dual_v] - x_[dual_u] > 0)
+		{
+			diffvu = x_[dual_v] - x_[dual_u];
+		}
+		else
+		{
+			diffvu = 0;
+		}
+
+		r_(dual_u, dual_v) = 1e-5 + weight_.coeff(u, v) * diffuv;
+		r_(dual_v, dual_u) = 1e-5 + weight_.coeff(v, u) * diffvu;
 	}
 
 	update_r_.Stop();
 
-	if (max_improv < 1 || reweight_round_ > 20)
+	if (max_improv < 1e-2 || reweight_round_ > 30)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -784,34 +814,36 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 20)
+	if (ADMM_round_ >= 40)
 	{
 		return true;
 	}
 
-	//if (primal_res_.norm() <= pri_tol_ /*&& dual_res_.norm() <= dual_tol_*/)
-	//{
-	//	return true;
-	//}
-	//else
-	//{
-	//	double p_r = primal_res_.norm();
-	//	double d_r = dual_res_.norm();
+	if (primal_res_ <= pri_tol_ && dual_res_.norm() <= dual_tol_)
+	{
+		return true;
+	}
+	else
+	{
+		double p_r = primal_res_;
+		double d_r = dual_res_.norm();
 
-	//	if (p_r > d_r)
-	//	{
-	//		penalty_ *= 2;
-	//	}
+		if (penalty_ < 1e10 && penalty_ > 0.0001)
+		{
+			if (p_r > d_r)
+			{
+				penalty_ *= 2;
+			}
 
-	//	if (p_r < d_r)
-	//	{
-	//		penalty_ /= 2;
-	//	}
+			if (p_r < d_r)
+			{
+				penalty_ /= 2;
+			}
+		}
+		return false;
+	}
 
-	//	return false;
-	//}
-
-	return false;
+	//return false;
 }
 
 
