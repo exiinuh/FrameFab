@@ -147,16 +147,16 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
+			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			//Statistics tmp_x(str_x, x_);
+			//tmp_x.GenerateVectorFile();
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		//Statistics s_eR(str_eR, res_energy);
+		//s_eR.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -508,7 +508,11 @@ void ADMMCut::CalculateD()
 	// Here, K is continuous-x weighted
 	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
-	SpMat Q = penalty_ * K.transpose() * K;
+
+	// Ensure that Q is PSD
+	int Nk = K.rows();
+	double K_eps = K.diagonal().sum() / Nk * 1e-5;
+	SpMat Q = penalty_ * (K.transpose() * K + (MX::Identity(Nk, Nk) * K_eps).sparseView());
 
 	// Construct Linear coefficient for D-Qp problem
 	ptr_stiffness_->CreateF(&x_);
@@ -763,7 +767,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-2 || reweight_round_ > 30)
+	if (max_improv < 1e-1 || reweight_round_ > 30)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -814,12 +818,12 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 40)
+	if (ADMM_round_ >= 30)
 	{
 		return true;
 	}
 
-	if (primal_res_ <= pri_tol_ && dual_res_.norm() <= dual_tol_)
+	if (primal_res_ <= pri_tol_/* && dual_res_.norm() <= dual_tol_*/)
 	{
 		return true;
 	}
