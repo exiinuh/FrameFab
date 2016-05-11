@@ -14,7 +14,7 @@ typedef unsigned long long lld;
 using namespace Geometry;
 using namespace std;
 
-//#define	STRICT_COLLISION
+#define	STRICT_COLLISION
 
 // ¦È=(0,180), ¦Õ=(0,360)
 // target means printing edge, order menas existing edge

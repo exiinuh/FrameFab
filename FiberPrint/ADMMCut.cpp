@@ -733,7 +733,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-2 || reweight_round_ > 20)
+	if (max_improv < 1 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
