@@ -58,6 +58,7 @@
 
 		// written especially for WirePrint
 		virtual bool solve(const S& H, const V& f, V &_x,
+			const V &_y,
 			const double& d_tol,
 			bool _debug) = 0;
 

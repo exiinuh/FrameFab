@@ -68,6 +68,9 @@ void ADMMCut::MakeLayers()
 		/* set x for intial cut setting */
 		SetBoundary();
 
+		cut_energy.clear();
+		res_energy.clear();
+
 		cout << "****************************************" << endl;
 		cout << "ADMMCut Round : " << cut_round_ << endl;
 		cout << "---------------------------------" << endl;
@@ -79,7 +82,7 @@ void ADMMCut::MakeLayers()
 
 		do
 		{
-			penalty_ = 1000;
+			penalty_ = 100;
 			ADMM_round_ = 0;
 
 			/* Reweighting loop for cut */
@@ -122,16 +125,14 @@ void ADMMCut::MakeLayers()
 					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
 
 				primal_res_ = (K_new * D_ - F_new).norm() + (y_ - A_ * x_).norm();
-				double KD_res = (K_new * D_ - F_new).norm();
-				double AX_res = (y_ - A_ * x_).norm();
+
 				/*-------------------Screenplay-------------------*/
 				//double new_cut_energy = x_.dot(L_ * x_);
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
 				cout << "primal_residual : " << primal_res_ << endl;
-				cout << "primal_residual(KD-F) : " << KD_res << endl;
-				cout << "primal_residual(Y-AX) : " << AX_res << endl;
+
 				cout << "---------------------" << endl;
 				ADMM_round_++;
 			} while (!TerminationCriteria());
@@ -141,11 +142,6 @@ void ADMMCut::MakeLayers()
 
 			/*-------------------Screenplay-------------------*/
 			double res_tmp = primal_res_;
-			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-			cout << "Res Energy :" << res_tmp << endl;
-			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
-
-			//cut_energy.push_back(energy);
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
@@ -153,12 +149,57 @@ void ADMMCut::MakeLayers()
 			Statistics tmp_x(str_x, x_);
 			tmp_x.GenerateVectorFile();
 
+			/* calculate original objective function value */
+			double cut_tmp = 0;
+			for (int i = 0; i < Md_; i++)
+			{
+				int dual_u = ptr_dualgraph_->u(i);
+				int dual_v = ptr_dualgraph_->v(i);
+				int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+				int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+
+				double diffuv;
+				double diffvu;
+
+				if (x_[dual_u] - x_[dual_v] > 0)
+				{
+					diffuv = x_[dual_u] - x_[dual_v];
+				}
+				else
+				{
+					diffuv = 0;
+				}
+
+				if (x_[dual_v] - x_[dual_u] > 0)
+				{
+					diffvu = x_[dual_v] - x_[dual_u];
+				}
+				else
+				{
+					diffvu = 0;
+				}
+
+				cut_tmp += weight_.coeff(u, v) * diffuv;
+				cut_tmp += weight_.coeff(v, u) * diffvu;
+			}
+
+			cut_energy.push_back(cut_tmp);
+
+			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
+			cout << "Primal Res :" << res_tmp << endl;
+			cout << "Objective Function :" << cut_tmp << endl;
+			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
+
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
 		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
 		Statistics s_eR(str_eR, res_energy);
 		s_eR.GenerateStdVecFile();
+
+		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+		Statistics s_eC(str_eC, cut_energy);
+		s_eC.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -404,8 +445,8 @@ void ADMMCut::CalculateX()
 
 	// Construct Linear coefficient for x-Qp problem
 	// Modified @Mar/9/2016, y = Ax constraints came into play.
-	a_ = -penalty_	* A_.transpose() * y_
-					- A_.transpose() * lambda_y_  
+	a_ = - penalty_	* A_.transpose() * y_
+					+ A_.transpose() * lambda_y_  
 					+ Q.transpose()	 * lambda_stf_;
 
 	// Inequality constraints A*x <= b
@@ -415,10 +456,14 @@ void ADMMCut::CalculateX()
 	b.setZero();
 
 	// Variable constraints x >= lb, x <= ub
+	// 0 <= x_i <= 1
 	VX lb(Nd_), ub(Nd_);
 	lb.setZero();
 	ub.setOnes();
 
+	// top-down constraints
+	// x_i = 0, while strut i belongs to the top
+	// x_i = 1, while strut i belongs to the bottom
 	cal_qp_.Start();
 	ptr_qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
 	cal_qp_.Stop();
@@ -507,9 +552,16 @@ void ADMMCut::CalculateD()
 	// Here, K is continuous-x weighted
 	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
-
+	
 	// Ensure that Q is PSD
-	SpMat Q = penalty_ * (K.transpose() * K);
+	SpMat Q = penalty_ * K.transpose() * K;
+
+	if (0 == ADMM_round_)
+	{
+		K_eps_ = Q.diagonal().sum()/Q.rows() * 0.01;
+	}
+
+	Q = Q + (MX::Identity(Q.rows(), Q.rows()) * K_eps_).sparseView();
 
 	// Construct Linear coefficient for D-Qp problem
 	ptr_stiffness_->CreateF(&x_);
@@ -517,8 +569,31 @@ void ADMMCut::CalculateD()
 
 	VX a = K.transpose() * lambda_stf_ - penalty_ * K.transpose() * F;
 
+	int Nd = ptr_dualgraph_->SizeOfVertList();
+	int Ns = ptr_dualgraph_->SizeOfFreeFace();
+
+	VX D_w(Ns);
+	D_w.setZero();
+
+	for (int i = 0; i < Ns; i++)
+	{
+		WF_edge *e = ptr_frame_->GetEdge(ptr_dualgraph_->e_orig_id(i));
+		int u = ptr_dualgraph_->v_dual_id(e->pvert_->ID());
+		int v = ptr_dualgraph_->v_dual_id(e->ppair_->pvert_->ID());
+
+		if (u != -1)
+		{
+			D_w[u] = max(D_w[u], x_[i]);
+		}
+
+		if (v != -1)
+		{
+			D_w[v] = max(D_w[v], x_[i]);
+		}
+	}
+
 	cal_qp_.Start();
-	ptr_qp_->solve(Q, a, D_, D_tol_, debug_);
+	ptr_qp_->solve(Q, a, D_, D_w, D_tol_, debug_);
 	cal_qp_.Stop();
 	cal_d_.Stop();
 }
@@ -537,40 +612,39 @@ void ADMMCut::CalculateY()
 		int dual_v = ptr_dualgraph_->v(i);
 		int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
 		int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
-		
+
 		double diffuv = x_[dual_u] - x_[dual_v];
 		double diffvu = x_[dual_v] - x_[dual_u];
-		
+
 		double opt_y1, opt_y2;  // optimal y value, y1 = xi - xj, y2 = xj - xi
 		double of_c1, of_c2;	// objective function @ optimal y value
-		
+
 		// case #1 y_ij < 0
 		// obj func: lamba_ij * y_ij + (mu/2) * (y_ij - (x_i - x_j))^2
-		opt_y1 = -lambda_y_[i] / penalty_ + diffuv;
+		opt_y1 = lambda_y_[i] / penalty_ + diffuv;
 		if (opt_y1 < 0)
 		{
-			of_c1 = lambda_y_[i] * opt_y1 + (penalty_ / 2) * pow((opt_y1 - diffuv), 2);
+			of_c1 = (-lambda_y_[i] - penalty_ * diffuv) * opt_y1 + (penalty_ / 2) * pow(opt_y1, 2);
 		}
 		else
 		{
-			of_c1 = (penalty_ / 2) * pow(diffuv, 2);
+			of_c1 = 0;
 		}
 
 
 		// case #2 y_ij > 0
 		// obj func: (1/r_ij) * w_ij^2 * y_ij^2 + lambda_y_ij * y_ij
 		// + (penalty/2) * (y_ij - x_i + x_j)^2 
-		opt_y2 = (penalty_ * diffuv - lambda_y_[i]) / (penalty_
-			+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
+		opt_y2 = (lambda_y_[i] + penalty_ * diffuv) / (2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v) + penalty_);
 		if (opt_y2 > 0)
 		{
-			of_c2 = (penalty_ / 2) * pow(diffuv, 2)
-				- 0.5 * pow((penalty_ * diffuv - lambda_y_[i]), 2) / (penalty_
-				+ 2 * pow(weight_.coeff(u, v), 2) / r_(dual_u, dual_v));
+			of_c2 = (1 / r_(dual_u, dual_v)) * pow(weight_.coeff(u, v) * opt_y2, 2)
+				+ (-lambda_y_[i] - penalty_ * diffuv) * opt_y2
+				+ (penalty_ / 2) * pow(opt_y2, 2);
 		}
 		else
 		{
-			of_c2 = (penalty_ / 2) * pow(diffuv, 2);
+			of_c2 = 0;
 		}
 
 		if (of_c1 > of_c2)
@@ -583,47 +657,42 @@ void ADMMCut::CalculateY()
 		}
 
 		/* ------------------------------------- */
-		// reverse case: yji = xj - xi
-		double opt_y1_r, opt_y2_r, of_c1_r, of_c2_r;
+
+		double r_opt_y1, r_opt_y2;  // optimal y value, y1 = xi - xj, y2 = xj - xi
+		double r_of_c1, r_of_c2;	// objective function @ optimal y value
 
 		// case #1 y_ji < 0
-		// obj func: lamba_ji * y_ji + (mu/2) * (y_ji - (x_j - x_i))^2
-		opt_y1_r = - lambda_y_[Md_ + i] / penalty_ + diffvu;
-		
-		if (opt_y1_r < 0)
+		r_opt_y1 = lambda_y_[Md_ + i] / penalty_ + diffvu;
+		if (r_opt_y1 < 0)
 		{
-			of_c1_r = lambda_y_[Md_ + i] * opt_y1_r + (penalty_ / 2) * pow((opt_y1_r - diffvu), 2);
+			r_of_c1 = (-lambda_y_[Md_ + i] - penalty_ * diffvu) * r_opt_y1 + (penalty_ / 2) * pow(r_opt_y1, 2);
 		}
 		else
 		{
-			of_c1_r = (penalty_ / 2) * pow(diffvu, 2);
+			r_of_c1 = 0;
 		}
 
 
 		// case #2 y_ji > 0
-		// obj func: 
-		opt_y2_r = (penalty_ * diffvu - lambda_y_[Md_ + i]) / (penalty_
-			+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
-		if (opt_y2_r > 0)
+		r_opt_y2 = (lambda_y_[Md_ + i] + penalty_ * diffvu) / (2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u) + penalty_);
+		if (r_opt_y2 > 0)
 		{
-			//of_c2_r = (penalty_ / 2) * pow(diffvu, 2)
-			//	- 0.5 * pow((penalty_ * diffvu - lambda_y_[Md_ + i]), 2) / (penalty_
-			//	+ 2 * pow(weight_.coeff(v, u), 2) / r_(dual_v, dual_u));
-			of_c2_r = (1 / r_(dual_v, dual_u)) * pow(weight_.coeff(v, u) * opt_y2_r, 2)
-				+ lambda_y_[Md_ + i] * opt_y2_r + (penalty_ / 2) * pow(opt_y2_r - diffvu, 2);
+			r_of_c2 = (1 / r_(dual_v, dual_u)) * pow(weight_.coeff(v, u) * r_opt_y2, 2)
+				+ (-lambda_y_[Md_ + i] - penalty_ * diffvu) * r_opt_y2
+				+ (penalty_ / 2) * pow(r_opt_y2, 2);
 		}
 		else
 		{
-			of_c2_r = (penalty_ / 2) * pow(diffvu, 2);
+			r_of_c2 = 0;
 		}
 
-		if (of_c1_r > of_c2_r)
+		if (r_of_c1 > r_of_c2)
 		{
-			y_[Md_ + i] = opt_y2_r;
+			y_[Md_ + i] = r_opt_y2;
 		}
 		else
 		{
-			y_[Md_ + i] = opt_y1_r;
+			y_[Md_ + i] = r_opt_y1;
 		}
 	}
 }
@@ -642,14 +711,16 @@ void ADMMCut::UpdateLambda()
 
 	lambda_stf_ = lambda_stf_ + penalty_ * (K * D_ - F);
 	
-	for (int i = 0; i < Md_; i++)
-	{
-		int dual_u = ptr_dualgraph_->u(i);
-		int dual_v = ptr_dualgraph_->v(i);
+	//for (int i = 0; i < Md_; i++)
+	//{
+	//	int dual_u = ptr_dualgraph_->u(i);
+	//	int dual_v = ptr_dualgraph_->v(i);
 
-		lambda_y_[i]		+= penalty_ * (y_[i]	   - (x_[dual_u] - x_[dual_v]));
-		lambda_y_[Md_ + i]  += penalty_ * (y_[Md_ + i] - (x_[dual_v] - x_[dual_u]));
-	}
+	//	lambda_y_[i]		+= penalty_ * (y_[i]	   - (x_[dual_u] - x_[dual_v]));
+	//	lambda_y_[Md_ + i]  += penalty_ * (y_[Md_ + i] - (x_[dual_v] - x_[dual_u]));
+	//}
+
+	lambda_y_ = lambda_y_ + penalty_ * (A_ * x_ - y_);
 
 	update_lambda_.Stop();
 }
@@ -715,19 +786,23 @@ bool ADMMCut::UpdateR(VX &x_prev)
 	update_r_.Start();
 
 	double max_improv = 0;
+	double int_diff = 0;
 	for (int i = 0; i < Nd_; i++)
 	{
 		/* if No significant improvment found */
-		double improv = fabs(x_prev[i] - x_[i]) / x_prev[i];
+		double improv = fabs(x_prev[i] - x_[i]) / (x_prev[i] + 1e-5);
 		if (improv > max_improv)
 		{
 			max_improv = improv;
 		}
+
+		//int_diff += min(abs(x_[i] - 0), abs(x_[i] - 1));
 	}
 
 	cout << "---UpdateR Rew Check---" << endl;
 	cout << "Reweighting Process No." << reweight_round_ - 1 << endl;
 	cout << "Max Relative Improvement = " << max_improv << endl;
+	//cout << "int diff" << int_diff << endl;
 	cout << "---" << endl;
 
 	for (int i = 0; i < Md_; i++)
@@ -764,7 +839,8 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1e-1 || reweight_round_ > 30)
+	if (max_improv < 1 || reweight_round_ > 20)
+	//if (int_diff < 1e-2 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -815,12 +891,12 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 30)
+	if (ADMM_round_ >= 40)
 	{
 		return true;
 	}
 
-	if (primal_res_ <= pri_tol_/* && dual_res_.norm() <= dual_tol_*/)
+	if (primal_res_ <= pri_tol_ && dual_res_.norm() <= dual_tol_)
 	{
 		return true;
 	}
@@ -829,7 +905,7 @@ bool ADMMCut::TerminationCriteria()
 		double p_r = primal_res_;
 		double d_r = dual_res_.norm();
 
-		if (penalty_ < 1e10 && penalty_ > 0.0001)
+		if (penalty_ < 1000 && penalty_ > 1)
 		{
 			if (p_r > d_r)
 			{
