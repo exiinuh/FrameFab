@@ -103,8 +103,8 @@ void BFAnalyzer::PrintOutQueue(int N)
 
 void BFAnalyzer::PrintOutTimer()
 {
-	printf("***FFAnalyzer timer result:\n");
-	BF_analyzer_.Print("FFAnalyzer:");
+	printf("***BFAnalyzer timer result:\n");
+	BF_analyzer_.Print("BFAnalyzer:");
 	upd_struct_.Print("UpdateStructure:");
 	rec_struct_.Print("RecoverStructure:");
 	upd_map_.Print("UpdateStateMap:");
