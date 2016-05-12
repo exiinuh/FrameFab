@@ -13,12 +13,17 @@ BFAnalyzer::~BFAnalyzer()
 
 bool BFAnalyzer::SeqPrint()
 {
+	BF_analyzer_.Start();
+
 	Init();
 
 	/* set pillars as starting edges */
 	PrintPillars();
+	bool ret = GenerateSeq(print_queue_.size(), Nd_);
+	
+	BF_analyzer_.Stop();
 
-	return GenerateSeq(print_queue_.size(), Nd_);
+	return ret;
 }
 
 
@@ -75,6 +80,7 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		}
 	}
 
+	printf("No next choice.\n");
 	return false;
 }
 
@@ -92,4 +98,17 @@ void BFAnalyzer::PrintOutQueue(int N)
 	}
 
 	fclose(fp);
+}
+
+
+void BFAnalyzer::PrintOutTimer()
+{
+	printf("***FFAnalyzer timer result:\n");
+	BF_analyzer_.Print("FFAnalyzer:");
+	upd_struct_.Print("UpdateStructure:");
+	rec_struct_.Print("RecoverStructure:");
+	upd_map_.Print("UpdateStateMap:");
+	upd_map_collision_.Print("DetectCollision:");
+	rec_map_.Print("RecoverStateMap:");
+	test_stiff_.Print("TestifyStiffness:");
 }

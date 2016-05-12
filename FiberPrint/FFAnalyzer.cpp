@@ -277,13 +277,13 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		}
 
 
-		///* stiffness test */
-		//if (!TestifyStiffness(ej))
-		//{	
-		//	/* examination failed */
-		//	printf("...Stiffness examination failed at edge #%d.\n", ej->ID() / 2);
-		//	return -1;
-		//}
+		/* stiffness test */
+		if (!TestifyStiffness(ej))
+		{	
+			/* examination failed */
+			printf("...Stiffness examination failed at edge #%d.\n", ej->ID() / 2);
+			return -1;
+		}
 
 
 		/* influence weight */

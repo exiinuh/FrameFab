@@ -106,11 +106,11 @@ void FiberPrintPlugIn::FrameFabPrint()
 	printf("FrameFab print done.\n");
 
 	fiber_print_.Stop();
-
-	PrintOutTimer();
-
-	//ptr_procanalyzer_->ProcPrint();
-	//ptr_procanalyzer_->CollisionColorMap();
+	printf("***Total timer result:\n");
+	fiber_print_.Print("FrameFab:");
+	ptr_graphcut_->PrintOutTimer();
+	ptr_seqanalyzer_->PrintOutTimer();
+	ptr_stiffness_->PrintOutTimer();
 }
 
 
@@ -137,7 +137,10 @@ void FiberPrintPlugIn::BruteForcePrint()
 	printf("BruteForce print done.\n");
 
 	fiber_print_.Stop();
+	printf("***Total timer result:\n");
 	fiber_print_.Print("BruteForce:");
+	ptr_seqanalyzer_->PrintOutTimer();
+	ptr_stiffness_->PrintOutTimer();
 }
 
 
@@ -230,17 +233,6 @@ void FiberPrintPlugIn::ExportPrintOrder(char *fname)
 		fprintf(fp, "%d\n", queue[i]->ID() / 2);
 	}	
 	fclose(fp);
-}
-
-
-void FiberPrintPlugIn::PrintOutTimer()
-{
-	printf("***Total timer result:\n");
-	fiber_print_.Print("FrameFab:");
-
-	ptr_graphcut_->PrintOutTimer();
-	ptr_seqanalyzer_->PrintOutTimer();
-	ptr_stiffness_->PrintOutTimer();
 }
 
 
