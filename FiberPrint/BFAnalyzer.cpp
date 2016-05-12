@@ -47,8 +47,11 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		if (!ptr_dualgraph_->isExistingEdge(ej))
 		{
-			if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_
-				|| ei->pvert_ == ej->ppair_->pvert_ || ei->ppair_->pvert_ == ej->ppair_->pvert_)
+			printf("###Attempting edge %d.\n", dual_j);
+			if (ptr_dualgraph_->isExistingVert(ej->pvert_->ID())
+				|| ptr_dualgraph_->isExistingVert(ej->ppair_->pvert_->ID()))
+			//if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_
+			//	|| ei->pvert_ == ej->ppair_->pvert_ || ei->ppair_->pvert_ == ej->ppair_->pvert_)
 			{
 				int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 				if (free_angle == 0)

@@ -1192,8 +1192,8 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	delete ptr_fiberprint_; 
 	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
 
-	//ptr_fiberprint_->FrameFabPrint();
-	ptr_fiberprint_->BruteForcePrint();
+	ptr_fiberprint_->FrameFabPrint();
+	//ptr_fiberprint_->BruteForcePrint();
 	//ptr_fiberprint_->SweepingPrint();
 	//ptr_fiberprint_->OneLayerPrint();
 	//ptr_fiberprint_->GetDeformation();

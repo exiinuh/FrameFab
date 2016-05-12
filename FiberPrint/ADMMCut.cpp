@@ -145,9 +145,9 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
+			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			//Statistics tmp_x(str_x, x_);
+			//tmp_x.GenerateVectorFile();
 
 			/* calculate original objective function value */
 			double cut_tmp = 0;
@@ -193,13 +193,13 @@ void ADMMCut::MakeLayers()
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		//Statistics s_eR(str_eR, res_energy);
+		//s_eR.GenerateStdVecFile();
 
-		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
-		Statistics s_eC(str_eC, cut_energy);
-		s_eC.GenerateStdVecFile();
+		//string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+		//Statistics s_eC(str_eC, cut_energy);
+		//s_eC.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -351,6 +351,19 @@ void ADMMCut::SetBoundary()
 	set_bound_.Start();
 
 	ptr_stiffness_->CalculateD(D_, &x_);
+
+	//if (cut_round_ == 0)
+	//{
+	//	WriteStiffness();
+	//}
+	//if (cut_round_ == 4)
+	//{
+	//	WriteStiffness();
+	//}
+	//if (cut_round_ == 6)
+	//{
+	//	WriteStiffness();
+	//}
 
 	// Set lower boundary and upper boundary
 	// equality constraints W*x = d
@@ -1014,94 +1027,83 @@ void ADMMCut::WriteWeight()
 }
 
 
-void ADMMCut::WriteStiffness(string offset, string rotation)
+void ADMMCut::WriteStiffness()
 {
-	//string path = path_;
+	char l[5];
+	sprintf(l, "%d", cut_round_);
+	string path = ptr_path_;
+	string offset_path = path + "/stiffness_" + l + ".txt";
 
-	//string offset_path = path + "/" + offset;
-	//string rotation_path = path + "/" + rotation;
+	FILE *fp = fopen(offset_path.c_str(), "w+");
+	fprintf(fp, "#offset colormap#\r\n");
 
-	//vector<FILE*> fp(2);
-	//fp[0] = fopen(offset_path.c_str(), "w+");
-	//fp[1] = fopen(rotation_path.c_str(), "w+");
+	int N = ptr_frame_->SizeOfVertList();
+	vector<double> ss(N);
+	for (int i = 0; i < N; i++)
+	{
+		if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
+		{
+			int j = ptr_dualgraph_->v_dual_id(i);
 
-	//fprintf(fp[0], "#offset colormap#\r\n");
-	//fprintf(fp[1], "#rotation colormap#\r\n",
-	//	0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+			VX offset(3);
+			for (int k = 0; k < 3; k++)
+			{
+				offset[k] = D_[j * 6 + k];
+			}
 
-	//int N = ptr_frame_->SizeOfVertList();
-	//vector<vector<double>> ss(N);
-	//for (int i = 0; i < N; i++)
-	//{
-	//	ss[i].resize(2);
-	//	if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
-	//	{
-	//		int j = ptr_dualgraph_->v_dual_id(i);
+			if (offset.norm() >= D_tol_)
+			{
+				printf(".............. %lf\n", offset.norm());
+				getchar();
+			}
+			ss[i] = offset.norm() / D_tol_;
+		}
+		else
+		{
+			ss[i] = 0.0;
+		}
 
-	//		VX offset(3);
-	//		for (int k = 0; k < 3; k++)
-	//		{
-	//			offset[k] = D_[j * 6 + k];
-	//		}
+		//if (ptr_dualgraph_->isExistingVert(i))
+		{
+			point p = ptr_frame_->GetVert(i)->RenderPos();
+			fprintf(fp, "%lf %lf %lf ", p.x(), p.y(), p.z());
 
-	//		if (offset.norm() >= Dt_tol_)
-	//		{
-	//			printf(".............. %lf\n", offset.norm());
-	//			getchar();
-	//		}
-	//		ss[i][0] = offset.norm() / Dt_tol_;
-	//	}
-	//	else
-	//	{
-	//		ss[i][0] = 0.0;
-	//		ss[i][1] = 0.0;
-	//	}
+			double r;
+			double g;
+			double b;
 
-	//	//if (ptr_dualgraph_->isExistingVert(i))
-	//	{
-	//		point p = ptr_frame_->GetVert(i)->RenderPos();
-	//		for (int j = 0; j < 2; j++)
-	//		{
-	//			fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
+			if (ss[i] < 0.25)
+			{
+				r = 0.0;
+				g = ss[i] * 4.0;
+				b = 1.0;
+			}
+			else
+				if (ss[i] < 0.5)
+				{
+					r = 0.0;
+					g = 1.0;
+					b = (0.5 - ss[i]) * 4.0;
+				}
+				else
+					if (ss[i] < 0.75)
+					{
+						r = (ss[i] - 0.5) * 4.0;
+						g = 1.0;
+						b = 0.0;
+					}
+					else
+					{
+						r = 1.0;
+						g = (1.0 - ss[i]) * 4.0;
+						b = 0.0;
+					}
 
-	//			double r;
-	//			double g;
-	//			double b;
+			fprintf(fp, "%lf %lf %lf\r\n", r, g, b);
+		}
+	}
 
-	//			if (ss[i][j] < 0.25)
-	//			{
-	//				r = 0.0;
-	//				g = ss[i][j] * 4.0;
-	//				b = 1.0;
-	//			}
-	//			else
-	//				if (ss[i][j] < 0.5)
-	//				{
-	//					r = 0.0;
-	//					g = 1.0;
-	//					b = (0.5 - ss[i][j]) * 4.0;
-	//				}
-	//				else
-	//					if (ss[i][j] < 0.75)
-	//					{
-	//						r = (ss[i][j] - 0.5) * 4.0;
-	//						g = 1.0;
-	//						b = 0.0;
-	//					}
-	//					else
-	//					{
-	//						r = 1.0;
-	//						g = (1.0 - ss[i][j]) * 4.0;
-	//						b = 0.0;
-	//					}
-
-	//			fprintf(fp[j], "%lf %lf %lf\r\n", r, g, b);
-	//		}
-	//	}
-	//}
-
-	//fclose(fp[0]);
-	//fclose(fp[1]);
+	fclose(fp);
 }
 
 
