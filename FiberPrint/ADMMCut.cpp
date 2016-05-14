@@ -559,7 +559,7 @@ void ADMMCut::CalculateD()
 	// Ensure that Q is PSD
 	SpMat Q = penalty_ * K.transpose() * K;
 
-	if (0 == ADMM_round_)
+	//if (0 == ADMM_round_)
 	{
 		K_eps_ = Q.diagonal().sum()/Q.rows() * 0.01;
 	}
@@ -842,7 +842,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 1 || reweight_round_ > 20)
+	if (max_improv < 0.1 || reweight_round_ > 20)
 	//if (int_diff < 1e-2 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
