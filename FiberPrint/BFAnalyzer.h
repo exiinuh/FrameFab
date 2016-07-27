@@ -43,5 +43,11 @@ public:
 private:
 	bool	GenerateSeq(int h, int t);
 	void	PrintOutQueue(int N);	
+
+public:
+	void	PrintOutTimer();
+
+private:
+	Timer	BF_analyzer_;
 };
 

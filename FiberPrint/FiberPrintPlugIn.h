@@ -46,7 +46,6 @@ public:
 		ptr_seqanalyzer_->WriteRenderPath(min_layer, max_layer, ptr_path);
 	}
 
-	void			PrintOutTimer();
 	void			Debug();		// return value: edge index in mesh, for cut rendering
 
 public:

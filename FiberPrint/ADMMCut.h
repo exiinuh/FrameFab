@@ -67,7 +67,7 @@ public:
 
 private:
 	void		InitState();						// Initialization
-	void		InitCollisionWeight();
+	void		InitWeight();
 
 	void		SetStartingPoints();				// Set D and lambda variable's starting value
 	void		SetBoundary();
@@ -85,7 +85,7 @@ private:
 
 	void		PrintOutTimer();
 	void		WriteWeight();
-	void		WriteStiffness(string offset, string rotation);
+	void		WriteStiffness();
 	void		Debug();
 
 public:
@@ -105,8 +105,8 @@ private:
 	VX					a_;				// linear coefficient used in x_Qp
 	VX					d_;				// for setting boundary & QP x
 
-	VX						dual_res_;		// dual residual for ADMM termination criteria
-	double					primal_res_;	// dual residual for ADMM termination criteria
+	VX					dual_res_;		// dual residual for ADMM termination criteria
+	double				primal_res_;	// dual residual for ADMM termination criteria
 
 	/* 
 	Solves the quadratic programming problem:
@@ -136,7 +136,7 @@ private:
 	double				K_eps_;
 
 	Timer				ADMM_cut_;
-	Timer				init_collision_;
+	Timer				init_weight_;
 	Timer				create_a_;
 	Timer				create_c_;
 	Timer				set_bound_;

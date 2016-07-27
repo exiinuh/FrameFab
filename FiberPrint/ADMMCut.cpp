@@ -53,7 +53,7 @@ void ADMMCut::MakeLayers()
 
 	// Initial Cutting Edge Setting
 	InitState();
-	InitCollisionWeight();
+	InitWeight();
 
 	vector<double> cut_energy;
 	vector<double> res_energy;
@@ -259,9 +259,9 @@ void ADMMCut::InitState()
 }
 
 
-void ADMMCut::InitCollisionWeight()
+void ADMMCut::InitWeight()
 {
-	init_collision_.Start();
+	init_weight_.Start();
 
 	int halfM = M_ / 2;
 	weight_.resize(halfM, halfM);
@@ -280,7 +280,7 @@ void ADMMCut::InitCollisionWeight()
 		double tmp_height;
 
 		tmp_range = ptr_dualgraph_->Weight(i);
-		tmp_height = exp(-6 * tmp_range * tmp_range);
+		tmp_height = exp(-3 * tmp_range * tmp_range);
 
 		ptr_collision_->DetectCollision(e1, e2, tmp);
 		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
@@ -289,14 +289,14 @@ void ADMMCut::InitCollisionWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
+		tmp_weight = exp(-0.5 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
 		}
 
 		tmp_range = max(Fji - Fij, 0.0);
-		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
+		tmp_weight = exp(-0.5 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_v / 2, orig_u / 2, tmp_weight));
@@ -305,7 +305,7 @@ void ADMMCut::InitCollisionWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
-	init_collision_.Stop();
+	init_weight_.Stop();
 }
 
 
@@ -416,9 +416,6 @@ void ADMMCut::SetBoundary()
 
 void ADMMCut::CreateA()
 {
-	vector<Triplet<double>> Lo_list;
-	vector<Triplet<double>> L_list;
-	
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -559,7 +556,7 @@ void ADMMCut::CalculateD()
 	// Ensure that Q is PSD
 	SpMat Q = penalty_ * K.transpose() * K;
 
-	//if (0 == ADMM_round_)
+	if (0 == ADMM_round_)
 	{
 		K_eps_ = Q.diagonal().sum()/Q.rows() * 0.01;
 	}
@@ -842,8 +839,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 20)
-	//if (int_diff < 1e-2 || reweight_round_ > 20)
+	if (max_improv < 0.1 || reweight_round_ > 50)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -894,7 +890,7 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 40)
+	if (ADMM_round_ >= 15)
 	{
 		return true;
 	}
@@ -931,7 +927,7 @@ void ADMMCut::PrintOutTimer()
 {
 	printf("***ADMMCut timer result:\n");
 	ADMM_cut_.Print("ADMMCut:");
-	init_collision_.Print("InitCollisionWeight:");
+	init_weight_.Print("InitWeight:");
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");
@@ -1018,94 +1014,83 @@ void ADMMCut::WriteWeight()
 }
 
 
-void ADMMCut::WriteStiffness(string offset, string rotation)
+void ADMMCut::WriteStiffness()
 {
-	//string path = path_;
+	char l[5];
+	sprintf(l, "%d", cut_round_);
+	string path = ptr_path_;
+	string offset_path = path + "/stiffness_" + l + ".txt";
 
-	//string offset_path = path + "/" + offset;
-	//string rotation_path = path + "/" + rotation;
+	FILE *fp = fopen(offset_path.c_str(), "w+");
+	fprintf(fp, "#offset colormap#\r\n");
 
-	//vector<FILE*> fp(2);
-	//fp[0] = fopen(offset_path.c_str(), "w+");
-	//fp[1] = fopen(rotation_path.c_str(), "w+");
+	int N = ptr_frame_->SizeOfVertList();
+	vector<double> ss(N);
+	for (int i = 0; i < N; i++)
+	{
+		if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
+		{
+			int j = ptr_dualgraph_->v_dual_id(i);
 
-	//fprintf(fp[0], "#offset colormap#\r\n");
-	//fprintf(fp[1], "#rotation colormap#\r\n",
-	//	0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+			VX offset(3);
+			for (int k = 0; k < 3; k++)
+			{
+				offset[k] = D_[j * 6 + k];
+			}
 
-	//int N = ptr_frame_->SizeOfVertList();
-	//vector<vector<double>> ss(N);
-	//for (int i = 0; i < N; i++)
-	//{
-	//	ss[i].resize(2);
-	//	if (ptr_dualgraph_->isExistingVert(i) && !ptr_frame_->isFixed(i))
-	//	{
-	//		int j = ptr_dualgraph_->v_dual_id(i);
+			if (offset.norm() >= D_tol_)
+			{
+				printf(".............. %lf\n", offset.norm());
+				getchar();
+			}
+			ss[i] = offset.norm() / D_tol_;
+		}
+		else
+		{
+			ss[i] = 0.0;
+		}
 
-	//		VX offset(3);
-	//		for (int k = 0; k < 3; k++)
-	//		{
-	//			offset[k] = D_[j * 6 + k];
-	//		}
+		//if (ptr_dualgraph_->isExistingVert(i))
+		{
+			point p = ptr_frame_->GetVert(i)->RenderPos();
+			fprintf(fp, "%lf %lf %lf ", p.x(), p.y(), p.z());
 
-	//		if (offset.norm() >= Dt_tol_)
-	//		{
-	//			printf(".............. %lf\n", offset.norm());
-	//			getchar();
-	//		}
-	//		ss[i][0] = offset.norm() / Dt_tol_;
-	//	}
-	//	else
-	//	{
-	//		ss[i][0] = 0.0;
-	//		ss[i][1] = 0.0;
-	//	}
+			double r;
+			double g;
+			double b;
 
-	//	//if (ptr_dualgraph_->isExistingVert(i))
-	//	{
-	//		point p = ptr_frame_->GetVert(i)->RenderPos();
-	//		for (int j = 0; j < 2; j++)
-	//		{
-	//			fprintf(fp[j], "%lf %lf %lf ", p.x(), p.y(), p.z());
+			if (ss[i] < 0.25)
+			{
+				r = 0.0;
+				g = ss[i] * 4.0;
+				b = 1.0;
+			}
+			else
+				if (ss[i] < 0.5)
+				{
+					r = 0.0;
+					g = 1.0;
+					b = (0.5 - ss[i]) * 4.0;
+				}
+				else
+					if (ss[i] < 0.75)
+					{
+						r = (ss[i] - 0.5) * 4.0;
+						g = 1.0;
+						b = 0.0;
+					}
+					else
+					{
+						r = 1.0;
+						g = (1.0 - ss[i]) * 4.0;
+						b = 0.0;
+					}
 
-	//			double r;
-	//			double g;
-	//			double b;
+			fprintf(fp, "%lf %lf %lf\r\n", r, g, b);
+		}
+	}
 
-	//			if (ss[i][j] < 0.25)
-	//			{
-	//				r = 0.0;
-	//				g = ss[i][j] * 4.0;
-	//				b = 1.0;
-	//			}
-	//			else
-	//				if (ss[i][j] < 0.5)
-	//				{
-	//					r = 0.0;
-	//					g = 1.0;
-	//					b = (0.5 - ss[i][j]) * 4.0;
-	//				}
-	//				else
-	//					if (ss[i][j] < 0.75)
-	//					{
-	//						r = (ss[i][j] - 0.5) * 4.0;
-	//						g = 1.0;
-	//						b = 0.0;
-	//					}
-	//					else
-	//					{
-	//						r = 1.0;
-	//						g = (1.0 - ss[i][j]) * 4.0;
-	//						b = 0.0;
-	//					}
-
-	//			fprintf(fp[j], "%lf %lf %lf\r\n", r, g, b);
-	//		}
-	//	}
-	//}
-
-	//fclose(fp[0]);
-	//fclose(fp[1]);
+	fclose(fp);
 }
 
 

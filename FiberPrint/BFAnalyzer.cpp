@@ -13,12 +13,17 @@ BFAnalyzer::~BFAnalyzer()
 
 bool BFAnalyzer::SeqPrint()
 {
+	BF_analyzer_.Start();
+
 	Init();
 
 	/* set pillars as starting edges */
 	PrintPillars();
+	bool ret = GenerateSeq(print_queue_.size(), Nd_);
+	
+	BF_analyzer_.Stop();
 
-	return GenerateSeq(print_queue_.size(), Nd_);
+	return ret;
 }
 
 
@@ -42,8 +47,11 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		if (!ptr_dualgraph_->isExistingEdge(ej))
 		{
-			if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_
-				|| ei->pvert_ == ej->ppair_->pvert_ || ei->ppair_->pvert_ == ej->ppair_->pvert_)
+			printf("###Attempting edge %d.\n", dual_j);
+			if (ptr_dualgraph_->isExistingVert(ej->pvert_->ID())
+				|| ptr_dualgraph_->isExistingVert(ej->ppair_->pvert_->ID()))
+			//if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_
+			//	|| ei->pvert_ == ej->ppair_->pvert_ || ei->ppair_->pvert_ == ej->ppair_->pvert_)
 			{
 				int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 				if (free_angle == 0)
@@ -75,6 +83,7 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		}
 	}
 
+	printf("No next choice.\n");
 	return false;
 }
 
@@ -92,4 +101,17 @@ void BFAnalyzer::PrintOutQueue(int N)
 	}
 
 	fclose(fp);
+}
+
+
+void BFAnalyzer::PrintOutTimer()
+{
+	printf("***BFAnalyzer timer result:\n");
+	BF_analyzer_.Print("BFAnalyzer:");
+	upd_struct_.Print("UpdateStructure:");
+	rec_struct_.Print("RecoverStructure:");
+	upd_map_.Print("UpdateStateMap:");
+	upd_map_collision_.Print("DetectCollision:");
+	rec_map_.Print("RecoverStateMap:");
+	test_stiff_.Print("TestifyStiffness:");
 }

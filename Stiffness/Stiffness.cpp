@@ -261,9 +261,9 @@ void Stiffness::CreateElasticK()
 			{
 				if (eKuv(k, l) != eKuv(l, k))
 				{
-					if (fabs(eKuv(k,l) / eKuv(l,k) - 1.0) > 1.0e-6
+					if (fabs(eKuv(k,l) / eKuv(l,k) - 1.0) > SPT_EPS
 						&& 
-						(fabs(eKuv(k,l) / eKuv(k,k)) > 1e-6 || fabs(eKuv(l,k) / eKuv(k,k)) > 1e-6)
+						(fabs(eKuv(k, l) / eKuv(k, k)) > SPT_EPS || fabs(eKuv(l, k) / eKuv(k, k)) > SPT_EPS)
 						)
 					{
 						fprintf(stderr, "elastic_K: element stiffness matrix not symetric ...\n");
