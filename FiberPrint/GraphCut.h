@@ -1,7 +1,7 @@
 /*
 * ==========================================================================
 *
-*		class:	GraphCut
+*		Class:	GraphCut
 *
 * Description:	Cut input model into layers by different means.
 *

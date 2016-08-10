@@ -10,13 +10,12 @@ QP *QPFactory::make(QPFactory::QPType t, bool _storeVariables)
 	case QPTYPE_BEGIN:
 		return qp;
 
-	case QPTYPE_END:
-		return qp;
-
 	case QPMOSEKT:
 		qp = new QPMosek();
 		break;
 
+	case QPTYPE_END:
+		return qp;
 	}
 
 	qp->setStoreVariables(_storeVariables);

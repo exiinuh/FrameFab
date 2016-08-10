@@ -548,7 +548,7 @@ void ADMMCut::CalculateD()
 {
 	cal_d_.Start();
 
-	// Construct Hessian Matrix for D-Qp problem
+	// Construct Hessian Matrix for X-Qp problem
 	// Here, K is continuous-x weighted
 	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
@@ -601,6 +601,8 @@ void ADMMCut::CalculateD()
 
 void ADMMCut::CalculateY()
 {
+	cal_y_.Start();
+
 	y_.resize(2 * Md_);
 
 	// y_ij = xi - xj (have direction!)
@@ -695,6 +697,8 @@ void ADMMCut::CalculateY()
 			y_[Md_ + i] = r_opt_y1;
 		}
 	}
+
+	cal_y_.Stop();
 }
 
 
@@ -931,6 +935,7 @@ void ADMMCut::PrintOutTimer()
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");
+	cal_y_.Print("CalculateY:");
 	cal_q_.Print("CalculateQ:");
 	cal_d_.Print("CalculateD:");
 	cal_qp_.Print("qp:");
