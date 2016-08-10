@@ -145,9 +145,9 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			//string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			//Statistics tmp_x(str_x, x_);
-			//tmp_x.GenerateVectorFile();
+			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+			Statistics tmp_x(str_x, x_);
+			tmp_x.GenerateVectorFile();
 
 			/* calculate original objective function value */
 			double cut_tmp = 0;
@@ -193,13 +193,13 @@ void ADMMCut::MakeLayers()
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		//string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		//Statistics s_eR(str_eR, res_energy);
-		//s_eR.GenerateStdVecFile();
+		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+		Statistics s_eR(str_eR, res_energy);
+		s_eR.GenerateStdVecFile();
 
-		//string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
-		//Statistics s_eC(str_eC, cut_energy);
-		//s_eC.GenerateStdVecFile();
+		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+		Statistics s_eC(str_eC, cut_energy);
+		s_eC.GenerateStdVecFile();
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -351,19 +351,6 @@ void ADMMCut::SetBoundary()
 	set_bound_.Start();
 
 	ptr_stiffness_->CalculateD(D_, &x_);
-
-	//if (cut_round_ == 0)
-	//{
-	//	WriteStiffness();
-	//}
-	//if (cut_round_ == 4)
-	//{
-	//	WriteStiffness();
-	//}
-	//if (cut_round_ == 6)
-	//{
-	//	WriteStiffness();
-	//}
 
 	// Set lower boundary and upper boundary
 	// equality constraints W*x = d
@@ -561,7 +548,7 @@ void ADMMCut::CalculateD()
 {
 	cal_d_.Start();
 
-	// Construct Hessian Matrix for D-Qp problem
+	// Construct Hessian Matrix for X-Qp problem
 	// Here, K is continuous-x weighted
 	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
@@ -614,6 +601,8 @@ void ADMMCut::CalculateD()
 
 void ADMMCut::CalculateY()
 {
+	cal_y_.Start();
+
 	y_.resize(2 * Md_);
 
 	// y_ij = xi - xj (have direction!)
@@ -708,6 +697,8 @@ void ADMMCut::CalculateY()
 			y_[Md_ + i] = r_opt_y1;
 		}
 	}
+
+	cal_y_.Stop();
 }
 
 
@@ -852,7 +843,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.2 || reweight_round_ > 10)
+	if (max_improv < 0.1 || reweight_round_ > 50)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -944,6 +935,7 @@ void ADMMCut::PrintOutTimer()
 	set_bound_.Print("SetBoundary:");
 	create_l_.Print("CreateL:");
 	cal_x_.Print("CalculateX:");
+	cal_y_.Print("CalculateY:");
 	cal_q_.Print("CalculateQ:");
 	cal_d_.Print("CalculateD:");
 	cal_qp_.Print("qp:");

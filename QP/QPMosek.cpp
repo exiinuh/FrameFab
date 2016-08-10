@@ -90,6 +90,8 @@ bool QPMosek::solve(const S& H, const V& f,
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_INFEAS, mP_);		//Controls when the problem is declared infeasible, default 10e-10
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, mP_);	//Controls when the complementarity is reduced enough, default 10e-8
 
+		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_ELIMINATOR_USE, MSK_OFF);
+
 		if (r == MSK_RES_OK)
 		{
 			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
@@ -395,7 +397,8 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 	bool linprog = (numvar == 0);
 	if (linprog){ numvar = f.size(); }
 
-	//number of constraints (number of nodes)
+	//number of constraints (number of nodes), add more than i need
+	// refer http://docs.mosek.com/7.1/capi/Efficiency_considerations.html
 	MSKint32t numcon = numvar / 6;
 
 	MSKint32t     i, j;
@@ -409,18 +412,20 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 		/* Create the optimization task. */
 		r = MSK_maketask(env, numcon, numvar, &task);
 
-		if (nTasks_>0)
+		if (nTasks_ > 0)
 		{
 			MSK_putintparam(task, MSK_IPAR_NUM_THREADS, nTasks_);
 		}
 
-
 		//set precision: see http://docs.mosek.com/7.0/capi/The_optimizers_for_continuous_problems.html#sec-solve-conic
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_PFEAS, mP_);		//Controls primal feasibility, default 10e-8
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_DFEAS, mP_);		//Controls dual feasibility, default 10e-8
-		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, mP_);	//Controls relative gap, default 10e-7
-		MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_INFEAS, mP_);		//Controls when the problem is declared infeasible, default 10e-10
-		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, mP_);	//Controls when the complementarity is reduced enough, default 10e-8
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_REL_GAP, mP_);		//Controls relative gap, default 10e-7
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_TOL_INFEAS, mP_);			//Controls when the problem is declared infeasible, default 10e-10
+		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, mP_);		//Controls when the complementarity is reduced enough, default 10e-8
+
+		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_USE, MSK_PRESOLVE_MODE_OFF);
+		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_ELIMINATOR_USE, MSK_OFF);
 
 		if (r == MSK_RES_OK)
 		{
@@ -444,26 +449,6 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 			if (r == MSK_RES_OK)
 				r = MSK_putcfix(task, 0.0);
 
-			if (r == MSK_RES_OK)
-			{
-				if (_debug) { MYOUT << "Q: " << std::endl; }
-				for (int i = 0; i < numvar/6; i++)
-				{
-					// the structure have (numvar/6) nodes
-					MSKint32t qsubi[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
-					MSKint32t qsubj[] = { 6 * i, 6 * i + 1, 6 * i + 2 };
-					double	  qval[] = { 2 * x_w[i], 2 * x_w[i], 2 * x_w[i]};
-					//double	  qval[] = { 2, 2, 2};
-
-					// Replaces all the quadratic entries in one constraint k
-					// In our program, this specifies the deformation constrains:
-					// d_{i}_t.norm < tol
-					r = MSK_putqconk(task, i, 3, qsubi, qsubj, qval);
-				}
-				
-			}
-
-
 			for (j = 0; j<numvar && r == MSK_RES_OK; ++j)
 			{
 
@@ -473,29 +458,36 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 					if (r == MSK_RES_OK)
 						r = MSK_putcj(task, j, f[j]);
 				}
-				
-				/* Set the bounds on variable j.
-				blx[j] <= x_j <= bux[j] */
-				if (r == MSK_RES_OK)
-				{
-
-					r = MSK_putvarbound(task,
-						j,           /* Index of variable.*/
-						MSK_BK_FR,      /* Bound key.*/
-						-MYINF,      /* Numerical value of lower bound.*/
-						MYINF);     /* Numerical value of upper bound.*/
-				}
 			}
 
-			/* Set the bounds on constraints.
-			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
-			for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
+			double temp_bound = MYINF;
+			/* variable bounds */
+			for (j = 0; j < numvar/6 && r == MSK_RES_OK; ++j)
 			{
-					r = MSK_putconbound(task,
-						i,							/* Index of constraint.*/
-						MSK_BK_UP,	/* Bound key.*/
-						-MYINF,			/* Numerical value of lower bound.*/
-						pow(d_tol,2));			/* Numerical value of upper bound.*/
+				if (x_w[j] < 1e-9)
+				{
+					temp_bound = MYINF;
+				}
+				else
+				{
+					temp_bound = d_tol / x_w[j];
+				}
+
+				r = MSK_putvarbound(task,
+					j * 6,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					- temp_bound,      /* Numerical value of lower bound.*/
+					temp_bound);     /* Numerical value of upper bound.*/
+			}
+
+			for (j = 0; j < numvar && r == MSK_RES_OK; ++j)
+			{
+				/* Set the linear term c_j in the objective.*/
+				if (f.size()>0)
+				{
+					if (r == MSK_RES_OK)
+						r = MSK_putcj(task, j, f[j]);
+				}
 			}
 
 			if (r == MSK_RES_OK && !linprog)

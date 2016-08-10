@@ -14,7 +14,7 @@ ExtruderCone::ExtruderCone()
 	*/
 	normal_		= Vec3f(0, 0, 1);
 	angle_		= 1.5* F_PI / 9;
-	height_		= 20;
+	height_		= 30;
 	wave_angle_ = F_PI / 18;
 	divide_		= 16;
 	tool_lenth_ = 15;// 120mm connect robot arm
