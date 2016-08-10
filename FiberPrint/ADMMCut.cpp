@@ -425,6 +425,8 @@ void ADMMCut::SetBoundary()
 
 void ADMMCut::CreateA()
 {
+	create_a_.Start();
+
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
 	for (int i = 0; i < Md_; i++)
@@ -438,6 +440,8 @@ void ADMMCut::CreateA()
 	}
 	
 	A_.setFromTriplets(A_list.begin(), A_list.end());
+
+	create_a_.Stop();
 }
 
 void ADMMCut::CalculateX()
@@ -940,9 +944,11 @@ void ADMMCut::PrintOutTimer()
 {
 	printf("***ADMMCut timer result:\n");
 	ADMM_cut_.Print("ADMMCut:");
+	init_state_.Print("InitState:");
 	init_weight_.Print("InitWeight:");
 	set_bound_.Print("SetBoundary:");
-	create_l_.Print("CreateL:");
+	set_startpoint_.Print("SetStartPoint:");
+	create_a_.Print("CreateA:");
 	cal_x_.Print("CalculateX:");
 	cal_y_.Print("CalculateY:");
 	cal_q_.Print("CalculateQ:");

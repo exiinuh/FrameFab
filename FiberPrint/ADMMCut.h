@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <Eigen/dense>
 #include <Eigen/Sparse>
 #include <Eigen/SparseCore>
@@ -118,13 +120,11 @@ private:
 	Timer				create_c_;
 	Timer				set_bound_;
 	Timer				set_startpoint_;
-	Timer				create_l_;
 	Timer				cal_y_;
 	Timer				cal_x_;
 	Timer				cal_q_;
 	Timer				cal_qp_;
 	Timer				cal_d_;
-	Timer				cal_y_;
 	Timer				update_lambda_;
 	Timer				update_cut_;
 	Timer				update_r_;
