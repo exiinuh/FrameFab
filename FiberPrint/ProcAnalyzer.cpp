@@ -31,7 +31,8 @@ void ProcAnalyzer::ProcPrint()
 
 	QuadricCollision *ptr_collision = new QuadricCollision(ptr_frame);
 
-
+	vector<WF_edge*> print_queue;
+	
 	if (debug_)
 	{
 		ptr_dualgraph->Dualization();
@@ -39,7 +40,12 @@ void ProcAnalyzer::ProcPrint()
 	}
 	else
 	{
-		//ptr_seqanalyzer_->OutputPrintOrder(layer_queue_);
+		ptr_seqanalyzer_->OutputPrintOrder(print_queue);
+	}
+
+	for (int i = 0; i < print_queue.size(); i++)
+	{
+		layer_queue_.push_back(print_queue[i]->ID());
 	}
 
 

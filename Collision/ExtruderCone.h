@@ -1,24 +1,3 @@
-/*
-* ==========================================================================
-*
-*       class: Extruder Cone
-*
-*    Description:  This class maintains extruder bounding cone info
-*				   and OpenGL rednering interfaces.
-*
-*	 Version:  1.1
-*	 Created:  Oct/20/2015
-*    Update :  Dec/08/2015
-*
-*	 Author:   Guoxian Song
-*	 Company:  GCL@USTC
-*	 Note:     This file uses mathematical part of Geometric Tools Engine,
-*			   a library of source code for computing in the fields of
-*			   mathematics, graphics, image analysis, and physics.
-*			   For more info, please refer to http://www.geometrictools.com/index.html
-*
-* ==========================================================================
-*/
 #pragma once
 #include "GlobalFunctions\GCommon.h"
 #include "WireFrame\WireFrame.h"

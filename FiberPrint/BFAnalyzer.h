@@ -1,23 +1,3 @@
-/*
-* ==========================================================================
-*
-*       class:	BFAnalyzer
-*
-* Description:  perform Brute Force algorithm to generate a collision-free, 
-*				structurally-stable path.
-*
-*	  Version:  1.0
-*	  Created:  Mar/23/2016
-*     Update :  Mar/25/2016
-*
-*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
-*	  Company:  GCL@USTC
-*	     Note:	Generate every possible tool path and remove paths that are
-*				not collision-free or structurally-stable.
-*
-* ==========================================================================
-*/
-
 #pragma once
 
 #include "SeqAnalyzer.h"

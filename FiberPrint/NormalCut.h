@@ -1,20 +1,3 @@
-/*
-* ==========================================================================
-*
-*		class:	NormalCut
-*
-* Description:	Cut layers by sweeping from bottom to top.
-*
-*	  Version:  1.0
-*	  Created:  Mar/25/2016
-*     Updated:  Mar/26/2016
-*
-*	   Author:  Xin Hu, Yijiang Huang, Guoxian Song
-*	  Company:  GCL@USTC
-*
-* ==========================================================================
-*/
-
 #pragma once
 
 #include <map>

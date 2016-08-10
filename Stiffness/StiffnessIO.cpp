@@ -298,6 +298,9 @@ void StiffnessIO::GnuPltStaticMesh(
 	fprintf(fpm, "#       X-dsp        Y-dsp        Z-dsp\n");
 
 
+	FILE *fpv = fopen("C:/Users/DELL/Desktop/result/vert.txt", "w");
+	FILE *fpl = fopen("C:/Users/DELL/Desktop/result/line.txt", "w");
+
 	for (m = 0; m < nE; m++) 
 	{	
 		// write deformed shape data for each element
@@ -316,15 +319,30 @@ void StiffnessIO::GnuPltStaticMesh(
 		fprintf(fpm, "\n# element %5d \n", m);
 		if (anlyz) 
 		{
-			GnuPltCubicBentBeam(fpm,
+			vector<point> beam;
+			GnuPltCubicBentBeam(beam,
 				D, m, ptr_dualgraph, ptr_wf, exagg_static);
-		}
 
+			int nB = beam.size();
+			for (int i = 0; i < nB; ++i)
+			{	
+				fprintf(fpm, " %12.4e %12.4e %12.4e\n\n", beam[i].x(), beam[i].y(), beam[i].z());
+			}
+
+			if (nB != 0)
+			{
+				fprintf(fpl, "%lf %lf %lf %lf %lf %lf\n",
+					beam[0].x(), beam[0].y(), beam[0].z(),
+					beam[nB - 1].x(), beam[nB - 1].y(), beam[nB - 1].z());
+				fprintf(fpv, "%lf %lf %lf\n", beam[0].x(), beam[0].y(), beam[0].z());
+				fprintf(fpv, "%lf %lf %lf\n", beam[nB - 1].x(), beam[nB - 1].y(), beam[nB - 1].z());
+			}
+		}
 	}
 
+	fclose(fpl);
+	fclose(fpv);
 	fclose(fpm);
-
-	return;
 }
 
 /*
@@ -334,7 +352,7 @@ void StiffnessIO::GnuPltStaticMesh(
 * Nov/25/2015
 */
 void StiffnessIO::GnuPltCubicBentBeam(
-	FILE *fpm, 
+	vector<point> &beam,
 	VX &D, 
 	int dual_i, 
 	DualGraph *ptr_dualgraph, WireFrame *ptr_frame, 
@@ -432,11 +450,11 @@ void StiffnessIO::GnuPltCubicBentBeam(
 		dX = t0*s + t3*v + t6*w;
 		dY = t1*s + t4*v + t7*w;
 		dZ = t2*s + t5*v + t8*w;
-
-		fprintf(fpm, " %12.4e %12.4e %12.4e\n",
-			ej->pvert_->Position().x() + dX, ej->pvert_->Position().y() + dY, ej->pvert_->Position().z() + dZ);
+		
+		beam.push_back(point(ej->pvert_->Position().x() + dX, 
+			ej->pvert_->Position().y() + dY, ej->pvert_->Position().z() + dZ));
+		//fprintf(fpm, " %12.4e %12.4e %12.4e\n",);
 	}
-	fprintf(fpm, "\n\n");
 
 	return;
 }

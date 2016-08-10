@@ -1,28 +1,3 @@
-/*
-* ==========================================================================
-*
-*       class: StiffnessSolver  
-*
-*    Description:  Matrix math function for stiffness linear system solving
-*
-*	 Version:  1.1
-*	 Created:  Nov/24/2015 by Yijiang Huang
-*    Update :  Apr/26/2016 by Xin Hu
-*
-*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
-*	 Company:  GCL@USTC
-*	 Note:	   This file is modified from HPGmatrix.c, which is a part of Frame3dd.
-*			You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
-*			Related matrix computation issue raised in matrix structural analysis can be 
-*			found at
-*			1. Partitioned matrix equation : http://people.duke.edu/~hpgavin/cee421/SolveMatrixEquation.pdf.
-*           2. Information about Eigen library's SimplicialLDLt can be found at Eigen library's online doc
-*              http://eigen.tuxfamily.org/dox/classEigen_1_1SimplicialLDLT.html
-*
-*			By March/30/2016, this solver is implemented by using Eigen solver 
-*			(http://eigen.tuxfamily.org/index.php?title=Main_Page) purely.
-* ==========================================================================
-*/
 #ifndef STIFFNESS_SOLVER_H
 #define STIFFNESS_SOLVER_H
 

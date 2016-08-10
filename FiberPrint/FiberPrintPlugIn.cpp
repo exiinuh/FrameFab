@@ -97,11 +97,11 @@ void FiberPrintPlugIn::FrameFabPrint()
 	ptr_graphcut_->MakeLayers();
 	cout << "Graph Cut completed." << endl;
 	
-	//if (!ptr_seqanalyzer_->SeqPrint())
-	//{
-	//	cout << "Model not printable!" << endl;
-	//	getchar();
-	//}
+	if (!ptr_seqanalyzer_->SeqPrint())
+	{
+		cout << "Model not printable!" << endl;
+		getchar();
+	}
 
 	printf("FrameFab print done.\n");
 
@@ -183,6 +183,8 @@ void FiberPrintPlugIn::OneLayerPrint()
 		ptr_path_
 		);
 
+	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
+
 	if (!ptr_seqanalyzer_->SeqPrint())
 	{
 		cout << "Model not printable!" << endl;
@@ -191,6 +193,8 @@ void FiberPrintPlugIn::OneLayerPrint()
 
 	fiber_print_.Stop();
 	fiber_print_.Print("OneLayer:");
+
+	//ptr_procanalyzer_->ProcPrint();
 }
 
 

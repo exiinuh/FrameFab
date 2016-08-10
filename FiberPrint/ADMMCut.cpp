@@ -106,6 +106,7 @@ void ADMMCut::MakeLayers()
 				UpdateLambda();
 
 				/*-------------------Residual Calculation-------------------*/
+				printf("residual calculation.\n");
 				SpMat Q_prev;
 				SpMat Q_new;
 				CalculateQ(D_prev, Q_prev);
@@ -220,6 +221,8 @@ void ADMMCut::MakeLayers()
 
 void ADMMCut::InitState()
 {
+	init_state_.Start();
+
 	ptr_dualgraph_->Dualization();
 	Nd_ = ptr_dualgraph_->SizeOfVertList();
 	Md_ = ptr_dualgraph_->SizeOfEdgeList();
@@ -256,6 +259,8 @@ void ADMMCut::InitState()
 	cout << "dual tolerance : " << dual_tol_ << endl;
 	cout << "ADMMCut Start" << endl;
 	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
+
+	init_state_.Stop();
 }
 
 
@@ -311,6 +316,8 @@ void ADMMCut::InitWeight()
 
 void ADMMCut::SetStartingPoints()
 {
+	set_startpoint_.Start();
+
 	if (cut_round_ == 0)
 	{
 		Nd_w_ = ptr_dualgraph_->SizeOfVertList();
@@ -343,6 +350,8 @@ void ADMMCut::SetStartingPoints()
 	a_.setZero();
 
 	//ptr_stiffness_->Debug();
+
+	set_startpoint_.Stop();
 }
 
 
@@ -1109,15 +1118,4 @@ void ADMMCut::WriteStiffness()
 
 void ADMMCut::Debug()
 {
-	int cut_count = 0;
-	SetStartingPoints();
-	ptr_stiffness_->CalculateD(D_, x_, 0, false, false, false);
-	int temp[24] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54, 8, 14 };
-	int temp_2[42] = { 82, 66, 76, 62, 58, 168, 64, 60, 78, 192, 80, 98, 110, 96, 196, 190, 56, 4, 2, 92, 94, 54,
-		8, 84, 72, 74, 194, 68, 70, 90, 210, 180, 184, 102, 108, 188, 100, 178, 106, 186, 86, 14
-	};
-
-
-
-
 }

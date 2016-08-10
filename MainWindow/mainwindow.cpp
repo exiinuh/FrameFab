@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 	ui.mainToolBar->setVisible(false);
-	this->setWindowTitle("Fiber printing");
+	this->setWindowTitle("FrameFab");
 	setGeometry(200, 150, 1000, 700);
 	
 	renderingwidget_ = new RenderingWidget(this);
@@ -902,15 +902,6 @@ void MainWindow::ShowLayerInfo(int layer_id, int total_id)
 
 void MainWindow::ShowAbout()
 {
-	QMessageBox::information(this, "About QtMeshFrame-1.0.1",
-
-		QString("<h3>This MeshFrame provides some operations about *.obj files sunch as") +
-		" IO, render with points , edges, triangles or textures and some interactions with mouse."
-		" A fix light source is provided for you."
-		"This is a basic and raw frame for handling meshes. The mesh is of half_edge struct.\n"
-		"Please contact" "<font color=blue> duckie@mail.ustc.edu.cn<\font><font color=black>, Yijiang Huang if you has any questions.<\font><\h3>"
-		,
-		QMessageBox::Ok);
 }
 
 

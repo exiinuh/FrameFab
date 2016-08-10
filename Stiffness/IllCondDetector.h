@@ -1,12 +1,4 @@
 #pragma once
-// This file implement the model stability analysis algorithm, addressed in
-// "Detecting the Causes of Ill-Conditioning in Structural Finite Element Method", Ram. K et. al, July 2013.
-// Check http://eprints.ma.man.ac.uk/1997/01/covered/MIMS_ep2013_35.pdf for detail of their paper.
-// About LAPACK, doc  : http://www.netlib.org/lapack/explore-html/d0/da2/spotrf_8f.html#aaf31db7ab15b4f4ba527a3d31a15a58e
-//			     info : https://software.intel.com/zh-cn/node/521001
-// Author  :Yijiang Huang. 
-// Contact :duckie@mail.ustc.edu.cn
-// Nov. 2015
 
 #ifndef ILLCONDDECTOR_H
 #define ILLCONDDECTOR_H
@@ -36,15 +28,6 @@ extern "C" void dpotrf_(const char *UPLO, const int *N, double *A, const int *LD
 // the Cholesky factorization A = U**T*U or A = L*L**T computed by
 // DPPTRF.
 // refer : http://www.netlib.org/lapack/explore-html/d0/d9b/dppcon_8f.html#a8107a68e3c7d948fe246bf0feae0470b
-/*
-* Note by Y.J. Huang @Mar/15/2016
-* I don't know why this routine fails for stiffness funtion (bunny head 60 unrestrained nodes)
-* but works fine for simple example in debug.
-*
-* [BugFix @Mar/15/2016] Please specify WORK and LWORK as:
-* 	double *workcon  = (double*)malloc(3 * N_ * sizeof(double));
-*   int    *lworkcon = (int*)malloc(N_ * sizeof(int));
-*/
 extern "C" void dpocon_(const char *UPLO, const int *N, const double *AP, const int *lda, const double *ANORM,
 	double *RCOND, double *WORK, int *LWORK, int *INFO);
 
