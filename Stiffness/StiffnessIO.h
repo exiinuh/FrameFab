@@ -1,21 +1,3 @@
-/*
-* ==========================================================================
-*
-*       class: StiffnessIO
-*
-* Description: create mesh data of deformed and undeformed mesh for GnuPlot.
-*
-*	  Version: 1.1
-*	  Created: Mar/20/2016
-*	  Updated: Apr/03/2016
-*
-*	   Author: Yijiang Huang, Xin Hu, Guoxian Song
-*	  Company: GCL@USTC
-*	     Note: This file is modified from frame3dd_io.c, which is a part of Frame3dd.
-*			   You can get original C file of Frame3dd from http://frame3dd.sourceforge.net/.
-*			   You can download Gnuplot at	http://sourceforge.net/projects/gnuplot/
-* ==========================================================================
-*/
 #ifndef STIFFNESS_IO_H
 #define STIFFNESS_IO_H
 
@@ -81,7 +63,7 @@ public:
 	*	loaded at their nodes.
 	*/
 	void GnuPltCubicBentBeam(
-		FILE *fpm,
+		vector<point> &beam,
 		VX &D,			/* calculated deformation */
 		int dual_i, DualGraph *ptr_dualgraph, WireFrame *ptr_frame, 
 		double exagg

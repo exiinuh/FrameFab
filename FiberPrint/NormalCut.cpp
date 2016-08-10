@@ -33,7 +33,7 @@ void NormalCut::MakeLayers()
 		}
 	}
 
-	int layer_gap = 30;
+	int layer_gap = 35;
 	int l = 0;
 	multimap<double, WF_edge*>::iterator it;
 	for (it = sweep_queue_.begin(); it != sweep_queue_.end(); l++)

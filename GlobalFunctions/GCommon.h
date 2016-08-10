@@ -1,18 +1,3 @@
-/*
-* ==========================================================================
-*
-*       file: GCommon.h
-*
-*    Description:  GCommon.h provides some common configuration for fiberprint project.
-*
-*	 Version:  1.0
-*	 Created:  Nov/25/2015
-*
-*	 Author:   Yijiang Huang, Xin Hu, Guoxian Song
-*	 Company:  GCL@USTC
-* ==========================================================================
-*/
-
 #pragma once
 #include <cmath>
 

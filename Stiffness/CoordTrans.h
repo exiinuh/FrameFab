@@ -1,13 +1,3 @@
-/*
-	@file : 
-	Coordinate transformations for the Fiberprint Structural Analysis SubModule
-
-	Author : Yijiang Huang, Xin Hu, Guoxian Song
-	Date   : 18 Nov 2015
-	Note   : This file modify part of the file coordtrans.h, a part of FRAME3DD
-	You can get the original copy of frame3dd at http://frame3dd.sourceforge.net/.
-*/
-
 #pragma once
 #include <vector>
 #include <Eigen\dense>

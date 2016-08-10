@@ -9,7 +9,7 @@ public:
 		double Wp = 1.0,
 		double Wa = 1.0,
 		double Wi = 5.0,
-		double seq_D_tol = 1000,
+		double seq_D_tol = 1.0,
 		double ADMM_D_tol = 1.0,
 		double penalty = 1e2,
 		double pri_tol = 1e-2,
@@ -17,9 +17,9 @@ public:
 		double radius = 0.75,
 		double density = 1210 * 1e-12,
 		double g = -9806.3,
-		double youngs_modulus = 3665,
-		double shear_modulus = 1375,
-		double poisson_ratio = 0.333
+		double youngs_modulus = 3457,
+		double shear_modulus = 1294,
+		double poisson_ratio = 0.335
 		);
 
 	~FiberPrintPARM();

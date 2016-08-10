@@ -1,23 +1,3 @@
-/*
-* ==========================================================================
-*
-*		class:	SequenceAnalyzer
-*
-* Description:  perform tool path searching algorithm to generate
-*				a collision-free, structurally stable path.
-*
-*	  Version:  1.2
-*	  Created:  Oct/20/2015
-*     Update :  Mar/30/2016
-*
-*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
-*	  Company:  GCL@USTC
-*
-*	Successor:	FFAnalyzer - FrameFab sequence analyzer
-*				BFAnalyzer - Brute Force sequence analyzer
-*
-* ==========================================================================
-*/
 #pragma once
 #include <cmath>
 

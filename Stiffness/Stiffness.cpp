@@ -573,7 +573,7 @@ void Stiffness::WriteData(VectorXd &D, int id, string fname, bool verbose)
 	string meshpath = path + '/' + fname + iname + "-msh";
 	string plotpath = path + '/' + fname + iname + ".plt";
 
-	double  exagg_static = 1;
+	double  exagg_static = 5;
 	float	scale = 1;
 
 	stiff_io_.WriteInputData(fpath.c_str(), ptr_dualgraph_, ptr_parm_, verbose);

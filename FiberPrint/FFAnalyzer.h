@@ -1,32 +1,3 @@
-/*
-* ==========================================================================
-*
-*       class:	FFAnalyzer
-*
-* Description:  perform the algorithm in FrameFab to generate a collision-free,
-*				structurally-stable path.
-*
-*	  Version:  1.1
-*	  Created:  Mar/23/2016
-*     Update :  Mar/25/2016
-*
-*	   Author:  Xin Hu, Guoxian Song, Yijiang Huang
-*	  Company:  GCL@USTC
-*	     Note:	Backtracking Greedy Approach:
-*				At every decision state, a trail solution is performed,
-*				unvisited current layer edges that are connected to already printed
-*				structure and calculate their adjacency,collision and stiffness weight.
-*				
-*				The total printing cost is weighted sum of the three: 
-*					
-*					wp_ * P + wl_ * L + ws_ * S
-*				
-*					P: adjacency cost
-*					L: collision cost	
-*
-* ==========================================================================
-*/
-
 #pragma once
 #include <cmath>
 #include <cstring>

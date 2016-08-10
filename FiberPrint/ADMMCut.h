@@ -1,28 +1,6 @@
-/*
-* ==========================================================================
-*
-*		class:	ADMMCut
-*
-* Description:	This file is a part of implementation fo paper "FrameFab" : 
-*				a fast&stable way to fabricate wireframe. The GraphCut submodule 
-*				takes charge of dividing the wireframe into several structually-stable 
-*				sections, scaling the problem down, enabling further tool path 
-*				searching part numerically tractable.
-*
-*	  Version:  1.1
-*	  Created:  Oct/10/2015
-*     Updated:  Mar/25/2016
-*
-*	   Author:  Xin Hu, Yijiang Huang, Guoxian Song
-*	  Company:  GCL@USTC
-*
-*    WARNING:  DO NOT insert node and edge after you dualize the graph,
-*    as we append all project b_fixed point at the end of dual face.
-*    Further inserting will cause stiffness matrix and force creation error.
-* ==========================================================================
-*/
-
 #pragma once
+
+#include <iostream>
 
 #include <Eigen/dense>
 #include <Eigen/Sparse>
@@ -136,11 +114,12 @@ private:
 	double				K_eps_;
 
 	Timer				ADMM_cut_;
+	Timer				init_state_;
 	Timer				init_weight_;
 	Timer				create_a_;
 	Timer				create_c_;
 	Timer				set_bound_;
-	Timer				create_l_;
+	Timer				set_startpoint_;
 	Timer				cal_y_;
 	Timer				cal_x_;
 	Timer				cal_q_;
