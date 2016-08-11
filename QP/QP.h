@@ -47,17 +47,15 @@
 		QP():storeVariables_(false), storePath_(std::string("./")){ ; }
 		virtual ~QP(){ ; }
 
-		//trying to solve QP described above. Returns true if succeeded, false otherwise.
-		virtual bool solve(const S& H, const V& f,
-			const S& A, const V& b,
+		virtual bool solve(
+			const S& H, const V& f,
 			const S& C, const V& d,
-			const V& lb, const V& ub,
-			V& _x, const V* _x0 = NULL,
-			const Cones* cones = NULL,
+			V& _x,
 			bool _debug = false) = 0;
 
-		// written especially for WirePrint
-		virtual bool solve(const S& H, const V& f, V &_x,
+		virtual bool solve(
+			const S& H, const V& f, 
+			V &_x,
 			const V &_y,
 			const double& d_tol,
 			bool _debug) = 0;

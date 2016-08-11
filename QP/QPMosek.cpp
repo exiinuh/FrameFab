@@ -41,12 +41,10 @@ void MSKAPI printstr(void *handle,
 } /* printstr */
 #endif
 
-bool QPMosek::solve(const S& H, const V& f,
-	const S& A, const V& b,
+bool QPMosek::solve(
+	const S& H, const V& f,
 	const S& C, const V& d,
-	const V& lb, const V& ub,
 	V &_x,
-	const Cones* cones/*=NULL*/,
 	bool _debug)
 {
 #ifdef MOSEK_EXISTS
@@ -58,11 +56,7 @@ bool QPMosek::solve(const S& H, const V& f,
 
 	//number of variables
 	MSKint32t numvar = H.rows();
-	bool linprog = (numvar == 0);
-	if (linprog){ numvar = f.size(); }
-
-	//number of constraints
-	MSKint32t numcon = b.size() + d.size();
+	MSKint32t numcon = d.size();
 
 	MSKint32t     i, j;
 
@@ -79,7 +73,6 @@ bool QPMosek::solve(const S& H, const V& f,
 		{
 			MSK_putintparam(task, MSK_IPAR_NUM_THREADS, nTasks_);
 		}
-
 
 		//set precision: see http://docs.mosek.com/7.0/capi/The_optimizers_for_continuous_problems.html#sec-solve-conic
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_PFEAS, mP_);		//Controls primal feasibility, default 10e-8
@@ -112,11 +105,11 @@ bool QPMosek::solve(const S& H, const V& f,
 			/* Copy matrix [A;C] to mosek */
 			if (r == MSK_RES_OK)
 			{
-				if (_debug){ MYOUT << "A: " << std::endl; }
+				if (_debug) { MYOUT << "C: " << std::endl; }
 
-				for (int k = 0; k<A.outerSize() && r == MSK_RES_OK; ++k)
+				for (int k = 0; k < C.outerSize() && r == MSK_RES_OK; ++k)
 				{
-					for (S::InnerIterator it(A, k); it; ++it)
+					for (S::InnerIterator it(C, k); it; ++it)
 					{
 						MSKint32t r = it.row();
 						MSKint32t c = it.col();
@@ -125,34 +118,6 @@ bool QPMosek::solve(const S& H, const V& f,
 						r = MSK_putaij(task, r, c, v);
 					}
 				}
-
-				if (_debug) { MYOUT << "C: " << std::endl; }
-
-				for (int k = 0; k<C.outerSize() && r == MSK_RES_OK; ++k)
-				{
-					for (S::InnerIterator it(C, k); it; ++it)
-					{
-						MSKint32t r = it.row() + A.rows();
-						MSKint32t c = it.col();
-						double	v = it.value();
-						//if (_debug){ MYOUT << "(" << r << "," << c << ") " << /*std::setprecision(16) <<*/ v << std::endl; }
-						r = MSK_putaij(task, r, c, v);
-					}
-				}
-
-				if (r == MSK_RES_OK)
-				{
-					if (cones != NULL)
-					{
-						for (unsigned int ci = 0; ci<cones->size(); ++ci)
-						{
-							r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, cones->at(ci).idxs.size(), &(cones->at(ci).idxs[0]));
-							//r=MSK_appendcone(task,MSK_CT_QUAD,0.0,cones->at(ci).size(),&(cones->at(ci)[0]));
-							std::cout << ci << std::endl;
-						}
-					}
-				}
-
 
 				/*
 				r = MSK_putacolslice(task,
@@ -182,24 +147,16 @@ bool QPMosek::solve(const S& H, const V& f,
 					if (r == MSK_RES_OK)
 						r = MSK_putcj(task, j, f[j]);
 				}
+
 				/* Set the bounds on variable j.
 				blx[j] <= x_j <= bux[j] */
 				if (r == MSK_RES_OK){
-					MSKboundkeye bkx = MSK_BK_FR;
-					double lj = lb[j];
-					double uj = ub[j];
-
-					if (lj != -MYINF && uj == MYINF){ bkx = MSK_BK_LO; }
-					if (lj == -MYINF && uj != MYINF){ bkx = MSK_BK_UP; }
-					if (lj == uj){ bkx = MSK_BK_FX; assert(std::isfinite(lj)); }
-					if (lj == -MYINF && uj == MYINF){ bkx = MSK_BK_FR; }
-					if (lj != -MYINF && uj != MYINF){ bkx = MSK_BK_RA; }
 
 					r = MSK_putvarbound(task,
 						j,           /* Index of variable.*/
-						bkx,      /* Bound key.*/
-						lj,      /* Numerical value of lower bound.*/
-						uj);     /* Numerical value of upper bound.*/
+						MSK_BK_RA,      /* Bound key.*/
+						0,      /* Numerical value of lower bound.*/
+						1);     /* Numerical value of upper bound.*/
 				}
 
 				//Done before as a whole
@@ -217,28 +174,25 @@ bool QPMosek::solve(const S& H, const V& f,
 			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
 			for (i = 0; i<numcon && r == MSK_RES_OK; ++i)
 			{
-				bool equ = (i >= b.size());
-				int ie = (equ ? (i - b.size()) : i);
-
-				double lbi;
-				double ubi;
-				if (!equ){
-					lbi = -MYINF;
-					ubi = b[i];
-				}
-				else{
-					lbi = d[ie];	// beyond b.size() quality constraints
-					ubi = d[ie];
-				}
+				//double lbi;
+				//double ubi;
+				//if (!equ){
+				//	lbi = -MYINF;
+				//	ubi = b[i];
+				//}
+				//else{
+				//	lbi = d[ie];	// beyond b.size() quality constraints
+				//	ubi = d[ie];
+				//}
 
 				r = MSK_putconbound(task,
-					i,							/* Index of constraint.*/
-					equ ? MSK_BK_FX : MSK_BK_UP,	/* Bound key.*/
-					lbi,			/* Numerical value of lower bound.*/
-					ubi);			/* Numerical value of upper bound.*/
+					i,				/* Index of constraint.*/
+					MSK_BK_FX,		/* Bound key.*/
+					d[i],			/* Numerical value of lower bound.*/
+					d[i]);			/* Numerical value of upper bound.*/
 			}
 
-			if (r == MSK_RES_OK && !linprog)
+			if (r == MSK_RES_OK)
 			{
 				/*
 				* The lower triangular part of the Q
@@ -270,6 +224,7 @@ bool QPMosek::solve(const S& H, const V& f,
 
 				/* Input the Q for the objective. */
 				r = MSK_putqobj(task, nnz, &hi[0], &hj[0], &hv[0]);
+
 			}
 
 			if (_debug){
@@ -277,17 +232,22 @@ bool QPMosek::solve(const S& H, const V& f,
 				MSK_writedata(task, "taskdump.opf");
 			}
 
-			tSetup.Stop();
-			if (storeVariables_){
+			//tSetup.Stop();
+			
+			if (storeVariables_)
+			{
 				std::string fileName;
-				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName)){
+				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName))
+				{
 					MYERR << __FUNCTION__ << ": No unique filename for QpMosek dump found. Not storing." << std::endl;
 				}
-				else{
+				else
+				{
 					MSK_writedata(task, fileName.c_str());
 				}
 			}
-			tSolve.Start();
+
+			//tSolve.Start();
 
 			if (r == MSK_RES_OK)
 			{
@@ -365,7 +325,7 @@ bool QPMosek::solve(const S& H, const V& f,
 		MSK_deletetask(&task);
 	}
 
-	tSolve.Stop();
+	// tSolve.Stop();
 
 	return success;
 
