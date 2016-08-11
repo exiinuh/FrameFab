@@ -45,18 +45,16 @@ bool QPMosek::solve(const S& H, const V& f,
 	const S& A, const V& b,
 	const S& C, const V& d,
 	const V& lb, const V& ub,
-	V &_x, const V *_x0/*=NULL*/,
+	V &_x,
 	const Cones* cones/*=NULL*/,
 	bool _debug)
 {
 #ifdef MOSEK_EXISTS
 	fVal_ = MYINF;
-	tSetup.Start();
+	
+	//tSetup.Start();
 
 	bool success = false;
-
-	//To cancel warnings about unused
-	(void)_x0;
 
 	//number of variables
 	MSKint32t numvar = H.rows();
@@ -91,14 +89,11 @@ bool QPMosek::solve(const S& H, const V& f,
 		MSK_putdouparam(task, MSK_DPAR_INTPNT_CO_TOL_MU_RED, mP_);	//Controls when the complementarity is reduced enough, default 10e-8
 
 		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_ELIMINATOR_USE, MSK_OFF);
+		MSK_putintparam(task, MSK_IPAR_CHECK_CONVEXITY, MSK_CHECK_CONVEXITY_NONE);
 
 		if (r == MSK_RES_OK)
 		{
 			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
-
-			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-Start
-			// if ( r == MSK_RES_OK )
-			//	  r = MSK_putintparam(task,MSK_IPAR_OPTIMIZER,MSK_OPTIMIZER_FREE_SIMPLEX);
 
 			/* Append 'NUMCON' empty constraints.
 			The constraints will initially have no bounds. */
@@ -426,6 +421,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 
 		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_USE, MSK_PRESOLVE_MODE_OFF);
 		//MSK_putintparam(task, MSK_IPAR_PRESOLVE_ELIMINATOR_USE, MSK_OFF);
+		MSK_putintparam(task, MSK_IPAR_CHECK_CONVEXITY, MSK_CHECK_CONVEXITY_NONE);
 
 		if (r == MSK_RES_OK)
 		{

@@ -18,7 +18,7 @@ public:
 		const S& A, const V& b,
 		const S& C, const V& d,
 		const V& lb, const V& ub,
-		V& _x, const V* _x0 = NULL,
+		V& _x,
 		const Cones* cones = NULL,
 		bool _debug = false);
 	
