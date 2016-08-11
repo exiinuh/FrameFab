@@ -464,50 +464,71 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 			/* variable bounds */
 			for (j = 0; j < numvar/6 && r == MSK_RES_OK; ++j)
 			{
-				if (x_w[j] < 1e-9)
-				{
-					temp_bound = MYINF;
+				//if (x_w[j] < 1e-15)
+				//{
+				//	temp_bound = MYINF;
 
-					r = MSK_putvarbound(task,
-						j * 6,           /* Index of variable.*/
-						MSK_BK_FR,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6,           /* Index of variable.*/
+				//	//	MSK_BK_FR,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
 
-					r = MSK_putvarbound(task,
-						j * 6 + 1,           /* Index of variable.*/
-						MSK_BK_FR,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6 + 1,           /* Index of variable.*/
+				//	//	MSK_BK_FR,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
 
-					r = MSK_putvarbound(task,
-						j * 6 + 2,           /* Index of variable.*/
-						MSK_BK_FR,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
-				}
-				else
-				{
-					temp_bound = d_tol / x_w[j];
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6 + 2,           /* Index of variable.*/
+				//	//	MSK_BK_FR,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
+				//}
+				//else
+				//{
+				//	temp_bound = d_tol / x_w[j];
 
-					r = MSK_putvarbound(task,
-						j * 6,           /* Index of variable.*/
-						MSK_BK_RA,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6,           /* Index of variable.*/
+				//	//	MSK_BK_RA,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
 
-					r = MSK_putvarbound(task,
-						j * 6 + 1,           /* Index of variable.*/
-						MSK_BK_RA,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6 + 1,           /* Index of variable.*/
+				//	//	MSK_BK_RA,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
 
-					r = MSK_putvarbound(task,
-						j * 6 + 2,           /* Index of variable.*/
-						MSK_BK_RA,      /* Bound key.*/
-						-temp_bound,      /* Numerical value of lower bound.*/
-						temp_bound);     /* Numerical value of upper bound.*/
-				}
+				//	//r = MSK_putvarbound(task,
+				//	//	j * 6 + 2,           /* Index of variable.*/
+				//	//	MSK_BK_RA,      /* Bound key.*/
+				//	//	-temp_bound,      /* Numerical value of lower bound.*/
+				//	//	temp_bound);     /* Numerical value of upper bound.*/
+				//}
+
+				temp_bound = d_tol;
+
+				r = MSK_putvarbound(task,
+					j * 6,           /* Index of variable.*/
+					MSK_BK_RA,      /* Bound key.*/
+					-temp_bound,      /* Numerical value of lower bound.*/
+					temp_bound);     /* Numerical value of upper bound.*/
+
+				r = MSK_putvarbound(task,
+					j * 6 + 1,           /* Index of variable.*/
+					MSK_BK_RA,      /* Bound key.*/
+					-temp_bound,      /* Numerical value of lower bound.*/
+					temp_bound);     /* Numerical value of upper bound.*/
+				
+				r = MSK_putvarbound(task,
+					j * 6 + 2,           /* Index of variable.*/
+					MSK_BK_RA,      /* Bound key.*/
+					-temp_bound,      /* Numerical value of lower bound.*/
+					temp_bound);     /* Numerical value of upper bound.*/
+
 			}
 
 			for (j = 0; j < numvar && r == MSK_RES_OK; ++j)

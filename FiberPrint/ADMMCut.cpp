@@ -936,7 +936,7 @@ bool ADMMCut::TerminationCriteria()
 		return false;
 	}
 
-	//return false;
+	return false;
 }
 
 
