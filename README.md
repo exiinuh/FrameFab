@@ -1,27 +1,36 @@
 # FrameFab
+
 ## 1. Environment
 - **CPU**: i7-3770k @ 3.50GHz
 - **RAM**: 16GB
 - **OS**: Windows 7-64bit
 - **Compiler**: Visual Studio 2013
 - **Language**: C++/C
+
 ## 2. Dependencies
+
 ### 2.1 General ways to include libraries in Visual Studio 2013 C++ projects
 1. Download src/.lib/.dll from website.
 2. **"Linker > General > Additional Library Directory"**: add "*$(LIBRARYDIR)\include*".
 3. **"Linker > Input > Additional Dependencies"**: add *".lib"*.
 4. **"My Computer > Properties > Advanced > Environment Variables"**:  add "*$(LIBRARYDIR)\bin*".
+
 ### 2.2 Qt
 Download **Qt 5.5.1** from "*https://www.qt.io/download/*".
 (OpenGL should be included in Qt.)
+
 ### 2.3 LAPACK
 Download **LAPACK 3.5.0** from "*http://www.netlib.org/lapack/*".
+
 ### 2.4 Mosek
 Download **Mosek 7.0** from "*https://www.mosek.com/resources/downloads*".
+
 ### 2.5 Eigen
 Download **Eigen 3** from "*http://eigen.tuxfamily.org/index.php?title=Main_Page*".
+
 ### 2.6 Geometric Tools Engine
 Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Downloads/Downloads.html*".
+
 ## 3. .PWF file format
 A **.PWF file format** is a mesh format used for the storage of object information in **FrameFab**. While .obj files are compatible with FrameFab, .pwf files are actually the extended version of .obj files that containing extra information from FrameFab results.
 
