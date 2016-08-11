@@ -488,7 +488,7 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 {
 	cal_q_.Start();
 
-	// Construct Hessian Matrix for D-Qp problem
+	// Construct Hessian Matrix for X-Qp problem
 	Q.resize(6 * Ns_, Nd_);
 	vector<Eigen::Triplet<double>> Q_list;
 
@@ -561,7 +561,7 @@ void ADMMCut::CalculateD()
 {
 	cal_d_.Start();
 
-	// Construct Hessian Matrix for X-Qp problem
+	// Construct Hessian Matrix for D-Qp problem
 	// Here, K is continuous-x weighted
 	ptr_stiffness_->CreateGlobalK(&x_);
 	SpMat K = *(ptr_stiffness_->WeightedK());
@@ -936,7 +936,7 @@ bool ADMMCut::TerminationCriteria()
 		return false;
 	}
 
-	//return false;
+	return false;
 }
 
 
