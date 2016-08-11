@@ -14,16 +14,17 @@ public:
 	QPMosek();
 	virtual ~QPMosek();
 
-	virtual bool solve(const S& H, const V& f,
-		const S& A, const V& b,
+	/* for FrameFab graphcut: CalculateX*/
+	virtual bool solve(
+		const S& H, const V& f,
 		const S& C, const V& d,
-		const V& lb, const V& ub,
-		V& _x, const V* _x0 = NULL,
-		const Cones* cones = NULL,
+		V& _x,
 		bool _debug = false);
 	
 	/* for FrameFab graphcut: CalculateD*/
-	virtual bool solve(const S& H, const V& f, V &_d,
+	virtual bool solve(
+		const S& H, const V& f, 
+		V &_d,
 		const V& _x,
 		const double& d_tol,
 		bool _debug);

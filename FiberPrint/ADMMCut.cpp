@@ -462,23 +462,11 @@ void ADMMCut::CalculateX()
 					+ A_.transpose() * lambda_y_  
 					+ Q.transpose()	 * lambda_stf_;
 
-	// Inequality constraints A*x <= b
-	SpMat A(6 * Fd_, 6 * Fd_);
-	A.setZero();
-	VX b(6 * Fd_);
-	b.setZero();
-
-	// Variable constraints x >= lb, x <= ub
-	// 0 <= x_i <= 1
-	VX lb(Nd_), ub(Nd_);
-	lb.setZero();
-	ub.setOnes();
-
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
 	// x_i = 1, while strut i belongs to the bottom
 	cal_qp_.Start();
-	ptr_qp_->solve(H, a_, A, b, W_, d_, lb, ub, x_, NULL, NULL, debug_);
+	ptr_qp_->solve(H, a_, W_, d_, x_, debug_);
 	cal_qp_.Stop();
 	cal_x_.Stop();
 }
