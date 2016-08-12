@@ -113,6 +113,9 @@ private:
 
 	double				K_eps_;
 
+	SpMat				K_;
+	VX					F_;
+
 	Timer				ADMM_cut_;
 	Timer				init_state_;
 	Timer				init_weight_;

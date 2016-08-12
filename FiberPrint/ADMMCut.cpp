@@ -97,6 +97,12 @@ void ADMMCut::MakeLayers()
 				/*-------------------ADMM loop-------------------*/
 				CalculateX();
 
+				/* Update K reweighted by new x */
+				ptr_stiffness_->CreateGlobalK(&x_);
+				ptr_stiffness_->CreateF(&x_);
+				K_ = *(ptr_stiffness_->WeightedK());
+				F_ = *(ptr_stiffness_->WeightedF());
+
 				y_prev = y_;
 				CalculateY();
 
@@ -113,18 +119,12 @@ void ADMMCut::MakeLayers()
 				CalculateQ(D_prev, Q_prev);
 				CalculateQ(D_, Q_new);
 
-				/* Update K reweighted by new x */
-				ptr_stiffness_->CreateGlobalK(&x_);
-				ptr_stiffness_->CreateF(&x_);
-				SpMat K_new = *(ptr_stiffness_->WeightedK());
-				VX    F_new = *(ptr_stiffness_->WeightedF());
-
 				dual_res_ = - lambda_stf_.transpose() * (Q_prev - Q_new)
 					- penalty_ * (y_ - y_prev).transpose() * A_
 					- (lambda_y_ - lambda_y_prev).transpose() * A_
 					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
 
-				primal_res_ = (K_new * D_ - F_new).norm() + (y_ - A_ * x_).norm();
+				primal_res_ = (K_ * D_ - F_).norm() + (y_ - A_ * x_).norm();
 
 				/*-------------------Screenplay-------------------*/
 
@@ -552,14 +552,9 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 void ADMMCut::CalculateD()
 {
 	cal_d_.Start();
-
-	// Construct Hessian Matrix for D-Qp problem
-	// Here, K is continuous-x weighted
-	ptr_stiffness_->CreateGlobalK(&x_);
-	SpMat K = *(ptr_stiffness_->WeightedK());
 	
 	// Ensure that Q is PSD
-	SpMat Q = penalty_ * K.transpose() * K;
+	SpMat Q = penalty_ * K_.transpose() * K_;
 
 	if (0 == ADMM_round_)
 	{
@@ -568,11 +563,7 @@ void ADMMCut::CalculateD()
 
 	Q = Q + (MX::Identity(Q.rows(), Q.rows()) * K_eps_).sparseView();
 
-	// Construct Linear coefficient for D-Qp problem
-	ptr_stiffness_->CreateF(&x_);
-	VX F = *(ptr_stiffness_->WeightedF());
-
-	VX a = K.transpose() * lambda_stf_ - penalty_ * K.transpose() * F;
+	VX a = K_.transpose() * lambda_stf_ - penalty_ * K_.transpose() * F_;
 
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Ns = ptr_dualgraph_->SizeOfFreeFace();
@@ -711,14 +702,7 @@ void ADMMCut::UpdateLambda()
 {
 	update_lambda_.Start();
 
-	// Recompute K(x_{k+1}) and F(x_{k+1})
-	ptr_stiffness_->CreateGlobalK(&x_);
-	SpMat K = *(ptr_stiffness_->WeightedK());
-
-	ptr_stiffness_->CreateF(&x_);
-	VX F = *(ptr_stiffness_->WeightedF());
-
-	lambda_stf_ = lambda_stf_ + penalty_ * (K * D_ - F);
+	lambda_stf_ = lambda_stf_ + penalty_ * (K_ * D_ - F_);
 	
 	//for (int i = 0; i < Md_; i++)
 	//{
@@ -848,7 +832,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 50)
+	if (max_improv < 0.1 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
