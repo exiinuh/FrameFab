@@ -47,7 +47,6 @@ public:
 
 	vector<int>		cutting_edge_;
 
-
 protected:
 	/* for debuging */
 	bool			debug_;

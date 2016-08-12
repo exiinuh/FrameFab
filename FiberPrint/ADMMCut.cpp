@@ -35,6 +35,7 @@ ADMMCut::ADMMCut(
 	dual_tol_ = ptr_parm->dual_tol_;
 
 	debug_ = false;
+	output_stat_ = false;
 }
 
 
@@ -118,8 +119,6 @@ void ADMMCut::MakeLayers()
 				SpMat K_new = *(ptr_stiffness_->WeightedK());
 				VX    F_new = *(ptr_stiffness_->WeightedF());
 
-				//dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-				//	+ lambda_stf_.transpose() * (Q_prev - Q_new);
 				dual_res_ = - lambda_stf_.transpose() * (Q_prev - Q_new)
 					- penalty_ * (y_ - y_prev).transpose() * A_
 					- (lambda_y_ - lambda_y_prev).transpose() * A_
@@ -128,7 +127,6 @@ void ADMMCut::MakeLayers()
 				primal_res_ = (K_new * D_ - F_new).norm() + (y_ - A_ * x_).norm();
 
 				/*-------------------Screenplay-------------------*/
-				//double new_cut_energy = x_.dot(L_ * x_);
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
@@ -146,9 +144,12 @@ void ADMMCut::MakeLayers()
 			res_energy.push_back(res_tmp);
 
 			/* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
+			if (output_stat_)
+			{
+				string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+				Statistics tmp_x(str_x, x_);
+				tmp_x.GenerateVectorFile();
+			}
 
 			/* calculate original objective function value */
 			double cut_tmp = 0;
@@ -194,13 +195,16 @@ void ADMMCut::MakeLayers()
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		if (output_stat_)
+		{
+			string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+			Statistics s_eR(str_eR, res_energy);
+			s_eR.GenerateStdVecFile();
 
-		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
-		Statistics s_eC(str_eC, cut_energy);
-		s_eC.GenerateStdVecFile();
+			string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+			Statistics s_eC(str_eC, cut_energy);
+			s_eC.GenerateStdVecFile();
+		}
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
