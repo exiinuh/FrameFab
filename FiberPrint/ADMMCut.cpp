@@ -138,59 +138,58 @@ void ADMMCut::MakeLayers()
 
 			/* One reweighting process ended! */
 			/* Output energy and residual */
-
 			/*-------------------Screenplay-------------------*/
-			double res_tmp = primal_res_;
-			res_energy.push_back(res_tmp);
-
 			/* write x distribution to a file */
 			if (output_stat_)
 			{
+				double res_tmp = primal_res_;
+				res_energy.push_back(res_tmp);
+
 				string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
 				Statistics tmp_x(str_x, x_);
 				tmp_x.GenerateVectorFile();
+
+				/* calculate original objective function value */
+				double cut_tmp = 0;
+				for (int i = 0; i < Md_; i++)
+				{
+					int dual_u = ptr_dualgraph_->u(i);
+					int dual_v = ptr_dualgraph_->v(i);
+					int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+					int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+
+					double diffuv;
+					double diffvu;
+
+					if (x_[dual_u] - x_[dual_v] > 0)
+					{
+						diffuv = x_[dual_u] - x_[dual_v];
+					}
+					else
+					{
+						diffuv = 0;
+					}
+
+					if (x_[dual_v] - x_[dual_u] > 0)
+					{
+						diffvu = x_[dual_v] - x_[dual_u];
+					}
+					else
+					{
+						diffvu = 0;
+					}
+
+					cut_tmp += weight_.coeff(u, v) * diffuv;
+					cut_tmp += weight_.coeff(v, u) * diffvu;
+				}
+
+				cut_energy.push_back(cut_tmp);
+
+				cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
+				cout << "Primal Res :" << primal_res_ << endl;
+				cout << "Objective Function :" << cut_tmp << endl;
+				cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 			}
-
-			/* calculate original objective function value */
-			double cut_tmp = 0;
-			for (int i = 0; i < Md_; i++)
-			{
-				int dual_u = ptr_dualgraph_->u(i);
-				int dual_v = ptr_dualgraph_->v(i);
-				int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
-				int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
-
-				double diffuv;
-				double diffvu;
-
-				if (x_[dual_u] - x_[dual_v] > 0)
-				{
-					diffuv = x_[dual_u] - x_[dual_v];
-				}
-				else
-				{
-					diffuv = 0;
-				}
-
-				if (x_[dual_v] - x_[dual_u] > 0)
-				{
-					diffvu = x_[dual_v] - x_[dual_u];
-				}
-				else
-				{
-					diffvu = 0;
-				}
-
-				cut_tmp += weight_.coeff(u, v) * diffuv;
-				cut_tmp += weight_.coeff(v, u) * diffvu;
-			}
-
-			cut_energy.push_back(cut_tmp);
-
-			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-			cout << "Primal Res :" << res_tmp << endl;
-			cout << "Objective Function :" << cut_tmp << endl;
-			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
@@ -832,7 +831,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 20)
+	if (max_improv < 0.1 || reweight_round_ > 50)
 	{
 		/* Exit Reweighting */
 		return true;
