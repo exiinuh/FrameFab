@@ -271,7 +271,8 @@ void ADMMCut::InitWeight()
 	int halfM = M_ / 2;
 	weight_.resize(halfM, halfM);
 	vector<Triplet<double>> weight_list;
-
+	
+	//#pragma omp parallel for
 	for (int i = 0; i < Md_; i++)
 	{
 		int orig_u = ptr_dualgraph_->e_orig_id(ptr_dualgraph_->u(i));
