@@ -35,6 +35,7 @@ ADMMCut::ADMMCut(
 	dual_tol_ = ptr_parm->dual_tol_;
 
 	debug_ = false;
+	output_stat_ = false;
 }
 
 
@@ -113,22 +114,18 @@ void ADMMCut::MakeLayers()
 
 				/*-------------------Residual Calculation-------------------*/
 				printf("residual calculation.\n");
-				SpMat Q_prev;
 				SpMat Q_new;
-				CalculateQ(D_prev, Q_prev);
 				CalculateQ(D_, Q_new);
 
-				//dual_res_ = penalty_ * (D_prev - D_).transpose() * K_new.transpose() * Q_prev
-				//	+ lambda_stf_.transpose() * (Q_prev - Q_new);
-				dual_res_ = - lambda_stf_.transpose() * (Q_prev - Q_new)
+				dual_res_ = - lambda_stf_.transpose() * (Q_ - Q_new)
 					- penalty_ * (y_ - y_prev).transpose() * A_
 					- (lambda_y_ - lambda_y_prev).transpose() * A_
-					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
+					+ penalty_ * x_.transpose() * (Q_ - Q_new).transpose() * Q_;
 
 				primal_res_ = (K_ * D_ - F_).norm() + (y_ - A_ * x_).norm();
 
+				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
-				//double new_cut_energy = x_.dot(L_ * x_);
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
 				cout << "dual_residual : " << dual_res_.norm() << endl;
@@ -140,67 +137,72 @@ void ADMMCut::MakeLayers()
 
 			/* One reweighting process ended! */
 			/* Output energy and residual */
-
 			/*-------------------Screenplay-------------------*/
-			double res_tmp = primal_res_;
-			res_energy.push_back(res_tmp);
-
 			/* write x distribution to a file */
-			string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-			Statistics tmp_x(str_x, x_);
-			tmp_x.GenerateVectorFile();
-
-			/* calculate original objective function value */
-			double cut_tmp = 0;
-			for (int i = 0; i < Md_; i++)
+			if (output_stat_)
 			{
-				int dual_u = ptr_dualgraph_->u(i);
-				int dual_v = ptr_dualgraph_->v(i);
-				int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
-				int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+				double res_tmp = primal_res_;
+				res_energy.push_back(res_tmp);
 
-				double diffuv;
-				double diffvu;
+				string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
+				Statistics tmp_x(str_x, x_);
+				tmp_x.GenerateVectorFile();
 
-				if (x_[dual_u] - x_[dual_v] > 0)
+				/* calculate original objective function value */
+				double cut_tmp = 0;
+				for (int i = 0; i < Md_; i++)
 				{
-					diffuv = x_[dual_u] - x_[dual_v];
-				}
-				else
-				{
-					diffuv = 0;
+					int dual_u = ptr_dualgraph_->u(i);
+					int dual_v = ptr_dualgraph_->v(i);
+					int u = ptr_dualgraph_->e_orig_id(dual_u) / 2;
+					int v = ptr_dualgraph_->e_orig_id(dual_v) / 2;
+
+					double diffuv;
+					double diffvu;
+
+					if (x_[dual_u] - x_[dual_v] > 0)
+					{
+						diffuv = x_[dual_u] - x_[dual_v];
+					}
+					else
+					{
+						diffuv = 0;
+					}
+
+					if (x_[dual_v] - x_[dual_u] > 0)
+					{
+						diffvu = x_[dual_v] - x_[dual_u];
+					}
+					else
+					{
+						diffvu = 0;
+					}
+
+					cut_tmp += weight_.coeff(u, v) * diffuv;
+					cut_tmp += weight_.coeff(v, u) * diffvu;
 				}
 
-				if (x_[dual_v] - x_[dual_u] > 0)
-				{
-					diffvu = x_[dual_v] - x_[dual_u];
-				}
-				else
-				{
-					diffvu = 0;
-				}
+				cut_energy.push_back(cut_tmp);
 
-				cut_tmp += weight_.coeff(u, v) * diffuv;
-				cut_tmp += weight_.coeff(v, u) * diffvu;
+				cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
+				cout << "Primal Res :" << primal_res_ << endl;
+				cout << "Objective Function :" << cut_tmp << endl;
+				cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 			}
-
-			cut_energy.push_back(cut_tmp);
-
-			cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-			cout << "Primal Res :" << res_tmp << endl;
-			cout << "Objective Function :" << cut_tmp << endl;
-			cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-		Statistics s_eR(str_eR, res_energy);
-		s_eR.GenerateStdVecFile();
+		if (output_stat_)
+		{
+			string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
+			Statistics s_eR(str_eR, res_energy);
+			s_eR.GenerateStdVecFile();
 
-		string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
-		Statistics s_eC(str_eC, cut_energy);
-		s_eC.GenerateStdVecFile();
+			string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
+			Statistics s_eC(str_eC, cut_energy);
+			s_eC.GenerateStdVecFile();
+		}
 
 		/* Update New Cut information to Rendering (layer_label_) */
 
@@ -448,19 +450,21 @@ void ADMMCut::CalculateX()
 {
 	cal_x_.Start();
 
-	// Construct Hessian Matrix for D-Qp problem
-	SpMat Q;
-	CalculateQ(D_, Q);
+	// Construct Hessian Matrix for X-Qp problem
+	if (0 == ADMM_round_)
+	{
+		CalculateQ(D_, Q_);
+	}
 
 	SpMat H1 = A_.transpose() * A_;
-	SpMat H2 = Q.transpose() * Q;
+	SpMat H2 = Q_.transpose() * Q_;
 	SpMat H = penalty_ * (H1 + H2);
 
 	// Construct Linear coefficient for x-Qp problem
 	// Modified @Mar/9/2016, y = Ax constraints came into play.
 	a_ = - penalty_	* A_.transpose() * y_
 					+ A_.transpose() * lambda_y_  
-					+ Q.transpose()	 * lambda_stf_;
+					+ Q_.transpose() * lambda_stf_;
 
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
@@ -478,6 +482,7 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 
 	// Construct Hessian Matrix for X-Qp problem
 	Q.resize(6 * Ns_, Nd_);
+	Q.setZero();
 	vector<Eigen::Triplet<double>> Q_list;
 
 	for (int i = 0; i < Ns_; i++)
@@ -828,7 +833,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 20)
+	if (max_improv < 0.1 || reweight_round_ > 50)
 	{
 		/* Exit Reweighting */
 		return true;

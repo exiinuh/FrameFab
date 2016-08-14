@@ -106,7 +106,7 @@ private:
 	int					Nd_w_;		    // Nd_w_: Number of nodes in WHOLE dual graph 
 
 	int					stop_n_;		// stop_n   : termination criteria for ADMMCut process, number of dual nodes in LowerSet
-	double				D_tol_;		// Dt_tol   : tolerance of offset in stiffness
+	double				D_tol_;			// Dt_tol   : tolerance of offset in stiffness
 	double				penalty_;		// penalty  : penalty factor used in ADMM  
 	double				pri_tol_;		// pri_tol  : primal residual tolerance for ADMM termination criterion
 	double				dual_tol_;		// dual_tol : dual   residual tolerance for ADMM termination criterion
@@ -115,6 +115,7 @@ private:
 
 	SpMat				K_;
 	VX					F_;
+	SpMat				Q_;
 
 	Timer				ADMM_cut_;
 	Timer				init_state_;
@@ -131,5 +132,7 @@ private:
 	Timer				update_lambda_;
 	Timer				update_cut_;
 	Timer				update_r_;
+
+	bool				output_stat_;	// 1: turn on output stat	0: turn off
 };
 
