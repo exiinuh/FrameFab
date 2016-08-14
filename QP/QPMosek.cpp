@@ -432,6 +432,23 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 					-temp_bound,      /* Numerical value of lower bound.*/
 					temp_bound);     /* Numerical value of upper bound.*/
 
+				r = MSK_putvarbound(task,
+					j * 6 + 3,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
+
+				r = MSK_putvarbound(task,
+					j * 6 + 4,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
+
+				r = MSK_putvarbound(task,
+					j * 6 + 5,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
 			}
 
 			for (j = 0; j < numvar && r == MSK_RES_OK; ++j)

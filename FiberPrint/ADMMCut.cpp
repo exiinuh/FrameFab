@@ -114,18 +114,17 @@ void ADMMCut::MakeLayers()
 
 				/*-------------------Residual Calculation-------------------*/
 				printf("residual calculation.\n");
-				SpMat Q_prev;
 				SpMat Q_new;
-				CalculateQ(D_prev, Q_prev);
 				CalculateQ(D_, Q_new);
 
-				dual_res_ = - lambda_stf_.transpose() * (Q_prev - Q_new)
+				dual_res_ = - lambda_stf_.transpose() * (Q_ - Q_new)
 					- penalty_ * (y_ - y_prev).transpose() * A_
 					- (lambda_y_ - lambda_y_prev).transpose() * A_
-					+ penalty_ * x_.transpose() * (Q_prev - Q_new).transpose() * Q_prev;
+					+ penalty_ * x_.transpose() * (Q_ - Q_new).transpose() * Q_;
 
 				primal_res_ = (K_ * D_ - F_).norm() + (y_ - A_ * x_).norm();
 
+				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
@@ -451,19 +450,21 @@ void ADMMCut::CalculateX()
 {
 	cal_x_.Start();
 
-	// Construct Hessian Matrix for D-Qp problem
-	SpMat Q;
-	CalculateQ(D_, Q);
+	// Construct Hessian Matrix for X-Qp problem
+	if (0 == ADMM_round_)
+	{
+		CalculateQ(D_, Q_);
+	}
 
 	SpMat H1 = A_.transpose() * A_;
-	SpMat H2 = Q.transpose() * Q;
+	SpMat H2 = Q_.transpose() * Q_;
 	SpMat H = penalty_ * (H1 + H2);
 
 	// Construct Linear coefficient for x-Qp problem
 	// Modified @Mar/9/2016, y = Ax constraints came into play.
 	a_ = - penalty_	* A_.transpose() * y_
 					+ A_.transpose() * lambda_y_  
-					+ Q.transpose()	 * lambda_stf_;
+					+ Q_.transpose() * lambda_stf_;
 
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
@@ -481,6 +482,7 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 
 	// Construct Hessian Matrix for X-Qp problem
 	Q.resize(6 * Ns_, Nd_);
+	Q.setZero();
 	vector<Eigen::Triplet<double>> Q_list;
 
 	for (int i = 0; i < Ns_; i++)

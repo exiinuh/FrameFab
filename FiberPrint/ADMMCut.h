@@ -115,6 +115,7 @@ private:
 
 	SpMat				K_;
 	VX					F_;
+	SpMat				Q_;
 
 	Timer				ADMM_cut_;
 	Timer				init_state_;
