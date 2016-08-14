@@ -349,11 +349,9 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 
 	//number of variables
 	MSKint32t numvar = H.rows();
-	bool linprog = (numvar == 0);
-	if (linprog){ numvar = f.size(); }
 
 	//number of constraints (number of nodes), add more than i need
-	// refer http://docs.mosek.com/7.1/capi/Efficiency_considerations.html
+	//refer http://docs.mosek.com/7.1/capi/Efficiency_considerations.html
 	MSKint32t numcon = numvar / 6;
 
 	MSKint32t     i, j;
@@ -387,10 +385,6 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 		{
 			if (_debug){ r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, NULL, printstr); }
 
-			//Set mosek to use simplex optimizer. Doc says this method should be more suited for hot-Start
-			// if ( r == MSK_RES_OK )
-			//	  r = MSK_putintparam(task,MSK_IPAR_OPTIMIZER,MSK_OPTIMIZER_FREE_SIMPLEX);
-
 			/* Append 'NUMCON' empty constraints.
 			The constraints will initially have no bounds. */
 			if (r == MSK_RES_OK)
@@ -416,57 +410,10 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 				}
 			}
 
-			double temp_bound = MYINF;
+			double temp_bound = d_tol;
 			/* variable bounds */
 			for (j = 0; j < numvar/6 && r == MSK_RES_OK; ++j)
 			{
-				//if (x_w[j] < 1e-15)
-				//{
-				//	temp_bound = MYINF;
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6,           /* Index of variable.*/
-				//	//	MSK_BK_FR,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6 + 1,           /* Index of variable.*/
-				//	//	MSK_BK_FR,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6 + 2,           /* Index of variable.*/
-				//	//	MSK_BK_FR,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-				//}
-				//else
-				//{
-				//	temp_bound = d_tol / x_w[j];
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6,           /* Index of variable.*/
-				//	//	MSK_BK_RA,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6 + 1,           /* Index of variable.*/
-				//	//	MSK_BK_RA,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-
-				//	//r = MSK_putvarbound(task,
-				//	//	j * 6 + 2,           /* Index of variable.*/
-				//	//	MSK_BK_RA,      /* Bound key.*/
-				//	//	-temp_bound,      /* Numerical value of lower bound.*/
-				//	//	temp_bound);     /* Numerical value of upper bound.*/
-				//}
-
-				temp_bound = d_tol;
-
 				r = MSK_putvarbound(task,
 					j * 6,           /* Index of variable.*/
 					MSK_BK_RA,      /* Bound key.*/
@@ -485,6 +432,23 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 					-temp_bound,      /* Numerical value of lower bound.*/
 					temp_bound);     /* Numerical value of upper bound.*/
 
+				r = MSK_putvarbound(task,
+					j * 6 + 3,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
+
+				r = MSK_putvarbound(task,
+					j * 6 + 4,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
+
+				r = MSK_putvarbound(task,
+					j * 6 + 5,           /* Index of variable.*/
+					MSK_BK_FR,      /* Bound key.*/
+					-MYINF,      /* Numerical value of lower bound.*/
+					MYINF);     /* Numerical value of upper bound.*/
 			}
 
 			for (j = 0; j < numvar && r == MSK_RES_OK; ++j)
@@ -497,7 +461,7 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 				}
 			}
 
-			if (r == MSK_RES_OK && !linprog)
+			if (r == MSK_RES_OK)
 			{
 				/*
 				* The lower triangular part of the Q
@@ -540,7 +504,8 @@ bool QPMosek::solve(const S& H, const V& f, V &_x, const V &x_w, const double & 
 			if (storeVariables_)
 			{
 				std::string fileName;
-				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName)){
+				if (!Loader::uniqueFilename(storePath_ + "/QPMosekDump", ".task", fileName))
+				{
 					MYERR << __FUNCTION__ << ": No unique filename for QpMosek dump found. Not storing." << std::endl;
 				}
 				else{

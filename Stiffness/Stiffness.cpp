@@ -215,22 +215,6 @@ void Stiffness::CreateElasticK()
         int n1 = ptr_dualgraph_->v_dual_id(u);
         int n2 = ptr_dualgraph_->v_dual_id(v);
 
-        //fprintf(stdout, "---elastic_K---Node : %d & %d\n", n1+1, n2+1);
-        ////fprintf(stdout, "t0-t8 : %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
-        ////    t0, t1, t2, t3, t4, t5, t6, t7, t8);
-
-        //fprintf(stdout, "E: %.15f\n", E_);
-        //fprintf(stdout, "G: %.15f\n", G_);
-        //fprintf(stdout, "Le: %.15f\n", Le);
-        ////fprintf(stdout, "Jxx: %f\n", Jxx);
-        //fprintf(stdout, "Iyy: %.15f\n", Iyy);
-        //fprintf(stdout, "Izz: %.15f\n", Izz);
-        //fprintf(stdout, "Asy: %.15f\n", Asy);
-        //fprintf(stdout, "Asz: %.15f\n", Asz);
-        //fprintf(stdout, "---\n");
-        //fprintf(stdout, "Ksz: %.15f\n", Ksz);
-        //fprintf(stdout, "Ksy: %.15f\n", Ksy);
-
 		eKuv(0,0) = eKuv(6,6) = E_ * Ax / Le;
 		eKuv(1,1) = eKuv(7,7) = 12. * E_ * Izz / (Le * Le * Le * (1. + Ksy));
 		eKuv(2,2) = eKuv(8,8) = 12. * E_ * Iyy / (Le * Le * Le * (1. + Ksz));
