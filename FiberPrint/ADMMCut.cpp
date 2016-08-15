@@ -274,7 +274,6 @@ void ADMMCut::InitWeight()
 	weight_.resize(halfM, halfM);
 	vector<Triplet<double>> weight_list;
 	
-	//#pragma omp parallel for
 	for (int i = 0; i < Md_; i++)
 	{
 		int orig_u = ptr_dualgraph_->e_orig_id(ptr_dualgraph_->u(i));
@@ -286,7 +285,7 @@ void ADMMCut::InitWeight()
 		double tmp_range;
 		double tmp_weight;
 		double tmp_height;
-
+			
 		tmp_range = ptr_dualgraph_->Weight(i);
 		tmp_height = exp(-3 * tmp_range * tmp_range);
 
@@ -834,7 +833,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 50)
+	if (max_improv < 0.1 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
