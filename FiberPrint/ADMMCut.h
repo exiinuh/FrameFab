@@ -83,7 +83,7 @@ private:
 	VX					a_;				// linear coefficient used in x_Qp
 	VX					d_;				// for setting boundary & QP x
 
-	VX					dual_res_;		// dual residual for ADMM termination criteria
+	double				dual_res_;		// dual residual for ADMM termination criteria
 	double				primal_res_;	// dual residual for ADMM termination criteria
 
 	/* 
@@ -116,6 +116,7 @@ private:
 	SpMat				K_;
 	VX					F_;
 	SpMat				Q_;
+	SpMat				H1_;
 
 	Timer				ADMM_cut_;
 	Timer				init_state_;
