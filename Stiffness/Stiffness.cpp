@@ -509,7 +509,10 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose
 
 	bool bSuccess = true;
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
-	printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
+	if (verbose)
+	{
+		printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
+	}
 	if (error < STIFF_TOL)
 	{
 		if (verbose)

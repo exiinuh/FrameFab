@@ -53,7 +53,7 @@ public:
 	bool CalculateD(
 		VX &D,
 		VX *ptr_x = NULL,
-		bool verbose = true, bool cond_num = false, bool write_3dd = false,
+		bool verbose = false, bool cond_num = false, bool write_3dd = false,
 		int file_id = 0, string file_name = ""
 		);
 
@@ -62,19 +62,19 @@ public:
 		VX &D, 
 		VX &D0,						// D0 is the last result
 		VX *ptr_x = NULL,
-		bool verbose = true, bool cond_num = false, bool write_3dd = false,
+		bool verbose = false, bool cond_num = false, bool write_3dd = false,
 		int file_id = 0, string file_name = ""
 		);
 
 	/* Check condition number */
 	bool CheckIllCondition(
 		IllCondDetector &stiff_inspector, 
-		bool verbose = true
+		bool verbose = false
 		);
 	bool CheckError(
 		IllCondDetector &stiff_inspector,
 		VX &D, 
-		bool verbose = true
+		bool verbose = false
 		);
 
 	/* Write to file */
@@ -82,7 +82,7 @@ public:
 		VectorXd &D, 
 		int id = 0, 
 		string fname = "stiff_data",
-		bool verbose = true
+		bool verbose = false
 		);
 
 	/* Data I/O */

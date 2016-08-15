@@ -33,9 +33,6 @@ ADMMCut::ADMMCut(
 	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
-
-	debug_ = false;
-	output_stat_ = false;
 }
 
 
@@ -72,10 +69,6 @@ void ADMMCut::MakeLayers()
 		cut_energy.clear();
 		res_energy.clear();
 
-		cout << "****************************************" << endl;
-		cout << "ADMMCut Round : " << cut_round_ << endl;
-		cout << "---------------------------------" << endl;
-
 		VX x_prev;
 		VX D_prev;
 		VX y_prev;
@@ -91,8 +84,12 @@ void ADMMCut::MakeLayers()
 
 			do
 			{
-				cout << "ADMMCut Round: " << cut_round_ << ", reweight iteration:" << reweight_round_
-					<< ", ADMM " << ADMM_round_ << " iteration." << endl;
+				if (output_stat_)
+				{
+					fprintf(stderr, "---------------------------------------\n");
+					fprintf(stderr, "Cut round: %d\nReweight iteration: %d\nADMM round: %d\n",
+						cut_round_, reweight_round_, ADMM_round_);
+				}
 
 				/*-------------------ADMM loop-------------------*/
 				CalculateX();
@@ -113,7 +110,6 @@ void ADMMCut::MakeLayers()
 				UpdateLambda();
 
 				/*-------------------Residual Calculation-------------------*/
-				printf("residual calculation.\n");
 				SpMat Q_new;
 				CalculateQ(D_, Q_new);
 
@@ -135,11 +131,12 @@ void ADMMCut::MakeLayers()
 				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
 
-				//cout << "new quadratic func value record: " << new_cut_energy << endl;
-				cout << "dual_residual : "	 << dual_res_	<< endl;
-				cout << "primal_residual : " << primal_res_ << endl;
+				if (output_stat_)
+				{
+					fprintf(stderr, "Dual residual: %lf\nPrimal residual: %lf\n",
+						dual_res_, primal_res_);
+				}
 
-				cout << "---------------------" << endl;
 				ADMM_round_++;
 			} while (!TerminationCriteria());
 
@@ -192,10 +189,10 @@ void ADMMCut::MakeLayers()
 
 				cut_energy.push_back(cut_tmp);
 
-				cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
-				cout << "Primal Res :" << primal_res_ << endl;
-				cout << "Objective Function :" << cut_tmp << endl;
-				cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
+				//cout << "Cut " << cut_round_ << " Reweight " << reweight_round_ << " completed." << endl;
+				//cout << "Primal Res :" << primal_res_ << endl;
+				//cout << "Objective Function :" << cut_tmp << endl;
+				//cout << "<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-" << endl;
 			}
 
 			reweight_round_++;
@@ -216,14 +213,11 @@ void ADMMCut::MakeLayers()
 
 		UpdateCut();
 
-		fprintf(stdout, "ADMMCut No.%d process is Finished!\n", cut_round_);
 		cut_round_++;
 
 	} while (!CheckLabel());
 
 	ptr_frame_->Unify();
-
-	fprintf(stdout, "All done!\n");
 
 	ADMM_cut_.Stop();
 }
@@ -263,12 +257,6 @@ void ADMMCut::InitState()
 			//e->ppair_->SetLayer(1);
 		}
 	}
-
-	cout << "penalty : " << penalty_ << endl;
-	cout << "primal tolerance : " << pri_tol_ << endl;
-	cout << "dual tolerance : " << dual_tol_ << endl;
-	cout << "ADMMCut Start" << endl;
-	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 
 	init_state_.Stop();
 }
@@ -808,11 +796,10 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		//int_diff += min(abs(x_[i] - 0), abs(x_[i] - 1));
 	}
 
-	cout << "---UpdateR Rew Check---" << endl;
-	cout << "Reweighting Process No." << reweight_round_ - 1 << endl;
-	cout << "Max Relative Improvement = " << max_improv << endl;
-	//cout << "int diff" << int_diff << endl;
-	cout << "---" << endl;
+	if (output_stat_)
+	{
+		fprintf(stderr, "Max relative improvement: %lf\n", max_improv);
+	}
 
 	for (int i = 0; i < Md_; i++)
 	{
@@ -876,13 +863,11 @@ bool ADMMCut::CheckLabel()
 			u++;
 		}
 	}
-
-	cout << "--------------------------------------------" << endl;
-	cout << "ADMMCut REPORT" << endl;
-	cout << "ADMMCut Round : " << cut_round_ << endl;
-	cout << "Lower Set edge number : " << l << "\\ " << Nd_w_ << " (Whole dual graph Nd)" << endl;
-	cout << "Lower Set percentage  : " << double(l) / double(Nd_w_) * 100 << "%" << endl;
-	cout << "--------------------------------------------" << endl;
+	
+	if (output_stat_)
+	{
+		fprintf(stderr, "Lower set edge(whole): %d(%d)\n", l, Nd_w_);
+	}
 
 	if (l < 20 || l < ptr_frame_->SizeOfPillar())
 	{

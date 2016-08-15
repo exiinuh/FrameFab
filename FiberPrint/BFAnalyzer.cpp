@@ -36,7 +36,7 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 
 	if (debug_)
 	{
-		printf("---searching at edge %d, head %d, (tail %d).\n", 
+		fprintf(stderr, "---searching at edge %d, head %d, (tail %d).\n", 
 			print_queue_[h - 1]->ID() / 2, h, t);
 	}
 
@@ -47,7 +47,10 @@ bool BFAnalyzer::GenerateSeq(int h, int t)
 		WF_edge *ej = ptr_frame_->GetEdge(orig_j);
 		if (!ptr_dualgraph_->isExistingEdge(ej))
 		{
-			printf("###Attempting edge %d.\n", dual_j);
+			if (debug_)
+			{
+				fprintf(stderr, "###Attempting edge %d.\n", dual_j);
+			}
 			if (ptr_dualgraph_->isExistingVert(ej->pvert_->ID())
 				|| ptr_dualgraph_->isExistingVert(ej->ppair_->pvert_->ID()))
 			//if (ei->pvert_ == ej->pvert_ || ei->ppair_->pvert_ == ej->pvert_

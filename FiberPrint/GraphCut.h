@@ -50,6 +50,7 @@ public:
 protected:
 	/* for debuging */
 	bool			debug_;
+	bool			output_stat_;	// 1: turn on output stat	0: turn off
 
 };
 

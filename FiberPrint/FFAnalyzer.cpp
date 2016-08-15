@@ -32,9 +32,12 @@ bool FFAnalyzer::SeqPrint()
 		layers_[e->Layer()].push_back(e);
 	}
 
-	for (int l = 0; l < layer_size; l++)
+	if (debug_)
 	{
-		printf("Size of layer %d is %d\n", l + 1, layers_[l].size());
+		for (int l = 0; l < layer_size; l++)
+		{
+			fprintf(stderr, "Size of layer %d is %d\n", l + 1, layers_[l].size());
+		}
 	}
 
 	/* print starting from the first layer */
@@ -58,12 +61,6 @@ bool FFAnalyzer::SeqPrint()
 			t = h + Nl;
 		}
 
-		if (debug_)
-		{
-			printf(">>>layer %d is in processing, intial head index %d, tail index %d\n", 
-				l + 1, h, t);
-		}
-
 		if (h == t)
 		{
 			continue;
@@ -84,11 +81,10 @@ bool FFAnalyzer::SeqPrint()
 
 		if (!GenerateSeq(l, h, t))
 		{
-			if (debug_)
-			{
-				printf("...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", 
-					l + 1);
-			}
+			fprintf(stderr,
+				"...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", 
+				l + 1
+				);
 			bSuccess = false;
 			break;
 		}
@@ -114,18 +110,14 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 	if (debug_)
 	{
-		printf("---searching edge #%d in layer %d, head %d, (tail %d)\n",
+		fprintf(stderr, "-----------------------------------\n");
+		fprintf(stderr, "Searching edge #%d in layer %d, head %d, tail %d\n",
 			ei->ID() / 2, l + 1, h, t);
 	}
 
 	/* exit */
 	if (h == t)
 	{
-		if (debug_)
-		{
-			printf("***searching at layer %d finishes.\n", l + 1);
-		}
-
 		return true;
 	}
 
@@ -161,9 +153,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 		if (debug_)
 		{
-			printf("^^^choose edge #%d in layer %d with cost %lf\n",
-				ej->ID() / 2, l + 1, it->first);
-			printf("^^^entering next searching state.\n");
+			fprintf(stderr, "Choose edge #%d in with cost %lf\n\n", ej->ID() / 2, it->first);
 		}
 
 		if (GenerateSeq(l, h + 1, t))
@@ -174,11 +164,6 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		RecoverStateMap(ej, tmp_angle);
 		RecoverStructure(ej);
 		print_queue_.pop_back();
-	}
-
-	if (debug_)
-	{
-		printf("---searching at layer %d, head %d, (tail %d) ended.\n", l + 1, h, t);
 	}
 
 	return false;
@@ -197,7 +182,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 
 		if (debug_)
 		{
-			printf("###Attempting edge #%d, layer %d, head %d\n",
+			fprintf(stderr, "Attempting edge #%d\n",
 				orig_j / 2, ej->Layer() + 1, print_queue_.size());
 		}
 
@@ -205,7 +190,10 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 		if (free_angle == 0)
 		{
-			printf("...collision examination failed at edge #%d.\n", ej->ID() / 2);
+			if (debug_)
+			{
+				fprintf(stderr, "...collision examination failed at edge #%d.\n\n", ej->ID() / 2);
+			}
 			return -1;
 		}
 
@@ -221,7 +209,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			/* edge j share two ends with printed structure */
 			if (debug_)
 			{
-				printf("^^^it shares two ends with printed structure\n");
+				fprintf(stderr, "It shares two ends with printed structure\n");
 			}
 			P = z;
 		}
@@ -231,7 +219,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 				/* edge j share one end with printed structure */
 				if (debug_)
 				{
-					printf("^^^it shares only one ends with printed structure\n");
+					fprintf(stderr, "It shares only one ends with printed structure\n");
 				}
 
 				double ang;
@@ -251,7 +239,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			{
 				if (debug_)
 				{
-					printf("...it floats, skip\n");
+					fprintf(stderr, "It floats, skip\n\n");
 				}
 				return -1;
 			}
@@ -281,7 +269,10 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		if (!TestifyStiffness(ej))
 		{	
 			/* examination failed */
-			printf("...Stiffness examination failed at edge #%d.\n", ej->ID() / 2);
+			if (debug_)
+			{
+				fprintf(stderr, "Stiffness examination failed at edge #%d.\n\n", ej->ID() / 2);
+			}
 			return -1;
 		}
 
@@ -310,7 +301,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		double cost = Wp_*P + Wa_*A + Wi_*I;
 		if (debug_)
 		{
-			printf("###P: %lf, A: %lf, I: %lf\ncost: %f\n", P, A, I, cost);
+			fprintf(stderr, "P: %lf, A: %lf, I: %lf\ncost: %f\n\n", P, A, I, cost);
 		}
 		return cost;
 	}

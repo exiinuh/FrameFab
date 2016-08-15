@@ -134,7 +134,5 @@ private:
 	Timer				update_lambda_;
 	Timer				update_cut_;
 	Timer				update_r_;
-
-	bool				output_stat_;	// 1: turn on output stat	0: turn off
 };
 

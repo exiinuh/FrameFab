@@ -44,7 +44,7 @@ SeqAnalyzer::SeqAnalyzer(
 
 	Nd_ = 0;
 
-	debug_ = true;
+	debug_ = false;
 	fileout_ = false;
 }
 
@@ -112,7 +112,10 @@ void SeqAnalyzer::PrintPillars()
 		print_queue_.push_back(it->second);
 	}
 
-	printf("Size of base queue: %d\n", base_queue.size());
+	if (debug_)
+	{
+		fprintf(stderr, "Size of base queue: %d\n", base_queue.size());
+	}
 
 	/* angle state with pillars */
 	for (int dual_i = 0; dual_i < Nd_; dual_i++)
