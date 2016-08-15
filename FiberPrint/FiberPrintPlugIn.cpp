@@ -85,6 +85,7 @@ void FiberPrintPlugIn::FrameFabPrint()
 		ptr_parm_,
 		ptr_path_
 		);
+
 	ptr_seqanalyzer_ = new FFAnalyzer(
 		ptr_dualgraph_,
 		ptr_collision_,
@@ -175,6 +176,8 @@ void FiberPrintPlugIn::OneLayerPrint()
 {
 	fiber_print_.Start();
 
+	Init();
+
 	ptr_seqanalyzer_ = new FFAnalyzer(
 		ptr_dualgraph_,
 		ptr_collision_,
@@ -208,7 +211,7 @@ void FiberPrintPlugIn::GetDeformation()
 }
 
 
-int FiberPrintPlugIn::ImportPrintOrder(char *fname)
+bool FiberPrintPlugIn::ImportPrintOrder(char *fname)
 { 
 	vector<int> queue;
 
@@ -220,8 +223,16 @@ int FiberPrintPlugIn::ImportPrintOrder(char *fname)
 	}
 	fclose(fp);
 
-	ptr_seqanalyzer_->InputPrintOrder(queue);
-	return queue.size();
+	if (queue.size() != ptr_frame_->SizeOfEdgeList() / 2)
+	{
+		return false;
+	}
+
+	if (ptr_seqanalyzer_ == NULL)
+	{
+		ptr_seqanalyzer_ = new FFAnalyzer(ptr_frame_);
+	}
+	return ptr_seqanalyzer_->InputPrintOrder(queue);
 }
 
 

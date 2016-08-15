@@ -1,8 +1,9 @@
 #include "FFAnalyzer.h"
 
 
-FFAnalyzer::FFAnalyzer()
+FFAnalyzer::FFAnalyzer(WireFrame *ptr_frame)
 {
+	ptr_frame_ = ptr_frame;
 }
 
 

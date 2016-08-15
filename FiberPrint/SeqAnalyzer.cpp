@@ -300,7 +300,7 @@ bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 }
 
 
-void SeqAnalyzer::InputPrintOrder(vector<int> &print_queue)
+bool SeqAnalyzer::InputPrintOrder(vector<int> &print_queue)
 {
 	print_queue_.clear();
 
@@ -308,8 +308,15 @@ void SeqAnalyzer::InputPrintOrder(vector<int> &print_queue)
 	for (int i = 0; i < Nq; i++)
 	{
 		WF_edge *e = ptr_frame_->GetEdge(print_queue[i]);
+		if (e == NULL)
+		{
+			print_queue_.clear();
+			return false;
+		}
 		print_queue_.push_back(e);
 	}
+
+	return true;
 }
 
 

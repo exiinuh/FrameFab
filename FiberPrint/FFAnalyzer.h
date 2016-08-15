@@ -14,7 +14,7 @@ public:
 	typedef Eigen::Vector3d V3;
 
 public:
-	FFAnalyzer();
+	FFAnalyzer(WireFrame *ptr_frame = NULL);
 	FFAnalyzer(
 		DualGraph			*ptr_dualgraph,
 		QuadricCollision	*ptr_collision,

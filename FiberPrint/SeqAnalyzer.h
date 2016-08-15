@@ -32,7 +32,7 @@ public:
 	virtual void	WriteRenderPath(int min_layer, int max_layer, char *ptr_path);
 
 public:
-	void			InputPrintOrder(vector<int> &print_queue);
+	bool			InputPrintOrder(vector<int> &print_queue);
 	void			OutputPrintOrder(vector<WF_edge*> &print_queue);
 
 protected:

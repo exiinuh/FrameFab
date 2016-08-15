@@ -536,7 +536,8 @@ void RenderingWidget::DrawHeat(bool bv)
 
 void RenderingWidget::DrawOrder(bool bv)
 {
-	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL)
+	if (!bv || ptr_frame_ == NULL || ptr_fiberprint_ == NULL 
+		|| ptr_fiberprint_->ptr_seqanalyzer_ == NULL)
 	{
 		return;
 	}
@@ -1016,7 +1017,14 @@ void RenderingWidget::Import()
 			ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, byfilename.data());
 		}
 
-		M = ptr_fiberprint_->ImportPrintOrder(byfilename.data());
+		if (!ptr_fiberprint_->ImportPrintOrder(byfilename.data()))
+		{
+			emit(QString("Import failed!"));
+		}
+		else
+		{
+			M = ptr_frame_->SizeOfEdgeList() / 2;
+		}
 	}
 
 
@@ -1027,7 +1035,7 @@ void RenderingWidget::Import()
 		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
 		QString(""),
 		QString("Choose base (B) | Choose ceiling (C)"),
-		M / 2,
+		M,
 		-1, ptr_frame_->SizeOfLayer()
 	);
 

@@ -14,7 +14,6 @@
 class FiberPrintPlugIn
 {
 public:
-public:
 	typedef Eigen::MatrixXd MX;
 	typedef Eigen::VectorXd VX;
 
@@ -36,7 +35,7 @@ public:
 	/* apply stiffness computation directly to the input frame shape */
 	void			GetDeformation();
 
-	int				ImportPrintOrder(char *fname);
+	bool			ImportPrintOrder(char *fname);
 	void			ExportPrintOrder(char *fname);
 
 	void			InputPrintOrder(vector<int> &queue)			{ ptr_seqanalyzer_->InputPrintOrder(queue); }
