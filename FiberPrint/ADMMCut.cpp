@@ -117,18 +117,26 @@ void ADMMCut::MakeLayers()
 				SpMat Q_new;
 				CalculateQ(D_, Q_new);
 
-				dual_res_ = - lambda_stf_.transpose() * (Q_ - Q_new)
+				//VX dual_res_v		 = -lambda_stf_.transpose() * (Q_ - Q_new);
+				//dual_res_v.noalias() += - penalty_ * (y_ - y_prev).transpose() * A_;
+				//dual_res_v.noalias() += - (lambda_y_ - lambda_y_prev).transpose() * A_;
+				//dual_res_v.noalias() += penalty_ * x_.transpose() * (Q_ - Q_new).transpose() * Q_;
+
+				VX dual_res_v = -lambda_stf_.transpose() * (Q_ - Q_new)
 					- penalty_ * (y_ - y_prev).transpose() * A_
 					- (lambda_y_ - lambda_y_prev).transpose() * A_
 					+ penalty_ * x_.transpose() * (Q_ - Q_new).transpose() * Q_;
+				
+				dual_res_ = dual_res_v.norm();
 
-				primal_res_ = (K_ * D_ - F_).norm() + (y_ - A_ * x_).norm();
+				// primal residual has been moved to UpdataLambda()
+				// to avoid repeated calculation
 
 				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
 
 				//cout << "new quadratic func value record: " << new_cut_energy << endl;
-				cout << "dual_residual : " << dual_res_.norm() << endl;
+				cout << "dual_residual : "	 << dual_res_	<< endl;
 				cout << "primal_residual : " << primal_res_ << endl;
 
 				cout << "---------------------" << endl;
@@ -443,6 +451,8 @@ void ADMMCut::CreateA()
 	
 	A_.setFromTriplets(A_list.begin(), A_list.end());
 
+	H1_ = A_.transpose() * A_;
+
 	create_a_.Stop();
 }
 
@@ -456,15 +466,18 @@ void ADMMCut::CalculateX()
 		CalculateQ(D_, Q_);
 	}
 
-	SpMat H1 = A_.transpose() * A_;
 	SpMat H2 = Q_.transpose() * Q_;
-	SpMat H = penalty_ * (H1 + H2);
+	SpMat H = penalty_ * (H1_ + H2);
 
 	// Construct Linear coefficient for x-Qp problem
 	// Modified @Mar/9/2016, y = Ax constraints came into play.
-	a_ = - penalty_	* A_.transpose() * y_
-					+ A_.transpose() * lambda_y_  
-					+ Q_.transpose() * lambda_stf_;
+	a_ = - penalty_ * (A_.transpose() * y_);
+	a_.noalias() += A_.transpose() * lambda_y_;
+	a_.noalias() += Q_.transpose() * lambda_stf_;
+
+	//a_ = - penalty_ * (A_.transpose() * y_) 
+	//	+ A_.transpose() * lambda_y_
+	//	+ Q_.transpose() * lambda_stf_;
 
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
@@ -532,7 +545,9 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 						}
 					}
 				}
-				VX Gamma = eKuu * Di + eKeu * Dj - Fe;
+				VX Gamma = - Fe;
+				Gamma.noalias() += eKuu * Di;
+				Gamma.noalias() += eKeu * Dj;
 
 				for (int k = 0; k < 6; k++)
 				{
@@ -555,16 +570,17 @@ void ADMMCut::CalculateD()
 	cal_d_.Start();
 	
 	// Ensure that Q is PSD
-	SpMat Q = penalty_ * K_.transpose() * K_;
+	SpMat Q = penalty_ * (K_.transpose() * K_);
 
 	if (0 == ADMM_round_)
 	{
 		K_eps_ = Q.diagonal().sum()/Q.rows() * 0.01;
 	}
 
-	Q = Q + (MX::Identity(Q.rows(), Q.rows()) * K_eps_).sparseView();
+	Q += (MX::Identity(Q.rows(), Q.rows()) * K_eps_).sparseView();
 
-	VX a = K_.transpose() * lambda_stf_ - penalty_ * K_.transpose() * F_;
+	VX a = K_.transpose() * lambda_stf_;
+	a.noalias() += - penalty_ * (K_.transpose() * F_);
 
 	int Nd = ptr_dualgraph_->SizeOfVertList();
 	int Ns = ptr_dualgraph_->SizeOfFreeFace();
@@ -703,18 +719,17 @@ void ADMMCut::UpdateLambda()
 {
 	update_lambda_.Start();
 
-	lambda_stf_ = lambda_stf_ + penalty_ * (K_ * D_ - F_);
+	VX tmp_stiff = K_ * D_;
+	tmp_stiff.noalias() -= F_;
 	
-	//for (int i = 0; i < Md_; i++)
-	//{
-	//	int dual_u = ptr_dualgraph_->u(i);
-	//	int dual_v = ptr_dualgraph_->v(i);
+	VX tmp_y = A_ * x_;
+	tmp_y.noalias() -= y_;
 
-	//	lambda_y_[i]		+= penalty_ * (y_[i]	   - (x_[dual_u] - x_[dual_v]));
-	//	lambda_y_[Md_ + i]  += penalty_ * (y_[Md_ + i] - (x_[dual_v] - x_[dual_u]));
-	//}
+	lambda_stf_.noalias() += penalty_ * tmp_stiff;
 
-	lambda_y_ = lambda_y_ + penalty_ * (A_ * x_ - y_);
+	lambda_y_.noalias()   += penalty_ * tmp_y;
+
+	primal_res_ = (tmp_stiff).norm() + (tmp_y).norm();
 
 	update_lambda_.Stop();
 }
@@ -889,23 +904,20 @@ bool ADMMCut::TerminationCriteria()
 		return true;
 	}
 
-	if (primal_res_ <= pri_tol_ && dual_res_.norm() <= dual_tol_)
+	if (primal_res_ <= pri_tol_ && dual_res_ <= dual_tol_)
 	{
 		return true;
 	}
 	else
 	{
-		double p_r = primal_res_;
-		double d_r = dual_res_.norm();
-
 		if (penalty_ < 1000 && penalty_ > 1)
 		{
-			if (p_r > d_r)
+			if (primal_res_ > dual_res_)
 			{
 				penalty_ *= 2;
 			}
 
-			if (p_r < d_r)
+			if (primal_res_ < dual_res_)
 			{
 				penalty_ /= 2;
 			}
