@@ -82,7 +82,7 @@ bool FFAnalyzer::SeqPrint()
 		if (!GenerateSeq(l, h, t))
 		{
 			fprintf(stderr,
-				"...all possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", 
+				"All possible start edge at layer %d has been tried but no feasible sequence is obtained.\n", 
 				l + 1
 				);
 			bSuccess = false;
