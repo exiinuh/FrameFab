@@ -194,6 +194,8 @@ private:
 	QPushButton			*pushbutton_lastlayer_;
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_fiberprint_;
+	QPushButton			*pushbutton_framefabcut_;
+	QPushButton			*pushbutton_onelayersearch_;
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;
 	QPushButton			*pushbutton_leftarrow_;
@@ -202,7 +204,6 @@ private:
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
 	QPushButton			*pushbutton_exportpath_;
-	QPushButton			*pushbutton_deformation_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;

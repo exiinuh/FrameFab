@@ -1213,6 +1213,84 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	);
 }
 
+void RenderingWidget::CutAnalysis(double Wl, double Wp, double Wa)
+{
+	QString dirname = QFileDialog::getExistingDirectory(
+		this,
+		tr("Result Directory"),
+		last_result_dir_,
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks
+		);
+
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	last_result_dir_ = dirname;
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
+
+	delete ptr_fiberprint_;
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+
+	ptr_fiberprint_->GetFrameFabCut();
+
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
+		QString(""),
+		QString(""),
+		ptr_frame_->SizeOfEdgeList() / 2,
+		-1, ptr_frame_->SizeOfLayer()
+		);
+}
+
+void RenderingWidget::OneLayerAnalysis(double Wl, double Wp, double Wa)
+{
+	QString dirname = QFileDialog::getExistingDirectory(
+		this,
+		tr("Result Directory"),
+		last_result_dir_,
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks
+		);
+
+	if (dirname.isEmpty())
+	{
+		emit(operatorInfo(QString("Read Directory Failed!")));
+		return;
+	}
+
+	last_result_dir_ = dirname;
+
+	// compatible with paths in chinese
+	QTextCodec *code = QTextCodec::codecForName("gd18030");
+	QTextCodec::setCodecForLocale(code);
+	QByteArray bydirname = dirname.toLocal8Bit();
+
+
+	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
+
+	delete ptr_fiberprint_;
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+
+	ptr_fiberprint_->OneLayerPrint();
+
+	InitInfoData(
+		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
+		QString(""),
+		QString(""),
+		ptr_frame_->SizeOfEdgeList() / 2,
+		-1, ptr_frame_->SizeOfLayer()
+		);
+}
 
 void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 {

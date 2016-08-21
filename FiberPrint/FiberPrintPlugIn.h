@@ -34,6 +34,7 @@ public:
 
 	/* apply stiffness computation directly to the input frame shape */
 	void			GetDeformation();
+	void			GetFrameFabCut();
 
 	bool			ImportPrintOrder(char *fname);
 	void			ExportPrintOrder(char *fname);
