@@ -128,5 +128,8 @@ public:
 	Timer			create_k_;
 	Timer			check_ill_;
 	Timer			check_error_;
+
+	/* Timing Stat */
+	bool				detailed_timing_;
 };
 #endif

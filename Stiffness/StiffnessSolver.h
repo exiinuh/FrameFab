@@ -26,7 +26,7 @@ public:
 	typedef	Eigen::MatrixXi				MXi;
 	
 public:
-	StiffnessSolver(){};
+	StiffnessSolver();
 	~StiffnessSolver(){};
 
 public:
@@ -87,6 +87,9 @@ public:
 public:
 	Timer	compute_k_;
 	Timer	solve_d_;
+
+	/* Timing Stat */
+	bool		detailed_timing_;
 };
 
 #endif

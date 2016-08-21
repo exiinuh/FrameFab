@@ -3,6 +3,7 @@
 
 Stiffness::Stiffness()
 {
+	detailed_timing_ = false;
 }
 
 
@@ -12,11 +13,14 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph)
 	ptr_dualgraph_ = ptr_dualgraph;
 
 	Init();
+
+	detailed_timing_ = false;
 }
 
 
 Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path)
 {
+	/* in use */
 	ptr_dualgraph_ = ptr_dualgraph;
 	ptr_parm_ = ptr_parm;
 	ptr_path_ = ptr_path;
@@ -32,6 +36,8 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *p
 	shear_ = 0;
 
 	Init(); 
+
+	detailed_timing_ = false;
 }
 
 
@@ -51,7 +57,10 @@ void Stiffness::Init()
 
 void Stiffness::CreateFe()
 {
-	create_fe_.Start();
+	if (detailed_timing_)
+	{
+		create_fe_.Start();
+	}
 
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
@@ -96,13 +105,19 @@ void Stiffness::CreateFe()
 		Fe_[i] = Fei;
 	}
 
-	create_fe_.Stop();
+	if (detailed_timing_)
+	{
+		create_fe_.Stop();
+	}
 }
 
 
 void Stiffness::CreateF(VX *ptr_x)
 {
-	create_f_.Start();
+	if (detailed_timing_)
+	{
+		create_f_.Start();
+	}
 
 	/* Run only after CreadFe is done! */
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
@@ -141,13 +156,19 @@ void Stiffness::CreateF(VX *ptr_x)
 		}
 	}
 
-	create_f_.Stop();
+	if (detailed_timing_)
+	{
+		create_f_.Stop();
+	}
 }
 
 
 void Stiffness::CreateElasticK()
 {
-	create_ek_.Start();
+	if (detailed_timing_)
+	{
+		create_ek_.Start();
+	}
 
 	WireFrame		  *ptr_frame   = ptr_dualgraph_->ptr_frame_;
 	vector<WF_edge *> wf_edge_list = *ptr_frame->GetEdgeList();
@@ -264,13 +285,19 @@ void Stiffness::CreateElasticK()
 		eK_[i] = eKuv;
 	}
 
-	create_ek_.Stop();
+	if (detailed_timing_)
+	{
+		create_ek_.Stop();
+	}
 }
 
 
 void Stiffness::CreateGlobalK(VX *ptr_x)
 {
-	create_k_.Start();
+	if (detailed_timing_)
+	{
+		create_k_.Start();
+	}
 
 	WireFrame *ptr_frame = ptr_dualgraph_->ptr_frame_;
 	int Nd = ptr_dualgraph_->SizeOfVertList();
@@ -365,7 +392,10 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 	}
 	K_.setFromTriplets(K_list.begin(), K_list.end());
 
-	create_k_.Stop();
+	if (detailed_timing_)
+	{
+		create_k_.Stop();
+	}
 }
 
 
@@ -475,7 +505,10 @@ bool Stiffness::CalculateD(
 
 bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose)
 {	
-	check_ill_.Start();
+	if (detailed_timing_)
+	{
+		check_ill_.Start();
+	}
 
 	bool bSuccess = true;
 	double cond_num;
@@ -497,7 +530,10 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose
 		bSuccess = false;
 	}
 
-	check_ill_.Stop();
+	if (detailed_timing_)
+	{
+		check_ill_.Stop();
+	}
 
 	return bSuccess;
 }
@@ -505,7 +541,10 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose
 
 bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose)
 {
-	check_error_.Start();
+	if (detailed_timing_)
+	{
+		check_error_.Start();
+	}
 
 	bool bSuccess = true;
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
@@ -529,7 +568,10 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose
 		bSuccess = false;
 	}
 
-	check_error_.Stop();
+	if (detailed_timing_)
+	{
+		check_error_.Stop();
+	}
 
 	return bSuccess;
 }
@@ -657,13 +699,20 @@ VectorXd Stiffness::Fe(int ei)
 
 void Stiffness::PrintOutTimer()
 {
-	printf("***Stiffness timer result:\n");
-	stiff_solver_.compute_k_.Print("ComputeK:");
-	stiff_solver_.solve_d_.Print("SolveD:");
-	create_fe_.Print("CreateFe:");
-	create_f_.Print("CreateF:");
-	create_ek_.Print("CreateElasticK:");
-	create_k_.Print("CreateGlobalK:");
-	check_ill_.Print("CheckIllCond:");
-	check_error_.Print("CheckError:");
+	if (detailed_timing_)
+	{
+		printf("***Stiffness timer result:\n");
+		stiff_solver_.compute_k_.Print("ComputeK:");
+		stiff_solver_.solve_d_.Print("SolveD:");
+		create_fe_.Print("CreateFe:");
+		create_f_.Print("CreateF:");
+		create_ek_.Print("CreateElasticK:");
+		create_k_.Print("CreateGlobalK:");
+		check_ill_.Print("CheckIllCond:");
+		check_error_.Print("CheckError:");
+	}
+	else
+	{
+		printf("***Stiffness detailed timing turned off.\n");
+	}
 }

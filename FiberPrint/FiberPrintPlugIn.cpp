@@ -200,6 +200,39 @@ void FiberPrintPlugIn::OneLayerPrint()
 	//ptr_procanalyzer_->ProcPrint();
 }
 
+void FiberPrintPlugIn::GetFrameFabCut()
+{
+	fiber_print_.Start();
+
+	Init();
+
+	ptr_graphcut_ = new ADMMCut(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
+
+	ptr_seqanalyzer_ = new FFAnalyzer(
+		ptr_dualgraph_,
+		ptr_collision_,
+		ptr_stiffness_,
+		ptr_parm_,
+		ptr_path_
+		);
+
+	ptr_graphcut_->MakeLayers();
+	cout << "Graph Cut completed." << endl;
+
+	printf("FrameFab Cut done.\n");
+
+	fiber_print_.Stop();
+	printf("***Total timer result:\n");
+	fiber_print_.Print("FrameFabCut:");
+	ptr_graphcut_->PrintOutTimer();
+	ptr_stiffness_->PrintOutTimer();
+}
 
 void FiberPrintPlugIn::GetDeformation()
 {

@@ -118,6 +118,8 @@ public slots:
 	void	ScaleFrame(double scale);
 
 	void	FiberPrintAnalysis(double Wl, double Wp, double Wa);
+	void	CutAnalysis(double Wl, double Wp, double Wa);
+	void	OneLayerAnalysis(double Wl, double Wp, double Wa);
 	void	DeformationAnalysis(double Wl, double Wp, double Wa);
 
 	void	ProjectBound(double len);
@@ -156,8 +158,8 @@ signals:
 
 public:
 	MainWindow		*ptr_mainwindow_;
-	CArcBall		*ptr_arcball_;
-	WireFrame		*ptr_frame_;
+	CArcBall				*ptr_arcball_;
+	WireFrame			*ptr_frame_;
 
 private:
 	QString			last_file_dir_;
@@ -182,11 +184,11 @@ private:
 	FiberPrintPlugIn	*ptr_fiberprint_;
 
 	vector<WF_vert*>	captured_verts_;
-	vector<bool>		is_captured_vert_;
+	vector<bool>			is_captured_vert_;
 	vector<WF_edge*>	captured_edges_;
-	vector<bool>		is_captured_edge_;
+	vector<bool>			is_captured_edge_;
 
-	float				scale_;
+	float					scale_;
 	int					print_order_;
 };
 

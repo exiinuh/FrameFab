@@ -61,6 +61,8 @@ protected:
 signals:
 	void	ChangeEdgeMode(int);
 	void	SendFiberParas(double, double, double);
+	void	SendFrameFabCutParas(double, double, double);
+	void	SendOneLayerSearchParas(double, double, double);
 	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
@@ -84,6 +86,8 @@ public slots:
 
 	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
 	void	GetFiberParas();
+	void	GetFrameFabCutParas();
+	void	GetOneLayerSearchParas();
 	void	GetDeformParas();
 	void	GetProjectionParas();
 	void	GetSaveParas();
@@ -194,6 +198,8 @@ private:
 	QPushButton			*pushbutton_lastlayer_;
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_fiberprint_;
+	QPushButton			*pushbutton_framefabcut_;
+	QPushButton			*pushbutton_onelayersearch_;
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;
 	QPushButton			*pushbutton_leftarrow_;
@@ -202,7 +208,6 @@ private:
 	QPushButton			*pushbutton_exportvert_;
 	QPushButton			*pushbutton_exportline_;
 	QPushButton			*pushbutton_exportpath_;
-	QPushButton			*pushbutton_deformation_;
 
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;

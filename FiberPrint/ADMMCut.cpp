@@ -225,7 +225,10 @@ void ADMMCut::MakeLayers()
 
 void ADMMCut::InitState()
 {
-	init_state_.Start();
+	if (detail_timing_)
+	{
+		init_state_.Start();
+	}
 
 	ptr_dualgraph_->Dualization();
 	Nd_ = ptr_dualgraph_->SizeOfVertList();
@@ -258,13 +261,19 @@ void ADMMCut::InitState()
 		}
 	}
 
-	init_state_.Stop();
+	if (detail_timing_)
+	{
+		init_state_.Stop();
+	}
 }
 
 
 void ADMMCut::InitWeight()
 {
-	init_weight_.Start();
+	if (detail_timing_)
+	{
+		init_weight_.Start();
+	}
 
 	int halfM = M_ / 2;
 	weight_.resize(halfM, halfM);
@@ -308,13 +317,19 @@ void ADMMCut::InitWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
-	init_weight_.Stop();
+	if (detail_timing_)
+	{
+		init_weight_.Stop();
+	}
 }
 
 
 void ADMMCut::SetStartingPoints()
 {
-	set_startpoint_.Start();
+	if (detail_timing_)
+	{
+		set_startpoint_.Start();
+	}
 
 	if (cut_round_ == 0)
 	{
@@ -348,14 +363,19 @@ void ADMMCut::SetStartingPoints()
 	a_.setZero();
 
 	//ptr_stiffness_->Debug();
-
-	set_startpoint_.Stop();
+	if (detail_timing_)
+	{
+		set_startpoint_.Stop();
+	}
 }
 
 
 void ADMMCut::SetBoundary()
 {
-	set_bound_.Start();
+	if (detail_timing_)
+	{
+		set_bound_.Start();
+	}
 
 	ptr_stiffness_->CalculateD(D_, &x_);
 
@@ -418,12 +438,18 @@ void ADMMCut::SetBoundary()
 	}
 	W_.setFromTriplets(W_list.begin(), W_list.end());
 
-	set_bound_.Stop();
+	if (detail_timing_)
+	{
+		set_bound_.Stop();
+	}
 }
 
 void ADMMCut::CreateA()
 {
-	create_a_.Start();
+	if (detail_timing_)
+	{
+		create_a_.Start();
+	}
 
 	A_.resize(2 * Md_, Nd_);
 	vector<Triplet<double>> A_list;
@@ -441,12 +467,18 @@ void ADMMCut::CreateA()
 
 	H1_ = A_.transpose() * A_;
 
-	create_a_.Stop();
+	if (detail_timing_)
+	{
+		create_a_.Stop();
+	}
 }
 
 void ADMMCut::CalculateX()
 {
-	cal_x_.Start();
+	if (detail_timing_)
+	{
+		cal_x_.Start();
+	}
 
 	// Construct Hessian Matrix for X-Qp problem
 	if (0 == ADMM_round_)
@@ -470,16 +502,31 @@ void ADMMCut::CalculateX()
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
 	// x_i = 1, while strut i belongs to the bottom
-	cal_qp_.Start();
+	if (detail_timing_)
+	{
+		cal_qp_.Start();
+	}
+
 	ptr_qp_->solve(H, a_, W_, d_, x_, debug_);
-	cal_qp_.Stop();
-	cal_x_.Stop();
+
+	if (detail_timing_)
+	{
+		cal_qp_.Stop();
+	}
+
+	if (detail_timing_)
+	{
+		cal_x_.Stop();
+	}
 }
 
 
 void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 {
-	cal_q_.Start();
+	if (detail_timing_)
+	{
+		cal_q_.Start();
+	}
 
 	// Construct Hessian Matrix for X-Qp problem
 	Q.resize(6 * Ns_, Nd_);
@@ -549,14 +596,20 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 
 	Q.setFromTriplets(Q_list.begin(), Q_list.end());
 
-	cal_q_.Stop();
+	if (detail_timing_)
+	{
+		cal_q_.Stop();
+	}
 }
 
 
 void ADMMCut::CalculateD()
 {
-	cal_d_.Start();
-	
+	if (detail_timing_)
+	{
+		cal_d_.Start();
+	}
+
 	// Ensure that Q is PSD
 	SpMat Q = penalty_ * (K_.transpose() * K_);
 
@@ -593,16 +646,31 @@ void ADMMCut::CalculateD()
 		}
 	}
 
-	cal_qp_.Start();
+	if (detail_timing_)
+	{
+		cal_qp_.Start();
+	}
+
 	ptr_qp_->solve(Q, a, D_, D_w, D_tol_, debug_);
-	cal_qp_.Stop();
-	cal_d_.Stop();
+	
+	if (detail_timing_)
+	{
+		cal_qp_.Stop();
+	}
+
+	if (detail_timing_)
+	{
+		cal_d_.Stop();
+	}
 }
 
 
 void ADMMCut::CalculateY()
 {
-	cal_y_.Start();
+	if (detail_timing_)
+	{
+		cal_y_.Start();
+	}
 
 	y_.resize(2 * Md_);
 
@@ -699,13 +767,19 @@ void ADMMCut::CalculateY()
 		}
 	}
 
-	cal_y_.Stop();
+	if (detail_timing_)
+	{
+		cal_y_.Stop();
+	}
 }
 
 
 void ADMMCut::UpdateLambda()
 {
-	update_lambda_.Start();
+	if (detail_timing_)
+	{
+		update_lambda_.Start();
+	}
 
 	VX tmp_stiff = K_ * D_;
 	tmp_stiff.noalias() -= F_;
@@ -719,13 +793,19 @@ void ADMMCut::UpdateLambda()
 
 	primal_res_ = (tmp_stiff).norm() + (tmp_y).norm();
 
-	update_lambda_.Stop();
+	if (detail_timing_)
+	{
+		update_lambda_.Stop();
+	}
 }
 
 
 void ADMMCut::UpdateCut()
 {
-	update_cut_.Start();
+	if (detail_timing_)
+	{
+		update_cut_.Start();
+	}
 
 	// Convert previous continuous computed result to discrete 1-0 label
 	for (int i = 0; i < M_; i++)
@@ -774,13 +854,19 @@ void ADMMCut::UpdateCut()
 		}
 	}
 
-	update_cut_.Stop();
+	if (detail_timing_)
+	{
+		update_cut_.Stop();
+	}
 }
 
 
 bool ADMMCut::UpdateR(VX &x_prev)
 {
-	update_r_.Start();
+	if (detail_timing_)
+	{
+		update_r_.Start();
+	}
 
 	double max_improv = 0;
 	double int_diff = 0;
@@ -833,7 +919,10 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		r_(dual_v, dual_u) = 1e-5 + weight_.coeff(v, u) * diffvu;
 	}
 
-	update_r_.Stop();
+	if (detail_timing_)
+	{
+		update_r_.Stop();
+	}
 
 	if (max_improv < 1 || reweight_round_ > 20)
 	{
@@ -918,19 +1007,27 @@ void ADMMCut::PrintOutTimer()
 {
 	printf("***ADMMCut timer result:\n");
 	ADMM_cut_.Print("ADMMCut:");
-	init_state_.Print("InitState:");
-	init_weight_.Print("InitWeight:");
-	set_bound_.Print("SetBoundary:");
-	set_startpoint_.Print("SetStartPoint:");
-	create_a_.Print("CreateA:");
-	cal_x_.Print("CalculateX:");
-	cal_y_.Print("CalculateY:");
-	cal_q_.Print("CalculateQ:");
-	cal_d_.Print("CalculateD:");
-	cal_qp_.Print("qp:");
-	update_lambda_.Print("UpdateLambda:");
-	update_cut_.Print("UpdateCut:");
-	update_r_.Print("UpdateR:");
+
+	if (detail_timing_)
+	{
+		init_state_.Print("InitState:");
+		init_weight_.Print("InitWeight:");
+		set_bound_.Print("SetBoundary:");
+		set_startpoint_.Print("SetStartPoint:");
+		create_a_.Print("CreateA:");
+		cal_x_.Print("CalculateX:");
+		cal_y_.Print("CalculateY:");
+		cal_q_.Print("CalculateQ:");
+		cal_d_.Print("CalculateD:");
+		cal_qp_.Print("qp:");
+		update_lambda_.Print("UpdateLambda:");
+		update_cut_.Print("UpdateCut:");
+		update_r_.Print("UpdateR:");
+	}
+	else
+	{
+		printf("***ADMMCut detailed timing turned off.\n");
+	}
 }
 
 

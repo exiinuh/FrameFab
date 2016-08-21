@@ -7,7 +7,7 @@
 *
 *	  Version:  1.1
 *	  Created:  Oct/10/2015
-*     Updated:  Mar/25/2016
+*     Updated:  Aug/21/2016
 *
 *	   Author:  Xin Hu, Yijiang Huang, Guoxian Song
 *	  Company:  GCL@USTC
@@ -50,7 +50,7 @@ public:
 protected:
 	/* for debuging */
 	bool			debug_;
+	bool			detail_timing_;	// 1: verbose detailed timing for each computing sesseion; 0: only total runtime
 	bool			output_stat_;	// 1: turn on output stat	0: turn off
-
 };
 

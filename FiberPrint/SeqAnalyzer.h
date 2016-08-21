@@ -6,7 +6,6 @@
 #include "Collision\QuadricCollision.h"
 #include "Collision\ResolveAngle.h"
 
-
 class SeqAnalyzer
 {
 public:
@@ -62,12 +61,14 @@ protected:
 
 	/* parameters */
 	double				gamma_;						// gamma_	: amplifier factor for adjacency cost
-	double				D_tol_;						// Dt_tol	: tolerance of offset in stiffness
-	double				Wp_;						// Wp_		: stablity weight for printing cost
-	double				Wa_;						// Wa_		: adjacent weight for printing cost
-	double				Wi_;						// Wl_		: influence weight for printing cost
+	double				D_tol_;							// Dt_tol	: tolerance of offset in stiffness
+	double				Wp_;								// Wp_		: stablity weight for printing cost
+	double				Wa_;								// Wa_		: adjacent weight for printing cost
+	double				Wi_;								// Wl_		: influence weight for printing cost
 
+	/* for debuging */
 	bool				debug_;
+	bool				detail_timing_;					// 1: verbose detailed timing for each computing sesseion; 0: only total runtime
 	bool				fileout_;
 
 	Timer				upd_struct_;
