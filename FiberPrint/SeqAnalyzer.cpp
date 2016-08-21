@@ -17,6 +17,7 @@ SeqAnalyzer::SeqAnalyzer()
 	Nd_ = 0;
 
 	debug_ = false;
+	detail_timing_ = false;
 	fileout_ = false;
 }
 
@@ -45,6 +46,7 @@ SeqAnalyzer::SeqAnalyzer(
 	Nd_ = 0;
 
 	debug_ = false;
+	detail_timing_ = false;
 	fileout_ = false;
 }
 
@@ -131,7 +133,10 @@ void SeqAnalyzer::PrintPillars()
 
 void SeqAnalyzer::UpdateStructure(WF_edge *e)
 {
-	upd_struct_.Start();
+	if (detail_timing_)
+	{
+		upd_struct_.Start();
+	}
 
 	int dual_upd = ptr_dualgraph_->UpdateDualization(e);
 
@@ -176,13 +181,19 @@ void SeqAnalyzer::UpdateStructure(WF_edge *e)
 		}
 	}
 
-	upd_struct_.Stop();
+	if (detail_timing_)
+	{
+		upd_struct_.Stop();
+	}
 }
 
 
 void SeqAnalyzer::RecoverStructure(WF_edge *e)
 {
-	rec_struct_.Start();
+	if (detail_timing_)
+	{
+		rec_struct_.Start();
+	}
 
 	int dual_del = ptr_dualgraph_->RemoveUpdation(e);
 	
@@ -198,25 +209,39 @@ void SeqAnalyzer::RecoverStructure(WF_edge *e)
 		D0_.conservativeResize(6 * Ns);
 	}
 
-	rec_struct_.Stop();
+	if (detail_timing_)
+	{
+		rec_struct_.Stop();
+	}
 }
 
 
 void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
-	upd_map_.Start();
+	if (detail_timing_)
+	{
+		upd_map_.Start();
+	}
 
 	int dual_i = ptr_wholegraph_->e_dual_id(order_e->ID());
 	int Nd = ptr_wholegraph_->SizeOfVertList();
-	for (int dual_j = 0; dual_j< Nd; dual_j++)
+	for (int dual_j = 0; dual_j < Nd; dual_j++)
 	{
 		WF_edge * target_e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_j));
 		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(target_e))
 		{
-			upd_map_collision_.Start();
+			if (detail_timing_)
+			{
+				upd_map_collision_.Start();
+			}
+
 			vector<lld> tmp(3);
 			ptr_collision_->DetectCollision(target_e, order_e, tmp);
-			upd_map_collision_.Stop();
+
+			if (detail_timing_)
+			{
+				upd_map_collision_.Stop();
+			}
 
 			for (int k = 0; k < 3; k++)
 			{
@@ -226,13 +251,19 @@ void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_ma
 		}
 	}
 
-	upd_map_.Stop();
+	if (detail_timing_)
+	{
+		upd_map_.Stop();
+	}
 }
 
 
 void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
-	rec_map_.Start();
+	if (detail_timing_)
+	{
+		rec_map_.Start();
+	}
 
 	int dual_i = ptr_wholegraph_->e_dual_id(order_e->ID());
 	int Nd = ptr_wholegraph_->SizeOfVertList();
@@ -250,13 +281,19 @@ void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_m
 		}
 	}
 
-	rec_map_.Stop();
+	if (detail_timing_)
+	{
+		rec_map_.Stop();
+	}
 }
 
 
 bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 {
-	test_stiff_.Start();
+	if (detail_timing_)
+	{
+		test_stiff_.Start();
+	}
 
 	/* insert a trail edge */
 	UpdateStructure(e);
@@ -295,7 +332,11 @@ bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 	/* remove the trail edge */
 	RecoverStructure(e);
 
-	test_stiff_.Stop();
+	if (detail_timing_)
+	{
+		test_stiff_.Stop();
+	}
+
 	return bSuccess;
 }
 

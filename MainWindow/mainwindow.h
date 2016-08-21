@@ -61,6 +61,8 @@ protected:
 signals:
 	void	ChangeEdgeMode(int);
 	void	SendFiberParas(double, double, double);
+	void	SendFrameFabCutParas(double, double, double);
+	void	SendOneLayerSearchParas(double, double, double);
 	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
 	void	SendSaveOBJParas(QString);
@@ -84,6 +86,8 @@ public slots:
 
 	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
 	void	GetFiberParas();
+	void	GetFrameFabCutParas();
+	void	GetOneLayerSearchParas();
 	void	GetDeformParas();
 	void	GetProjectionParas();
 	void	GetSaveParas();

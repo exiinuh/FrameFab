@@ -1,14 +1,25 @@
 #include "StiffnessSolver.h"
-
+StiffnessSolver::StiffnessSolver()
+{
+	detailed_timing_ = false;
+}
 
 /* Eigen solver */
 bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info)
 {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
 
-	compute_k_.Start();
+	if (detailed_timing_)
+	{
+		compute_k_.Start();
+	}
+
 	solver.compute(K);
-	compute_k_.Stop();
+	
+	if (detailed_timing_)
+	{
+		compute_k_.Stop();
+	}
 
     info = 0;
     
@@ -49,9 +60,17 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, int verbose, int &info
 		return false;
     }
 
-	solve_d_.Start();
-    D = solver.solve(F);
-	solve_d_.Stop();
+	if (detailed_timing_)
+	{
+		solve_d_.Start();
+	}
+	
+	D = solver.solve(F);
+	
+	if (detailed_timing_)
+	{
+		solve_d_.Stop();
+	}
 
     if (solver.info() != Eigen::Success)
     {
@@ -67,10 +86,17 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, i
 {
 	Eigen::ConjugateGradient<SpMat> solver;
 
-	compute_k_.Start();
+	if (detailed_timing_)
+	{
+		compute_k_.Start();
+	}
+	
 	solver.compute(K);
-	compute_k_.Stop();
-
+	
+	if (detailed_timing_)
+	{
+		compute_k_.Stop();
+	}
 	info = 0;
 	
 	if (solver.info() != Eigen::Success)
@@ -82,9 +108,17 @@ bool StiffnessSolver::SolveSystem(SpMat &K, VX &D, VX &F, VX &D0, int verbose, i
 	solver.setMaxIterations(3000);
 	//D = solver.solve(F);
 
-	solve_d_.Start();
+	if (detailed_timing_)
+	{
+		solve_d_.Start();
+	}
+
 	D = solver.solveWithGuess(F, D0);
-	solve_d_.Stop();
+	
+	if (detailed_timing_)
+	{
+		solve_d_.Stop();
+	}
 
 	if (solver.info() != Eigen::Success)
 	{

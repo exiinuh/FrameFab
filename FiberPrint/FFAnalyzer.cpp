@@ -98,7 +98,6 @@ bool FFAnalyzer::SeqPrint()
 	}
 
 	FF_analyzer_.Stop();
-
 	return bSuccess;
 }
 
@@ -187,17 +186,6 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 				orig_j / 2, ej->Layer() + 1, print_queue_.size());
 		}
 
-		/* collision test */
-		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
-		if (free_angle == 0)
-		{
-			if (debug_)
-			{
-				fprintf(stderr, "...collision examination failed at edge #%d.\n\n", ej->ID() / 2);
-			}
-			return -1;
-		}
-
 		/* stabiliy weight */
 		int uj = ptr_frame_->GetEndu(orig_j);
 		int vj = ptr_frame_->GetEndv(orig_j);
@@ -215,36 +203,57 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			P = z;
 		}
 		else
-			if (exist_uj || exist_vj)
+		if (exist_uj || exist_vj)
+		{
+			/* edge j share one end with printed structure */
+			if (debug_)
 			{
-				/* edge j share one end with printed structure */
-				if (debug_)
-				{
-					fprintf(stderr, "It shares only one ends with printed structure\n");
-				}
+				fprintf(stderr, "It shares only one ends with printed structure\n");
+			}
 
-				double ang;
-				point pos_uj = ptr_frame_->GetPosition(uj);
-				point pos_vj = ptr_frame_->GetPosition(vj);
-				if (exist_uj)
-				{
-					ang = Geometry::angle(point(0, 0, 1), pos_vj - pos_uj);
-				}
-				else
-				{
-					ang = Geometry::angle(point(0, 0, 1), pos_uj - pos_vj);
-				}
-				P = z * exp(ang);
+			double ang;
+			point pos_uj = ptr_frame_->GetPosition(uj);
+			point pos_vj = ptr_frame_->GetPosition(vj);
+			if (exist_uj)
+			{
+				ang = Geometry::angle(point(0, 0, 1), pos_vj - pos_uj);
 			}
 			else
 			{
-				if (debug_)
-				{
-					fprintf(stderr, "It floats, skip\n\n");
-				}
-				return -1;
+				ang = Geometry::angle(point(0, 0, 1), pos_uj - pos_vj);
 			}
+			P = z * exp(ang);
+		}
+		else
+		{
+			if (debug_)
+			{
+				fprintf(stderr, "It floats, skip\n\n");
+			}
+			return -1;
+		}
 
+		/* collision test */
+		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
+		if (free_angle == 0)
+		{
+			if (debug_)
+			{
+				fprintf(stderr, "...collision examination failed at edge #%d.\n\n", ej->ID() / 2);
+			}
+			return -1;
+		}
+
+		/* stiffness test */
+		if (!TestifyStiffness(ej))
+		{
+			/* examination failed */
+			if (debug_)
+			{
+				fprintf(stderr, "Stiffness examination failed at edge #%d.\n\n", ej->ID() / 2);
+			}
+			return -1;
+		}
 
 		/* adjacency weight */
 		if (ei == NULL)
@@ -264,19 +273,6 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 				A = 1.0;
 			}
 		}
-
-
-		/* stiffness test */
-		if (!TestifyStiffness(ej))
-		{	
-			/* examination failed */
-			if (debug_)
-			{
-				fprintf(stderr, "Stiffness examination failed at edge #%d.\n\n", ej->ID() / 2);
-			}
-			return -1;
-		}
-
 
 		/* influence weight */
 		int remaining = Nd_ - ptr_dualgraph_->SizeOfVertList();
@@ -315,12 +311,20 @@ void FFAnalyzer::PrintOutTimer()
 {
 	printf("***FFAnalyzer timer result:\n");
 	FF_analyzer_.Print("FFAnalyzer:");
-	upd_struct_.Print("UpdateStructure:");
-	rec_struct_.Print("RecoverStructure:");
-	upd_map_.Print("UpdateStateMap:");
-	upd_map_collision_.Print("DetectCollision:");
-	rec_map_.Print("RecoverStateMap:");
-	test_stiff_.Print("TestifyStiffness:");
+
+	if (detail_timing_)
+	{
+		upd_struct_.Print("UpdateStructure:");
+		rec_struct_.Print("RecoverStructure:");
+		upd_map_.Print("UpdateStateMap:");
+		upd_map_collision_.Print("DetectCollision:");
+		rec_map_.Print("RecoverStateMap:");
+		test_stiff_.Print("TestifyStiffness:");
+	}
+	else
+	{
+		printf("***FFAnalyzer detailed timing turned off.\n");
+	}
 }
 
 

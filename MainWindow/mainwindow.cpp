@@ -335,17 +335,17 @@ void MainWindow::CreatePushButtons()
 
 	pushbutton_framefabcut_ = new QPushButton(tr("FrameFab Cut"), this);
 	pushbutton_framefabcut_->setFixedSize(140, 35);
-	connect(pushbutton_framefabcut_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
+	connect(pushbutton_framefabcut_, SIGNAL(clicked()), this, SLOT(GetFrameFabCutParas()));
 	connect(this,
-		SIGNAL(SendFiberParas(double, double, double)),
+		SIGNAL(SendFrameFabCutParas(double, double, double)),
 		renderingwidget_,
 		SLOT(CutAnalysis(double, double, double)));
 
 	pushbutton_onelayersearch_ = new QPushButton(tr("One Layer Search"), this);
 	pushbutton_onelayersearch_->setFixedSize(140, 35);
-	connect(pushbutton_onelayersearch_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
+	connect(pushbutton_onelayersearch_, SIGNAL(clicked()), this, SLOT(GetOneLayerSearchParas()));
 	connect(this,
-		SIGNAL(SendFiberParas(double, double, double)),
+		SIGNAL(SendOneLayerSearchParas(double, double, double)),
 		renderingwidget_,
 		SLOT(OneLayerAnalysis(double, double, double)));
 
@@ -622,6 +622,21 @@ void MainWindow::GetFiberParas()
 		spinbox_wi_->value()));
 }
 
+void MainWindow::GetFrameFabCutParas()
+{
+	emit(SendFrameFabCutParas(
+		spinbox_wp_->value(),
+		spinbox_wa_->value(),
+		spinbox_wi_->value()));
+}
+
+void MainWindow::GetOneLayerSearchParas()
+{
+	emit(SendOneLayerSearchParas(
+		spinbox_wp_->value(),
+		spinbox_wa_->value(),
+		spinbox_wi_->value()));
+}
 
 void MainWindow::GetDeformParas()
 {

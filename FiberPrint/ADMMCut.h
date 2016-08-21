@@ -123,7 +123,6 @@ private:
 	Timer				init_state_;
 	Timer				init_weight_;
 	Timer				create_a_;
-	Timer				create_c_;
 	Timer				set_bound_;
 	Timer				set_startpoint_;
 	Timer				cal_y_;
