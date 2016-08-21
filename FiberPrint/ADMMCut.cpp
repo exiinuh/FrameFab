@@ -835,7 +835,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 
 	update_r_.Stop();
 
-	if (max_improv < 0.1 || reweight_round_ > 20)
+	if (max_improv < 1 || reweight_round_ > 20)
 	{
 		/* Exit Reweighting */
 		return true;
@@ -884,7 +884,7 @@ bool ADMMCut::CheckLabel()
 
 bool ADMMCut::TerminationCriteria()
 {
-	if (ADMM_round_ >= 15)
+	if (ADMM_round_ >= 20)
 	{
 		return true;
 	}
@@ -895,7 +895,7 @@ bool ADMMCut::TerminationCriteria()
 	}
 	else
 	{
-		if (penalty_ < 1000 && penalty_ > 1)
+		if (penalty_ < 1e10 && penalty_ > 0.0001)
 		{
 			if (primal_res_ > dual_res_)
 			{
