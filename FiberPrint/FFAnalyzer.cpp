@@ -41,6 +41,8 @@ bool FFAnalyzer::SeqPrint()
 		}
 	}
 
+	//Timer layer_search;
+	
 	/* print starting from the first layer */
 	bool bSuccess = true;
 	for (int l = 0; l < layer_size; l++)
@@ -50,6 +52,9 @@ bool FFAnalyzer::SeqPrint()
 		* h : head for printing queue of the layer
 		* t : tail for printing queue of the layer
 		*/
+		//layer_search.Reset();
+		//layer_search.Start();
+
 		int Nl = layers_[l].size();
 		int h = print_queue_.size();
 		int t;
@@ -89,6 +94,20 @@ bool FFAnalyzer::SeqPrint()
 			bSuccess = false;
 			break;
 		}
+
+		//layer_search.Stop();
+		//
+		//string str = std::to_string(l) + ":";
+		//const char *msg = str.c_str();
+		//char* cstr = new char[str.length() + 1];
+		//strcpy(cstr, msg);
+
+		//layer_search.Print(cstr);
+		//printf("layer size: %d\n", Nl);
+		//printf("layer %d finished\n", l);
+		//printf("--------------\n");
+
+		//getchar();
 	}
 
 	if (fileout_)
@@ -104,6 +123,11 @@ bool FFAnalyzer::SeqPrint()
 
 bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 {
+	//Timer ind_search;
+
+	//ind_search.Reset();
+	//ind_search.Start();
+
 	/* last edge */
 	assert(h != 0);						// there must be pillars
 	WF_edge *ei = print_queue_[h - 1];
@@ -127,6 +151,8 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 
 	/* next edge in current layer */
 	int Nl = layers_[l].size();
+	//int count = 0;
+
 	for (int j = 0; j < Nl; j++)
 	{
 		WF_edge *ej = layers_[l][j];
@@ -135,8 +161,14 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		if (cost != -1)
 		{
 			choice.insert(pair<double, WF_edge*>(cost, ej));
+			//count++;
 		}
+		//printf("------------\n");
 	}
+	//printf("%d cost computed / %d\n", count, Nl);
+
+	//ind_search.Stop();
+	//ind_search.Print("Single strut: ");
 
 	/* ranked by weight */
 	for (it = choice.begin(); it != choice.end(); it++)
@@ -180,12 +212,20 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		double  A = 0;							// adjacency weight
 		double	I = 0;							// influence weight
 
+		//Timer p_timer, a_timer, i_timer, stiff_timer;
+
+		//p_timer.Reset();
+		//a_timer.Reset();
+		//i_timer.Reset();
+		//stiff_timer.Reset();
+
 		if (debug_)
 		{
 			fprintf(stderr, "Attempting edge #%d\n",
 				orig_j / 2, ej->Layer() + 1, print_queue_.size());
 		}
 
+		//p_timer.Start();
 		/* stabiliy weight */
 		int uj = ptr_frame_->GetEndu(orig_j);
 		int vj = ptr_frame_->GetEndv(orig_j);
@@ -233,6 +273,10 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			return -1;
 		}
 
+		//p_timer.Stop();
+		//p_timer.Print("cost compute connectivity:");
+
+		//a_timer.Start();
 		/* collision test */
 		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 		if (free_angle == 0)
@@ -243,7 +287,10 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			}
 			return -1;
 		}
+		//a_timer.Stop();
+		//a_timer.Print("cost compute collision:");
 
+		//stiff_timer.Start();
 		/* stiffness test */
 		if (!TestifyStiffness(ej))
 		{
@@ -254,6 +301,8 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			}
 			return -1;
 		}
+		//stiff_timer.Stop();
+		//stiff_timer.Print("cost compute stiff check:");
 
 		/* adjacency weight */
 		if (ei == NULL)
@@ -274,6 +323,8 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 			}
 		}
 
+		//i_timer.Start();
+		int count = 0;
 		/* influence weight */
 		int remaining = Nd_ - ptr_dualgraph_->SizeOfVertList();
 		for (int dual_k = 0; dual_k < Nd_; dual_k++)
@@ -291,9 +342,19 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 				double tmp_range = ptr_collision_->ColFreeAngle(tmp) * 1.0 /
 					ptr_collision_->Divide();
 				I += exp(-5 * tmp_range * tmp_range);
+
+				count++;
 			}
 		}
 		I /= remaining;
+
+		//I = 0;
+
+		//printf("influence count: %d\n", count);
+		//printf("-------------\n");
+
+		//i_timer.Stop();
+		//i_timer.Print("cost compute influence:");
 
 		double cost = Wp_*P + Wa_*A + Wi_*I;
 		if (debug_)

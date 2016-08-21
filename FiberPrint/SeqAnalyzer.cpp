@@ -45,7 +45,7 @@ SeqAnalyzer::SeqAnalyzer(
 
 	Nd_ = 0;
 
-	debug_ = false;
+	debug_ = true;
 	detail_timing_ = false;
 	fileout_ = false;
 }
