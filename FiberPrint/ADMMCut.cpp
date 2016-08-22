@@ -291,7 +291,7 @@ void ADMMCut::InitWeight()
 		double tmp_height;
 			
 		tmp_range = ptr_dualgraph_->Weight(i);
-		tmp_height = exp(-6 * tmp_range * tmp_range);
+		tmp_height = exp(-3 * tmp_range * tmp_range);
 
 		ptr_collision_->DetectCollision(e1, e2, tmp);
 		Fji = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
@@ -300,7 +300,7 @@ void ADMMCut::InitWeight()
 		Fij = ptr_collision_->ColFreeAngle(tmp) * 1.0 / ptr_collision_->Divide();
 
 		tmp_range = max(Fij - Fji, 0.0);
-		tmp_weight = exp(-6 * tmp_range * tmp_range) * tmp_height;
+		tmp_weight = exp(-0.5 * tmp_range * tmp_range) * tmp_height;
 		if (tmp_weight > SPT_EPS)
 		{
 			weight_list.push_back(Triplet<double>(orig_u / 2, orig_v / 2, tmp_weight));
