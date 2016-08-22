@@ -76,7 +76,6 @@ void ADMMCut::MakeLayers()
 
 		do
 		{
-			penalty_ = 100;
 			ADMM_round_ = 0;
 
 			/* Reweighting loop for cut */
@@ -84,7 +83,7 @@ void ADMMCut::MakeLayers()
 
 			do
 			{
-				if (output_stat_)
+				if (debug_)
 				{
 					fprintf(stderr, "---------------------------------------\n");
 					fprintf(stderr, "Cut round: %d\nReweight iteration: %d\nADMM round: %d\n",
@@ -131,7 +130,7 @@ void ADMMCut::MakeLayers()
 				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
 
-				if (output_stat_)
+				if (debug_)
 				{
 					fprintf(stderr, "Dual residual: %lf\nPrimal residual: %lf\n",
 						dual_res_, primal_res_);
@@ -507,7 +506,7 @@ void ADMMCut::CalculateX()
 		cal_qp_.Start();
 	}
 
-	ptr_qp_->solve(H, a_, W_, d_, x_, debug_);
+	ptr_qp_->solve(H, a_, W_, d_, x_, false);
 
 	if (detail_timing_)
 	{
@@ -651,7 +650,7 @@ void ADMMCut::CalculateD()
 		cal_qp_.Start();
 	}
 
-	ptr_qp_->solve(Q, a, D_, D_w, D_tol_, debug_);
+	ptr_qp_->solve(Q, a, D_, D_w, D_tol_, false);
 	
 	if (detail_timing_)
 	{
@@ -984,7 +983,7 @@ bool ADMMCut::TerminationCriteria()
 	}
 	else
 	{
-		if (penalty_ < 1e10 && penalty_ > 0.0001)
+		if (penalty_ < 1e8 && penalty_ > 0.0001)
 		{
 			if (primal_res_ > dual_res_)
 			{

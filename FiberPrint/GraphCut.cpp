@@ -6,7 +6,7 @@ GraphCut::GraphCut()
 	ptr_frame_ = NULL;
 	ptr_path_ = NULL;
 
-	debug_ = false;
+	debug_ = true;
 	detail_timing_ = false;
 	output_stat_ = false;
 }
