@@ -85,58 +85,6 @@ void Statistics::StreamDenMatrixOutput()
 	std::cout << "------------------------------" << std::endl;
 }
 
-bool Statistics::IsSpSymmetry()
-{
-	int c = SpMat_.cols();
-	int r = SpMat_.rows();
-	assert(c != 0 && r != 0 && c == r);
-	bool flag = 1;
-	std::cout << "------------------------------" << std::endl;
-	for (int i = 0; i < r; i++)
-	{
-		for (int j = i; j < c; j++)
-		{
-			double e_ij = SpMat_.coeff(i, j);
-			double e_ji = SpMat_.coeff(j, i);
-			if (e_ij != e_ji)
-			{
-				std::cout << "No! Sparse Matrix not Symmetry!" << std::endl;
-				std::cout << name_ << "(" << i << "," << j << ") = " << std::setprecision(OUTPUTPRECISION) << e_ij << std::endl;
-				std::cout << name_ << "(" << j << "," << i << ") = " << std::setprecision(OUTPUTPRECISION) << e_ji << std::endl;
-				flag = 0;
-			}
-		}
-	}
-	std::cout << "------------------------------" << std::endl;
-	return flag;
-}
-
-bool Statistics::IsDenSymmetry()
-{
-	int c = denMat_.cols();
-	int r = denMat_.rows();
-	assert(c != 0 && r != 0 && c == r);
-	bool flag = 0;
-	std::cout << "------------------------------" << std::endl;
-	for (int i = 0; i < r; i++)
-	{
-		for (int j = i; j < c; j++)
-		{
-			double e_ij = denMat_(i, j);
-			double e_ji = denMat_(j, i);
-			if (e_ij != e_ji)
-			{
-				std::cout << "No! Sparse Matrix not Symmetry!" << std::endl;
-				std::cout << name_ << "(" << i << "," << j << ") = " << std::setprecision(OUTPUTPRECISION) << e_ij << std::endl;
-				std::cout << name_ << "(" << j << "," << i << ") = " << std::setprecision(OUTPUTPRECISION) << e_ji << std::endl;
-				flag = 1;
-			}
-		}
-	}
-	std::cout << "------------------------------" << std::endl;
-	return flag;
-}
-
 void Statistics::GenerateVectorFile()
 {
 

@@ -6,7 +6,6 @@
 #include "QP.h"
 #include "QPMosek.h"
 
-
 class QPFactory
 {
 public:

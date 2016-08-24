@@ -29,26 +29,24 @@ public:
 		const double& d_tol,
 		bool _debug);
 
-	virtual std::string report() const;
-	virtual double functionValue() const { return fVal_; }
-	virtual int exitFlag() const { return xFlag_; }
+	virtual std::string		report() const;
+	virtual double			functionValue() const { return fVal_; }
+	virtual int				exitFlag() const { return xFlag_; }
 
-	bool test() const;
+	void	setNTasks(int n){ nTasks_ = n; };
+	int		nTasks() const { return nTasks_; }
 
-	void setNTasks(int n){ nTasks_ = n; };
-	int nTasks() const { return nTasks_; }
-
-	void setThreshold(double t){ mP_ = t; }
-	double threshold(){ return mP_; }
+	void	setThreshold(double t){ mP_ = t; }
+	double	threshold(){ return mP_; }
 
 	std::string exitFlagToString(int _xFlag) const;
 
 private:
 	Timer tSetup, tSolve;
-	void* env_;		// environment in Mosek
-	double fVal_;	// objective fdunction value
-	int xFlag_;		// solution status
-	int nTasks_;	// for multi task number
-	double mP_;		// threshold
+	void*	env_;		// environment in Mosek
+	double	fVal_;		// objective fdunction value
+	int		xFlag_;		// solution status
+	int		nTasks_;	// for multi task number
+	double	mP_;		// threshold
 };
 #endif // QPMOSEK_H

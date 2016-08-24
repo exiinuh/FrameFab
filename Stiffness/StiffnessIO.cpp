@@ -1,43 +1,4 @@
 #include "StiffnessIO.h"
-/*
-* GetlineNoCommen :
-* get a line into a character string. from K&R
-* get the line only up to one of the following characters:  \n  %  #  ?
-* ignore all comma (,) characters
-* ignore all double quote (") characters
-* ignore all semi-colon (;) characters
-*/
-void StiffnessIO::GetlineNoComment(
-	FILE *fp,   /**< pointer to the file from which to read */
-	char *s,    /**< pointer to the string to which to write */
-	int lim    /**< the longest anticipated line length  */)
-{
-	int     c = 0, i = 0;
-
-	while (--lim > 0 && (c = getc(fp)) != EOF 
-		&& c != '\n' && c != '%' && c != '#' 
-		&& c != '?') 
-	{
-		if (c != ',' && c != '"' && c != ';')
-			s[i++] = c;
-		else
-			s[i++] = ' ';
-	}
-
-	s[i] = '\0';
-	
-	if (c != '\n')
-	{
-		while (--lim > 0 && (c = getc(fp)) != EOF && c != '\n')
-		{
-			/* read the rest of the line, otherwise do nothing */;
-		}
-	}
-	
-	if (c == EOF) s[0] = EOF;
-	
-	return;
-}
 
 /*
 * OUTPUT_PATH
@@ -62,7 +23,7 @@ void StiffnessIO::OutputPath(const char *fname, char fullpath[], const int len, 
 
 	if (res > len) 
 	{
-		errorMsg("ERROR: unable to construct output filename: overflow.\n");
+		printf("ERROR: unable to construct output filename: overflow.\n");
 		exit(16);
 	}
 
@@ -139,7 +100,7 @@ void StiffnessIO::GnuPltStaticMesh(
 	if ((fpm = fopen(plotpath, "w")) == NULL)
 	{
 		sprintf(errMsg, "\n  error: cannot open gnuplot script file: %s \n", plotpath);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(23);
 	}
 
@@ -243,7 +204,7 @@ void StiffnessIO::GnuPltStaticMesh(
 	if ((fpm = fopen(meshpath, "w")) == NULL) 
 	{
 		sprintf(errMsg, "\n  error: cannot open gnuplot undeformed mesh data file: %s\n", meshpath);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(21);
 	}
 
@@ -285,7 +246,7 @@ void StiffnessIO::GnuPltStaticMesh(
 	if ((fpm = fopen(meshfl, "w")) == NULL) 
 	{
 		sprintf(errMsg, "\n  error: cannot open gnuplot deformed mesh data file %s \n", meshfl);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(22);
 	}
 
@@ -421,7 +382,7 @@ void StiffnessIO::GnuPltCubicBentBeam(
 	if (!info)
 	{
 		sprintf(errMsg, " n1 = %d  n2 = %d  L = %e  u7 = %e \n", dual_u+1, dual_v+1, L, u7);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(30);
 	}
 
@@ -431,7 +392,7 @@ void StiffnessIO::GnuPltCubicBentBeam(
 	if (!info)
 	{
 		sprintf(errMsg, " n1 = %d  n2 = %d  L = %e  u7 = %e \n", dual_u + 1, dual_v + 1, L, u7);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(30);
 	}
 
@@ -474,7 +435,7 @@ void StiffnessIO::WriteInputData(
 	if ((fp = fopen(fpath, "w")) == NULL)
 	{
 		sprintf_s(errMsg, "\n ERROR: cannot open .3dd transfer data file '%s'", fpath);
-		errorMsg(errMsg);
+		printf(errMsg);
 		exit(11);
 	}
 
@@ -702,8 +663,4 @@ void StiffnessIO::SaveDisplaceVector(char filename[], const VX &D, int n, DualGr
 	fclose(fp);
 	return;
 
-}
-
-void StiffnessIO::Debug(int verbose)
-{
 }

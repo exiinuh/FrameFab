@@ -1,3 +1,24 @@
+/*
+* ==========================================================================
+*		This file is part of the implementation of
+*
+*		<FrameFab: Robotic Fabrication of Frame Shapes>
+*		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
+*		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+*
+*		Description:This file contains matrix condition checking related computational units.
+*
+*		Version: 2.0
+*		Created: Oct/10/2015
+*		Updated: Aug/24/2016
+*
+*		Author:  Yijiang Huang
+*		Company:  GCL@USTC
+*
+*		Note: This file utilize LAPACK library.
+* ==========================================================================
+*/
+
 #pragma once
 
 #ifndef ILLCONDDECTOR_H

@@ -1,3 +1,26 @@
+/*
+* ==========================================================================
+*
+*		class:	WireFrame
+*
+*		This file is part of the implementation of
+*
+*		<Sustainable Fabrication of Frame Shapes>
+*		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
+*		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+*
+*		Description: WireFrame is the basic data structure to store original frame shape in
+*		FrameFab.
+*
+*		Version:  2.0
+*		Created: Oct/10/2015
+*		Updated: Aug/24/2016
+*
+*		Author:  Xin Hu
+*		Company:  GCL@USTC
+* ==========================================================================
+*/
+
 #pragma once
 
 #include <assert.h>
@@ -6,7 +29,6 @@
 #include <cmath>
 
 #include "WireFrame\Vec.h"
-
 
 using namespace std;
 using trimesh::vec;

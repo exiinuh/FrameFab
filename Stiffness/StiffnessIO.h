@@ -1,3 +1,25 @@
+/*
+* ==========================================================================
+*
+*		class:	StiffnessIO
+*
+*		This file is part of the implementation of
+*
+*		<Sustainable Fabrication of Frame Shapes>
+*		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
+*		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+*
+*		Description: This module takes charge of outputting stiffness matrix related results,
+*
+*		Version:  2.0
+*		Created: Oct/10/2015
+*		Updated: Aug/24/2016
+*
+*		Author:  Yijiang Huang, Xin Hu
+*		Company:  GCL@USTC
+* ==========================================================================
+*/
+
 #ifndef STIFFNESS_IO_H
 #define STIFFNESS_IO_H
 
@@ -12,15 +34,12 @@
 #include "I_O\Statistics.h"
 
 #include "GlobalFunctions\GCommon.h"
-#include "GUtil.h"
 #include "StiffnessSolver.h"
 
 #include "FiberPrint\FiberPrintPARM.h"
 #include "FiberPrint\DualGraph.h"
 #include "CoordTrans.h"
 
-/* maximum number of load cases */
-#define _NL_ 32
 #define MYOUT std::cout
 #define MYEND std::endl
 class StiffnessIO
@@ -34,13 +53,13 @@ public:
 	typedef	Eigen::MatrixXi MXi;
 
 	typedef std::vector<V3> vec3;
+
 public:
 	StiffnessIO(){};
 	~StiffnessIO(){};
 
 public:
 
-	void	GetlineNoComment(FILE *fp, char *s, int lim);
 	void	OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose);
 
 	/*--- GnuPlot file output ---*/
@@ -91,8 +110,6 @@ public:
 	*/		;
 	void SaveDisplaceVector(char filename[], const VX &D, int n, DualGraph *ptr_dual_graph);
 	
-	void Debug(int verbose);		// 1 : copious screenpaly, 0 : none 
-
 public:
 	void	dots(FILE *fp, int n)
 	{
@@ -107,8 +124,8 @@ public:
 		if (tmp == NULL) {
 			fprintf(stderr,
 				"ERROR: Environment Variables %%TEMP%% and %%FRAME3DD_OUTDIR%% are not set.  "
-				"At least one of these variables must be set so that FiberPrint knows where to "
-				"write its temporary files.  Set one of these variable, then re-run FiberPrint.");
+				"At least one of these variables must be set so that FrameFab knows where to "
+				"write its temporary files.  Set one of these variable, then re-run FrameFab.");
 			exit(15);
 		}
 		return tmp;

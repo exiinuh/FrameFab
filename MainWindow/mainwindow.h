@@ -1,3 +1,25 @@
+/*
+* ==========================================================================
+*
+*		class:	MainWindow
+*
+*		This file is part of the implementation of
+*
+*		<Sustainable Fabrication of Frame Shapes>
+*		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
+*		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+*
+*		Description: Qt main window.
+*
+*		Version:  2.0
+*		Created: Oct/10/2015
+*		Updated: Aug/24/2016
+*
+*		Author:  Xin Hu
+*		Company:  GCL@USTC
+* ==========================================================================
+*/
+
 #pragma once
 
 #ifndef MAINWINDOW_H
