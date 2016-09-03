@@ -6,7 +6,7 @@
 This code implements the algorithm in the following paper:
 
 Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. FramFab: Robotic Fabrication of Frame Shapes.
-ACM Trans. Graph. 35, 6, 2014.
+ACM Trans. Graph. 35, 6, 2016.
 
 ## 2. Dependencies
 
