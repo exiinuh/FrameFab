@@ -121,7 +121,6 @@ namespace Geometry
 		{
 			return sqrt(data_[0] * data_[0] + data_[1] * data_[1] + data_[2] * data_[2]);
 		}
-
 		void normalize()
 		{
 			double length = norm();
