@@ -5,17 +5,38 @@
 *		<FrameFab: Robotic Fabrication of Frame Shapes>
 *		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
 *		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+----------------------------------------------------------------------------
+*		Class:	IllConditioner
 *
-*		Description:This file contains matrix condition checking related computational units.
+*		Description: Matrix condition checking related computational units.
 *
 *		Version: 2.0
 *		Created: Oct/10/2015
 *		Updated: Aug/24/2016
 *
-*		Author:  Yijiang Huang
+*		Author:  Xin Hu, Yijiang Huang, Guoxian Song
 *		Company:  GCL@USTC
+*		Citation:	This file use matrix operation module from
+*			Title:			LAPACK
+*							a linear algebra package
+*			Code Version:	3.6.1
+*			Availability:	http://www.netlib.org/lapack/
+----------------------------------------------------------------------------
+*		Copyright (C) 2016  Yijiang Huang, Xin Hu, Guoxian Song, Juyong Zhang
+*		and Ligang Liu.
 *
-*		Note: This file utilize LAPACK library.
+*		FrameFab is free software: you can redistribute it and/or modify
+*		it under the terms of the GNU General Public License as published by
+*		the Free Software Foundation, either version 3 of the License, or
+*		(at your option) any later version.
+*
+*		FrameFab is distributed in the hope that it will be useful,
+*		but WITHOUT ANY WARRANTY; without even the implied warranty of
+*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*		GNU General Public License for more details.
+*
+*		You should have received a copy of the GNU General Public License
+*		along with FrameFab.  If not, see <http://www.gnu.org/licenses/>.
 * ==========================================================================
 */
 

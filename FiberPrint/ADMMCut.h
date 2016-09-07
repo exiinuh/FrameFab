@@ -1,17 +1,16 @@
 /*
 * ==========================================================================
-*
-*		class:	ADMMCut
-*
 *		This file is part of the implementation of
 *
-*		<Sustainable Fabrication of Frame Shapes>
+*		<FrameFab: Robotic Fabrication of Frame Shapes>
 *		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
 *		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+----------------------------------------------------------------------------
+*		class:	ADMMCut
 *
-*		Description:	The GraphCut submodule takes charge of dividing the 
-*				wireframe into several structually-stable sections, scaling the 
-*				problem down, enabling further tool path searching part 
+*		Description:	The GraphCut submodule takes charge of dividing the
+*				wireframe into several structually-stable sections, scaling the
+*				problem down, enabling further tool path searching part
 *				numerically tractable.
 *
 *		Version:  2.0
@@ -20,10 +19,29 @@
 *
 *		Author:  Xin Hu, Yijiang Huang, Guoxian Song
 *		Company:  GCL@USTC
+*		Citation:	This file is modified out of coordtrans.c from
+*			Title:			Frame3dd source code
+*							Static and dynamic structural analysis of 2D and 3D frames and trusses with
+*							elastic and geometric stiffness.
+*			Author:			Henri P. Gavin
+*			Code Version:	20140514+
+*			Availability:	http://frame3dd.sourceforge.net/
+----------------------------------------------------------------------------
+*		Copyright (C) 2016  Yijiang Huang, Xin Hu, Guoxian Song, Juyong Zhang
+*		and Ligang Liu.
 *
-*		WARNING:  DO NOT insert node and edge after you dualize the graph,
-*		as we append all project b_fixed point at the end of dual face.
-*		Further inserting will cause stiffness matrix and force creation error.
+*		FrameFab is free software: you can redistribute it and/or modify
+*		it under the terms of the GNU General Public License as published by
+*		the Free Software Foundation, either version 3 of the License, or
+*		(at your option) any later version.
+*
+*		FrameFab is distributed in the hope that it will be useful,
+*		but WITHOUT ANY WARRANTY; without even the implied warranty of
+*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*		GNU General Public License for more details.
+*
+*		You should have received a copy of the GNU General Public License
+*		along with FrameFab.  If not, see <http://www.gnu.org/licenses/>.
 * ==========================================================================
 */
 

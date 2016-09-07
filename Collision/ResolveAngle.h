@@ -1,27 +1,42 @@
 /*
 * ==========================================================================
-*
-*		class:	ResolveAngle
-*
 *		This file is part of the implementation of
 *
-*		<Sustainable Fabrication of Frame Shapes>
+*		<FrameFab: Robotic Fabrication of Frame Shapes>
 *		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
 *		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+----------------------------------------------------------------------------
+*		class:	ResolveAngle
 *
 *		Description:
 *
 *		Version:  2.0
 *		Created:  Oct/20/2015
-*		Updated: Aug/24/2016
 *
-*		Author:  Guoxian Song
+*		Author:  Xin Hu, Yijiang Huang, Guoxian Song
 *		Company:  GCL@USTC
+*		Citation:	This file use some geometric API and objects from
+*			Title:			Geometric Tools Engine
+*							a library of source code for computing in the fields of
+*							mathematics, graphics, image analysis, and physics.
+*			Code Version:	3.2.6
+*			Availability:	http://www.geometrictools.com/index.html
+----------------------------------------------------------------------------
+*		Copyright (C) 2016  Yijiang Huang, Xin Hu, Guoxian Song, Juyong Zhang
+*		and Ligang Liu.
 *
-*	 Note:     This file uses mathematical part of Geometric Tools Engine,
-*			   a library of source code for computing in the fields of
-*			   mathematics, graphics, image analysis, and physics.
-*			   For more info, please refer to http://www.geometrictools.com/index.html
+*		FrameFab is free software: you can redistribute it and/or modify
+*		it under the terms of the GNU General Public License as published by
+*		the Free Software Foundation, either version 3 of the License, or
+*		(at your option) any later version.
+*
+*		FrameFab is distributed in the hope that it will be useful,
+*		but WITHOUT ANY WARRANTY; without even the implied warranty of
+*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*		GNU General Public License for more details.
+*
+*		You should have received a copy of the GNU General Public License
+*		along with FrameFab.  If not, see <http://www.gnu.org/licenses/>.
 * ==========================================================================
 */
 
