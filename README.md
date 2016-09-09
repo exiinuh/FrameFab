@@ -40,3 +40,6 @@ Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Dow
 5. Click **FiberPrint** to run the whole process.
 6. When it is done, you can turn on *Heat* under the *Edge* mode to see the result of *layer-decomposition*.
 
+## 4. Contact
+The code is written by Xin Hu (hx37118@mail.ustc.edu.cn) and Yijiang Huang (duckie@mail.ustc.edu.cn). Feel free to contact Xin or Yijiang if you have any comments.
+
