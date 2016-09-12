@@ -1,3 +1,48 @@
+/*
+* ==========================================================================
+*		This file is part of the implementation of
+*
+*		<FrameFab: Robotic Fabrication of Frame Shapes>
+*		Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu
+*		In ACM Transactions on Graphics (Proc. SIGGRAPH Asia 2016)
+----------------------------------------------------------------------------
+*		class:	StiffnessIO
+*
+*		Description: This module takes charge of outputting stiffness matrix related results.
+*
+*		Version:  1.0
+*		Created:  Mar/23/2016
+*		Updated:  Aug/24/2016
+*
+*		Author:  Xin Hu, Yijiang Huang, Guoxian Song
+*		Company:  GCL@USTC
+*		Citation:	Some part of this module is modified from frame3dd_io.c
+*					output related submodule.
+*			Title:			Frame3dd source code
+*							Static and dynamic structural analysis of 2D and 3D frames and trusses with
+*							elastic and geometric stiffness.
+*			Author:			Henri P. Gavin
+*			Code Version:	20140514+
+*			Availability:	http://frame3dd.sourceforge.net/
+----------------------------------------------------------------------------
+*		Copyright (C) 2016  Yijiang Huang, Xin Hu, Guoxian Song, Juyong Zhang
+*		and Ligang Liu.
+*
+*		FrameFab is free software: you can redistribute it and/or modify
+*		it under the terms of the GNU General Public License as published by
+*		the Free Software Foundation, either version 3 of the License, or
+*		(at your option) any later version.
+*
+*		FrameFab is distributed in the hope that it will be useful,
+*		but WITHOUT ANY WARRANTY; without even the implied warranty of
+*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*		GNU General Public License for more details.
+*
+*		You should have received a copy of the GNU General Public License
+*		along with FrameFab.  If not, see <http://www.gnu.org/licenses/>.
+* ==========================================================================
+*/
+
 #ifndef STIFFNESS_IO_H
 #define STIFFNESS_IO_H
 
@@ -12,15 +57,12 @@
 #include "I_O\Statistics.h"
 
 #include "GlobalFunctions\GCommon.h"
-#include "GUtil.h"
 #include "StiffnessSolver.h"
 
 #include "FiberPrint\FiberPrintPARM.h"
 #include "FiberPrint\DualGraph.h"
 #include "CoordTrans.h"
 
-/* maximum number of load cases */
-#define _NL_ 32
 #define MYOUT std::cout
 #define MYEND std::endl
 class StiffnessIO
@@ -34,13 +76,13 @@ public:
 	typedef	Eigen::MatrixXi MXi;
 
 	typedef std::vector<V3> vec3;
+
 public:
 	StiffnessIO(){};
 	~StiffnessIO(){};
 
 public:
 
-	void	GetlineNoComment(FILE *fp, char *s, int lim);
 	void	OutputPath(const char *fname, char fullpath[], const int len, char *default_outdir, int verbose);
 
 	/*--- GnuPlot file output ---*/
@@ -91,8 +133,6 @@ public:
 	*/		;
 	void SaveDisplaceVector(char filename[], const VX &D, int n, DualGraph *ptr_dual_graph);
 	
-	void Debug(int verbose);		// 1 : copious screenpaly, 0 : none 
-
 public:
 	void	dots(FILE *fp, int n)
 	{
@@ -107,8 +147,8 @@ public:
 		if (tmp == NULL) {
 			fprintf(stderr,
 				"ERROR: Environment Variables %%TEMP%% and %%FRAME3DD_OUTDIR%% are not set.  "
-				"At least one of these variables must be set so that FiberPrint knows where to "
-				"write its temporary files.  Set one of these variable, then re-run FiberPrint.");
+				"At least one of these variables must be set so that FrameFab knows where to "
+				"write its temporary files.  Set one of these variable, then re-run FrameFab.");
 			exit(15);
 		}
 		return tmp;
