@@ -1,11 +1,12 @@
 # FrameFab
 
-## 1. Overview
-This repository contains the robotic printing sequence generation software developed as part of the publication
 
-> **FrameFab: Robotic Fabrication of Frame Shapes**<br/>
-> Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. <br/>
-> In *ACM Transactions on Graphics (Proceedings of SIGGRAPH Asia 2016)*<br/>
+## 1. Overview
+
+This code implements the algorithm in the following paper:
+
+Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. FramFab: Robotic Fabrication of Frame Shapes.
+ACM Trans. Graph. 35, 6, 2016.
 
 ## 2. Dependencies
 
@@ -28,7 +29,7 @@ Download **Mosek 7.0** from "*https://www.mosek.com/resources/downloads*".
 ### 2.5 Eigen
 Download **Eigen 3** from "*http://eigen.tuxfamily.org/index.php?title=Main_Page*".
 
-### 2.6 Geometric Tools Engine
+### 3.6 Geometric Tools Engine
 Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Downloads/Downloads.html*".
 
 ## 3. FrameFab instructions
@@ -38,4 +39,7 @@ Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Dow
 4. Click **Project** to project *base vertexes* to a flat plane which is below the lowest position of all the vertexes. The vertexes projected on the plane are *fixed vertexes* and the edges connecting *base vertexes* and *fixed vertexes* are *pillars*.
 5. Click **FiberPrint** to run the whole process.
 6. When it is done, you can turn on *Heat* under the *Edge* mode to see the result of *layer-decomposition*.
+
+## 4. Contact
+The code is written by Xin Hu (hx37118@mail.ustc.edu.cn) and Yijiang Huang (duckie@mail.ustc.edu.cn). Feel free to contact Xin or Yijiang if you have any comments.
 
