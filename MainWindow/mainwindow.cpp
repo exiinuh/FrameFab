@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 	layout_right->addWidget(groupbox_fiber_);
 	layout_right->addWidget(groupbox_meshpara_);
 	layout_right->addWidget(groupbox_seqpara_);
-	layout_right->addWidget(groupbox_debug_);
+	//layout_right->addWidget(groupbox_debug_);
 	layout_right->addWidget(groupbox_sep2_);
 	layout_right->addStretch(1);
 
@@ -84,9 +84,9 @@ void MainWindow::CreateActions()
 	action_export_->setStatusTip(tr("Export to disk"));
 	connect(action_export_, SIGNAL(triggered()), renderingwidget_, SLOT(Export()));
 
-	action_exportrender_ = new QAction(tr("Export to render"), this);
-	action_exportrender_->setStatusTip(tr("Export to render"));
-	connect(action_exportrender_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
+	//action_exportrender_ = new QAction(tr("Export to render"), this);
+	//action_exportrender_->setStatusTip(tr("Export to render"));
+	//connect(action_exportrender_, SIGNAL(triggered()), this, SLOT(OpenExportDialog()));
 
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
@@ -107,15 +107,15 @@ void MainWindow::CreateMenus()
 	menu_file_->addSeparator();
 	menu_file_->addAction(action_import_);
 	menu_file_->addAction(action_export_);
-	menu_file_->addAction(action_exportrender_);
+	//menu_file_->addAction(action_exportrender_);
 
 	menu_display_ = menuBar()->addMenu(tr("&Display"));
 	menu_display_->setStatusTip(tr("Display settings"));
 	menu_display_->addAction(action_background_);
 
-	menu_help_ = menuBar()->addMenu(tr("&Help"));
-	menu_help_->setStatusTip(tr("Help"));
-	menu_help_->addAction(action_about_);
+	//menu_help_ = menuBar()->addMenu(tr("&Help"));
+	//menu_help_->setStatusTip(tr("Help"));
+	//menu_help_->addAction(action_about_);
 }
 
 
@@ -341,28 +341,28 @@ void MainWindow::CreatePushButtons()
 		renderingwidget_,
 		SLOT(CutAnalysis(double, double, double)));
 
-	pushbutton_deformation_ = new QPushButton(tr("Deformation"), this);
-	pushbutton_deformation_->setFixedSize(140, 35);
-	connect(pushbutton_deformation_, SIGNAL(clicked()), this, SLOT(GetDeformParas()));
-	connect(this,
-		SIGNAL(SendDeformParas(double, double, double)),
-		renderingwidget_,
-		SLOT(DeformationAnalysis(double, double, double)));
+	//pushbutton_deformation_ = new QPushButton(tr("Deformation"), this);
+	//pushbutton_deformation_->setFixedSize(140, 35);
+	//connect(pushbutton_deformation_, SIGNAL(clicked()), this, SLOT(GetDeformParas()));
+	//connect(this,
+	//	SIGNAL(SendDeformParas(double, double, double)),
+	//	renderingwidget_,
+	//	SLOT(DeformationAnalysis(double, double, double)));
 
 	pushbutton_project_ = new QPushButton(tr("Project"), this);
 	pushbutton_project_->setFixedSize(140, 35);
 	connect(pushbutton_project_, SIGNAL(clicked()), this, SLOT(GetProjectionParas()));
 	connect(this, SIGNAL(SendProjectionParas(double)), renderingwidget_, SLOT(ProjectBound(double)));
 	
-	pushbutton_rightarrow_ = new QPushButton(tr(">>"), this);
-	pushbutton_rightarrow_->setFlat(true);
-	pushbutton_rightarrow_->setFixedSize(20, 20);
-	connect(pushbutton_rightarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
+	//pushbutton_rightarrow_ = new QPushButton(tr(">>"), this);
+	//pushbutton_rightarrow_->setFlat(true);
+	//pushbutton_rightarrow_->setFixedSize(20, 20);
+	//connect(pushbutton_rightarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
 
-	pushbutton_leftarrow_ = new QPushButton(tr("<<"), this);
-	pushbutton_leftarrow_->setFlat(true);
-	pushbutton_leftarrow_->setFixedSize(20, 20);
-	connect(pushbutton_leftarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
+	//pushbutton_leftarrow_ = new QPushButton(tr("<<"), this);
+	//pushbutton_leftarrow_->setFlat(true);
+	//pushbutton_leftarrow_->setFixedSize(20, 20);
+	//connect(pushbutton_leftarrow_, SIGNAL(clicked()), this, SLOT(SwitchParaBox()));
 
 	pushbutton_save_ = new QPushButton(tr("Save"), this);
 	connect(pushbutton_save_, SIGNAL(clicked()), this, SLOT(GetSaveParas()));
@@ -402,10 +402,10 @@ void MainWindow::CreateToolButtons()
 	toolbutton_chooseb_ceiling_->setFixedSize(140, 35);
 	connect(toolbutton_chooseb_ceiling_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseCeiling()));
 
-	toolbutton_choosesubg_ = new QToolButton(this);
-	toolbutton_choosesubg_->setText(tr("Choose\nsubgraph"));
-	toolbutton_choosesubg_->setFixedSize(80, 50);
-	connect(toolbutton_choosesubg_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseSubG()));
+	//toolbutton_choosesubg_ = new QToolButton(this);
+	//toolbutton_choosesubg_->setText(tr("Choose\nsubgraph"));
+	//toolbutton_choosesubg_->setFixedSize(80, 50);
+	//connect(toolbutton_choosesubg_, SIGNAL(clicked()), renderingwidget_, SLOT(SwitchToChooseSubG()));
 
 	connect(renderingwidget_, SIGNAL(ChooseBasePressed(bool)), this, SLOT(ChooseBaseClicked(bool)));
 	connect(renderingwidget_, SIGNAL(ChooseCeilingPressed(bool)), this, SLOT(ChooseCeilingClicked(bool)));
@@ -460,7 +460,7 @@ void MainWindow::CreateGroups()
 	edit_layout->addWidget(pushbutton_rotatexy_);
 	edit_layout->addWidget(pushbutton_rotatexz_);
 	edit_layout->addWidget(pushbutton_rotateyz_);
-	edit_layout->addWidget(toolbutton_choosesubg_);
+	//edit_layout->addWidget(toolbutton_choosesubg_);
 
 	// separator group
 	groupbox_sep1_ = new QGroupBox(this);
@@ -472,7 +472,7 @@ void MainWindow::CreateGroups()
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
 	fiber_layout->addWidget(pushbutton_framefabcut_);
-	fiber_layout->addWidget(pushbutton_deformation_);
+	//fiber_layout->addWidget(pushbutton_deformation_);
 	fiber_layout->addWidget(toolbutton_choosebase_);
 	fiber_layout->addWidget(toolbutton_chooseb_ceiling_);
 	fiber_layout->addWidget(pushbutton_project_);
@@ -495,13 +495,13 @@ void MainWindow::CreateGroups()
 	seqpara_layout->addWidget(spinbox_wa_);
 	seqpara_layout->addWidget(label_wi_);
 	seqpara_layout->addWidget(spinbox_wi_);
-	seqpara_layout->addWidget(pushbutton_rightarrow_);
+	//seqpara_layout->addWidget(pushbutton_rightarrow_);
 
 	// debug group
-	groupbox_debug_ = new QGroupBox(tr("Debug"), this);
-	groupbox_debug_->setFlat(true);
-	QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
-	debug_layout->addWidget(pushbutton_leftarrow_);
+	//groupbox_debug_ = new QGroupBox(tr("Debug"), this);
+	//groupbox_debug_->setFlat(true);
+	//QVBoxLayout *debug_layout = new QVBoxLayout(groupbox_debug_);
+	//debug_layout->addWidget(pushbutton_leftarrow_);
 
 	// separator group
 	groupbox_sep2_ = new QGroupBox(this);
@@ -610,7 +610,7 @@ void MainWindow::ChooseCeilingClicked(bool down)
 
 void MainWindow::ChooseSubGClicked(bool down)
 {
-	toolbutton_choosesubg_->setDown(down);
+	//toolbutton_choosesubg_->setDown(down);
 }
 
 
@@ -783,18 +783,18 @@ void MainWindow::CheckEdgeMode()
 
 void MainWindow::SwitchParaBox()
 {
-	if (sender() == pushbutton_rightarrow_)
-	{
-		groupbox_meshpara_->setVisible(false);
-		groupbox_seqpara_->setVisible(false);
-		groupbox_debug_->setVisible(true);
-	}
-	else
-	{
-		groupbox_debug_->setVisible(false);
-		groupbox_meshpara_->setVisible(true);
-		groupbox_seqpara_->setVisible(true);
-	}
+	//if (sender() == pushbutton_rightarrow_)
+	//{
+	//	groupbox_meshpara_->setVisible(false);
+	//	groupbox_seqpara_->setVisible(false);
+	//	groupbox_debug_->setVisible(true);
+	//}
+	//else
+	//{
+	//	groupbox_debug_->setVisible(false);
+	//	groupbox_meshpara_->setVisible(true);
+	//	groupbox_seqpara_->setVisible(true);
+	//}
 }
 
 
@@ -952,7 +952,7 @@ void MainWindow::Reset()
 	groupbox_orderdisplay_->setVisible(false);
 	groupbox_edit_->setVisible(true);
 
-	groupbox_debug_->setVisible(false);
+	//groupbox_debug_->setVisible(false);
 	groupbox_seqpara_->setVisible(true);
 	groupbox_meshpara_->setVisible(true);
 }

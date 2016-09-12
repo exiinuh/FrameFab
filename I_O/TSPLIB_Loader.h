@@ -9,10 +9,9 @@
 #include "iostream"
 #include <iostream>
 #include <fstream>
-#include "Loader.h"
 #include "Statistics.h"
 
-class TSPLIB_Loader : public Loader
+class TSPLIB_Loader
 {
 public:
 	typedef Eigen::SparseMatrix<double> SpMat;

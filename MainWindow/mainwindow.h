@@ -165,14 +165,14 @@ private:
 	// Basic
 	QMenu				*menu_file_;
 	QMenu				*menu_display_;
-	QMenu				*menu_help_;
+	//QMenu				*menu_help_;
 
 	QAction				*action_new_;
 	QAction				*action_open_;
 	QAction				*action_save_;
 	QAction				*action_import_;
 	QAction				*action_export_;
-	QAction				*action_exportrender_;
+	//QAction				*action_exportrender_;
 
 	QAction				*action_background_;
 
@@ -241,10 +241,10 @@ private:
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_framefabcut_;
-	QPushButton			*pushbutton_deformation_;
+	//QPushButton			*pushbutton_deformation_;
 	QPushButton			*pushbutton_project_;
-	QPushButton			*pushbutton_rightarrow_;
-	QPushButton			*pushbutton_leftarrow_;
+	//QPushButton			*pushbutton_rightarrow_;
+	//QPushButton			*pushbutton_leftarrow_;
 	QPushButton			*pushbutton_save_;
 	QPushButton			*pushbutton_export_;
 	QPushButton			*pushbutton_exportvert_;
@@ -254,7 +254,7 @@ private:
 	// Toolbuttons
 	QToolButton			*toolbutton_choosebase_;
 	QToolButton			*toolbutton_chooseb_ceiling_;
-	QToolButton			*toolbutton_choosesubg_;
+	//QToolButton			*toolbutton_choosesubg_;
 
 	// Sliders
 	QSlider				*slider_order_;
@@ -267,7 +267,7 @@ private:
 	QGroupBox			*groupbox_fiber_;
 	QGroupBox			*groupbox_meshpara_;
 	QGroupBox			*groupbox_seqpara_;
-	QGroupBox			*groupbox_debug_;
+	//QGroupBox			*groupbox_debug_;
 	QGroupBox			*groupbox_sep1_;
 	QGroupBox			*groupbox_sep2_;
 	QGroupBox			*groupbox_exportvert_;
