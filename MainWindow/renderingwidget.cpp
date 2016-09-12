@@ -1169,40 +1169,52 @@ void RenderingWidget::ScaleFrame(double scale)
 }
 
 
-void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
+void RenderingWidget::FrameFabAnalysis(
+	double Wl, double Wp, double Wa, 
+	bool terminal_output, bool file_output
+	)
 {
-	QString dirname = QFileDialog::getExistingDirectory(
-		this, 
-		tr("Result Directory"),
-		last_result_dir_,
-		QFileDialog::ShowDirsOnly
-		| QFileDialog::DontResolveSymlinks
-	);
-
-	if (dirname.isEmpty())
-	{
-		emit(operatorInfo(QString("Read Directory Failed!")));
-		return;
-	}
-
-	last_result_dir_ = dirname;
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray bydirname = dirname.toLocal8Bit();
-
-	
 	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
 
-	delete ptr_fiberprint_; 
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+	if (file_output)
+	{
+		QString dirname = QFileDialog::getExistingDirectory(
+			this,
+			tr("Result Directory"),
+			last_result_dir_,
+			QFileDialog::ShowDirsOnly
+			| QFileDialog::DontResolveSymlinks
+			);
+
+		if (dirname.isEmpty())
+		{
+			emit(operatorInfo(QString("Read Directory Failed!")));
+			return;
+		}
+
+		last_result_dir_ = dirname;
+
+		// compatible with paths in chinese
+		QTextCodec *code = QTextCodec::codecForName("gd18030");
+		QTextCodec::setCodecForLocale(code);
+		QByteArray bydirname = dirname.toLocal8Bit();
+
+		delete ptr_fiberprint_;
+		ptr_fiberprint_ = new FiberPrintPlugIn(
+			ptr_frame_, ptr_parm, bydirname.data(), 
+			terminal_output, file_output
+			);
+	}
+	else
+	{
+		delete ptr_fiberprint_;
+		ptr_fiberprint_ = new FiberPrintPlugIn(
+			ptr_frame_, ptr_parm, NULL, 
+			terminal_output, file_output
+			);
+	}
 
 	ptr_fiberprint_->FrameFabPrint();
-	//ptr_fiberprint_->BruteForcePrint();
-	//ptr_fiberprint_->SweepingPrint();
-	//ptr_fiberprint_->OneLayerPrint();
-	//ptr_fiberprint_->GetDeformation();
 
 	InitInfoData(
 		ptr_frame_->SizeOfVertList(), ptr_frame_->SizeOfEdgeList() / 2,
@@ -1213,33 +1225,51 @@ void RenderingWidget::FiberPrintAnalysis(double Wl, double Wp, double Wa)
 	);
 }
 
-void RenderingWidget::CutAnalysis(double Wl, double Wp, double Wa)
+void RenderingWidget::CutAnalysis(
+	double Wl, double Wp, double Wa,
+	bool terminal_output, bool file_output
+	)
 {
-	QString dirname = QFileDialog::getExistingDirectory(
-		this,
-		tr("Result Directory"),
-		last_result_dir_,
-		QFileDialog::ShowDirsOnly
-		| QFileDialog::DontResolveSymlinks
-		);
-
-	if (dirname.isEmpty())
-	{
-		emit(operatorInfo(QString("Read Directory Failed!")));
-		return;
-	}
-
-	last_result_dir_ = dirname;
-
-	// compatible with paths in chinese
-	QTextCodec *code = QTextCodec::codecForName("gd18030");
-	QTextCodec::setCodecForLocale(code);
-	QByteArray bydirname = dirname.toLocal8Bit();
-
+	QByteArray bydirname = NULL;
 	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
 
-	delete ptr_fiberprint_;
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+	if (file_output)
+	{
+		QString dirname = QFileDialog::getExistingDirectory(
+			this,
+			tr("Result Directory"),
+			last_result_dir_,
+			QFileDialog::ShowDirsOnly
+			| QFileDialog::DontResolveSymlinks
+			);
+
+		if (dirname.isEmpty())
+		{
+			emit(operatorInfo(QString("Read Directory Failed!")));
+			return;
+		}
+
+		last_result_dir_ = dirname;
+
+		// compatible with paths in chinese
+		QTextCodec *code = QTextCodec::codecForName("gd18030");
+		QTextCodec::setCodecForLocale(code);
+		bydirname = dirname.toLocal8Bit();
+
+		delete ptr_fiberprint_;
+		ptr_fiberprint_ = new FiberPrintPlugIn(
+			ptr_frame_, ptr_parm, bydirname.data(),
+			terminal_output, file_output
+			);
+	}
+	else
+	{
+		delete ptr_fiberprint_;
+		ptr_fiberprint_ = new FiberPrintPlugIn(
+			ptr_frame_, ptr_parm, NULL,
+			terminal_output, file_output
+			);
+	}
 
 	ptr_fiberprint_->GetFrameFabCut();
 
@@ -1316,7 +1346,7 @@ void RenderingWidget::DeformationAnalysis(double Wl, double Wp, double Wa)
 	FiberPrintPARM *ptr_parm = new FiberPrintPARM(Wl, Wp, Wa);
 
 	delete ptr_fiberprint_;
-	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data());
+	ptr_fiberprint_ = new FiberPrintPlugIn(ptr_frame_, ptr_parm, bydirname.data(), false, true);
 
 	ptr_fiberprint_->GetDeformation();
 

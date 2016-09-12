@@ -159,8 +159,8 @@ public slots:
 			);
 	void	ScaleFrame(double scale);
 
-	void	FiberPrintAnalysis(double Wl, double Wp, double Wa);
-	void	CutAnalysis(double Wl, double Wp, double Wa);
+	void	FrameFabAnalysis(double Wl, double Wp, double Wa, bool terminal_output, bool file_output);
+	void	CutAnalysis(double Wl, double Wp, double Wa, bool terminal_output, bool file_output);
 	void	OneLayerAnalysis(double Wl, double Wp, double Wa);
 	void	DeformationAnalysis(double Wl, double Wp, double Wa);
 
@@ -200,8 +200,8 @@ signals:
 
 public:
 	MainWindow		*ptr_mainwindow_;
-	CArcBall				*ptr_arcball_;
-	WireFrame			*ptr_frame_;
+	CArcBall		*ptr_arcball_;
+	WireFrame		*ptr_frame_;
 
 private:
 	QString			last_file_dir_;

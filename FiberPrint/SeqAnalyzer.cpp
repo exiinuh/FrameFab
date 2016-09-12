@@ -16,9 +16,8 @@ SeqAnalyzer::SeqAnalyzer()
 
 	Nd_ = 0;
 
-	debug_ = false;
-	detail_timing_ = false;
-	fileout_ = false;
+	terminal_output_ = false;
+	file_output_ = false;
 }
 
 
@@ -27,7 +26,9 @@ SeqAnalyzer::SeqAnalyzer(
 	QuadricCollision	*ptr_collision,
 	Stiffness			*ptr_stiffness,
 	FiberPrintPARM		*ptr_parm,
-	char				*ptr_path
+	char				*ptr_path,
+	bool				terminal_output,
+	bool				file_output
 	)
 {
 	ptr_frame_ = ptr_dualgraph->ptr_frame_;
@@ -45,9 +46,8 @@ SeqAnalyzer::SeqAnalyzer(
 
 	Nd_ = 0;
 
-	debug_ = false;
-	detail_timing_ = false;
-	fileout_ = false;
+	terminal_output_ = terminal_output;
+	file_output_ = file_output;
 }
 
 
@@ -114,7 +114,7 @@ void SeqAnalyzer::PrintPillars()
 		print_queue_.push_back(it->second);
 	}
 
-	if (debug_)
+	if (terminal_output_)
 	{
 		fprintf(stderr, "Size of base queue: %d\n", base_queue.size());
 	}
@@ -133,7 +133,7 @@ void SeqAnalyzer::PrintPillars()
 
 void SeqAnalyzer::UpdateStructure(WF_edge *e)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		upd_struct_.Start();
 	}
@@ -181,7 +181,7 @@ void SeqAnalyzer::UpdateStructure(WF_edge *e)
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		upd_struct_.Stop();
 	}
@@ -190,7 +190,7 @@ void SeqAnalyzer::UpdateStructure(WF_edge *e)
 
 void SeqAnalyzer::RecoverStructure(WF_edge *e)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		rec_struct_.Start();
 	}
@@ -209,7 +209,7 @@ void SeqAnalyzer::RecoverStructure(WF_edge *e)
 		D0_.conservativeResize(6 * Ns);
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		rec_struct_.Stop();
 	}
@@ -218,7 +218,7 @@ void SeqAnalyzer::RecoverStructure(WF_edge *e)
 
 void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		upd_map_.Start();
 	}
@@ -230,7 +230,7 @@ void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_ma
 		WF_edge * target_e = ptr_frame_->GetEdge(ptr_wholegraph_->e_orig_id(dual_j));
 		if (dual_i != dual_j && !ptr_dualgraph_->isExistingEdge(target_e))
 		{
-			if (detail_timing_)
+			if (terminal_output_)
 			{
 				upd_map_collision_.Start();
 			}
@@ -238,7 +238,7 @@ void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_ma
 			vector<lld> tmp(3);
 			ptr_collision_->DetectCollision(target_e, order_e, tmp);
 
-			if (detail_timing_)
+			if (terminal_output_)
 			{
 				upd_map_collision_.Stop();
 			}
@@ -251,7 +251,7 @@ void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_ma
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		upd_map_.Stop();
 	}
@@ -260,7 +260,7 @@ void SeqAnalyzer::UpdateStateMap(WF_edge *order_e, vector<vector<lld>> &state_ma
 
 void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_map)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		rec_map_.Start();
 	}
@@ -281,7 +281,7 @@ void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_m
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		rec_map_.Stop();
 	}
@@ -290,7 +290,7 @@ void SeqAnalyzer::RecoverStateMap(WF_edge *order_e, vector<vector<lld>> &state_m
 
 bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		test_stiff_.Start();
 	}
@@ -332,7 +332,7 @@ bool SeqAnalyzer::TestifyStiffness(WF_edge *e)
 	/* remove the trail edge */
 	RecoverStructure(e);
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		test_stiff_.Stop();
 	}

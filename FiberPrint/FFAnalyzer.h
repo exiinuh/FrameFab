@@ -70,10 +70,12 @@ public:
 		QuadricCollision	*ptr_collision,
 		Stiffness			*ptr_stiffness,
 		FiberPrintPARM		*ptr_parm,
-		char				*ptr_path
+		char				*ptr_path,
+		bool				terminal_output = false, 
+		bool				file_output = false
 		)
 		:SeqAnalyzer(ptr_dualgraph, ptr_collision, ptr_stiffness,
-		ptr_parm, ptr_path){}
+		ptr_parm, ptr_path, terminal_output, file_output){}
 	~FFAnalyzer();
 
 public:
@@ -81,7 +83,7 @@ public:
 
 private:
 	bool			GenerateSeq(int l, int h, int t);
-	double		GenerateCost(WF_edge *ei, WF_edge *ej);
+	double			GenerateCost(WF_edge *ei, WF_edge *ej);
 
 public:
 	void			PrintOutTimer();

@@ -91,8 +91,14 @@ void MainWindow::CreateActions()
 	action_background_ = new QAction(tr("Change background"), this);
 	connect(action_background_, SIGNAL(triggered()), renderingwidget_, SLOT(SetBackground()));
 
-	action_about_ = new QAction(tr("About"), this);
-	connect(action_about_, SIGNAL(triggered()), this, SLOT(ShowAbout()));
+	//action_about_ = new QAction(tr("About"), this);
+	//connect(action_about_, SIGNAL(triggered()), this, SLOT(ShowAbout()));
+
+	action_terminal_ = new QAction(tr("Terminal Output"), this);
+	action_terminal_->setCheckable(true);
+
+	action_file_ = new QAction(tr("File Output"), this);
+	action_file_->setCheckable(true);
 }
 
 
@@ -113,9 +119,10 @@ void MainWindow::CreateMenus()
 	menu_display_->setStatusTip(tr("Display settings"));
 	menu_display_->addAction(action_background_);
 
-	//menu_help_ = menuBar()->addMenu(tr("&Help"));
-	//menu_help_->setStatusTip(tr("Help"));
-	//menu_help_->addAction(action_about_);
+	menu_debug_ = menuBar()->addMenu(tr("&Debug"));
+	menu_debug_->setStatusTip(tr("Debug"));
+	menu_debug_->addAction(action_terminal_);
+	menu_debug_->addAction(action_file_);
 }
 
 
@@ -325,21 +332,21 @@ void MainWindow::CreatePushButtons()
 	pushbutton_nextlayer_->setFixedSize(35, 20);
 	connect(pushbutton_nextlayer_, SIGNAL(clicked()), renderingwidget_, SLOT(PrintNextLayer()));
 
-	pushbutton_fiberprint_ = new QPushButton(tr("FrameFab Print"), this);
-	pushbutton_fiberprint_->setFixedSize(140, 35);
-	connect(pushbutton_fiberprint_, SIGNAL(clicked()), this, SLOT(GetFiberParas()));
+	pushbutton_framefabprint_ = new QPushButton(tr("FrameFab Print"), this);
+	pushbutton_framefabprint_->setFixedSize(140, 35);
+	connect(pushbutton_framefabprint_, SIGNAL(clicked()), this, SLOT(GetFrameFabParas()));
 	connect(this, 
-		SIGNAL(SendFiberParas(double, double, double)), 
+		SIGNAL(SendFrameFabParas(double, double, double, bool, bool)),
 		renderingwidget_, 
-		SLOT(FiberPrintAnalysis(double, double, double)));
+		SLOT(FrameFabAnalysis(double, double, double, bool, bool)));
 
 	pushbutton_framefabcut_ = new QPushButton(tr("FrameFab Cut"), this);
 	pushbutton_framefabcut_->setFixedSize(140, 35);
 	connect(pushbutton_framefabcut_, SIGNAL(clicked()), this, SLOT(GetFrameFabCutParas()));
 	connect(this,
-		SIGNAL(SendFrameFabCutParas(double, double, double)),
+		SIGNAL(SendFrameFabCutParas(double, double, double, bool, bool)),
 		renderingwidget_,
-		SLOT(CutAnalysis(double, double, double)));
+		SLOT(CutAnalysis(double, double, double, bool, bool)));
 
 	//pushbutton_deformation_ = new QPushButton(tr("Deformation"), this);
 	//pushbutton_deformation_->setFixedSize(140, 35);
@@ -470,7 +477,7 @@ void MainWindow::CreateGroups()
 	groupbox_fiber_ = new QGroupBox(tr("Fiber"), this);
 	groupbox_fiber_->setFlat(true);
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
-	fiber_layout->addWidget(pushbutton_fiberprint_);
+	fiber_layout->addWidget(pushbutton_framefabprint_);
 	fiber_layout->addWidget(pushbutton_framefabcut_);
 	//fiber_layout->addWidget(pushbutton_deformation_);
 	fiber_layout->addWidget(toolbutton_choosebase_);
@@ -614,12 +621,15 @@ void MainWindow::ChooseSubGClicked(bool down)
 }
 
 
-void MainWindow::GetFiberParas()
+void MainWindow::GetFrameFabParas()
 {
-	emit(SendFiberParas(
+	emit(SendFrameFabParas(
 		spinbox_wp_->value(),
 		spinbox_wa_->value(),
-		spinbox_wi_->value()));
+		spinbox_wi_->value(),
+		action_terminal_->isChecked(),
+		action_file_->isChecked()
+		));
 }
 
 void MainWindow::GetFrameFabCutParas()
@@ -627,7 +637,10 @@ void MainWindow::GetFrameFabCutParas()
 	emit(SendFrameFabCutParas(
 		spinbox_wp_->value(),
 		spinbox_wa_->value(),
-		spinbox_wi_->value()));
+		spinbox_wi_->value(),
+		action_terminal_->isChecked(),
+		action_file_->isChecked()
+		));
 }
 
 void MainWindow::GetOneLayerSearchParas()

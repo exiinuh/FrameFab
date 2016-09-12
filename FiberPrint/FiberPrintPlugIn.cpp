@@ -14,16 +14,24 @@ FiberPrintPlugIn::FiberPrintPlugIn()
 
 	ptr_path_ = NULL;
 	ptr_parm_ = NULL;
+
+	terminal_output_ = false;
+	file_output_ = false;
 }
 
 
-FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame, 
-	FiberPrintPARM *ptr_parm, char *ptr_path)
+FiberPrintPlugIn::FiberPrintPlugIn(
+	WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path,
+	bool terminal_output, bool file_output
+	)
 {
 	ptr_frame_ = ptr_frame;
 	ptr_dualgraph_ = new DualGraph(ptr_frame);
 	ptr_collision_ = new QuadricCollision(ptr_frame);
-	ptr_stiffness_ = new Stiffness(ptr_dualgraph_, ptr_parm, ptr_path);
+	ptr_stiffness_ = new Stiffness(
+		ptr_dualgraph_, ptr_parm, 
+		ptr_path, terminal_output
+		);
 
 	ptr_graphcut_ = NULL;
 	ptr_seqanalyzer_ = NULL;
@@ -31,6 +39,9 @@ FiberPrintPlugIn::FiberPrintPlugIn(WireFrame *ptr_frame,
 
 	ptr_path_ = ptr_path;
 	ptr_parm_ = ptr_parm;
+
+	terminal_output_ = terminal_output;
+	file_output_ = file_output;
 }
 
 
@@ -83,7 +94,9 @@ void FiberPrintPlugIn::FrameFabPrint()
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 
 	ptr_seqanalyzer_ = new FFAnalyzer(
@@ -91,7 +104,9 @@ void FiberPrintPlugIn::FrameFabPrint()
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 	//ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
 	
@@ -121,12 +136,14 @@ void FiberPrintPlugIn::BruteForcePrint()
 
 	Init();
 
-	ptr_seqanalyzer_ = new BFAnalyzer(
+	ptr_seqanalyzer_ = new FFAnalyzer(
 		ptr_dualgraph_,
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 
 	if (!ptr_seqanalyzer_->SeqPrint())
@@ -155,7 +172,9 @@ void FiberPrintPlugIn::SweepingPrint()
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 
 	ptr_graphcut_->MakeLayers();
@@ -183,7 +202,9 @@ void FiberPrintPlugIn::OneLayerPrint()
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 
 	ptr_procanalyzer_ = new ProcAnalyzer(ptr_seqanalyzer_, ptr_path_);
@@ -211,15 +232,9 @@ void FiberPrintPlugIn::GetFrameFabCut()
 		ptr_collision_,
 		ptr_stiffness_,
 		ptr_parm_,
-		ptr_path_
-		);
-
-	ptr_seqanalyzer_ = new FFAnalyzer(
-		ptr_dualgraph_,
-		ptr_collision_,
-		ptr_stiffness_,
-		ptr_parm_,
-		ptr_path_
+		ptr_path_,
+		terminal_output_,
+		file_output_
 		);
 
 	ptr_graphcut_->MakeLayers();
@@ -240,7 +255,7 @@ void FiberPrintPlugIn::GetDeformation()
 
 	VX D;
 	ptr_stiffness_->Init();
-	ptr_stiffness_->CalculateD(D, NULL, true, false, true, 0, "FiberTest");
+	ptr_stiffness_->CalculateD(D, NULL, false, 0, "FiberTest");
 }
 
 

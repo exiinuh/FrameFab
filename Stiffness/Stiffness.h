@@ -84,7 +84,10 @@ public:
 public:
 	Stiffness();
 	Stiffness(DualGraph *ptr_dualgraph);
-	Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path);
+	Stiffness(
+		DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path = NULL, 
+		bool terminal_output = false, bool file_output = false
+		);
 	~Stiffness();
 
 public:
@@ -98,7 +101,7 @@ public:
 	bool CalculateD(
 		VX &D,
 		VX *ptr_x = NULL,
-		bool verbose = false, bool cond_num = false, bool write_3dd = false,
+		bool cond_num = false, 
 		int file_id = 0, string file_name = ""
 		);
 
@@ -107,27 +110,19 @@ public:
 		VX &D, 
 		VX &D0,						// D0 is the last result
 		VX *ptr_x = NULL,
-		bool verbose = false, bool cond_num = false, bool write_3dd = false,
+		bool cond_num = false,
 		int file_id = 0, string file_name = ""
 		);
 
 	/* Check condition number */
-	bool CheckIllCondition(
-		IllCondDetector &stiff_inspector, 
-		bool verbose = false
-		);
-	bool CheckError(
-		IllCondDetector &stiff_inspector,
-		VX &D, 
-		bool verbose = false
-		);
+	bool CheckIllCondition(IllCondDetector &stiff_inspector);
+	bool CheckError(IllCondDetector &stiff_inspector, VX &D);
 
 	/* Write to file */
 	void WriteData(
 		VectorXd &D, 
 		int id = 0, 
-		string fname = "stiff_data",
-		bool verbose = false
+		string fname = "stiff_data"
 		);
 
 	/* Data I/O */
@@ -174,7 +169,7 @@ public:
 	Timer			check_ill_;
 	Timer			check_error_;
 
-	/* Timing Stat */
-	bool				detailed_timing_;
+	bool			terminal_output_;
+	bool			file_output_;
 };
 #endif

@@ -62,7 +62,9 @@ public:
 		QuadricCollision	*ptr_collision,
 		Stiffness			*ptr_stiffness,
 		FiberPrintPARM		*ptr_parm,
-		char				*ptr_path
+		char				*ptr_path,
+		bool				terminal_output = false,
+		bool				file_output = false
 		);
 	virtual ~SeqAnalyzer();
 
@@ -108,9 +110,8 @@ protected:
 	double				Wi_;								// Wl_		: influence weight for printing cost
 
 	/* for debuging */
-	bool				debug_;
-	bool				detail_timing_;					// 1: verbose detailed timing for each computing sesseion; 0: only total runtime
-	bool				fileout_;
+	bool				terminal_output_;
+	bool				file_output_;
 
 	Timer				upd_struct_;
 	Timer				rec_struct_;
