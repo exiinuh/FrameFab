@@ -642,7 +642,7 @@ void WireFrame::ExportPoints(int min_layer, int max_layer, const char *path)
 			//fprintf(fp, "%lf %lf %lf\n", u.x() / 125.0, u.y() / 125.0, u.z() / 125.0);
 
 			point u = (*pvert_list_)[i]->RenderPos();
-			fprintf(fp, "%lf %lf %lf\n", u.x(), u.y(), u.z());
+			fprintf(fp, "%lf %lf %lf\r\n", u.x(), u.y(), u.z());
 		}
 	}
 
@@ -676,7 +676,7 @@ void WireFrame::ExportLines(int min_layer, int max_layer, const char *path)
 
 			point u = e2->pvert_->RenderPos();
 			point v = e1->pvert_->RenderPos();
-			fprintf(fp, "%lf %lf %lf %lf %lf %lf\n",
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf\r\n",
 				u.x(), u.y(), u.z(), v.x(), v.y(), v.z());
 		}
 	}

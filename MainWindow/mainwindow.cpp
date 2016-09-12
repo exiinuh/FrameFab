@@ -341,13 +341,13 @@ void MainWindow::CreatePushButtons()
 		renderingwidget_,
 		SLOT(CutAnalysis(double, double, double)));
 
-	pushbutton_onelayersearch_ = new QPushButton(tr("One Layer Search"), this);
-	pushbutton_onelayersearch_->setFixedSize(140, 35);
-	connect(pushbutton_onelayersearch_, SIGNAL(clicked()), this, SLOT(GetOneLayerSearchParas()));
+	pushbutton_deformation_ = new QPushButton(tr("Deformation"), this);
+	pushbutton_deformation_->setFixedSize(140, 35);
+	connect(pushbutton_deformation_, SIGNAL(clicked()), this, SLOT(GetDeformParas()));
 	connect(this,
-		SIGNAL(SendOneLayerSearchParas(double, double, double)),
+		SIGNAL(SendDeformParas(double, double, double)),
 		renderingwidget_,
-		SLOT(OneLayerAnalysis(double, double, double)));
+		SLOT(DeformationAnalysis(double, double, double)));
 
 	pushbutton_project_ = new QPushButton(tr("Project"), this);
 	pushbutton_project_->setFixedSize(140, 35);
@@ -472,7 +472,7 @@ void MainWindow::CreateGroups()
 	QVBoxLayout *fiber_layout = new QVBoxLayout(groupbox_fiber_);
 	fiber_layout->addWidget(pushbutton_fiberprint_);
 	fiber_layout->addWidget(pushbutton_framefabcut_);
-	fiber_layout->addWidget(pushbutton_onelayersearch_);
+	fiber_layout->addWidget(pushbutton_deformation_);
 	fiber_layout->addWidget(toolbutton_choosebase_);
 	fiber_layout->addWidget(toolbutton_chooseb_ceiling_);
 	fiber_layout->addWidget(pushbutton_project_);

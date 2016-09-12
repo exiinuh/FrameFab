@@ -199,7 +199,7 @@ private:
 	QPushButton			*pushbutton_nextlayer_;
 	QPushButton			*pushbutton_fiberprint_;
 	QPushButton			*pushbutton_framefabcut_;
-	QPushButton			*pushbutton_onelayersearch_;
+	QPushButton			*pushbutton_deformation_;
 	QPushButton			*pushbutton_project_;
 	QPushButton			*pushbutton_rightarrow_;
 	QPushButton			*pushbutton_leftarrow_;
