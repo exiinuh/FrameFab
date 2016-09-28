@@ -18,7 +18,9 @@ ADMMCut::ADMMCut(
 	QuadricCollision	*ptr_collision,
 	Stiffness			*ptr_stiffness,
 	FiberPrintPARM		*ptr_parm,
-	char				*ptr_path
+	char				*ptr_path,
+	bool				terminal_output,
+	bool				file_output
 	)
 {
 	ptr_frame_ = ptr_dualgraph->ptr_frame_;
@@ -33,6 +35,9 @@ ADMMCut::ADMMCut(
 	penalty_ = ptr_parm->penalty_;
 	pri_tol_ = ptr_parm->pri_tol_;
 	dual_tol_ = ptr_parm->dual_tol_;
+	
+	terminal_output_ = terminal_output;
+	file_output_ = file_output;
 }
 
 
@@ -83,7 +88,7 @@ void ADMMCut::MakeLayers()
 
 			do
 			{
-				if (debug_)
+				if (terminal_output_)
 				{
 					fprintf(stderr, "---------------------------------------\n");
 					fprintf(stderr, "Cut round: %d\nReweight iteration: %d\nADMM round: %d\n",
@@ -130,7 +135,7 @@ void ADMMCut::MakeLayers()
 				Q_ = Q_new;
 				/*-------------------Screenplay-------------------*/
 
-				if (debug_)
+				if (terminal_output_)
 				{
 					fprintf(stderr, "Dual residual: %lf\nPrimal residual: %lf\n",
 						dual_res_, primal_res_);
@@ -143,13 +148,13 @@ void ADMMCut::MakeLayers()
 			/* Output energy and residual */
 			/*-------------------Screenplay-------------------*/
 			/* write x distribution to a file */
-			if (output_stat_)
+			if (file_output_)
 			{
 				double res_tmp = primal_res_;
 				res_energy.push_back(res_tmp);
 
 				string str_x = "Cut_" + to_string(cut_round_) + "_Rew_" + to_string(reweight_round_) + "_x";
-				Statistics tmp_x(str_x, x_);
+				Statistics tmp_x(str_x, x_, ptr_path_);
 				tmp_x.GenerateVectorFile();
 
 				/* calculate original objective function value */
@@ -197,14 +202,14 @@ void ADMMCut::MakeLayers()
 			reweight_round_++;
 		} while (!UpdateR(x_prev));
 
-		if (output_stat_)
+		if (file_output_)
 		{
 			string str_eR = "Cut_" + to_string(cut_round_) + "_Res_Energy";
-			Statistics s_eR(str_eR, res_energy);
+			Statistics s_eR(str_eR, res_energy, ptr_path_);
 			s_eR.GenerateStdVecFile();
 
 			string str_eC = "Cut_" + to_string(cut_round_) + "_Cut_Energy";
-			Statistics s_eC(str_eC, cut_energy);
+			Statistics s_eC(str_eC, cut_energy, ptr_path_);
 			s_eC.GenerateStdVecFile();
 		}
 
@@ -224,7 +229,7 @@ void ADMMCut::MakeLayers()
 
 void ADMMCut::InitState()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		init_state_.Start();
 	}
@@ -260,7 +265,7 @@ void ADMMCut::InitState()
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		init_state_.Stop();
 	}
@@ -269,7 +274,7 @@ void ADMMCut::InitState()
 
 void ADMMCut::InitWeight()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		init_weight_.Start();
 	}
@@ -316,7 +321,7 @@ void ADMMCut::InitWeight()
 
 	weight_.setFromTriplets(weight_list.begin(), weight_list.end());
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		init_weight_.Stop();
 	}
@@ -325,7 +330,7 @@ void ADMMCut::InitWeight()
 
 void ADMMCut::SetStartingPoints()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		set_startpoint_.Start();
 	}
@@ -362,7 +367,7 @@ void ADMMCut::SetStartingPoints()
 	a_.setZero();
 
 	//ptr_stiffness_->Debug();
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		set_startpoint_.Stop();
 	}
@@ -371,7 +376,7 @@ void ADMMCut::SetStartingPoints()
 
 void ADMMCut::SetBoundary()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		set_bound_.Start();
 	}
@@ -437,7 +442,7 @@ void ADMMCut::SetBoundary()
 	}
 	W_.setFromTriplets(W_list.begin(), W_list.end());
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		set_bound_.Stop();
 	}
@@ -445,7 +450,7 @@ void ADMMCut::SetBoundary()
 
 void ADMMCut::CreateA()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		create_a_.Start();
 	}
@@ -466,7 +471,7 @@ void ADMMCut::CreateA()
 
 	H1_ = A_.transpose() * A_;
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		create_a_.Stop();
 	}
@@ -474,7 +479,7 @@ void ADMMCut::CreateA()
 
 void ADMMCut::CalculateX()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_x_.Start();
 	}
@@ -501,20 +506,16 @@ void ADMMCut::CalculateX()
 	// top-down constraints
 	// x_i = 0, while strut i belongs to the top
 	// x_i = 1, while strut i belongs to the bottom
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_qp_.Start();
 	}
 
 	ptr_qp_->solve(H, a_, W_, d_, x_, false);
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
-		cal_qp_.Stop();
-	}
-
-	if (detail_timing_)
-	{
+		cal_qp_.Stop();	
 		cal_x_.Stop();
 	}
 }
@@ -522,7 +523,7 @@ void ADMMCut::CalculateX()
 
 void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_q_.Start();
 	}
@@ -595,7 +596,7 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 
 	Q.setFromTriplets(Q_list.begin(), Q_list.end());
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_q_.Stop();
 	}
@@ -604,7 +605,7 @@ void ADMMCut::CalculateQ(const VX _D, SpMat &Q)
 
 void ADMMCut::CalculateD()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_d_.Start();
 	}
@@ -645,19 +646,19 @@ void ADMMCut::CalculateD()
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_qp_.Start();
 	}
 
 	ptr_qp_->solve(Q, a, D_, D_w, D_tol_, false);
 	
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_qp_.Stop();
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_d_.Stop();
 	}
@@ -666,7 +667,7 @@ void ADMMCut::CalculateD()
 
 void ADMMCut::CalculateY()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_y_.Start();
 	}
@@ -766,7 +767,7 @@ void ADMMCut::CalculateY()
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		cal_y_.Stop();
 	}
@@ -775,7 +776,7 @@ void ADMMCut::CalculateY()
 
 void ADMMCut::UpdateLambda()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_lambda_.Start();
 	}
@@ -792,7 +793,7 @@ void ADMMCut::UpdateLambda()
 
 	primal_res_ = (tmp_stiff).norm() + (tmp_y).norm();
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_lambda_.Stop();
 	}
@@ -801,7 +802,7 @@ void ADMMCut::UpdateLambda()
 
 void ADMMCut::UpdateCut()
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_cut_.Start();
 	}
@@ -853,7 +854,7 @@ void ADMMCut::UpdateCut()
 		}
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_cut_.Stop();
 	}
@@ -862,7 +863,7 @@ void ADMMCut::UpdateCut()
 
 bool ADMMCut::UpdateR(VX &x_prev)
 {
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_r_.Start();
 	}
@@ -881,7 +882,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		//int_diff += min(abs(x_[i] - 0), abs(x_[i] - 1));
 	}
 
-	if (output_stat_)
+	if (terminal_output_)
 	{
 		fprintf(stderr, "Max relative improvement: %lf\n", max_improv);
 	}
@@ -918,7 +919,7 @@ bool ADMMCut::UpdateR(VX &x_prev)
 		r_(dual_v, dual_u) = 1e-5 + weight_.coeff(v, u) * diffvu;
 	}
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		update_r_.Stop();
 	}
@@ -952,7 +953,7 @@ bool ADMMCut::CheckLabel()
 		}
 	}
 	
-	if (output_stat_)
+	if (terminal_output_)
 	{
 		fprintf(stderr, "Lower set edge(whole): %d(%d)\n", l, Nd_w_);
 	}
@@ -1007,7 +1008,7 @@ void ADMMCut::PrintOutTimer()
 	printf("***ADMMCut timer result:\n");
 	ADMM_cut_.Print("ADMMCut:");
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		init_state_.Print("InitState:");
 		init_weight_.Print("InitWeight:");

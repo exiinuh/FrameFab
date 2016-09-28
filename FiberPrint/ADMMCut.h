@@ -84,7 +84,9 @@ public:
 		QuadricCollision	*ptr_collision,
 		Stiffness			*ptr_stiffness,
 		FiberPrintPARM		*ptr_parm,
-		char				*ptr_path
+		char				*ptr_path,
+		bool				terminal_output = false, 
+		bool				file_output = false
 		);
 	~ADMMCut();
 

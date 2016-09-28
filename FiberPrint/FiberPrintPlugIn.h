@@ -57,8 +57,10 @@ public:
 
 public:
 	FiberPrintPlugIn();
-	FiberPrintPlugIn(WireFrame *ptr_frame, FiberPrintPARM *ptr_parm,
-						char *path);
+	FiberPrintPlugIn(
+		WireFrame *ptr_frame, FiberPrintPARM *ptr_parm, char *ptr_path = NULL, 
+		bool terminal_output = false, bool file_output = false
+		);
 	~FiberPrintPlugIn();
 
 public:
@@ -101,6 +103,9 @@ public:
 
 private:
 	Timer				fiber_print_;
+
+	bool				terminal_output_;
+	bool				file_output_;
 };
 
 #endif // FIBERPRINTPLUGIN_H

@@ -11,11 +11,11 @@ bool Statistics::UniqueFileName()
 	{
 		if (file_n == 0)
 		{
-			UniqueFullFileName = store_path_ + filename_;
+			UniqueFullFileName = store_path_ + "/" + filename_;
 		}
 		else
 		{
-			UniqueFullFileName = store_path_ + std::to_string(file_n) + filename_;
+			UniqueFullFileName = store_path_ + "/" + std::to_string(file_n) + filename_;
 		}
 		//UniqueFullFileName.c_str();
 		std::ifstream	iff(UniqueFullFileName);

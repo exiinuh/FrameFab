@@ -56,32 +56,38 @@ using namespace Eigen;
 class Statistics{
 public:
 	Statistics(){}
-	Statistics(std::string _name, Eigen::VectorXd _VX, int _iteration) :name_(_name),iteration_(_iteration)
+	Statistics(std::string _name, Eigen::VectorXd _VX, int _iteration, char *ptr_path = PATH) 
+		:name_(_name),iteration_(_iteration)
 	{
 		Vx_ = _VX;
-		store_path_ = PATH;
+		store_path_ = string(ptr_path);
 	}
-	Statistics(std::string _name, Eigen::VectorXd _VX) :name_(_name),iteration_(-1)
+	Statistics(std::string _name, Eigen::VectorXd _VX, char *ptr_path = PATH)
+		:name_(_name),iteration_(-1)
 	{
 		Vx_ = _VX;
-		store_path_ = PATH;
+		store_path_ = string(ptr_path);
 	}
 
-	Statistics(std::string _name, Eigen::SparseMatrix<double> SpMat) :name_(_name), iteration_(-1)
-	{ SpMat_ = SpMat; 
-	store_path_ = PATH;
+	Statistics(std::string _name, Eigen::SparseMatrix<double> SpMat, char *ptr_path = PATH)
+		:name_(_name), iteration_(-1)
+	{ 
+		SpMat_ = SpMat; 
+		store_path_ = string(ptr_path);
 	}
 	
-	Statistics(std::string _name, Eigen::MatrixXd Mat): name_(_name)
+	Statistics(std::string _name, Eigen::MatrixXd Mat, char *ptr_path = PATH)
+		: name_(_name)
 	{
 		denMat_ = Mat; 
-		store_path_ = PATH;
+		store_path_ = string(ptr_path);
 	}
 
-	Statistics(std::string _name, std::vector<double> _stdvec) : name_(_name), iteration_(-1)
+	Statistics(std::string _name, std::vector<double> _stdvec, char *ptr_path = PATH)
+		: name_(_name), iteration_(-1)
 	{
 		stdVec_ = _stdvec;
-		store_path_ = PATH;
+		store_path_ = string(ptr_path);
 	}
 	~Statistics(){}
 

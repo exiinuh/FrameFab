@@ -51,10 +51,12 @@ public:
 		QuadricCollision	*ptr_collision,
 		Stiffness			*ptr_stiffness,
 		FiberPrintPARM		*ptr_parm,
-		char				*ptr_path
+		char				*ptr_path,
+		bool				terminal_output = false,
+		bool				file_output = false
 		)
 		:SeqAnalyzer(ptr_dualgraph, ptr_collision, ptr_stiffness,
-		ptr_parm, ptr_path){}
+		ptr_parm, ptr_path, terminal_output, file_output){}
 	~BFAnalyzer();
 
 public:

@@ -102,8 +102,14 @@ protected:
 
 signals:
 	void	ChangeEdgeMode(int);
-	void	SendFiberParas(double, double, double);
-	void	SendFrameFabCutParas(double, double, double);
+	void	SendFrameFabParas(
+		double, double, double, 
+		bool, bool
+		);
+	void	SendFrameFabCutParas(
+		double, double, double, 
+		bool, bool
+		);
 	void	SendOneLayerSearchParas(double, double, double);
 	void	SendDeformParas(double, double, double);
 	void	SendProjectionParas(double);
@@ -127,7 +133,7 @@ public slots:
 	void	ChooseSubGClicked(bool down);
 
 	/* mode = 1: normal fiber rountine; mode = 0: deformation calculation*/
-	void	GetFiberParas();
+	void	GetFrameFabParas();
 	void	GetFrameFabCutParas();
 	void	GetOneLayerSearchParas();
 	void	GetDeformParas();
@@ -166,6 +172,7 @@ private:
 	QMenu				*menu_file_;
 	QMenu				*menu_display_;
 	//QMenu				*menu_help_;
+	QMenu				*menu_debug_;
 
 	QAction				*action_new_;
 	QAction				*action_open_;
@@ -176,8 +183,11 @@ private:
 
 	QAction				*action_background_;
 
-	QAction				*action_about_;
-	
+	//QAction				*action_about_;
+
+	QAction				*action_terminal_;
+	QAction				*action_file_;
+
 	// Labels
 	QLabel				*label_meshinfo_;
 	QLabel				*label_operatorinfo_;
@@ -239,7 +249,7 @@ private:
 	QPushButton			*pushbutton_nextedge_;
 	QPushButton			*pushbutton_lastlayer_;
 	QPushButton			*pushbutton_nextlayer_;
-	QPushButton			*pushbutton_fiberprint_;
+	QPushButton			*pushbutton_framefabprint_;
 	QPushButton			*pushbutton_framefabcut_;
 	//QPushButton			*pushbutton_deformation_;
 	QPushButton			*pushbutton_project_;

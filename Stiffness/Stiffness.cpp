@@ -3,7 +3,8 @@
 
 Stiffness::Stiffness()
 {
-	detailed_timing_ = false;
+	terminal_output_ = false;
+	file_output_ = false;
 }
 
 
@@ -14,11 +15,15 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph)
 
 	Init();
 
-	detailed_timing_ = false;
+	terminal_output_ = false;
+	file_output_ = false;
 }
 
 
-Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path)
+Stiffness::Stiffness(
+	DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *ptr_path,
+	bool terminal_output, bool file_output
+	)
 {
 	/* in use */
 	ptr_dualgraph_ = ptr_dualgraph;
@@ -37,7 +42,8 @@ Stiffness::Stiffness(DualGraph *ptr_dualgraph, FiberPrintPARM *ptr_parm, char *p
 
 	Init(); 
 
-	detailed_timing_ = false;
+	terminal_output_ = terminal_output;
+	file_output_ = file_output;
 }
 
 
@@ -57,7 +63,7 @@ void Stiffness::Init()
 
 void Stiffness::CreateFe()
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_fe_.Start();
 	}
@@ -105,7 +111,7 @@ void Stiffness::CreateFe()
 		Fe_[i] = Fei;
 	}
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_fe_.Stop();
 	}
@@ -114,7 +120,7 @@ void Stiffness::CreateFe()
 
 void Stiffness::CreateF(VX *ptr_x)
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_f_.Start();
 	}
@@ -156,7 +162,7 @@ void Stiffness::CreateF(VX *ptr_x)
 		}
 	}
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_f_.Stop();
 	}
@@ -165,7 +171,7 @@ void Stiffness::CreateF(VX *ptr_x)
 
 void Stiffness::CreateElasticK()
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_ek_.Start();
 	}
@@ -285,7 +291,7 @@ void Stiffness::CreateElasticK()
 		eK_[i] = eKuv;
 	}
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_ek_.Stop();
 	}
@@ -294,7 +300,7 @@ void Stiffness::CreateElasticK()
 
 void Stiffness::CreateGlobalK(VX *ptr_x)
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_k_.Start();
 	}
@@ -392,7 +398,7 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 	}
 	K_.setFromTriplets(K_list.begin(), K_list.end());
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		create_k_.Stop();
 	}
@@ -401,8 +407,7 @@ void Stiffness::CreateGlobalK(VX *ptr_x)
 
 bool Stiffness::CalculateD(
 	VX &D, VX *ptr_x, 
-	bool verbose, bool cond_num, bool write_3dd,
-	int file_id, string file_name
+	bool cond_num, int file_id, string file_name
 	)
 {
 	D.resize(6 * Ns_);
@@ -418,34 +423,34 @@ bool Stiffness::CalculateD(
 	/* --- Check Stiffness Matrix Condition Number --- */
 	if (cond_num)
 	{
-		if (!CheckIllCondition(stiff_inspector, verbose))
+		if (!CheckIllCondition(stiff_inspector))
 		{
 			return false;
 		}
 	}
 
 	/* --- Solving Process --- */
-	if (verbose)
+	if (terminal_output_)
 	{
 		fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
 	}
 	
-	if (!stiff_solver_.SolveSystem(K_, D, F_, verbose, info))
+	if (!stiff_solver_.SolveSystem(K_, D, F_, terminal_output_, info))
 	{
 		cout << "Stiffness Solver fail!\n" << endl;
 		return false;
 	}
 
 	/* --- Equilibrium Error Check --- */
-	if (!CheckError(stiff_inspector, D, verbose))
+	if (!CheckError(stiff_inspector, D))
 	{
 		return false;
 	}
 
 	/* --- Output Process --- */
-	if (write_3dd)
+	if (file_output_)
 	{
-		WriteData(D, file_id, file_name, verbose);
+		WriteData(D, file_id, file_name);
 	}
 
 	return true;
@@ -454,7 +459,7 @@ bool Stiffness::CalculateD(
 
 bool Stiffness::CalculateD(
 	VX &D, VX &D0, VX *ptr_x,
-	bool verbose, bool cond_num, bool write_3dd,
+	bool cond_num,
 	int file_id, string file_name
 	)
 {
@@ -468,44 +473,44 @@ bool Stiffness::CalculateD(
 	IllCondDetector	stiff_inspector(K_);
 	if (cond_num)
 	{
-		if (!CheckIllCondition(stiff_inspector, verbose))
+		if (!CheckIllCondition(stiff_inspector))
 		{
 			return false;
 		}
 	}
 
 	/* --- Solving Process --- */
-	if (verbose)
+	if (terminal_output_)
 	{
 		fprintf(stdout, "Stiffness : Linear Elastic Analysis ... Element Gravity Loads\n");
 	}
 
 	int	info;
-	if (!stiff_solver_.SolveSystem(K_, D, F_, D0, verbose, info))
+	if (!stiff_solver_.SolveSystem(K_, D, F_, D0, terminal_output_, info))
 	{
 		cout << "Stiffness Solver fail!\n" << endl;
 		return false;
 	}
 
 	/* --- Equilibrium Error Check --- */
-	if (!CheckError(stiff_inspector, D, verbose))
+	if (!CheckError(stiff_inspector, D))
 	{
 		return false;
 	}
 
 	/* --- Output Process --- */
-	if (write_3dd)
+	if (file_output_)
 	{
-		WriteData(D, file_id, file_name, verbose);
+		WriteData(D, file_id, file_name);
 	}
 
 	return true;
 }
 
 
-bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose)
+bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector)
 {	
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		check_ill_.Start();
 	}
@@ -516,7 +521,7 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose
 	printf("Condition Number = %9.3e\n", cond_num);
 	if (cond_num < MCOND_TOL)
 	{
-		if (verbose)
+		if (terminal_output_)
 		{
 			printf(" < tol = %7.1e\n", MCOND_TOL);
 			printf(" * Acceptable Matrix! *\n");
@@ -530,7 +535,7 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose
 		bSuccess = false;
 	}
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		check_ill_.Stop();
 	}
@@ -539,22 +544,22 @@ bool Stiffness::CheckIllCondition(IllCondDetector &stiff_inspector, bool verbose
 }
 
 
-bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose)
+bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D)
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		check_error_.Start();
 	}
 
 	bool bSuccess = true;
 	double error = stiff_inspector.EquilibriumError(K_, D, F_);
-	if (verbose)
+	if (terminal_output_)
 	{
 		printf("Root Mean Square (RMS) equilibrium error = %9.3e\n", error);
 	}
 	if (error < STIFF_TOL)
 	{
-		if (verbose)
+		if (terminal_output_)
 		{
 			printf(" < tol = %7.1e\n", STIFF_TOL);
 			printf(" * Converged *\n");
@@ -568,7 +573,7 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose
 		bSuccess = false;
 	}
 
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		check_error_.Stop();
 	}
@@ -577,7 +582,7 @@ bool Stiffness::CheckError(IllCondDetector &stiff_inspector, VX &D, bool verbose
 }
 
 
-void Stiffness::WriteData(VectorXd &D, int id, string fname, bool verbose)
+void Stiffness::WriteData(VectorXd &D, int id, string fname)
 {	
 	if (fname == "")
 	{
@@ -605,7 +610,7 @@ void Stiffness::WriteData(VectorXd &D, int id, string fname, bool verbose)
 	double  exagg_static = 5;
 	float	scale = 1;
 
-	stiff_io_.WriteInputData(fpath.c_str(), ptr_dualgraph_, ptr_parm_, verbose);
+	stiff_io_.WriteInputData(fpath.c_str(), ptr_dualgraph_, ptr_parm_, terminal_output_);
 	stiff_io_.GnuPltStaticMesh(fpath.c_str(), meshpath.c_str(), plotpath.c_str(),
 		D_joined, exagg_static, scale, ptr_dualgraph_, ptr_dualgraph_->ptr_frame_);
 }
@@ -699,7 +704,7 @@ VectorXd Stiffness::Fe(int ei)
 
 void Stiffness::PrintOutTimer()
 {
-	if (detailed_timing_)
+	if (terminal_output_)
 	{
 		printf("***Stiffness timer result:\n");
 		stiff_solver_.compute_k_.Print("ComputeK:");

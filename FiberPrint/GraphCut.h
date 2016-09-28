@@ -69,8 +69,7 @@ public:
 
 protected:
 	/* for debuging */
-	bool			debug_;
-	bool			detail_timing_;	// 1: verbose detailed timing for each computing sesseion; 0: only total runtime
-	bool			output_stat_;	// 1: turn on output stat	0: turn off
+	bool			terminal_output_;
+	bool			file_output_;
 };
 

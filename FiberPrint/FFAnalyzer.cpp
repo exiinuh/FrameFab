@@ -110,7 +110,7 @@ bool FFAnalyzer::SeqPrint()
 		//getchar();
 	}
 
-	if (fileout_)
+	if (file_output_)
 	{
 		//WriteLayerQueue();
 		//WriteRenderPath();
@@ -127,7 +127,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 	assert(h != 0);						// there must be pillars
 	WF_edge *ei = print_queue_[h - 1];
 
-	if (debug_)
+	if (terminal_output_)
 	{
 		fprintf(stderr, "-----------------------------------\n");
 		fprintf(stderr, "Searching edge #%d in layer %d, head %d, tail %d\n",
@@ -172,7 +172,7 @@ bool FFAnalyzer::GenerateSeq(int l, int h, int t)
 		vector<vector<lld>> tmp_angle(3);
 		UpdateStateMap(ej, tmp_angle);
 
-		if (debug_)
+		if (terminal_output_)
 		{
 			fprintf(stderr, "Choose edge #%d in with cost %lf\n\n", ej->ID() / 2, it->first);
 		}
@@ -201,7 +201,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		double  A = 0;							// adjacency weight
 		double	I = 0;							// influence weight
 
-		if (debug_)
+		if (terminal_output_)
 		{
 			fprintf(stderr, "Attempting edge #%d\n",
 				orig_j / 2, ej->Layer() + 1, print_queue_.size());
@@ -217,7 +217,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		if (exist_uj && exist_vj)
 		{
 			/* edge j share two ends with printed structure */
-			if (debug_)
+			if (terminal_output_)
 			{
 				fprintf(stderr, "It shares two ends with printed structure\n");
 			}
@@ -227,7 +227,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		if (exist_uj || exist_vj)
 		{
 			/* edge j share one end with printed structure */
-			if (debug_)
+			if (terminal_output_)
 			{
 				fprintf(stderr, "It shares only one ends with printed structure\n");
 			}
@@ -247,7 +247,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		}
 		else
 		{
-			if (debug_)
+			if (terminal_output_)
 			{
 				fprintf(stderr, "It floats, skip\n\n");
 			}
@@ -258,7 +258,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		int free_angle = ptr_collision_->ColFreeAngle(angle_state_[dual_j]);
 		if (free_angle == 0)
 		{
-			if (debug_)
+			if (terminal_output_)
 			{
 				fprintf(stderr, "...collision examination failed at edge #%d.\n\n", ej->ID() / 2);
 			}
@@ -269,7 +269,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		if (!TestifyStiffness(ej))
 		{
 			/* examination failed */
-			if (debug_)
+			if (terminal_output_)
 			{
 				fprintf(stderr, "Stiffness examination failed at edge #%d.\n\n", ej->ID() / 2);
 			}
@@ -317,7 +317,7 @@ double FFAnalyzer::GenerateCost(WF_edge *ei, WF_edge *ej)
 		I /= remaining;
 
 		double cost = Wp_*P + Wa_*A + Wi_*I;
-		if (debug_)
+		if (terminal_output_)
 		{
 			fprintf(stderr, "P: %lf, A: %lf, I: %lf\ncost: %f\n\n", P, A, I, cost);
 		}
@@ -333,7 +333,7 @@ void FFAnalyzer::PrintOutTimer()
 	printf("***FFAnalyzer timer result:\n");
 	FF_analyzer_.Print("FFAnalyzer:");
 
-	if (detail_timing_)
+	if (terminal_output_)
 	{
 		upd_struct_.Print("UpdateStructure:");
 		rec_struct_.Print("RecoverStructure:");
