@@ -5,7 +5,7 @@
 
 This code implements the algorithm in the following paper:
 
-Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. FramFab: Robotic Fabrication of Frame Shapes.
+Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. FrameFab: Robotic Fabrication of Frame Shapes.
 ACM Trans. Graph. 35, 6, 2016.
 
 ## 2. Dependencies
@@ -41,5 +41,5 @@ Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Dow
 6. When it is done, you can turn on *Heat* under the *Edge* mode to see the result of *layer-decomposition*.
 
 ## 4. Contact
-The code is written by Xin Hu (hx37118@mail.ustc.edu.cn), Yijiang Huang (yijiangh@mit.edu.cn) and Guoxian Song (sgx2012@mail.ustc.edu.cn). Feel free to contact them if you have any comments.
+The code is written by Xin Hu (hx37118@mail.ustc.edu.cn), Yijiang Huang (yijiangh@mit.edu) and Guoxian Song (sgx2012@mail.ustc.edu.cn). Feel free to contact them if you have any comments.
 
