@@ -1,8 +1,9 @@
 include_directories(
-        SYSTEM
         ${Qt_INCLUDE_DIRS}
         ${Eigen3_INCLUDE_DIRS}
         ${MOSEK_INCLUDE_DIRS}
+        ${CMAKE_SOURCE_DIR}/src
+        $
 )
 
 if (NOT APPLE)
@@ -14,7 +15,7 @@ file(GLOB FRAMEFAB_SRC ${CMAKE_SOURCE_DIR}/src/framefab/*.h ${CMAKE_SOURCE_DIR}/
 file(GLOB FRAMEFAB_UI ${CMAKE_SOURCE_DIR}/src/framefab/*.ui)
 
 ## http://stackoverflow.com/questions/29968264/linking-and-uic-order-in-a-cmake-qt-project
-qt_wrap_ui(FRAMEFAB_UI_H ${FRAMEFAB_UI})
+QT5_WRAP_UI(FRAMEFAB_UI_H ${FRAMEFAB_UI})
 
 add_executable(framefab ${FRAMEFAB_SRC} ${FRAMEFAB_UI_H})
 

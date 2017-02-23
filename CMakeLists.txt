@@ -13,7 +13,7 @@ set(CMAKE_AUTOMOC ON)
 
 # http://cmake.3232098.n2.nabble.com/Default-value-for-CMAKE-BUILD-TYPE-td7550756.html
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'Release' as none was specified.")
+    message(STATUS "Setting build type to ' Release' as none was specified.")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
@@ -21,8 +21,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # https://cmake.org/Wiki/CMake:How_To_Find_Libraries
-find_package(Qt COMPONENTS QtCore QtGui QtOpenGL QtWidgets REQUIRED)
+#find_package(Qt REQUIRED QtCore QtWidgets QtGui QtOpenGL)
+#find_package(Qt COMPONENTS QtCore QtGui QtOpenGL QtWidgets REQUIRED)
 #find_package(OpenGL REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
