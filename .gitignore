@@ -1,0 +1,6 @@
+# no .a files
+*.a
+
+build/*
+.idea/*
+cmake-build-debug/*
