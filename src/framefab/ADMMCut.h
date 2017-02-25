@@ -58,12 +58,12 @@
 #include <Eigen/SparseQR>
 #include <Eigen/Core>
 
-#include "GraphCut.h"
-#include "GlobalFunctions\GCommon.h"
+#include "framefab/GraphCut.h"
+#include "framefab/GCommon.h"
 
-#include "QP\QPMosek.h"
-#include "QP\QPFactory.h"
-#include "I_O\Statistics.h"
+#include "framefab/QPMosek.h"
+#include "framefab/QPFactory.h"
+#include "framefab/tatistics.h"
 
 using namespace std;
 using namespace Eigen;

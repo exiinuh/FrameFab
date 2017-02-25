@@ -60,11 +60,11 @@
 #include <gl\GLU.h>
 #include <glut.h>
 
-#include "mainwindow.h"
-#include "ArcBall.h"
-#include "GlobalFunctions\globalFunctions.h"
-#include "FiberPrint\FiberPrintPlugIn.h"
-#include "WireFrame\WireFrame.h"
+#include "framefab\mainwindow.h"
+#include "framefab\ArcBall.h"
+#include "framefab\globalFunctions.h"
+#include "framefab\FiberPrintPlugIn.h"
+#include "framefab\WireFrame.h"
 
 enum OperationMode
 {

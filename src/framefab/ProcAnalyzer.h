@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "SeqAnalyzer.h"
+#include "framefab\SeqAnalyzer.h"
 
 using namespace std;
 

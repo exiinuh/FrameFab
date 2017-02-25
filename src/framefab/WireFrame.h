@@ -43,7 +43,7 @@
 #include <map>
 #include <cmath>
 
-#include "WireFrame\Vec.h"
+#include "framefab/Vec.h"
 
 using namespace std;
 using trimesh::vec;

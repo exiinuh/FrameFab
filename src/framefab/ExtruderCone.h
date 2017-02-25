@@ -43,9 +43,9 @@
 */
 
 #pragma once
-#include "GlobalFunctions\GCommon.h"
-#include "WireFrame\WireFrame.h"
-#include "Triangle.h"
+#include "framefab/GCommon.h"
+#include "framefab/WireFrame.h"
+#include "framefab/Triangle.h"
 
 using namespace std;
 

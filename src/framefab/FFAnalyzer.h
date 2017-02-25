@@ -52,7 +52,7 @@
 #include <cmath>
 #include <cstring>
 
-#include "SeqAnalyzer.h"
+#include "framefab\SeqAnalyzer.h"
 
 
 class FFAnalyzer : public SeqAnalyzer

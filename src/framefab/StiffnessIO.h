@@ -51,17 +51,17 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <Eigen/dense>
+#include <Eigen/Dense>
 
-#include "CoordTrans.h"
-#include "I_O\Statistics.h"
+#include "framefab/CoordTrans.h"
+#include "framefab/Statistics.h"
 
-#include "GlobalFunctions\GCommon.h"
-#include "StiffnessSolver.h"
+#include "framefab/GCommon.h"
+#include "framefab/StiffnessSolver.h"
 
-#include "FiberPrint\FiberPrintPARM.h"
-#include "FiberPrint\DualGraph.h"
-#include "CoordTrans.h"
+#include "framefab/FiberPrintPARM.h"
+#include "framefab/DualGraph.h"
+#include "framefab/CoordTrans.h"
 
 #define MYOUT std::cout
 #define MYEND std::endl

@@ -45,9 +45,9 @@
 
 #pragma once
 #include <vector>
-#include <Eigen\dense>
+#include <Eigen/Dense>
 
-#include "WireFrame\WireFrame.h"
+#include "framefab/WireFrame.h"
 
 /**
 CoordTrans -  evaluate the 3D coordinate transformation coefficients

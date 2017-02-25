@@ -44,8 +44,8 @@
 
 #include <cmath>
 #include <iostream>
-#include "GlobalFunctions\GCommon.h"
-#include "WireFrame\WireFrame.h"
+#include "framefab/GCommon.h"
+#include "framefab/WireFrame.h"
 
 using std::cout;
 

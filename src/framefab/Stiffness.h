@@ -49,7 +49,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include <Eigen/dense>
+#include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseCholesky>
@@ -59,14 +59,14 @@
 #include <Eigen/OrderingMethods>
 #include <Eigen/IterativeLinearSolvers>
 
-#include "WireFrame\WireFrame.h"
-#include "FiberPrint\DualGraph.h"
-#include "FiberPrint\FiberPrintPARM.h"
-#include "CoordTrans.h"
-#include "GlobalFunctions\GCommon.h"
-#include "StiffnessIO.h"
-#include "StiffnessSolver.h"
-#include "IllCondDetector.h"
+#include "framefab/WireFrame.h"
+#include "framefab/DualGraph.h"
+#include "framefab/FiberPrintPARM.h"
+#include "framefab/CoordTrans.h"
+#include "framefab/GCommon.h"
+#include "framefab/StiffnessIO.h"
+#include "framefab/StiffnessSolver.h"
+#include "framefab/IllCondDetector.h"
 
 using namespace std;
 using namespace Eigen;

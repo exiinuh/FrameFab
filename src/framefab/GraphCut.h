@@ -42,10 +42,10 @@
 
 #include <iostream>
 
-#include "WireFrame\WireFrame.h"
-#include "Stiffness\Stiffness.h"
-#include "Collision\QuadricCollision.h"
-#include "FiberPrintPARM.h"
+#include "framefab/WireFrame.h"
+#include "framefab/Stiffness.h"
+#include "framefab/QuadricCollision.h"
+#include "framefab/FiberPrintPARM.h"
 
 using namespace std;
 

@@ -1,3 +1,4 @@
+#include <GTEngine/Include/Mathematics/GteTriangle.h>
 #include "QuadricCollision.h"
 
 
@@ -32,8 +33,8 @@ QuadricCollision::~QuadricCollision()
 }
 
 
-void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, 
-	vector<lld> &result_map)
+void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph,
+									   vector<lld> &result_map)
 {
 	Init(result_map);
 	target_e_ = target_e;
@@ -51,8 +52,8 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, DualGraph *ptr_subgrap
 }
 
 
-void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e, 
-	vector<lld> &result_map)
+void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e,
+									   vector<lld> &result_map)
 {
 	Init(result_map);
 	target_e_ = target_e;
@@ -63,11 +64,11 @@ void QuadricCollision::DetectCollision(WF_edge *target_e, WF_edge *order_e,
 
 
 void QuadricCollision::DetectCollision(WF_edge *target_e,
-	vector<WF_edge*> exist_edge, vector<GeoV3> &output)
+									   vector<WF_edge*> exist_edge, vector<GeoV3> &output)
 {
 	output.clear();
 
-	double ¦È, ¦Õ;
+	double theta, phi;
 	target_e_ = target_e;
 	//North Point
 	if (!DetectEdges(exist_edge, 0, 0))
@@ -78,24 +79,24 @@ void QuadricCollision::DetectCollision(WF_edge *target_e,
 		{
 			if (i < 20)
 			{
-				¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-				¦Õ = i*18.0 / 180.0*F_PI;
+				theta = (j * 3 + 1)*18.0 / 180.0*F_PI;
+				phi = i*18.0 / 180.0*F_PI;
 			}
 
 			if (i>19 && i < 40)
 			{
-				¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-				¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+				theta = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+				phi = (i - 20)*18.0 / 180.0*F_PI;
 			}
 
 			if (i>39)
 			{
-				¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-				¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+				theta = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+				phi = (i - 40)*18.0 / 180.0*F_PI;
 			}
-			if (DetectEdges(exist_edge, ¦È, ¦Õ))
+			if (DetectEdges(exist_edge, theta, phi))
 				continue;
-			output.push_back(Orientation(¦È, ¦Õ));
+			output.push_back(Orientation(theta, phi));
 		}
 	}
 
@@ -121,7 +122,7 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 	{
 		return;
 	}
-	
+
 	int halfM = ptr_frame_->SizeOfEdgeList() / 2;
 	int mi = order_e->ID() / 2 * halfM + target_e_->ID() / 2;
 	if (colli_map_[mi] == NULL)
@@ -129,8 +130,8 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 		colli_map_[mi] = new vector<lld> ;
 		Init(*colli_map_[mi]);
 
-		double ¦È;								// angle with Z axis (rad)
-		double ¦Õ;								// angle with X axis (rad)
+		double theta;								// angle with Z axis (rad)
+		double phi;								// angle with X axis (rad)
 
 		for (int j = 0; j < 3; j++)
 		{
@@ -138,23 +139,23 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 			{
 				if (i < 20)
 				{
-					¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-					¦Õ = i*18.0 / 180.0*F_PI;
+					theta = (j * 3 + 1)*18.0 / 180.0*F_PI;
+					phi = i*18.0 / 180.0*F_PI;
 				}
 
 				if (i > 19 && i < 40)
 				{
-					¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-					¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+					theta = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+					phi = (i - 20)*18.0 / 180.0*F_PI;
 				}
 
 				if (i > 39)
 				{
-					¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-					¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+					theta = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+					phi = (i - 40)*18.0 / 180.0*F_PI;
 				}
 				lld mask = ((lld)1 << i);
-				if (DetectBulk(order_e, ¦È, ¦Õ))
+				if (DetectBulk(order_e, theta, phi))
 				{
 					(*colli_map_[mi])[j] |= mask;
 				}
@@ -184,11 +185,11 @@ void QuadricCollision::DetectEdge(WF_edge *order_e, vector<lld> &result_map)
 }
 
 
-bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, double ¦Õ)
+bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double theta, double phi)
 {
 	for (int i = 0; i < exist_edge.size(); i++)
 	{
-		if (DetectBulk(exist_edge[i], ¦È, ¦Õ))
+		if (DetectBulk(exist_edge[i], theta, phi))
 		{
 
 			return true;
@@ -198,13 +199,13 @@ bool QuadricCollision::DetectEdges(vector<WF_edge*> exist_edge, double ¦È, doubl
 }
 
 
-bool QuadricCollision::DetectBulk(WF_edge *order_e, double ¦È, double ¦Õ)
+bool QuadricCollision::DetectBulk(WF_edge *order_e, double theta, double phi)
 {
 	GeoV3 target_start = target_e_->pvert_->Position();
 	GeoV3 target_end = target_e_->ppair_->pvert_->Position();
 	GeoV3 order_start = order_e->pvert_->Position();
 	GeoV3 order_end = order_e->ppair_->pvert_->Position();
-	GeoV3 normal = Orientation(¦È, ¦Õ);
+	GeoV3 normal = Orientation(theta, phi);
 
 	//0
 	if (Parallel(normal, target_start - target_end))
@@ -271,10 +272,10 @@ bool QuadricCollision::DetectAngle(GeoV3 connect, GeoV3 end, GeoV3 target_end, G
 }
 
 
-bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end, 
-	GeoV3 order_start, GeoV3 order_end, GeoV3 normal)
+bool QuadricCollision::Case(GeoV3 target_start, GeoV3 target_end,
+							GeoV3 order_start, GeoV3 order_end, GeoV3 normal)
 {
-	
+
 
 	//Cone
 	if (DetectCone(target_start, normal, order_start, order_end))
@@ -317,7 +318,7 @@ bool QuadricCollision::SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s,
 
 	if (angle(normal, order_s - connect) < extruder_.Angle())
 	{
-		
+
 		return true;
 	}
 
@@ -350,7 +351,7 @@ bool QuadricCollision::SpecialCase(GeoV3 connect, GeoV3 target_s, GeoV3 order_s,
 
 
 bool QuadricCollision::ParallelCase(GeoV3 target_start, GeoV3 target_end,
-	GeoV3 order_start, GeoV3 order_end, GeoV3 normal)
+									GeoV3 order_start, GeoV3 order_end, GeoV3 normal)
 {
 
 	//Exception situation
@@ -507,8 +508,8 @@ bool QuadricCollision::DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target
 
 
 
-void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end, 
-	GeoV3 target_start, GeoV3  target_end, GeoV3 normal)
+void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
+									  GeoV3 target_start, GeoV3  target_end, GeoV3 normal)
 {
 	//face: front (up, down) back(up,down)
 	GeoV3 t = end - start;
@@ -535,20 +536,20 @@ void QuadricCollision::GenerateVolume(GeoV3 start, GeoV3  end,
 
 	bulk_.clear();
 #ifdef  STRICT_COLLISION
-	//Circle 
+	//Circle
 	GeoV3 q = cross(normal, p);
 	q.normalize();
 	vector<GeoV3> start_circle_point,end_circle_point;
 	for (int i = 0; i < 16; i++)
 	{
 		double part = 2 * F_PI / 16;
-		double ¦È = i*part;
-		start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
+		double theta = i*part;
+		start_circle_point.push_back(start_cone_center + p*cos(theta)*extruder_.Radii() + q*sin(theta)*extruder_.Radii());
 		end_circle_point.push_back(start_circle_point[i] + end - start);
 	}
 
 	for (int i = 0; i < 15; i++)
-	{	
+	{
 		bulk_.push_back(Triangle(start_circle_point[i], start_circle_point[i + 1], end_circle_point[i]));
 		bulk_.push_back(Triangle(end_circle_point[i], end_circle_point[i + 1], start_circle_point[i + 1]));
 	}
@@ -605,18 +606,18 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	GeoV3 p = cross(t, normal);
 	p.normalize();
 
-	double ¦Å = 1;
+	double eps = 1;
 
 	GeoV3 start_cone_center = normal*extruder_.Height() + connect;
 
 	//face front
-	GeoV3 start_front_cone = start_cone_center + p*extruder_.Radii() + t*¦Å;
-	GeoV3 start_front_cylinder = start_front_cone + normal*extruder_.CyclinderLenth() + t*¦Å;
+	GeoV3 start_front_cone = start_cone_center + p*extruder_.Radii() + t*eps;
+	GeoV3 start_front_cylinder = start_front_cone + normal*extruder_.CyclinderLenth() + t*eps;
 
 	//face back
-	GeoV3 start_back_cone = start_cone_center - p*extruder_.Radii() + t*¦Å;
-	GeoV3 start_back_cylinder = start_back_cone + normal*extruder_.CyclinderLenth() + t*¦Å;
-	GeoV3 start = connect + t*¦Å;
+	GeoV3 start_back_cone = start_cone_center - p*extruder_.Radii() + t*eps;
+	GeoV3 start_back_cylinder = start_back_cone + normal*extruder_.CyclinderLenth() + t*eps;
+	GeoV3 start = connect + t*eps;
 
 	//front
 	bulk_.clear();
@@ -629,7 +630,7 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 
 
 #ifdef  STRICT_COLLISION
-	//Circle 
+	//Circle
 	start = connect;
 	GeoV3 end = target_s;
 
@@ -639,8 +640,8 @@ void QuadricCollision::GenerateVolume(GeoV3 connect, GeoV3 target_s, GeoV3 order
 	for (int i = 0; i < 16; i++)
 	{
 		double part = 2 * F_PI / 16;
-		double ¦È = i*part;
-		start_circle_point.push_back(start_cone_center + p*cos(¦È)*extruder_.Radii() + q*sin(¦È)*extruder_.Radii());
+		double theta = i*part;
+		start_circle_point.push_back(start_cone_center + p*cos(theta)*extruder_.Radii() + q*sin(theta)*extruder_.Radii());
 		end_circle_point.push_back(start_circle_point[i] + end - start);
 	}
 
@@ -750,12 +751,12 @@ void QuadricCollision::Debug()
 //
 //	vector<GeoV3> angle;
 ////	angle = DetectStructure(ptr_frame_->GetEdge(seq[22]), exist_edge);
-//		 
+//
 //
 //
 //	//-------------------------
 //	point b;
-//	
+//
 //	WF_edge *a = ptr_frame_->GetEdge(22);
 //	b = a->pvert_->Position();
 //	cout << b.x() << ", " <<b.y() << ", " <<b.z()<< ", " << endl;
@@ -768,37 +769,37 @@ void QuadricCollision::Debug()
 //	a = a->ppair_;
 //	b = a->pvert_->Position();
 //	cout << b.x() << ", " << b.y() << ", " << b.z() << ", " << endl;
-//	
+//
 //	vector<lld> col_map;
 //	DetectCollision(ptr_frame_->GetEdge(22), ptr_frame_->GetEdge(20),col_map);
 //	cout << "           ---" << endl;
 //	cout << DetectBulk(ptr_frame_->GetEdge(20), 0.314159, 1.25664) << endl;
-//	double ¦È, ¦Õ;
+//	double theta, phi;
 //	for (int j = 0; j < 3; j++)
 //	{
 //		for (int i = 0; i < divide_; i++)
 //		{
-//				
+//
 //				if (i < 20)
 //				{
-//					¦È = (j * 3 + 1)*18.0 / 180.0*F_PI;
-//					¦Õ = i*18.0 / 180.0*F_PI;
+//					theta = (j * 3 + 1)*18.0 / 180.0*F_PI;
+//					phi = i*18.0 / 180.0*F_PI;
 //				}
 //				if (i>19 && i < 40)
 //				{
-//					¦È = (j * 3 + 2) * 18.0 / 180.0*F_PI;
-//					¦Õ = (i - 20)*18.0 / 180.0*F_PI;
+//					theta = (j * 3 + 2) * 18.0 / 180.0*F_PI;
+//					phi = (i - 20)*18.0 / 180.0*F_PI;
 //				}
 //				if (i>39)
 //				{
-//					¦È = (j * 3 + 3)* 18.0 / 180.0*F_PI;
-//					¦Õ = (i - 40)*18.0 / 180.0*F_PI;
+//					theta = (j * 3 + 3)* 18.0 / 180.0*F_PI;
+//					phi = (i - 40)*18.0 / 180.0*F_PI;
 //				}
-//				if (DetectBulk(ptr_frame_->GetEdge(20), ¦È, ¦Õ))
-//			{			
+//				if (DetectBulk(ptr_frame_->GetEdge(20), theta, phi))
+//			{
 //				continue;
-//			}	
-//				cout << ¦È << ", " << ¦Õ << ",0" << endl;					
+//			}
+//				cout << theta << ", " << phi << ",0" << endl;
 //		}
 //	}
 }

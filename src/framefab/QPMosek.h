@@ -47,8 +47,8 @@
 #define QPMOSEK_H
 
 
-#include "QP.h"
-#include "GlobalFunctions\Timer.h"
+#include "framefab\QP.h"
+#include "framefab\Timer.h"
 
 class QPMosek : public QP
 {

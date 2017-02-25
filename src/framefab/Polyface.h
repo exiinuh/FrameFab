@@ -41,9 +41,11 @@
 */
 
 #pragma once
-#include <windows.h>
-#include <glut.h>
-#include "Geometry.h"
+//#include <windows.h>
+
+// http://kiwwito.com/installing-opengl-glut-libraries-in-ubuntu/
+#include <GL/glut.h>
+#include "framefab/Geometry.h"
 
 using namespace std;
 

@@ -40,7 +40,7 @@
 
 #pragma once
 
-#include "SeqAnalyzer.h"
+#include "framefab/SeqAnalyzer.h"
 
 class BFAnalyzer : public SeqAnalyzer
 {

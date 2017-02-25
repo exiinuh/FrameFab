@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include "Polyface.h"
+#include "framefab\Polyface.h"
 
 class Parallelogram : public Polyface
 {

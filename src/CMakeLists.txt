@@ -1,4 +1,5 @@
 include_directories(
+  	${CMAKE_SOURCE_DIR}/ext
         ${CMAKE_SOURCE_DIR}/src
 )
 

@@ -39,7 +39,7 @@
 
 #include <map>
 
-#include "GraphCut.h"
+#include "framefab/GraphCut.h"
 
 using namespace std;
 

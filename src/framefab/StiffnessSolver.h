@@ -45,12 +45,12 @@
 #define STIFFNESS_SOLVER_H
 
 #include <iostream>
-#include <Eigen/dense>
-#include <Eigen/sparse>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <Eigen/SparseCholesky>
 #include <Eigen/LU>
 
-#include "GlobalFunctions\Timer.h"
+#include "framefab/Timer.h"
 
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))

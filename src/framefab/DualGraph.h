@@ -38,7 +38,7 @@
 #include <iostream>
 #include <Eigen/Core>
 
-#include "WireFrame\WireFrame.h"
+#include "framefab/WireFrame.h"
 
 using namespace std;
 using namespace Eigen;

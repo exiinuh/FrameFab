@@ -8,8 +8,8 @@
 #
 
 FIND_PATH(MOSEK_INCLUDE_DIR mosek.h
-  PATHS /usr/local/mosek/8/tools/platform/osx64x86/h/
-  PATHS ~/mosek/8/tools/platform/osx64x86/h/
+  PATHS /usr/local/mosek/8/tools/platform/linux64x86/h/
+  PATHS ~/mosek/8/tools/platform/linux64x86/h/
     )
 
 SET(SEARCH_PATHS "${MOSEK_INCLUDE_DIR}" "${MOSEK_INCLUDE_DIR}/../bin" "${MOSEK_INCLUDE_DIR}/lib")
@@ -18,7 +18,7 @@ set(MOSEK_LIBRARIES)
 FIND_LIBRARY(MOSEK_LIBRARIES  NAMES mosek64 PATHS ${SEARCH_PATHS} NO_DEFAULT_PATH DPATH_SUFFIXES a lib dylib)
 
 if(MOSEK_LIBRARIES AND MOSEK_INCLUDE_DIR)
-message(STATUS "Found mosek: ${MOSEK_LIBRARIES}")
+message(STATUS "Found MOSEK: ${MOSEK_LIBRARIES}")
 set(MOSEK_FOUND TRUE)
 endif(MOSEK_LIBRARIES AND MOSEK_INCLUDE_DIR)
 

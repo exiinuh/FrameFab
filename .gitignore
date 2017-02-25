@@ -1,6 +1,13 @@
 # no .a files
 *.a
+**.o
 
-build/*
-.idea/*
-cmake-build-debug/*
+**.cmake~
+**.txt~
+**.qrc~
+
+ext/GTEngine/build/**
+
+build/**
+.idea/**
+cmake-build-debug/**
