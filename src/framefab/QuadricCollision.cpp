@@ -1,4 +1,5 @@
 #include <GTEngine/Include/Mathematics/GteTriangle.h>
+#include <GTEngine/Include/Mathematics/GteCylinder3.h>
 #include "QuadricCollision.h"
 
 
@@ -447,7 +448,7 @@ bool QuadricCollision::DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_st
 	std::array<float, 3>s;
 
 	GeoV3 cylin_center;
-	cylin_center = start + normal*(extruder_.Height() + extruder_.CyclinderLenth()/2);
+	cylin_center = start + normal * (extruder_.Height() + extruder_.CyclinderLenth()/2);
 
 	s[0] = cylin_center.getX(); s[1] = cylin_center.getY(); s[2] = cylin_center.getZ();
 	cylinder_line.origin = s;

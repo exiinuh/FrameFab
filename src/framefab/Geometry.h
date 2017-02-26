@@ -93,12 +93,12 @@ namespace Geometry
 		double *data(){ return data_; }
 
 	public:
-		Vector3d operator+ (Vector3d &b)
+		Vector3d operator+ (const Vector3d &b)
 		{
 			return Vector3d(data_[0] + b.data_[0], data_[1] + b.data_[1], data_[2] + b.data_[2]);
 		}
 
-		Vector3d operator- (Vector3d &b)
+		Vector3d operator- (const Vector3d &b)
 		{
 			return Vector3d(data_[0] - b.data_[0], data_[1] - b.data_[1], data_[2] - b.data_[2]);
 		}

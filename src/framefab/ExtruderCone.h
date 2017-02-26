@@ -48,6 +48,7 @@
 #include "framefab/Triangle.h"
 
 using namespace std;
+using namespace Geometry;
 
 class ExtruderCone
 {

@@ -131,7 +131,7 @@ void ExtruderCone::Rotation(double angle, point start, point end)
 	Geometry::Vector3d z = Geometry::Vector3d(0, 0, 1);
 	Geometry::Vector3d zpz = Geometry::cross(z, pz);
 	zpz.normalize();
-	Geometry::Vector3d vec = pz*cos(angle) +z*sin(angle);
+	Geometry::Vector3d vec = pz * cos(angle) + z * sin(angle);
 	normal_ = Vec3f(vec.getX(), vec.getY(), vec.getZ());
 
 	Geometry::Vector3d u = pz*sin(angle) -z*cos(angle);
@@ -222,9 +222,12 @@ void ExtruderCone::Rotation(GeoV3 normal, point start, point end)
 
 		for (int i = 0; i < divide_; i++)
 		{
-			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
+			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal*height_
+                                    + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
 			point v1_(v1.getX(), v1.getY(), v1.getZ());
-			Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
+
+			Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_
+                                    + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
 			point v2_(v2.getX(), v2.getY(), v2.getZ());
 			top_[i] = v2_;
 
@@ -249,11 +252,15 @@ void ExtruderCone::Rotation(GeoV3 normal, point start, point end)
 		double radii = tan(angle_)*height_;
 		for (int i = 0; i < divide_; i++)
 		{
-			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
+			Geometry::Vector3d v1 = Geometry::Vector3d(base_point_) + normal * height_
+                                    + u*(radii*cos(2 * F_PI / divide_*(i + 1))) + v*(radii*sin(2 * F_PI / divide_*(i + 1)));
 			point v1_(v1.getX(), v1.getY(), v1.getZ());
-			Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_ + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
+
+            Geometry::Vector3d v2 = Geometry::Vector3d(base_point_) + normal*height_
+                                    + u*(radii*cos(2 * F_PI / divide_*(i))) + v*(radii*sin(2 * F_PI / divide_*(i)));
 			point v2_(v2.getX(), v2.getY(), v2.getZ());
-			top_[i] = v2_;
+
+            top_[i] = v2_;
 
 			side_[i] = Triangle(base_point_, v1_, v2_);
 		}

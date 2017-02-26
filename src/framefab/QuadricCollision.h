@@ -51,6 +51,7 @@
 
 #include <vector>
 #include <GTEnginePCH.h>
+#include <Mathematics/GteTriangle.h>
 #include <Mathematics/GteIntrSegment3Cone3.h>
 
 typedef unsigned long long lld;
