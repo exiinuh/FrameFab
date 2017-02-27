@@ -434,7 +434,7 @@ void StiffnessIO::WriteInputData(
 
 	if ((fp = fopen(fpath, "w")) == NULL)
 	{
-		sprintf_s(errMsg, "\n ERROR: cannot open .3dd transfer data file '%s'", fpath);
+		sprintf(errMsg, "\n ERROR: cannot open .3dd transfer data file '%s'", fpath);
 		printf(errMsg);
 		exit(11);
 	}

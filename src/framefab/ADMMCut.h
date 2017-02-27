@@ -50,7 +50,7 @@
 #include <omp.h>
 #include <iostream>
 
-#include <Eigen/dense>
+#include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseCholesky>
@@ -63,7 +63,7 @@
 
 #include "framefab/QPMosek.h"
 #include "framefab/QPFactory.h"
-#include "framefab/tatistics.h"
+#include "framefab/Statistics.h"
 
 using namespace std;
 using namespace Eigen;

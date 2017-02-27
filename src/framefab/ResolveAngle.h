@@ -41,9 +41,9 @@
 */
 
 #pragma once
-#include"framefab\WireFrame.h"
-#include"framefab\Geometry.h"
-#include"framefab\ExtruderCone.h"
+#include"framefab/WireFrame.h"
+#include"framefab/Geometry.h"
+#include"framefab/ExtruderCone.h"
 
 class ResolveAngle
 {

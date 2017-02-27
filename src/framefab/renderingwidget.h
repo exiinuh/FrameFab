@@ -50,21 +50,20 @@
 
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QAction>
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QTextCodec>
 
-#include <gl\GLU.h>
-#include <glut.h>
+#include <GL/glut.h>
 
-#include "framefab\mainwindow.h"
-#include "framefab\ArcBall.h"
-#include "framefab\globalFunctions.h"
-#include "framefab\FiberPrintPlugIn.h"
-#include "framefab\WireFrame.h"
+#include "framefab/mainwindow.h"
+#include "framefab/ArcBall.h"
+#include "framefab/globalFunctions.h"
+#include "framefab/FiberPrintPlugIn.h"
+#include "framefab/WireFrame.h"
 
 enum OperationMode
 {

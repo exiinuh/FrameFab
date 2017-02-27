@@ -1,6 +1,5 @@
 #include "WireFrame.h"
 
-
 WireFrame::WireFrame()
 	:delta_tol_(1e-1), unify_size_(2.0), layer_size_(0)
 {

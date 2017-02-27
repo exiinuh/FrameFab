@@ -42,10 +42,10 @@
 #pragma once
 #include <cmath>
 
-#include "framefab\ADMMCut.h"
-#include "framefab\NormalCut.h"
-#include "framefab\QuadricCollision.h"
-#include "framefab\ResolveAngle.h"
+#include "framefab/ADMMCut.h"
+#include "framefab/NormalCut.h"
+#include "framefab/QuadricCollision.h"
+#include "framefab/ResolveAngle.h"
 
 class SeqAnalyzer
 {

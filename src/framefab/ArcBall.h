@@ -34,7 +34,7 @@
 */
 
 #include <math.h>
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 #include <QPoint>
 
 #ifndef _MY_ARCBALL_CLASS_

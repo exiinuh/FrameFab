@@ -42,6 +42,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <string.h>
 
 #include "framefab/Vec.h"
 

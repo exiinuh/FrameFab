@@ -60,7 +60,7 @@
 #include <QInputDialog>
 #include <QLineEdit>
 
-#include "framefab/ui_mainwindow.h"
+#include "ui_mainwindow.h"
 #include "framefab/renderingwidget.h"
 
 

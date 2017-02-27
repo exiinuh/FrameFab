@@ -39,8 +39,8 @@
 #ifndef QPFACTORY_H
 #define QPFACTORY_H
 
-#include "framefab\QP.h"
-#include "framefab\QPMosek.h"
+#include "framefab/QP.h"
+#include "framefab/QPMosek.h"
 
 class QPFactory
 {

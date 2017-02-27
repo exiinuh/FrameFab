@@ -4,6 +4,7 @@ include_directories(
   ${Eigen_INCLUDE_DIRS}
   ${MOSEK_INCLUDE_DIRS}
   ${GTENGINE_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/ext
 )
