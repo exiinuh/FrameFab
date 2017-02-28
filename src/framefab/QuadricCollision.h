@@ -53,6 +53,9 @@
 #include <GTEnginePCH.h>
 #include <Mathematics/GteTriangle.h>
 #include <Mathematics/GteIntrSegment3Cone3.h>
+#include <Mathematics/GteIntrSegment3Cylinder3.h>
+#include <Mathematics/GteIntrSegment3Triangle3.h>
+#include <Mathematics/GteDistSegmentSegment.h>
 
 typedef unsigned long long lld;
 
@@ -69,6 +72,20 @@ public:
 	QuadricCollision();
 	QuadricCollision(WireFrame *ptr_frame);
 	~QuadricCollision();
+
+/*public:
+    // for Usage of FIQuery:
+    // A FIQuery-base class B must define a B::Result struct with member
+    // 'bool intersect'.  A FIQuery-derived class D must also derive a
+    // D::Result from B:Result but may have no members.  The member
+    // 'intersect' is 'true' iff the primitives intersect.  The operator()
+    // is non-const to allow FIQuery to store and modify private state
+    // that supports the query.
+    struct Result
+    {
+        Result():intersect(false){}
+        bool intersect;
+    };*/
 
 public:
 	void	DetectCollision(WF_edge *target_e, DualGraph *ptr_subgraph, vector<lld> &result_map);

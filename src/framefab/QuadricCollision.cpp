@@ -463,21 +463,21 @@ bool QuadricCollision::DetectCylinder(GeoV3 start, GeoV3 normal, GeoV3 target_st
 
 	gte::Segment<3, float> segment;
 	segment = Seg(target_start, target_end);
-	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> intersection;
-	auto result = intersection(segment, cylinder);
+	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> fiq;
+	auto fiq_result = fiq(segment, cylinder);
 
-	return result.intersect;
+	return fiq_result.intersect;
 }
 
 bool QuadricCollision::DetectTriangle(Triangle triangle, GeoV3 target_start, GeoV3 target_end)
 {
 	gte::Triangle<3, float> triangle_ = Tri(triangle.v0(), triangle.v1(), triangle.v2());
 
-	gte::FIQuery<float, gte::Segment<3, float>, gte::Triangle3<float>> intersection;
+	gte::FIQuery<float, gte::Segment<3, float>, gte::Triangle3<float>> fiq;
 	gte::Segment<3, float> segment = Seg(target_start, target_end);
 
-	auto result = intersection(segment, triangle_);
-	return result.intersect;
+	auto fiq_result = fiq(segment, triangle_);
+	return fiq_result.intersect;
 }
 
 
@@ -501,10 +501,10 @@ bool QuadricCollision::DetectTopCylinder(GeoV3 start, GeoV3 normal, GeoV3 target
 
 	gte::Segment<3, float> segment;
 	segment = Seg(target_start, target_end);
-	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> intersection;
-	auto result = intersection(segment, cylinder);
+	gte::FIQuery<float, gte::Segment<3, float>, gte::Cylinder3<float>> fiq;
+	auto fiq_result = fiq(segment, cylinder);
 
-	return result.intersect;
+	return fiq_result.intersect;
 }
 
 
@@ -688,9 +688,9 @@ double QuadricCollision::Distance(WF_edge* order_e)
 	gte::Segment<3, float> segment, segment_target;
 	segment = Seg(order_e->pvert_->Position(), order_e->ppair_->pvert_->Position());
 	segment_target = Seg(target_e_->pvert_->Position(), target_e_->ppair_->pvert_->Position());
-	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> distance;
-	auto result = distance(segment, segment_target);
-	return result.distance;
+	gte::DCPQuery<float, gte::Segment<3, float>, gte::Segment<3, float>> dcpq;
+	auto dcpq_result = dcpq(segment, segment_target);
+	return dcpq_result.distance;
 }
 
 gte::Segment<3, float> QuadricCollision::Seg(point target_start, point target_end)
