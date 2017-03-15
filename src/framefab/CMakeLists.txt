@@ -21,8 +21,9 @@ add_project_meta(META_FILES_TO_INCLUDE)
 set(RESOURCES_FILES mainwindow.qrc)
 
 # https://cmake.org/Wiki/CMake:How_To_Find_Libraries
-find_package(Qt5Widgets REQUIRED)
+# find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL REQUIRED)
 find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 

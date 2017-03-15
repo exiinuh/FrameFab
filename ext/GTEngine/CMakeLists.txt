@@ -3,7 +3,7 @@ set(BUILD_SHARED_LIBRARY true)
 
 project(GTEngine)
 
-# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -D__LINUX__ -DGTE_DEV_OPENGL -DGTE_DISABLE_PCH")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -D__LINUX__ -DGTE_DEV_OPENGL -DGTE_DISABLE_PCH")
 
 # SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
@@ -29,5 +29,6 @@ file(GLOB GTE_GRAPHICS_GLX_SRC  Source/Graphics/GL4/GLX/*.cpp)
 file(GLOB GTE_Applications_SRC  Source/Applications/*.cpp)
 file(GLOB GTE_Applications_GLX_SRC  Source/Applications/GLX/*.cpp)
 
-add_library(GTEngine ${GTE_ROOT_SRC} ${GTE_LOWLEVEL_SRC} ${GTE_MATHEMATICS_SRC} ${GTE_IMAGES_SRC} ${GTE_PHYSICS_SRC} ${GTE_GRAPHICS_SRC} ${GTE_GRAPHICS_OPENGL_SRC} ${GTE_GRAPHICS_GLX_SRC} ${GTE_Applications_SRC} ${GTE_Applications_GLX_SRC})
+add_library(GTEngine ${GTE_ROOT_SRC} ${GTE_MATHEMATICS_SRC})
+
 set_target_properties(GTEngine PROPERTIES COMPILE_FLAGS -fPIC)
