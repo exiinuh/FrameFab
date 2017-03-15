@@ -54,9 +54,9 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 
 	- update and specify new g++ compilation
 	> 	$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-	>     	$ sudo apt-get update
-	>     	$ sudo apt-get install gcc-5 g++-5
-	>	$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 1
+	> 	$ sudo apt-get update
+	> 	$ sudo apt-get install gcc-5 g++-5
+	> 	$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 1
 
 - Follow the usual CMake procedure:
 
@@ -65,6 +65,9 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 >     $ cd build
 >     $ cmake .. (/path/to/FrameFab)
 >     $ make -j4
+
+- Then start the program
+>     $ ./framefab
 
 ## 3. FrameFab instructions
 1. Read a .obj file into **FrameFab**.
