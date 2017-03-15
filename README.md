@@ -21,7 +21,7 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 ### Useful tools for installation
 
 - git
-- Cmake (Default cmake version of 14.04 is 2.8, we need cmake 3.2)
+- Cmake (default version 2.8)
 
 ## 3. Installation Instructions
 
@@ -31,20 +31,16 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 > $ git clone https://github.com/yijiangh/FrameFab
 
 - Install git, cmake, Eigen, BLAS, LAPACK using your package manager. In Ubuntu, that's:
-> $ sudo apt-get install libeigen3-dev libblas-dev liblapack-dev
+> $ sudo apt-get install git cmake libeigen3-dev libblas-dev liblapack-dev
 
 - Mosek
 	- download and install Mosek from [https://mosek.com/](https://mosek.com/). You'll need to request a license. It's free for academic use.
 	- set the `PATH` environment variable to full path by adding `export PATH=<MSKHOME>/mosek/8/tools/platform/linux64x86/bin:$PATH`, e.g. in `~/.bashrc` in Ubuntu machine (`MSKHOME` denote the directory in which MOSEK is unpacked and installed. Version number `8` is the the current mosek version). Refer to official [Installation doc](http://docs.mosek.com/7.0/toolsinstall/Linux_UNIX_installation_instructions.html).
 
 - Qt5, OpenGL and GLUT
-	- Follow the [official Qt instruction](http://wiki.qt.io/Install_Qt_5_on_Ubuntu) and [Glut installation guide on Ubuntu](http://kiwwito.com/installing-opengl-glut-libraries-in-ubuntu/)：
-		- `$ wget http://download.qt.io/official_releases/qt/5.7/5.7.0/qt-opensource-linux-x64-5.7.0.run`
-		- `$ chmod +x qt-opensource-linux-x64-5.7.0.run`
-		- `$ ./qt-opensource-linux-x64-5.7.0.run`
+	- Install Qt5 (refer to [this post](https://github.com/Cockatrice/Cockatrice/wiki/Compiling-Cockatrice-(Linux)))
+		- `sudo apt-get install qt5-default qttools5-dev qttools5-dev-tools` 
 	- Install OpenGL and Glut librarues
-		- `$ sudo apt-get install mesa-common-dev`
-		- `$ sudo apt-get install libglu1-mesa-dev -y`
 		- `$ sudo apt-get install freeglut3-dev`
 
 - update and change CXX compiler
@@ -57,10 +53,10 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 	>     	export CXX
 
 	- update and specify new g++ compilation
-	> 	   	$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+	> 	$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 	>     	$ sudo apt-get update
 	>     	$ sudo apt-get install gcc-5 g++-5
-	> 		$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 1
+	>	$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 1
 
 - Follow the usual CMake procedure:
 
