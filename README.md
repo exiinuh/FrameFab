@@ -12,20 +12,11 @@ ACM Trans. Graph. 35, 6, 2016.
 
 This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 
-### 2.2 Qt
-Download **Qt 5.5.1** from "*https://www.qt.io/download/*".
-(OpenGL should be included in Qt.)
-
-Download **LAPACK 3.5.0** from "*http://www.netlib.org/lapack/*".
-
-### 2.4 Mosek
-Download **Mosek 7.0** from "*https://www.mosek.com/resources/downloads*".
-
-### 2.5 Eigen
-Download **Eigen 3** from "*http://eigen.tuxfamily.org/index.php?title=Main_Page*".
-
-### 3.6 Geometric Tools Engine
-Download **Geometric Tools Engine 2.4** from "*http://www.geometrictools.com/Downloads/Downloads.html*".
+ - Qt & OpenGL, GLUT
+ - LAPACK & BLAS 
+ - MOSEK
+ - Eigen3
+ - [Geometric Tools Engine](http://www.geometrictools.com/Downloads/Downloads.html)
 
 ### Useful tools for installation
 
