@@ -5,7 +5,7 @@
 
 This code implements a sequence generation algorithm for robotic spatial printing, which is addressed in the following paper:
 
-Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. FrameFab: Robotic Fabrication of Frame Shapes.
+Yijiang Huang, Juyong Zhang, Xin Hu, Guoxian Song, Zhongyuan Liu, Lei Yu, Ligang Liu. **FrameFab: Robotic Fabrication of Frame Shapes**.
 ACM Trans. Graph. 35, 6, 2016.
 
 ## 2. Dependencies
@@ -69,7 +69,7 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 - Then start the program
 >     $ ./framefab
 
-## 3. FrameFab instructions
+## 4. FrameFab instructions
 1. Read a .obj file into **FrameFab**.
 2. Click **Choose ceiling**, choose the edges that you want them to be *ceiling*. Click again or press ESC to finish.
 3. Click **Choose base**, choose the vertexes that you want them to be *base*. Click again or press ESC to finish.
@@ -77,7 +77,7 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 5. Click **FiberPrint** to run the whole process.
 6. When it is done, you can turn on *Heat* under the *Edge* mode to see the result of *layer-decomposition*.
 
-## Common Installation problems
+## 5. Common Installation problems
 
 - ***The CXX compiler identification is unknown, no C++ compiler is found in cmake process***. Make sure you have c++ compiler on your system. Run `sudo apt-get install build-essential`, refer to [this post](http://stackoverflow.com/questions/9699930/cmake-complains-the-cxx-compiler-identification-is-unknown).
 
@@ -100,3 +100,6 @@ This code has been tested in Windows (built with VS2013) and Ubuntu 14.04-LTS.
 	 You can check the update result by `$ g++ --version`.
 
 - `-std=c++14` is needed for GTEngine's successful compilation.
+
+## 6. Contact info
+This code is implemented by Xin Hu, Yijiang Huang and Guoxian Song, supervised by [Juyong Zhang](http://staff.ustc.edu.cn/~juyong/) and [Ligang Liu](http://staff.ustc.edu.cn/~lgliu/), in 2016-17, @GCL USTC, and currently maintained by [Yijiang Huang](mailto:yijiangh@mit.edu).
